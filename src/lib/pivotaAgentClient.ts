@@ -46,6 +46,31 @@ const FALLBACK_PRODUCTS: RawProduct[] = [
   },
 ];
 
+function normalizeQuery(raw: string | undefined | null): string {
+  if (!raw) return "";
+  const trimmed = raw.trim();
+  const lower = trimmed.toLowerCase();
+
+  // 常见“泛化指令”统一视为默认推荐（空 query）
+  const genericIntents = new Set([
+    "show popular items",
+    "show me popular items",
+    "show me some popular items",
+    "recommend something",
+    "recommend some products",
+    "热门商品",
+    "推荐一些好物",
+  ]);
+  if (genericIntents.has(lower)) return "";
+
+  // 简单同义词归一化
+  if (lower === "tee" || lower === "t恤" || lower === "t-shirt" || lower === "t shirt") {
+    return "t-shirt";
+  }
+
+  return trimmed;
+}
+
 export async function callPivotaCreatorAgent(params: {
   creatorId: string;
   creatorName: string;
@@ -67,17 +92,18 @@ export async function callPivotaCreatorAgent(params: {
   }
 
   const lastUserMessage = [...params.messages].reverse().find((m) => m.role === "user");
-  const query = lastUserMessage?.content?.trim() || "Show popular items";
+  const userQueryRaw = lastUserMessage?.content ?? "";
+  const hasUserQuery = userQueryRaw.trim().length > 0;
+  const query = normalizeQuery(userQueryRaw);
 
   // 与 Shopping Agent 前端保持一致的调用协议：顶层只使用 operation + payload，
   // 额外信息放在 metadata，方便后端按 creatorId 做过滤/打标。
-  const payload = {
+  const basePayload = {
     // 后端明确建议：跨商户搜索使用 find_products，
     // 不填 merchant_id 即为跨商户。
     operation: "find_products",
     payload: {
       search: {
-        query,
         // 与 Shopping Agent 的 sendMessage 逻辑对齐：
         // page + page_size 分页，不强制只看有库存。
         page: 1,
@@ -109,48 +135,77 @@ export async function callPivotaCreatorAgent(params: {
     "";
 
   try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(BEARER_API_KEY ? { Authorization: `Bearer ${BEARER_API_KEY}` } : {}),
-        ...(X_AGENT_API_KEY ? { "X-Agent-API-Key": X_AGENT_API_KEY } : {}),
-      },
-      body: JSON.stringify(payload),
-    });
+    async function runOnce(searchQuery: string) {
+      const payload = {
+        ...basePayload,
+        payload: {
+          ...basePayload.payload,
+          search: {
+            ...basePayload.payload.search,
+            query: searchQuery,
+          },
+        },
+      };
 
-    if (!res.ok) {
-      let errorBody: string | undefined;
-      try {
-        errorBody = await res.text();
-      } catch (err) {
-        errorBody = undefined;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(BEARER_API_KEY ? { Authorization: `Bearer ${BEARER_API_KEY}` } : {}),
+          ...(X_AGENT_API_KEY ? { "X-Agent-API-Key": X_AGENT_API_KEY } : {}),
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        let errorBody: string | undefined;
+        try {
+          errorBody = await res.text();
+        } catch (err) {
+          errorBody = undefined;
+        }
+        throw new Error(
+          `Pivota agent request failed with status ${res.status}${
+            errorBody ? ` body: ${errorBody}` : ""
+          }`,
+        );
       }
-      throw new Error(
-        `Pivota agent request failed with status ${res.status}${
-          errorBody ? ` body: ${errorBody}` : ""
-        }`,
-      );
+
+      const data = await res.json();
+
+      const rawProducts: RawProduct[] =
+        data.products ??
+        data.output?.products ??
+        data.items ??
+        data.output?.items ??
+        [];
+
+      const reply: string =
+        data.reply ??
+        data.message ??
+        data.output?.reply ??
+        data.output?.final_text ??
+        (Array.isArray(rawProducts) && rawProducts.length === 0
+          ? "I couldn’t find good matches for that request. Try adjusting your budget, style, or category."
+          : "Sorry, I wasn’t able to get a useful reply from the backend this time.");
+
+      return { data, rawProducts, reply };
     }
 
-    const data = await res.json();
+    // 第一次：按用户 query 或默认 query 调用
+    const primary = await runOnce(query);
+    let { data, rawProducts, reply } = primary;
 
-    const rawProducts: RawProduct[] =
-      data.products ??
-      data.output?.products ??
-      data.items ??
-      data.output?.items ??
-      [];
-
-    // TODO: 根据 Pivota Agent 实际返回结构，把 reply 和 products 的解析逻辑简化为单一来源。
-  const reply: string =
-    data.reply ??
-    data.message ??
-    data.output?.reply ??
-    data.output?.final_text ??
-    (Array.isArray(rawProducts) && rawProducts.length === 0
-      ? "I couldn’t find good matches for that request. Try adjusting your budget, style, or category."
-      : "Sorry, I wasn’t able to get a useful reply from the backend this time.");
+    // 若用户输入了非空 query 且结果为 0，则再用空 query 兜底一次默认货盘
+    if (hasUserQuery && (!rawProducts || rawProducts.length === 0)) {
+      const fallback = await runOnce("");
+      if (fallback.rawProducts && fallback.rawProducts.length > 0) {
+        rawProducts = fallback.rawProducts;
+        data = { primary: primary.data, fallback: fallback.data };
+        reply =
+          "I couldn’t find exact matches for that request. Here are some popular or similar pieces instead.";
+      }
+    }
 
     return { reply, products: rawProducts, raw: data, agentUrlUsed: url };
   } catch (error) {
