@@ -100,8 +100,11 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
           content: m.content,
         })),
         payload: {
-          query: trimmed,
-          limit: 12,
+          search: {
+            query: trimmed,
+            limit: 8,
+            in_stock_only: true,
+          },
         },
       });
 

@@ -82,18 +82,21 @@ export async function callPivotaCreatorAgent(params: {
 
   const payload = {
     agent: "creator_agent",
-    operation: "find_products", // TODO: 若后端提供更合适的 operation/参数，应与后端对齐
+    // 跨商户查询使用 find_products_multi，避免空 query 打满商户导致超时
+    operation: "find_products_multi",
     creator_id: params.creatorId,
     persona: systemPrompt,
     messages: params.messages,
     payload: {
-      query,
-      limit: 8,
-      // TODO: 如果后端支持基于 creator 过滤/加权，可与后端协商使用 creator_ids 或类似字段
-      creator_ids: [params.creatorId],
+      search: {
+        query,
+        limit: 8,
+        in_stock_only: true,
+      },
     },
     metadata: {
       creatorName: params.creatorName,
+      creatorId: params.creatorId,
       source: "creator-agent-ui",
     },
   };
