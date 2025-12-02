@@ -13,6 +13,39 @@ export type CreatorAgentResponse = {
   agentUrlUsed?: string;
 };
 
+const FALLBACK_PRODUCTS: RawProduct[] = [
+  {
+    id: "mock-1",
+    title: "Mock CloudFit Hoodie",
+    description: "适合作为本地开发演示用的连帽衫。",
+    price: 459,
+    currency: "CNY",
+    image_url:
+      "https://images.pexels.com/photos/7671166/pexels-photo-7671166.jpeg?auto=compress&cs=tinysrgb&w=800",
+    inventory_quantity: 12,
+  },
+  {
+    id: "mock-2",
+    title: "Mock Everyday Bottle 600ml",
+    description: "本地开发演示的水杯。",
+    price: 169,
+    currency: "CNY",
+    image_url:
+      "https://images.pexels.com/photos/3735551/pexels-photo-3735551.jpeg?auto=compress&cs=tinysrgb&w=800",
+    inventory_quantity: 33,
+  },
+  {
+    id: "mock-3",
+    title: "Mock Urban Tech Runner",
+    description: "本地演示的城市跑鞋，偏通勤风。",
+    price: 729,
+    currency: "CNY",
+    image_url:
+      "https://images.pexels.com/photos/1124466/pexels-photo-1124466.jpeg?auto=compress&cs=tinysrgb&w=800",
+    inventory_quantity: 18,
+  },
+];
+
 export async function callPivotaCreatorAgent(params: {
   creatorId: string;
   creatorName: string;
@@ -29,38 +62,7 @@ export async function callPivotaCreatorAgent(params: {
     return {
       reply:
         "（本地 mock）我会在真实环境中帮你从 Creator 的内容里找适合的单品。先用这几件做 UI 演示 👇",
-      products: [
-        {
-          id: "mock-1",
-          title: "Mock CloudFit Hoodie",
-          description: "适合作为本地开发演示用的连帽衫。",
-          price: 459,
-          currency: "CNY",
-          image_url:
-            "https://images.pexels.com/photos/7671166/pexels-photo-7671166.jpeg?auto=compress&cs=tinysrgb&w=800",
-          inventory_quantity: 12,
-        },
-        {
-          id: "mock-2",
-          title: "Mock Everyday Bottle 600ml",
-          description: "本地开发演示的水杯。",
-          price: 169,
-          currency: "CNY",
-          image_url:
-            "https://images.pexels.com/photos/3735551/pexels-photo-3735551.jpeg?auto=compress&cs=tinysrgb&w=800",
-          inventory_quantity: 33,
-        },
-        {
-          id: "mock-3",
-          title: "Mock Urban Tech Runner",
-          description: "本地演示的城市跑鞋，偏通勤风。",
-          price: 729,
-          currency: "CNY",
-          image_url:
-            "https://images.pexels.com/photos/1124466/pexels-photo-1124466.jpeg?auto=compress&cs=tinysrgb&w=800",
-          inventory_quantity: 18,
-        },
-      ],
+      products: FALLBACK_PRODUCTS,
     };
   }
 
@@ -149,7 +151,7 @@ export async function callPivotaCreatorAgent(params: {
     if (message.includes("UPSTREAM_TIMEOUT") || message.includes("status 504")) {
       return {
         reply: "后端响应超时，请稍后再试或换个描述～",
-        products: [],
+        products: FALLBACK_PRODUCTS,
         raw: { error: message },
         agentUrlUsed: url,
       };
