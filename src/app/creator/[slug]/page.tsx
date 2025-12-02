@@ -126,7 +126,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
       setProducts(data.products ?? []);
     } catch (error) {
       console.error(error);
-      setLastResponse((prev) => prev ?? { error: "request failed", detail: String(error) });
+      setLastResponse((prev: any) => prev ?? { error: "request failed", detail: String(error) });
       setMessages((prev) => [
         ...prev,
         {
