@@ -76,9 +76,9 @@ export async function callPivotaCreatorAgent(params: {
     payload: {
       search: {
         query,
-        limit: 8,
-        in_stock_only: true,
-        page: 1,
+        // 与 Shopping Agent 的 sendMessage 对齐：不过滤库存，limit 10
+        in_stock_only: false,
+        limit: 10,
       },
     },
     metadata: {
