@@ -92,6 +92,7 @@ export async function callPivotaCreatorAgent(params: {
         query,
         limit: 8,
         in_stock_only: true,
+        page: 1,
       },
     },
     metadata: {
@@ -138,7 +139,9 @@ export async function callPivotaCreatorAgent(params: {
       data.message ??
       data.output?.reply ??
       data.output?.final_text ??
-      "抱歉，我暂时没有拿到有效的回复内容。";
+      (Array.isArray(rawProducts) && rawProducts.length === 0
+        ? "抱歉，没有找到合适的商品，请换个描述或条件试试。"
+        : "抱歉，我暂时没有拿到有效的回复内容。");
 
     const rawProducts: RawProduct[] =
       data.products ??

@@ -104,6 +104,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
             query: trimmed,
             limit: 8,
             in_stock_only: true,
+            page: 1,
           },
         },
       });
