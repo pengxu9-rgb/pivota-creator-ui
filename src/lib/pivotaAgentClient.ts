@@ -8,7 +8,7 @@ export type CreatorAgentMessage = {
 export type CreatorAgentResponse = {
   reply: string;
   products?: RawProduct[];
-   // 原始后端响应，用于 debug
+  // 原始后端响应，用于 debug 面板
   raw?: any;
   agentUrlUsed?: string;
 };
@@ -66,27 +66,13 @@ export async function callPivotaCreatorAgent(params: {
     };
   }
 
-  const systemPrompt = `
-你是 Pivota 的「Creator Shopping Agent」。
-
- - 具备 Pivota Shopping Agent 的基础能力（find_products / create_order / submit_payment）；
- - 当前服务的 Creator 为：${params.creatorName}（ID: ${params.creatorId}）。
-
- ${params.personaPrompt}
-
- 优先推荐该 Creator 内容中出现过的单品或同风格替代品，当为同风格补充时需向用户说明。
-  `.trim();
-
   const lastUserMessage = [...params.messages].reverse().find((m) => m.role === "user");
   const query = lastUserMessage?.content?.trim() || "Show popular items";
 
+  // 与 Shopping Agent 前端保持一致的调用协议：顶层只使用 operation + payload，
+  // 额外信息放在 metadata，方便后端按 creatorId 做过滤/打标。
   const payload = {
-    agent: "creator_agent",
-    // 跨商户查询使用 find_products_multi，避免空 query 打满商户导致超时
     operation: "find_products_multi",
-    creator_id: params.creatorId,
-    persona: systemPrompt,
-    messages: params.messages,
     payload: {
       search: {
         query,
@@ -96,8 +82,10 @@ export async function callPivotaCreatorAgent(params: {
       },
     },
     metadata: {
-      creatorName: params.creatorName,
       creatorId: params.creatorId,
+      creatorName: params.creatorName,
+      // 目前后端不会使用 persona，只作为元信息占位，方便未来在网关/Agent 层接入。
+      persona: params.personaPrompt,
       source: "creator-agent-ui",
     },
   };
@@ -105,14 +93,20 @@ export async function callPivotaCreatorAgent(params: {
   // TODO: 上面的 payload 字段名/结构可能需要根据 Pivota Agent 后端最终协议调整。
   // 当前先用一个清晰的草案，方便后续对齐。
 
+  const AGENT_API_KEY =
+    process.env.NEXT_PUBLIC_AGENT_API_KEY ||
+    process.env.AGENT_API_KEY ||
+    process.env.SHOP_GATEWAY_AGENT_API_KEY ||
+    process.env.PIVOTA_API_KEY ||
+    process.env.PIVOTA_AGENT_API_KEY ||
+    "";
+
   try {
     const res = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...(process.env.PIVOTA_AGENT_API_KEY
-          ? { Authorization: `Bearer ${process.env.PIVOTA_AGENT_API_KEY}` }
-          : {}),
+        ...(AGENT_API_KEY ? { "X-Agent-API-Key": AGENT_API_KEY } : {}),
       },
       body: JSON.stringify(payload),
     });
