@@ -133,6 +133,13 @@ export async function callPivotaCreatorAgent(params: {
 
     const data = await res.json();
 
+    const rawProducts: RawProduct[] =
+      data.products ??
+      data.output?.products ??
+      data.items ??
+      data.output?.items ??
+      [];
+
     // TODO: 根据 Pivota Agent 实际返回结构，把 reply 和 products 的解析逻辑简化为单一来源。
     const reply: string =
       data.reply ??
@@ -142,13 +149,6 @@ export async function callPivotaCreatorAgent(params: {
       (Array.isArray(rawProducts) && rawProducts.length === 0
         ? "抱歉，没有找到合适的商品，请换个描述或条件试试。"
         : "抱歉，我暂时没有拿到有效的回复内容。");
-
-    const rawProducts: RawProduct[] =
-      data.products ??
-      data.output?.products ??
-      data.items ??
-      data.output?.items ??
-      [];
 
     return { reply, products: rawProducts, raw: data, agentUrlUsed: url };
   } catch (error) {
