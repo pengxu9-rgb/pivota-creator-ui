@@ -10,6 +10,7 @@ export type CreatorAgentResponse = {
   products?: RawProduct[];
    // 原始后端响应，用于 debug
   raw?: any;
+  agentUrlUsed?: string;
 };
 
 export async function callPivotaCreatorAgent(params: {
@@ -141,7 +142,7 @@ export async function callPivotaCreatorAgent(params: {
       data.output?.items ??
       [];
 
-    return { reply, products: rawProducts, raw: data };
+    return { reply, products: rawProducts, raw: data, agentUrlUsed: url };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     // 如果后端超时，返回友好提示而不是直接抛出
@@ -150,6 +151,7 @@ export async function callPivotaCreatorAgent(params: {
         reply: "后端响应超时，请稍后再试或换个描述～",
         products: [],
         raw: { error: message },
+        agentUrlUsed: url,
       };
     }
     throw error;

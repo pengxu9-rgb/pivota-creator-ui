@@ -115,6 +115,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
         reply: string;
         products?: Product[];
         rawAgentResponse?: any;
+        agentUrlUsed?: string;
       };
 
       setLastResponse(data);
@@ -264,6 +265,9 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
               <pre className="max-h-48 overflow-auto rounded-lg bg-black/50 p-2 font-mono text-[10px] leading-relaxed">
                 {safeStringify(lastResponse)}
               </pre>
+              {lastResponse?.agentUrlUsed && (
+                <p className="mt-1 text-[10px] text-slate-300">agentUrlUsed: {lastResponse.agentUrlUsed}</p>
+              )}
             </div>
             {lastResponse?.rawAgentResponse && (
               <div>

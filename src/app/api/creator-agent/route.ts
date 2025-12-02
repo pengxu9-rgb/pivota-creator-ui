@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
         reply: response.reply,
         products,
         rawAgentResponse: response.raw,
+        agentUrlUsed: response.agentUrlUsed,
       },
       { status: 200 },
     );
