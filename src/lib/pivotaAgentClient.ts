@@ -8,6 +8,8 @@ export type CreatorAgentMessage = {
 export type CreatorAgentResponse = {
   reply: string;
   products?: RawProduct[];
+   // 原始后端响应，用于 debug
+  raw?: any;
 };
 
 export async function callPivotaCreatorAgent(params: {
@@ -64,16 +66,14 @@ export async function callPivotaCreatorAgent(params: {
   const systemPrompt = `
 你是 Pivota 的「Creator Shopping Agent」。
 
-基础能力与 Pivota Shopping Agent 一致，可以使用工具 find_products / create_order / submit_payment。
-你当前服务的 Creator 为：${params.creatorName}（ID: ${params.creatorId}）。
+ - 具备 Pivota Shopping Agent 的基础能力（find_products / create_order / submit_payment）；
+ - 当前服务的 Creator 为：${params.creatorName}（ID: ${params.creatorId}）。
 
-${params.personaPrompt}
+ ${params.personaPrompt}
 
-请优先在该 Creator 相关的商品中搜索和推荐（通过 creatorIds / creatorMinMentions 等过滤字段），
-在必要时再补充全局货盘，并清晰区分「来自 Creator 内容」与「同风格补充」。
+ 优先推荐该 Creator 内容中出现过的单品或同风格替代品，当为同风格补充时需向用户说明。
   `.trim();
 
-  // TODO: 根据后端最终定义的协议调整字段名和结构
   const payload = {
     agent: "creator_agent",
     creator_id: params.creatorId,
@@ -84,6 +84,9 @@ ${params.personaPrompt}
       source: "creator-agent-ui",
     },
   };
+
+  // TODO: 上面的 payload 字段名/结构可能需要根据 Pivota Agent 后端最终协议调整。
+  // 当前先用一个清晰的草案，方便后续对齐。
 
   const res = await fetch(url, {
     method: "POST",
@@ -102,10 +105,20 @@ ${params.personaPrompt}
 
   const data = await res.json();
 
-  // TODO: 根据真实返回结构做映射
+  // TODO: 根据 Pivota Agent 实际返回结构，把 reply 和 products 的解析逻辑简化为单一来源。
   const reply: string =
-    data.reply || data.message || "抱歉，我暂时没有拿到有效的回复内容。";
-  const products: RawProduct[] = data.products || data.items || [];
+    data.reply ??
+    data.message ??
+    data.output?.reply ??
+    data.output?.final_text ??
+    "抱歉，我暂时没有拿到有效的回复内容。";
 
-  return { reply, products };
+  const rawProducts: RawProduct[] =
+    data.products ??
+    data.output?.products ??
+    data.items ??
+    data.output?.items ??
+    [];
+
+  return { reply, products: rawProducts, raw: data };
 }

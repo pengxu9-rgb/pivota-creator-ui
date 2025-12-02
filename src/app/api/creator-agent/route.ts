@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
       {
         reply: response.reply,
         products,
+        rawAgentResponse: response.raw,
       },
       { status: 200 },
     );
