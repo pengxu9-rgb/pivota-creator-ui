@@ -85,7 +85,9 @@ export async function callPivotaCreatorAgent(params: {
     messages: params.messages,
     payload: {
       query,
-      limit: 12,
+      limit: 8,
+      // TODO: 如果后端支持基于 creator 过滤/加权，可与后端协商使用 creator_ids 或类似字段
+      creator_ids: [params.creatorId],
     },
     metadata: {
       creatorName: params.creatorName,
@@ -96,47 +98,60 @@ export async function callPivotaCreatorAgent(params: {
   // TODO: 上面的 payload 字段名/结构可能需要根据 Pivota Agent 后端最终协议调整。
   // 当前先用一个清晰的草案，方便后续对齐。
 
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(process.env.PIVOTA_AGENT_API_KEY
-        ? { Authorization: `Bearer ${process.env.PIVOTA_AGENT_API_KEY}` }
-        : {}),
-    },
-    body: JSON.stringify(payload),
-  });
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(process.env.PIVOTA_AGENT_API_KEY
+          ? { Authorization: `Bearer ${process.env.PIVOTA_AGENT_API_KEY}` }
+          : {}),
+      },
+      body: JSON.stringify(payload),
+    });
 
-  if (!res.ok) {
-    let errorBody: string | undefined;
-    try {
-      errorBody = await res.text();
-    } catch (err) {
-      errorBody = undefined;
+    if (!res.ok) {
+      let errorBody: string | undefined;
+      try {
+        errorBody = await res.text();
+      } catch (err) {
+        errorBody = undefined;
+      }
+      throw new Error(
+        `Pivota agent request failed with status ${res.status}${
+          errorBody ? ` body: ${errorBody}` : ""
+        }`,
+      );
     }
-    throw new Error(
-      `Pivota agent request failed with status ${res.status}${
-        errorBody ? ` body: ${errorBody}` : ""
-      }`,
-    );
+
+    const data = await res.json();
+
+    // TODO: 根据 Pivota Agent 实际返回结构，把 reply 和 products 的解析逻辑简化为单一来源。
+    const reply: string =
+      data.reply ??
+      data.message ??
+      data.output?.reply ??
+      data.output?.final_text ??
+      "抱歉，我暂时没有拿到有效的回复内容。";
+
+    const rawProducts: RawProduct[] =
+      data.products ??
+      data.output?.products ??
+      data.items ??
+      data.output?.items ??
+      [];
+
+    return { reply, products: rawProducts, raw: data };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    // 如果后端超时，返回友好提示而不是直接抛出
+    if (message.includes("UPSTREAM_TIMEOUT") || message.includes("status 504")) {
+      return {
+        reply: "后端响应超时，请稍后再试或换个描述～",
+        products: [],
+        raw: { error: message },
+      };
+    }
+    throw error;
   }
-
-  const data = await res.json();
-
-  // TODO: 根据 Pivota Agent 实际返回结构，把 reply 和 products 的解析逻辑简化为单一来源。
-  const reply: string =
-    data.reply ??
-    data.message ??
-    data.output?.reply ??
-    data.output?.final_text ??
-    "抱歉，我暂时没有拿到有效的回复内容。";
-
-  const rawProducts: RawProduct[] =
-    data.products ??
-    data.output?.products ??
-    data.items ??
-    data.output?.items ??
-    [];
-
-  return { reply, products: rawProducts, raw: data };
 }
