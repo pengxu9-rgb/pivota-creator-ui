@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { Send, Users, ShoppingCart } from "lucide-react";
 import { getCreatorBySlug, type CreatorAgentConfig } from "@/config/creatorAgents";
@@ -195,6 +195,61 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
   };
 
   const userQueries = messages.filter((m) => m.role === "user");
+
+  // Initial "Featured for you" from real backend, so右侧列表尽量使用真实选品
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadFeatured = async () => {
+      try {
+        const res = await fetch("/api/creator-agent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            creatorId: creator.id,
+            messages: [] as { role: "user" | "assistant"; content: string }[],
+          }),
+        });
+        if (!res.ok) return;
+
+        const data = (await res.json()) as {
+          reply: string;
+          products?: Product[];
+          rawAgentResponse?: any;
+          agentUrlUsed?: string;
+        };
+
+        if (cancelled) return;
+        if (data.products && data.products.length > 0) {
+          setProducts(data.products);
+        }
+
+        if (isDebug) {
+          setLastRequest((prev: any) => prev ?? {
+            creatorId: creator.id,
+            messages: [],
+            // 和 callPivotaCreatorAgent 的默认 query 保持语义一致
+            payload: {
+              search: {
+                query: "Show popular items",
+                in_stock_only: false,
+                limit: 10,
+              },
+            },
+          });
+          setLastResponse((prev: any) => prev ?? data);
+        }
+      } catch (error) {
+        console.error("loadFeatured error", error);
+      }
+    };
+
+    loadFeatured();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [creator.id, isDebug]);
 
   return (
     <main className="h-screen bg-gradient-to-b from-[#f8fbff] via-[#eef3fb] to-[#e6ecf7] text-slate-900">
