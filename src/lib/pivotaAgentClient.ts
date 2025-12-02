@@ -143,14 +143,14 @@ export async function callPivotaCreatorAgent(params: {
       [];
 
     // TODO: 根据 Pivota Agent 实际返回结构，把 reply 和 products 的解析逻辑简化为单一来源。
-    const reply: string =
-      data.reply ??
-      data.message ??
-      data.output?.reply ??
-      data.output?.final_text ??
-      (Array.isArray(rawProducts) && rawProducts.length === 0
-        ? "抱歉，没有找到合适的商品，请换个描述或条件试试。"
-        : "抱歉，我暂时没有拿到有效的回复内容。");
+  const reply: string =
+    data.reply ??
+    data.message ??
+    data.output?.reply ??
+    data.output?.final_text ??
+    (Array.isArray(rawProducts) && rawProducts.length === 0
+      ? "I couldn’t find good matches for that request. Try adjusting your budget, style, or category."
+      : "Sorry, I wasn’t able to get a useful reply from the backend this time.");
 
     return { reply, products: rawProducts, raw: data, agentUrlUsed: url };
   } catch (error) {
@@ -158,7 +158,8 @@ export async function callPivotaCreatorAgent(params: {
     // 如果后端超时，返回友好提示而不是直接抛出
     if (message.includes("UPSTREAM_TIMEOUT") || message.includes("status 504")) {
       return {
-        reply: "后端响应超时，请稍后再试或换个描述～",
+        reply:
+          "The shopping backend timed out. Please try again in a moment or rephrase your request.",
         products: FALLBACK_PRODUCTS,
         raw: { error: message },
         agentUrlUsed: url,
