@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
       {
         error: "Creator agent backend error",
         detail: error instanceof Error ? error.message : String(error),
+        agentUrlConfigured: Boolean(process.env.PIVOTA_AGENT_URL),
       },
       { status: 500 },
     );
