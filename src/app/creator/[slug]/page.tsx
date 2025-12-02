@@ -53,6 +53,19 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
   const searchParams = useSearchParams();
   const isDebug = useMemo(() => searchParams?.get("debug") === "1", [searchParams]);
 
+  const safeStringify = (value: any) => {
+    try {
+      return JSON.stringify(
+        value,
+        (_, v) => (typeof v === "bigint" ? v.toString() : v),
+        2,
+      );
+    } catch (error) {
+      console.error("Failed to stringify debug data", error);
+      return "<<unable to stringify debug data>>";
+    }
+  };
+
   const handleSend = async () => {
     const trimmed = input.trim();
     if (!trimmed || isLoading) return;
@@ -89,6 +102,8 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
       });
 
       if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        setLastResponse(errBody);
         throw new Error("request failed");
       }
 
@@ -111,6 +126,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
       setProducts(data.products ?? []);
     } catch (error) {
       console.error(error);
+      setLastResponse((prev) => prev ?? { error: "request failed", detail: String(error) });
       setMessages((prev) => [
         ...prev,
         {
@@ -236,20 +252,20 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
             <div>
               <h3 className="mb-2 text-xs font-semibold text-slate-100">lastRequest</h3>
               <pre className="max-h-48 overflow-auto rounded-lg bg-black/50 p-2 font-mono text-[10px] leading-relaxed">
-                {JSON.stringify(lastRequest, null, 2)}
+                {safeStringify(lastRequest)}
               </pre>
             </div>
             <div>
               <h3 className="mb-2 text-xs font-semibold text-slate-100">lastResponse</h3>
               <pre className="max-h-48 overflow-auto rounded-lg bg-black/50 p-2 font-mono text-[10px] leading-relaxed">
-                {JSON.stringify(lastResponse, null, 2)}
+                {safeStringify(lastResponse)}
               </pre>
             </div>
             {lastResponse?.rawAgentResponse && (
               <div>
                 <h3 className="mb-2 text-xs font-semibold text-slate-100">rawAgentResponse</h3>
                 <pre className="max-h-48 overflow-auto rounded-lg bg-black/60 p-2 font-mono text-[10px] leading-relaxed">
-                  {JSON.stringify(lastResponse.rawAgentResponse, null, 2)}
+                  {safeStringify(lastResponse.rawAgentResponse)}
                 </pre>
               </div>
             )}

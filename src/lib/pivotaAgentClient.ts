@@ -100,7 +100,17 @@ export async function callPivotaCreatorAgent(params: {
   });
 
   if (!res.ok) {
-    throw new Error(`Pivota agent request failed with status ${res.status}`);
+    let errorBody: string | undefined;
+    try {
+      errorBody = await res.text();
+    } catch (err) {
+      errorBody = undefined;
+    }
+    throw new Error(
+      `Pivota agent request failed with status ${res.status}${
+        errorBody ? ` body: ${errorBody}` : ""
+      }`,
+    );
   }
 
   const data = await res.json();

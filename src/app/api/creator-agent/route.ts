@@ -36,7 +36,10 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error(error);
     return NextResponse.json(
-      { error: "Creator agent backend error" },
+      {
+        error: "Creator agent backend error",
+        detail: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 },
     );
   }
