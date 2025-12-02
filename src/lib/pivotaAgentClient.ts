@@ -72,13 +72,17 @@ export async function callPivotaCreatorAgent(params: {
   // 与 Shopping Agent 前端保持一致的调用协议：顶层只使用 operation + payload，
   // 额外信息放在 metadata，方便后端按 creatorId 做过滤/打标。
   const payload = {
-    operation: "find_products_multi",
+    // 后端明确建议：跨商户搜索使用 find_products，
+    // 不填 merchant_id 即为跨商户。
+    operation: "find_products",
     payload: {
       search: {
         query,
-        // 与 Shopping Agent 的 sendMessage 对齐：不过滤库存，limit 10
+        // 与 Shopping Agent 的 sendMessage 逻辑对齐：
+        // page + page_size 分页，不强制只看有库存。
+        page: 1,
+        page_size: 8,
         in_stock_only: false,
-        limit: 10,
       },
     },
     metadata: {
@@ -93,12 +97,15 @@ export async function callPivotaCreatorAgent(params: {
   // TODO: 上面的 payload 字段名/结构可能需要根据 Pivota Agent 后端最终协议调整。
   // 当前先用一个清晰的草案，方便后续对齐。
 
-  const AGENT_API_KEY =
+  // 后端推荐：读取 PIVOTA_AGENT_API_KEY 并使用 Bearer 头；
+  // 其他 key 名用于向后兼容现有配置。
+  const BEARER_API_KEY =
+    process.env.PIVOTA_AGENT_API_KEY || process.env.PIVOTA_API_KEY || "";
+
+  const X_AGENT_API_KEY =
     process.env.NEXT_PUBLIC_AGENT_API_KEY ||
     process.env.AGENT_API_KEY ||
     process.env.SHOP_GATEWAY_AGENT_API_KEY ||
-    process.env.PIVOTA_API_KEY ||
-    process.env.PIVOTA_AGENT_API_KEY ||
     "";
 
   try {
@@ -106,7 +113,8 @@ export async function callPivotaCreatorAgent(params: {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...(AGENT_API_KEY ? { "X-Agent-API-Key": AGENT_API_KEY } : {}),
+        ...(BEARER_API_KEY ? { Authorization: `Bearer ${BEARER_API_KEY}` } : {}),
+        ...(X_AGENT_API_KEY ? { "X-Agent-API-Key": X_AGENT_API_KEY } : {}),
       },
       body: JSON.stringify(payload),
     });
