@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./../styles/globals.css";
+import { CartProvider } from "@/components/cart/CartProvider";
+import { CartDrawer } from "@/components/cart/CartDrawer";
 
 export const metadata: Metadata = {
   title: "Pivota Creator Agent UI",
@@ -12,8 +14,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="zh-CN">
-      <body>{children}</body>
+    <html lang="en">
+      <body>
+        <CartProvider>
+          {children}
+          <CartDrawer />
+        </CartProvider>
+      </body>
     </html>
   );
 }

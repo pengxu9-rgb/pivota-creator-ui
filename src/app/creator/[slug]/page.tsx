@@ -2,11 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import { Send, Users } from "lucide-react";
+import { Send, Users, ShoppingCart } from "lucide-react";
 import { getCreatorBySlug, type CreatorAgentConfig } from "@/config/creatorAgents";
 import type { Product } from "@/types/product";
 import { ProductCard } from "@/components/product/ProductCard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
+import { useCart } from "@/components/cart/CartProvider";
 
 type ChatMessage = {
   id: string;
@@ -91,6 +92,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
 
   const searchParams = useSearchParams();
   const isDebug = useMemo(() => searchParams?.get("debug") === "1", [searchParams]);
+  const { items: cartItems, open: openCart } = useCart();
 
   const safeStringify = (value: any) => {
     try {
@@ -197,7 +199,8 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
       </div>
 
       <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-8 lg:px-10">
-        <header className="mb-6 flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 shadow-md backdrop-blur-xl">
+        <header className="mb-6 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 shadow-md backdrop-blur-xl">
+          {/* Creator row */}
           <div className="flex items-center gap-3">
             <div className="h-12 w-12 overflow-hidden rounded-full border border-slate-200 shadow-sm">
               <img src={creator.avatarUrl} alt={creator.name} className="h-full w-full object-cover" />
@@ -211,6 +214,38 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
                 </span>
               </div>
               {creator.tagline && <p className="mt-0.5 text-xs text-slate-600">{creator.tagline}</p>}
+            </div>
+          </div>
+          {/* Tabs row - For You style shell */}
+          <div className="flex items-center justify-between gap-3">
+            <nav className="flex items-center gap-1 text-xs sm:text-sm">
+              <button className="rounded-full bg-slate-900 text-slate-50 px-3 py-1.5 sm:px-4">
+                For You
+              </button>
+              <button className="rounded-full px-3 py-1.5 text-slate-500 hover:bg-slate-100 sm:px-4">
+                Deals
+              </button>
+              <button className="hidden rounded-full px-3 py-1.5 text-slate-500 hover:bg-slate-100 sm:inline-flex">
+                Categories
+              </button>
+              <button className="hidden rounded-full px-3 py-1.5 text-slate-500 hover:bg-slate-100 md:inline-flex">
+                Creators
+              </button>
+            </nav>
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <button
+                type="button"
+                onClick={openCart}
+                className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 hover:bg-slate-100"
+              >
+                <ShoppingCart className="h-4 w-4" />
+                <span>Cart</span>
+                {cartItems.length > 0 && (
+                  <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-slate-900 px-1 text-[10px] font-semibold text-white">
+                    {cartItems.reduce((sum, item) => sum + item.quantity, 0)}
+                  </span>
+                )}
+              </button>
             </div>
           </div>
         </header>
@@ -270,33 +305,50 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
           </section>
 
           <section className="flex min-h-[520px] flex-col rounded-[24px] border border-slate-200 bg-white/90 p-4 shadow-md backdrop-blur-xl">
-            <SectionHeader
-              title="Products picked for you"
-              subtitle={`First, items from ${creator.name} content; then similar style matches.`}
-            />
+            {/* Featured for you */}
+            <div className="space-y-4">
+              <SectionHeader
+                title="Featured for you"
+                subtitle={`Based on ${creator.name}'s style and typical scenarios.`}
+              />
+              {isLoading && products.length === 0 ? (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {Array.from({ length: 3 }).map((_, idx) => (
+                    <div key={idx} className="h-40 animate-pulse rounded-3xl bg-slate-100" />
+                  ))}
+                </div>
+              ) : products.length === 0 ? (
+                <div className="flex flex-1 items-center justify-center text-[12px] text-slate-500">
+                  No candidates yet. Tell me what you need on the left.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {products.slice(0, 4).map((p) => (
+                    <ProductCard key={p.id} product={p} creatorName={creator.name} />
+                  ))}
+                </div>
+              )}
+            </div>
 
-            {isLoading && products.length === 0 ? (
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {Array.from({ length: 3 }).map((_, idx) => (
-                  <div key={idx} className="h-40 animate-pulse rounded-3xl bg-slate-100" />
-                ))}
-              </div>
-            ) : products.length === 0 ? (
-              <div className="flex flex-1 items-center justify-center text-[12px] text-slate-500">
-                No candidates yet. Tell me what you need on the left.
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {products.map((p) => (
-                  <ProductCard key={p.id} product={p} creatorName={creator.name} />
-                ))}
+            {/* Continue from last chat */}
+            {products.length > 0 && (
+              <div className="mt-6 space-y-3">
+                <SectionHeader
+                  title="Continue from last chat"
+                  subtitle="Shortlist we recently discussed together. You can keep comparing, or narrow it down again."
+                />
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                  {products.slice(1, 4).map((p) => (
+                    <ProductCard key={p.id} product={p} creatorName={creator.name} />
+                  ))}
+                </div>
               </div>
             )}
           </section>
         </div>
 
         {isDebug && (
-          <div className="mt-6 grid grid-cols-1 gap-4 rounded-2xl border border-white/10 bg-black/30 p-4 text-[11px] leading-relaxed text-white">
+          <div className="mt-6 grid grid-cols-1 gap-4 rounded-2xl border border-white/10 bg-black/60 p-4 text-[11px] leading-relaxed text-white">
             <div>
               <h3 className="mb-2 text-xs font-semibold text-white">lastRequest</h3>
               <pre className="max-h-48 overflow-auto rounded-lg bg-black/50 p-2 font-mono text-[10px] leading-relaxed">
