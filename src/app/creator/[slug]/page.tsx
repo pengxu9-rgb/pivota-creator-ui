@@ -177,7 +177,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
           content: data.reply,
         },
       ]);
-      setProducts(data.products ?? []);
+      setProducts((data.products && data.products.length > 0 ? data.products : RECOMMENDED_PRODUCTS));
     } catch (error) {
       console.error(error);
       setLastResponse((prev: any) => prev ?? { error: "request failed", detail: String(error) });
