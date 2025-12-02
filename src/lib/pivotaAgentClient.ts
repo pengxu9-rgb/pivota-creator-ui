@@ -74,11 +74,19 @@ export async function callPivotaCreatorAgent(params: {
  优先推荐该 Creator 内容中出现过的单品或同风格替代品，当为同风格补充时需向用户说明。
   `.trim();
 
+  const lastUserMessage = [...params.messages].reverse().find((m) => m.role === "user");
+  const query = lastUserMessage?.content?.trim() || "Show popular items";
+
   const payload = {
     agent: "creator_agent",
+    operation: "find_products", // TODO: 若后端提供更合适的 operation/参数，应与后端对齐
     creator_id: params.creatorId,
     persona: systemPrompt,
     messages: params.messages,
+    payload: {
+      query,
+      limit: 12,
+    },
     metadata: {
       creatorName: params.creatorName,
       source: "creator-agent-ui",

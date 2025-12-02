@@ -99,6 +99,10 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
           role: m.role,
           content: m.content,
         })),
+        payload: {
+          query: trimmed,
+          limit: 12,
+        },
       });
 
       if (!res.ok) {
