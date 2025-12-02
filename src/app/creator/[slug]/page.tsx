@@ -204,35 +204,68 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
         <div className="absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-purple-300/20 blur-3xl" />
       </div>
 
-      <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-6 lg:px-10">
-        <div className="grid flex-1 grid-cols-1 gap-5 lg:h-[calc(100vh-3rem)] lg:grid-cols-[360px_minmax(0,1fr)] lg:overflow-hidden">
-          {/* Left: creator header + chat in one card */}
-          <section className="flex h-full flex-col rounded-[24px] border border-slate-200 bg-white/80 p-4 shadow-md backdrop-blur-xl">
-            {/* Creator row */}
-            <div className="mb-3 flex items-center gap-3">
-              <div className="h-11 w-11 overflow-hidden rounded-full border border-slate-200 shadow-sm">
-                <img src={creator.avatarUrl} alt={creator.name} className="h-full w-full object-cover" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-sm font-semibold text-slate-900">{creator.name}</h1>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] text-emerald-700">
-                    <Users className="h-3 w-3" />
-                    Creator Agent
-                  </span>
-                </div>
-                {creator.tagline && (
-                  <p className="mt-0.5 text-[11px] text-slate-600">{creator.tagline}</p>
-                )}
-              </div>
+      <div className="relative z-10 flex min-h-screen flex-col">
+        {/* Top header: creator brand + tabs + cart, full-width */}
+        <header className="flex items-center justify-between border-b border-slate-200 bg-white/80 px-4 py-3 text-xs shadow-sm backdrop-blur-sm sm:text-sm md:px-6 lg:px-10">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 overflow-hidden rounded-full border border-slate-200 shadow-sm sm:h-11 sm:w-11">
+              <img src={creator.avatarUrl} alt={creator.name} className="h-full w-full object-cover" />
             </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-sm font-semibold text-slate-900 sm:text-base">{creator.name}</h1>
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] text-emerald-700">
+                  <Users className="h-3 w-3" />
+                  Creator Agent
+                </span>
+              </div>
+              {creator.tagline && (
+                <p className="mt-0.5 text-[11px] text-slate-600 sm:text-xs">{creator.tagline}</p>
+              )}
+            </div>
+          </div>
 
+          <div className="flex items-center gap-4 sm:gap-6">
+            <nav className="hidden items-center gap-1 text-xs sm:flex sm:text-sm">
+              <button className="rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-50 sm:px-4">
+                For You
+              </button>
+              <button className="rounded-full px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-100 sm:px-4">
+                Deals
+              </button>
+              <button className="hidden rounded-full px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-100 sm:inline-flex">
+                Categories
+              </button>
+              <button className="hidden rounded-full px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-100 md:inline-flex">
+                Creators
+              </button>
+            </nav>
+            <button
+              type="button"
+              onClick={openCart}
+              className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100"
+            >
+              <ShoppingCart className="h-4 w-4" />
+              <span>Cart</span>
+              {cartItems.length > 0 && (
+                <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-slate-900 px-1 text-[10px] font-semibold text-white">
+                  {cartItems.reduce((sum, item) => sum + item.quantity, 0)}
+                </span>
+              )}
+            </button>
+          </div>
+        </header>
+
+        {/* Main content: full-screen split layout */}
+        <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
+          {/* Left: chat column */}
+          <section className="flex w-full flex-col border-b border-slate-200 bg-white/70 px-4 py-4 backdrop-blur-sm lg:w-[360px] lg:border-b-0 lg:border-r lg:px-6">
             <div className="mb-3 text-[12px] text-slate-600">
               Describe your needs (scenario, budget, style). I’ll start with pieces Nina featured, then similar
               matches.
             </div>
 
-            {/* Messages area scrolls independently */}
+            {/* Messages area scrolls independently, input anchored at bottom */}
             <div className="flex min-h-0 flex-1 flex-col">
               <div className="flex-1 space-y-3 overflow-y-auto pr-1 text-[13px] leading-relaxed text-slate-800">
                 {messages.map((m) => (
@@ -286,40 +319,8 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
             </div>
           </section>
 
-          {/* Right: tabs + cart + product feed, scrolls independently */}
-          <section className="flex h-full flex-col rounded-[24px] border border-slate-200 bg-white/90 p-4 shadow-md backdrop-blur-xl">
-            {/* Tabs + cart row */}
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <nav className="flex items-center gap-1 text-xs sm:text-sm">
-                <button className="rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-50 sm:px-4">
-                  For You
-                </button>
-                <button className="rounded-full px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-100 sm:px-4">
-                  Deals
-                </button>
-                <button className="hidden rounded-full px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-100 sm:inline-flex">
-                  Categories
-                </button>
-                <button className="hidden rounded-full px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-100 md:inline-flex">
-                  Creators
-                </button>
-              </nav>
-              <button
-                type="button"
-                onClick={openCart}
-                className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100"
-              >
-                <ShoppingCart className="h-4 w-4" />
-                <span>Cart</span>
-                {cartItems.length > 0 && (
-                  <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-slate-900 px-1 text-[10px] font-semibold text-white">
-                    {cartItems.reduce((sum, item) => sum + item.quantity, 0)}
-                  </span>
-                )}
-              </button>
-            </div>
-
-            {/* Product sections */}
+          {/* Right: product feed column */}
+          <section className="flex flex-1 flex-col bg-white/40 px-4 py-4 lg:px-8">
             <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
               {/* Featured for you */}
               <div className="space-y-4">
@@ -346,7 +347,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
                 )}
               </div>
 
-              {/* Continue from last chat - show recent queries as chips */}
+              {/* Continue from last chat - recent user queries */}
               <div className="mt-6 space-y-3">
                 <SectionHeader
                   title="Continue from last chat"
@@ -378,36 +379,37 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
         </div>
 
         {isDebug && (
-          <div className="mt-6 grid grid-cols-1 gap-4 rounded-2xl border border-white/10 bg-black/60 p-4 text-[11px] leading-relaxed text-white">
-            <div>
-              <h3 className="mb-2 text-xs font-semibold text-white">lastRequest</h3>
-              <pre className="max-h-48 overflow-auto rounded-lg bg-black/50 p-2 font-mono text-[10px] leading-relaxed">
-                {safeStringify(lastRequest)}
-              </pre>
-            </div>
-            <div>
-              <h3 className="mb-2 text-xs font-semibold text-white">lastResponse</h3>
-              <pre className="max-h-48 overflow-auto rounded-lg bg-black/50 p-2 font-mono text-[10px] leading-relaxed">
-                {safeStringify(lastResponse)}
-              </pre>
-              {lastResponse?.agentUrlUsed && (
-                <p className="mt-1 text-[10px] text-slate-200">
-                  agentUrlUsed: {lastResponse.agentUrlUsed}
-                </p>
-              )}
-            </div>
-            {lastResponse?.rawAgentResponse && (
-              <div>
-                <h3 className="mb-2 text-xs font-semibold text-white">rawAgentResponse</h3>
-                <pre className="max-h-48 overflow-auto rounded-lg bg-black/60 p-2 font-mono text-[10px] leading-relaxed">
-                  {safeStringify(lastResponse.rawAgentResponse)}
+          <div className="border-t border-slate-200 bg-slate-950/90 px-4 py-4 text-[11px] leading-relaxed text-white md:px-6 lg:px-10">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div className="md:col-span-1">
+                <h3 className="mb-2 text-xs font-semibold text-white">lastRequest</h3>
+                <pre className="max-h-48 overflow-auto rounded-lg bg-black/50 p-2 font-mono text-[10px] leading-relaxed">
+                  {safeStringify(lastRequest)}
                 </pre>
               </div>
-            )}
+              <div className="md:col-span-1">
+                <h3 className="mb-2 text-xs font-semibold text-white">lastResponse</h3>
+                <pre className="max-h-48 overflow-auto rounded-lg bg-black/50 p-2 font-mono text-[10px] leading-relaxed">
+                  {safeStringify(lastResponse)}
+                </pre>
+                {lastResponse?.agentUrlUsed && (
+                  <p className="mt-1 text-[10px] text-slate-200">
+                    agentUrlUsed: {lastResponse.agentUrlUsed}
+                  </p>
+                )}
+              </div>
+              {lastResponse?.rawAgentResponse && (
+                <div className="md:col-span-1">
+                  <h3 className="mb-2 text-xs font-semibold text-white">rawAgentResponse</h3>
+                  <pre className="max-h-48 overflow-auto rounded-lg bg-black/60 p-2 font-mono text-[10px] leading-relaxed">
+                    {safeStringify(lastResponse.rawAgentResponse)}
+                  </pre>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
     </main>
   );
 }
-
