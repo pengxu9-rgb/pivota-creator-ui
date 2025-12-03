@@ -93,6 +93,7 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
   // Adyen drop-in state
   const adyenContainerRef = useRef<HTMLDivElement | null>(null);
   const [adyenMounted, setAdyenMounted] = useState(false);
+  const [pspUsed, setPspUsed] = useState<string | null>(null);
 
   const currency = items[0]?.currency || "USD";
 
@@ -258,6 +259,15 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
         (paymentRes as any)?.next_action?.redirect_url;
 
       setPaymentStatus(statusFromGateway);
+
+      const pspFromGateway =
+        (paymentRes as any).psp_used ||
+        (paymentRes as any).psp ||
+        paymentRes.payment?.psp ||
+        null;
+      if (pspFromGateway) {
+        setPspUsed(pspFromGateway);
+      }
 
       // Case 1: Adyen session – mount drop-in UI like Shopping Agent.
       if (action?.type === "adyen_session") {
@@ -719,7 +729,7 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
                   </label>
                 </div>
 
-                {hasStripe && (
+                {hasStripe && pspUsed !== "adyen" && (
                   <div className="grid grid-cols-1 gap-2">
                     <label className="text-[11px] font-medium text-slate-700">
                       Card details
