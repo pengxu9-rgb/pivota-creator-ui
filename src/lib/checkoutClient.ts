@@ -45,6 +45,30 @@ export type CheckoutOrderResponse = {
   [key: string]: unknown;
 };
 
+export type SubmitPaymentResponse = {
+  payment_status?: string;
+  redirect_url?: string;
+  payment_action?: {
+    type?: string;
+    url?: string | null;
+    client_secret?: string | null;
+    [key: string]: unknown;
+  } | null;
+  payment?: {
+    payment_status?: string;
+    redirect_url?: string;
+    client_secret?: string | null;
+    payment_action?: {
+      type?: string;
+      url?: string | null;
+      client_secret?: string | null;
+      [key: string]: unknown;
+    } | null;
+    [key: string]: unknown;
+  } | null;
+  [key: string]: unknown;
+};
+
 async function callAgentGateway(body: { operation: string; payload: any }) {
   const res = await fetch(AGENT_URL, {
     method: "POST",
@@ -127,3 +151,25 @@ export async function createOrderFromCart(params: {
   return data as CheckoutOrderResponse;
 }
 
+export async function submitPaymentForOrder(params: {
+  orderId: string;
+  amount: number;
+  currency: string;
+  paymentMethodHint?: string;
+  returnUrl?: string;
+}): Promise<SubmitPaymentResponse> {
+  const data = await callAgentGateway({
+    operation: "submit_payment",
+    payload: {
+      payment: {
+        order_id: params.orderId,
+        expected_amount: params.amount,
+        currency: params.currency,
+        payment_method_hint: params.paymentMethodHint || "card",
+        ...(params.returnUrl ? { return_url: params.returnUrl } : {}),
+      },
+    },
+  });
+
+  return data as SubmitPaymentResponse;
+}

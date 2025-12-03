@@ -3,7 +3,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/components/cart/CartProvider";
-import { createOrderFromCart } from "@/lib/checkoutClient";
+import {
+  createOrderFromCart,
+  submitPaymentForOrder,
+  type SubmitPaymentResponse,
+  type CheckoutOrderResponse,
+} from "@/lib/checkoutClient";
 import {
   accountsLogin,
   accountsVerify,
@@ -20,6 +25,12 @@ export default function CheckoutPage() {
   const [step, setStep] = useState<CheckoutStep>("form");
   const [error, setError] = useState<string | null>(null);
 
+  // Keep a snapshot of the cart at the moment the order is placed so that
+  // the success view can still show what was ordered even after the live cart
+  // has been cleared.
+  const [placedItems, setPlacedItems] = useState<typeof items | null>(null);
+  const [placedSubtotal, setPlacedSubtotal] = useState<number | null>(null);
+
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [addressLine1, setAddressLine1] = useState("");
@@ -30,6 +41,7 @@ export default function CheckoutPage() {
   const [phone, setPhone] = useState("");
   const [notes, setNotes] = useState("");
   const [orderId, setOrderId] = useState<string | undefined>();
+  const [paymentStatus, setPaymentStatus] = useState<string | undefined>();
 
   // Auth state for inline email login
   const [authStep, setAuthStep] = useState<AuthStep>("checking");
@@ -139,7 +151,11 @@ export default function CheckoutPage() {
     setStep("submitting");
 
     try {
-      const res = await createOrderFromCart({
+      // Snapshot current cart so we can render a stable summary after success.
+      setPlacedItems(items);
+      setPlacedSubtotal(subtotal);
+
+      const orderRes = await createOrderFromCart({
         items,
         email: effectiveEmail,
         name,
@@ -152,12 +168,64 @@ export default function CheckoutPage() {
         notes: notes || undefined,
       });
 
-      setOrderId((res as any).order_id || (res as any).id);
+      const createdOrderId =
+        (orderRes as CheckoutOrderResponse).order_id ||
+        (orderRes as any).id;
+
+      setOrderId(createdOrderId);
+
+      // Try to initiate payment via submit_payment. If this fails, we still
+      // keep the created order and show an error so user can retry.
+      let paymentRes: SubmitPaymentResponse | null = null;
+      if (createdOrderId) {
+        try {
+          const returnUrl =
+            typeof window !== "undefined"
+              ? `${window.location.origin}/account/orders`
+              : undefined;
+
+          paymentRes = await submitPaymentForOrder({
+            orderId: createdOrderId,
+            amount: subtotal,
+            currency,
+            paymentMethodHint: "card",
+            returnUrl,
+          });
+
+          setPaymentStatus(
+            paymentRes.payment_status ||
+              paymentRes.payment?.payment_status ||
+              undefined,
+          );
+
+          const action =
+            paymentRes.payment_action || paymentRes.payment?.payment_action;
+          const redirectUrl =
+            action?.url ||
+            paymentRes.redirect_url ||
+            paymentRes.payment?.redirect_url;
+
+          // If backend requests a redirect (e.g. hosted checkout), follow it.
+          if (action?.type === "redirect_url" && redirectUrl) {
+            if (typeof window !== "undefined") {
+              window.location.href = redirectUrl;
+              return;
+            }
+          }
+        } catch (paymentErr) {
+          console.error("submit_payment error", paymentErr);
+          // We don't block showing the created order; just show a friendly note.
+          setPaymentStatus("payment_pending");
+        }
+      }
+
       clear();
       setStep("success");
     } catch (err) {
       console.error(err);
-      setError("We couldn’t place the order right now. Please try again in a moment.");
+      setError(
+        "We couldn’t place the order right now. Please try again in a moment.",
+      );
       setStep("error");
     }
   };
@@ -186,12 +254,13 @@ export default function CheckoutPage() {
           <section className="flex flex-col rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm">
             <h2 className="text-sm font-semibold text-slate-900">Order summary</h2>
             <div className="mt-3 flex-1 space-y-3 overflow-y-auto">
-              {items.length === 0 ? (
+              {(step === "success" ? placedItems : items)?.length === 0 ||
+              !(step === "success" ? placedItems : items) ? (
                 <p className="text-sm text-slate-500">
                   Your cart is empty. Go back to the creator agent to pick a few items.
                 </p>
               ) : (
-                items.map((item) => (
+                (step === "success" ? placedItems! : items).map((item) => (
                   <div
                     key={item.id}
                     className="flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3"
@@ -224,7 +293,11 @@ export default function CheckoutPage() {
               <div className="flex items-center justify-between">
                 <span className="text-slate-600">Subtotal</span>
                 <span className="font-semibold text-slate-900">
-                  {currency} {subtotal.toFixed(2)}
+                  {currency}{" "}
+                  {(step === "success" && placedSubtotal != null
+                    ? placedSubtotal
+                    : subtotal
+                  ).toFixed(2)}
                 </span>
               </div>
             </div>
@@ -240,6 +313,13 @@ export default function CheckoutPage() {
                 </p>
                 {orderId && (
                   <p className="mt-2 text-xs text-slate-500">Order ID: {orderId}</p>
+                )}
+                {paymentStatus && (
+                  <p className="mt-1 text-xs text-slate-500">
+                    Payment status: {paymentStatus === "payment_pending"
+                      ? "pending — you may need to complete payment from the link we sent."
+                      : paymentStatus}
+                  </p>
                 )}
                 <button
                   type="button"
