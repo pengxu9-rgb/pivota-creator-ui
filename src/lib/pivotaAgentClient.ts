@@ -13,36 +13,48 @@ export type CreatorAgentResponse = {
   agentUrlUsed?: string;
 };
 
+// Fallback products used in mock mode / timeout scenarios.
+// Keep them aligned with the UI Featured card style and use USD for consistency.
 const FALLBACK_PRODUCTS: RawProduct[] = [
   {
-    id: "mock-1",
-    title: "Mock CloudFit Hoodie",
-    description: "适合作为本地开发演示用的连帽衫。",
-    price: 459,
-    currency: "CNY",
-    image_url:
-      "https://images.pexels.com/photos/7671166/pexels-photo-7671166.jpeg?auto=compress&cs=tinysrgb&w=800",
-    inventory_quantity: 12,
-  },
-  {
-    id: "mock-2",
-    title: "Mock Everyday Bottle 600ml",
-    description: "本地开发演示的水杯。",
-    price: 169,
-    currency: "CNY",
+    id: "mock-featured-1",
+    title: "Everyday Stainless Bottle 600ml",
+    description: "Minimal stainless bottle for desk or commute.",
+    price: 22,
+    currency: "USD",
     image_url:
       "https://images.pexels.com/photos/3735551/pexels-photo-3735551.jpeg?auto=compress&cs=tinysrgb&w=800",
-    inventory_quantity: 33,
+    inventory_quantity: 25,
   },
   {
-    id: "mock-3",
-    title: "Mock Urban Tech Runner",
-    description: "本地演示的城市跑鞋，偏通勤风。",
-    price: 729,
-    currency: "CNY",
+    id: "mock-featured-2",
+    title: "CloudFit Daily Hoodie",
+    description: "Soft brushed fleece, perfect for casual days.",
+    price: 68,
+    currency: "USD",
+    image_url:
+      "https://images.pexels.com/photos/7671166/pexels-photo-7671166.jpeg?auto=compress&cs=tinysrgb&w=800",
+    inventory_quantity: 18,
+  },
+  {
+    id: "mock-featured-3",
+    title: "Urban Tech Runner",
+    description: "Lightweight commuter sneakers with breathable mesh.",
+    price: 109,
+    currency: "USD",
     image_url:
       "https://images.pexels.com/photos/1124466/pexels-photo-1124466.jpeg?auto=compress&cs=tinysrgb&w=800",
-    inventory_quantity: 18,
+    inventory_quantity: 14,
+  },
+  {
+    id: "mock-featured-4",
+    title: "Minimal Essential Hoodie",
+    description: "Clean silhouette, pairs with everything.",
+    price: 59,
+    currency: "USD",
+    image_url:
+      "https://images.pexels.com/photos/7671167/pexels-photo-7671167.jpeg?auto=compress&cs=tinysrgb&w=800",
+    inventory_quantity: 22,
   },
 ];
 
