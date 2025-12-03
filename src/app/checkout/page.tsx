@@ -171,56 +171,81 @@ export default function CheckoutPage() {
       const createdOrderId =
         (orderRes as CheckoutOrderResponse).order_id ||
         (orderRes as any).id;
-
       setOrderId(createdOrderId);
 
-      // Try to initiate payment via submit_payment. If this fails, we still
-      // keep the created order and show an error so user can retry.
+      if (!createdOrderId) {
+        throw new Error("Order was created but no order ID was returned.");
+      }
+
+      // Step 2: ask gateway to initiate payment. We will only show a
+      // "success" state if payment has either been redirected to PSP or
+      // clearly marked as succeeded/processing.
       let paymentRes: SubmitPaymentResponse | null = null;
-      if (createdOrderId) {
-        try {
-          const returnUrl =
-            typeof window !== "undefined"
-              ? `${window.location.origin}/account/orders`
-              : undefined;
+      try {
+        const returnUrl =
+          typeof window !== "undefined"
+            ? `${window.location.origin}/account/orders`
+            : undefined;
 
-          paymentRes = await submitPaymentForOrder({
-            orderId: createdOrderId,
-            amount: subtotal,
-            currency,
-            paymentMethodHint: "card",
-            returnUrl,
-          });
+        paymentRes = await submitPaymentForOrder({
+          orderId: createdOrderId,
+          amount: subtotal,
+          currency,
+          paymentMethodHint: "card",
+          returnUrl,
+        });
+      } catch (paymentErr) {
+        console.error("submit_payment error", paymentErr);
+        setPaymentStatus("payment_pending");
+        setError(
+          "We created your order, but couldn’t start the payment flow. Please check your Orders page or try again.",
+        );
+        setStep("error");
+        return;
+      }
 
-          setPaymentStatus(
-            paymentRes.payment_status ||
-              paymentRes.payment?.payment_status ||
-              undefined,
-          );
+      const statusFromGateway =
+        paymentRes.payment_status || paymentRes.payment?.payment_status;
+      const action =
+        paymentRes.payment_action || paymentRes.payment?.payment_action;
+      const redirectUrl =
+        action?.url ||
+        paymentRes.redirect_url ||
+        paymentRes.payment?.redirect_url ||
+        (paymentRes as any)?.next_action?.redirect_url;
 
-          const action =
-            paymentRes.payment_action || paymentRes.payment?.payment_action;
-          const redirectUrl =
-            action?.url ||
-            paymentRes.redirect_url ||
-            paymentRes.payment?.redirect_url;
+      setPaymentStatus(statusFromGateway);
 
-          // If backend requests a redirect (e.g. hosted checkout), follow it.
-          if (action?.type === "redirect_url" && redirectUrl) {
-            if (typeof window !== "undefined") {
-              window.location.href = redirectUrl;
-              return;
-            }
-          }
-        } catch (paymentErr) {
-          console.error("submit_payment error", paymentErr);
-          // We don't block showing the created order; just show a friendly note.
-          setPaymentStatus("payment_pending");
+      // Case 1: gateway asks us to redirect to a hosted payment page.
+      if (action?.type === "redirect_url" && redirectUrl) {
+        if (typeof window !== "undefined") {
+          clear();
+          window.location.href = redirectUrl;
+          return;
         }
       }
 
-      clear();
-      setStep("success");
+      // Case 2: payment already succeeded / is processing (e.g. 0-amount or
+      // off-session). Treat as successful.
+      const normalizedStatus = (statusFromGateway || "").toLowerCase();
+      const isPaid =
+        normalizedStatus === "succeeded" ||
+        normalizedStatus === "paid" ||
+        normalizedStatus === "completed" ||
+        normalizedStatus === "processing";
+
+      if (isPaid) {
+        clear();
+        setStep("success");
+        return;
+      }
+
+      // Otherwise we don't claim full success: mark as pending and let the
+      // user check their Orders page / email.
+      setError(
+        "Your order was created, but the payment is not completed yet. Please check your email or Orders page for the latest status.",
+      );
+      setStep("error");
     } catch (err) {
       console.error(err);
       setError(
