@@ -53,6 +53,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
   const [activeTab, setActiveTab] = useState<"forYou" | "deals" | "categories" | "creators">(
     "forYou",
   );
+  const [isFeaturedLoading, setIsFeaturedLoading] = useState(true);
 
   const searchParams = useSearchParams();
   const isDebug = useMemo(() => searchParams?.get("debug") === "1", [searchParams]);
@@ -163,6 +164,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
 
     const loadFeatured = async () => {
       try {
+        setIsFeaturedLoading(true);
         const res = await fetch("/api/creator-agent", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -202,6 +204,10 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
         }
       } catch (error) {
         console.error("loadFeatured error", error);
+      } finally {
+        if (!cancelled) {
+          setIsFeaturedLoading(false);
+        }
       }
     };
 
@@ -381,7 +387,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
                       title="Featured for you"
                       subtitle={`Based on ${creator.name}'s style and typical scenarios.`}
                     />
-                    {isLoading && products.length === 0 ? (
+                    {(isFeaturedLoading || (isLoading && products.length === 0)) ? (
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         {Array.from({ length: 3 }).map((_, idx) => (
                           <div key={idx} className="h-40 animate-pulse rounded-3xl bg-slate-100" />
