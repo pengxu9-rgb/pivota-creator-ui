@@ -360,12 +360,12 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
                     className={m.role === "user" ? "flex justify-end" : "flex justify-start"}
                   >
                     <div
-                    className={
-                      m.role === "user"
-                        ? "max-w-[80%] rounded-3xl rounded-br-sm bg-slate-100 px-3 py-2 text-xs text-slate-800 shadow-sm"
-                          : "max-w-[80%] whitespace-pre-wrap rounded-3xl rounded-bl-sm bg-gradient-to-r from-[#fb7185] via-[#e879f9] to-[#6366f1] px-4 py-3 text-xs text-slate-900 shadow-md"
-                    }
-                  >
+                      className={
+                        m.role === "user"
+                          ? "max-w-[80%] rounded-3xl rounded-br-sm bg-slate-100 px-3 py-2 text-xs text-slate-800 shadow-sm"
+                          : "max-w-[80%] whitespace-pre-wrap rounded-3xl rounded-bl-sm bg-gradient-to-r from-[#fdf2ff] via-[#e0f2fe] to-[#f5f3ff] px-4 py-3 text-xs text-slate-900 shadow-md"
+                      }
+                    >
                       {m.content}
                     </div>
                   </div>
