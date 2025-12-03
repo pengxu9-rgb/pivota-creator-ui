@@ -41,8 +41,10 @@ export default function CheckoutPage() {
 
   const currency = items[0]?.currency || "USD";
 
+  // Prefer the email coming from the accounts service, then fall back to any
+  // local email the user has typed during this checkout session.
   const displayEmail =
-    email || loginEmail || (accountsUser && accountsUser.email) || "";
+    (accountsUser && accountsUser.email) || email || loginEmail || "";
 
   useEffect(() => {
     let cancelled = false;
@@ -327,7 +329,9 @@ export default function CheckoutPage() {
                       <div className="text-[11px]">
                         <p className="font-medium text-slate-900">Signed in</p>
                         <p className="text-slate-600">
-                          {displayEmail || "Signed in with your Pivota account."}
+                          {displayEmail
+                            ? `Signed in as ${displayEmail}`
+                            : "Signed in with your Pivota account."}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
