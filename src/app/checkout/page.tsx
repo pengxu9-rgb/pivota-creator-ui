@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { useCart } from "@/components/cart/CartProvider";
 import {
   createOrderFromCart,
@@ -15,11 +17,47 @@ import {
   accountsMe,
   type AccountsUser,
 } from "@/lib/accountsClient";
+import "@adyen/adyen-web/dist/adyen.css";
 
 type CheckoutStep = "form" | "submitting" | "success" | "error";
 type AuthStep = "checking" | "email" | "otp" | "authed";
 
+const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "";
+const hasStripe = !!publishableKey;
+
 export default function CheckoutPage() {
+  if (!hasStripe) {
+    return <CheckoutInner hasStripe={false} stripe={null} elements={null} />;
+  }
+
+  const stripePromise = loadStripe(publishableKey);
+
+  return (
+    <Elements stripe={stripePromise}>
+      <CheckoutWithStripe />
+    </Elements>
+  );
+}
+
+function CheckoutWithStripe() {
+  const stripe = useStripe();
+  const elements = useElements();
+  return (
+    <CheckoutInner
+      hasStripe={!!stripe}
+      stripe={stripe}
+      elements={elements}
+    />
+  );
+}
+
+type CheckoutInnerProps = {
+  hasStripe: boolean;
+  stripe: any;
+  elements: any;
+};
+
+function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
   const router = useRouter();
   const { items, subtotal, clear } = useCart();
   const [step, setStep] = useState<CheckoutStep>("form");
@@ -42,6 +80,7 @@ export default function CheckoutPage() {
   const [notes, setNotes] = useState("");
   const [orderId, setOrderId] = useState<string | undefined>();
   const [paymentStatus, setPaymentStatus] = useState<string | undefined>();
+  const [cardError, setCardError] = useState<string | null>(null);
 
   // Auth state for inline email login
   const [authStep, setAuthStep] = useState<AuthStep>("checking");
@@ -311,7 +350,60 @@ export default function CheckoutPage() {
         }
       }
 
-      // Case 2: payment already succeeded / is processing (e.g. 0-amount or
+      // Case 2: Stripe-style client_secret flow – use Stripe.js CardElement.
+      const clientSecret =
+        action?.client_secret ||
+        (paymentRes as any).client_secret ||
+        paymentRes.payment?.client_secret;
+
+      if (clientSecret && stripe && elements && hasStripe) {
+        const cardElement = elements.getElement(CardElement);
+        if (!cardElement) {
+          setError("Please enter your card details to pay.");
+          setStep("error");
+          return;
+        }
+
+        setCardError(null);
+        const result = await stripe.confirmCardPayment(clientSecret, {
+          payment_method: {
+            card: cardElement,
+          },
+        });
+
+        if (result.error) {
+          setCardError(result.error.message || "Payment failed");
+          setError(
+            "Payment failed. Please check your card details or try again.",
+          );
+          setStep("error");
+          return;
+        }
+
+        const intentStatus = result.paymentIntent?.status;
+        if (intentStatus === "succeeded" || intentStatus === "processing") {
+          clear();
+          setPaymentStatus(intentStatus);
+          setStep("success");
+          return;
+        }
+
+        if (intentStatus === "requires_action") {
+          setError(
+            "Additional authentication is required. Please complete the 3D Secure flow if prompted.",
+          );
+          setStep("error");
+          return;
+        }
+
+        setError(
+          "Payment could not be completed. Please try again or use a different card.",
+        );
+        setStep("error");
+        return;
+      }
+
+      // Case 3: payment already succeeded / is processing (e.g. 0-amount or
       // off-session). Treat as successful.
       const normalizedStatus = (statusFromGateway || "").toLowerCase();
       const isPaid =
@@ -626,6 +718,32 @@ export default function CheckoutPage() {
                     />
                   </label>
                 </div>
+
+                {hasStripe && (
+                  <div className="grid grid-cols-1 gap-2">
+                    <label className="text-[11px] font-medium text-slate-700">
+                      Card details
+                      <div className="mt-1 rounded-xl border border-slate-200 bg-white px-3 py-2">
+                        <CardElement
+                          options={{
+                            style: {
+                              base: {
+                                fontSize: "13px",
+                                color: "#020617",
+                                "::placeholder": { color: "#94a3b8" },
+                              },
+                            },
+                          }}
+                        />
+                      </div>
+                    </label>
+                    {cardError && (
+                      <p className="text-[11px] text-rose-500">
+                        {cardError}
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 {error && (
                   <p className="text-[11px] text-rose-500">
