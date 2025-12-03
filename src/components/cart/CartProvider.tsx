@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useMemo, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 export type CartItem = {
   id: string;
@@ -80,6 +80,37 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     clear,
     subtotal,
   };
+
+  // Persist cart to localStorage so items survive route changes / reloads
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const stored = window.localStorage.getItem("pivota_creator_cart");
+      if (stored) {
+        const parsed = JSON.parse(stored) as CartItem[];
+        if (Array.isArray(parsed)) {
+          setItems(parsed);
+        }
+      }
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("Failed to load cart from storage", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      if (items.length > 0) {
+        window.localStorage.setItem("pivota_creator_cart", JSON.stringify(items));
+      } else {
+        window.localStorage.removeItem("pivota_creator_cart");
+      }
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("Failed to save cart to storage", err);
+    }
+  }, [items]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
