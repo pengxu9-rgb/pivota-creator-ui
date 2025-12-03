@@ -30,11 +30,6 @@ function normalizeQuery(raw: string | undefined | null): string {
   ]);
   if (genericIntents.has(lower)) return "";
 
-  // 简单同义词归一化
-  if (lower === "tee" || lower === "t恤" || lower === "t-shirt" || lower === "t shirt") {
-    return "t-shirt";
-  }
-
   return trimmed;
 }
 
