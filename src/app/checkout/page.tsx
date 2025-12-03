@@ -116,8 +116,9 @@ export default function CheckoutPage() {
       setError("Your cart is empty.");
       return;
     }
-    if (authStep !== "authed" || !email) {
-      setError("Please verify your email before placing the order.");
+    // Ensure we have some email to attach to the order.
+    if (!email) {
+      setError("Please enter a valid email before placing the order.");
       return;
     }
     if (!email || !name || !addressLine1 || !city || !country || !postalCode) {
