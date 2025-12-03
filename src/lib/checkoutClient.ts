@@ -35,6 +35,12 @@ type CreateOrderPayload = {
   };
   customer_notes?: string;
   preferred_psp?: string;
+  metadata?: {
+    source?: string;
+    creatorId?: string;
+    creatorSlug?: string;
+    creatorName?: string;
+  };
 };
 
 export type CheckoutOrderResponse = {
@@ -116,6 +122,10 @@ export async function createOrderFromCart(params: {
   // Use first item's merchant as the order-level merchant; fall back to a demo id.
   const merchantId = params.items[0].merchantId || "demo_merchant";
 
+  const creatorId = params.items[0].creatorId;
+  const creatorSlug = params.items[0].creatorSlug;
+  const creatorName = params.items[0].creatorName;
+
   const items = params.items.map((item) => ({
     merchant_id: item.merchantId || merchantId,
     product_id: item.productId || item.id,
@@ -139,6 +149,12 @@ export async function createOrderFromCart(params: {
       phone: params.phone,
     },
     customer_notes: params.notes,
+    metadata: {
+      source: "creator-agent-ui",
+      ...(creatorId ? { creatorId } : {}),
+      ...(creatorSlug ? { creatorSlug } : {}),
+      ...(creatorName ? { creatorName } : {}),
+    },
   };
 
   const data = await callAgentGateway({

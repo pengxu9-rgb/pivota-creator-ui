@@ -6,9 +6,11 @@ import { useCart } from "@/components/cart/CartProvider";
 type Props = {
   product: Product;
   creatorName?: string;
+  creatorId?: string;
+  creatorSlug?: string;
 };
 
-export function ProductCard({ product, creatorName }: Props) {
+export function ProductCard({ product, creatorName, creatorId, creatorSlug }: Props) {
   const priceLabel = `${product.currency} ${product.price.toFixed(0)}`;
   const { addItem } = useCart();
 
@@ -69,6 +71,9 @@ export function ProductCard({ product, creatorName }: Props) {
                 imageUrl: product.imageUrl,
                 quantity: 1,
                 currency: product.currency,
+                creatorId,
+                creatorSlug,
+                creatorName,
               })
             }
             className="ml-2 rounded-full bg-slate-900 px-3 py-1 text-[10px] font-medium text-white shadow-sm hover:bg-slate-800"

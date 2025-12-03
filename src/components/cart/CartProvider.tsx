@@ -11,6 +11,9 @@ export type CartItem = {
   currency?: string;
   productId?: string;
   merchantId?: string;
+  creatorId?: string;
+  creatorSlug?: string;
+  creatorName?: string;
 };
 
 type CartContextValue = {
