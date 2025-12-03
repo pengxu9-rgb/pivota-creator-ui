@@ -15,49 +15,6 @@ type ChatMessage = {
   content: string;
 };
 
-const RECOMMENDED_PRODUCTS: Product[] = [
-  {
-    id: "rec-1",
-    title: "Everyday Stainless Bottle 600ml",
-    description: "Minimal stainless bottle for desk or commute.",
-    price: 22,
-    currency: "USD",
-    imageUrl:
-      "https://images.pexels.com/photos/3735551/pexels-photo-3735551.jpeg?auto=compress&cs=tinysrgb&w=800",
-    inventoryQuantity: 25,
-  },
-  {
-    id: "rec-2",
-    title: "CloudFit Daily Hoodie",
-    description: "Soft brushed fleece, perfect for casual days.",
-    price: 68,
-    currency: "USD",
-    imageUrl:
-      "https://images.pexels.com/photos/7671166/pexels-photo-7671166.jpeg?auto=compress&cs=tinysrgb&w=800",
-    inventoryQuantity: 18,
-  },
-  {
-    id: "rec-3",
-    title: "Urban Tech Runner",
-    description: "Lightweight commuter sneakers with breathable mesh.",
-    price: 109,
-    currency: "USD",
-    imageUrl:
-      "https://images.pexels.com/photos/1124466/pexels-photo-1124466.jpeg?auto=compress&cs=tinysrgb&w=800",
-    inventoryQuantity: 14,
-  },
-  {
-    id: "rec-4",
-    title: "Minimal Essential Hoodie",
-    description: "Clean silhouette, pairs with everything.",
-    price: 59,
-    currency: "USD",
-    imageUrl:
-      "https://images.pexels.com/photos/7671167/pexels-photo-7671167.jpeg?auto=compress&cs=tinysrgb&w=800",
-    inventoryQuantity: 22,
-  },
-];
-
 export default function CreatorAgentPage() {
   const params = useParams();
   const slugParam = params?.slug;
@@ -90,7 +47,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [products, setProducts] = useState<Product[]>(RECOMMENDED_PRODUCTS);
+  const [products, setProducts] = useState<Product[]>([]);
   const [lastRequest, setLastRequest] = useState<any>(null);
   const [lastResponse, setLastResponse] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<"forYou" | "deals" | "categories" | "creators">(
@@ -181,7 +138,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
           content: data.reply,
         },
       ]);
-      setProducts((data.products && data.products.length > 0 ? data.products : RECOMMENDED_PRODUCTS));
+      setProducts(data.products ?? []);
     } catch (error) {
       console.error(error);
       setLastResponse((prev: any) => prev ?? { error: "request failed", detail: String(error) });

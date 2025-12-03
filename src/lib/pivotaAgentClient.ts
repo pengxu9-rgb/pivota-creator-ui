@@ -13,51 +13,6 @@ export type CreatorAgentResponse = {
   agentUrlUsed?: string;
 };
 
-// Fallback products used in mock mode / timeout scenarios.
-// Keep them aligned with the UI Featured card style and use USD for consistency.
-const FALLBACK_PRODUCTS: RawProduct[] = [
-  {
-    id: "mock-featured-1",
-    title: "Everyday Stainless Bottle 600ml",
-    description: "Minimal stainless bottle for desk or commute.",
-    price: 22,
-    currency: "USD",
-    image_url:
-      "https://images.pexels.com/photos/3735551/pexels-photo-3735551.jpeg?auto=compress&cs=tinysrgb&w=800",
-    inventory_quantity: 25,
-  },
-  {
-    id: "mock-featured-2",
-    title: "CloudFit Daily Hoodie",
-    description: "Soft brushed fleece, perfect for casual days.",
-    price: 68,
-    currency: "USD",
-    image_url:
-      "https://images.pexels.com/photos/7671166/pexels-photo-7671166.jpeg?auto=compress&cs=tinysrgb&w=800",
-    inventory_quantity: 18,
-  },
-  {
-    id: "mock-featured-3",
-    title: "Urban Tech Runner",
-    description: "Lightweight commuter sneakers with breathable mesh.",
-    price: 109,
-    currency: "USD",
-    image_url:
-      "https://images.pexels.com/photos/1124466/pexels-photo-1124466.jpeg?auto=compress&cs=tinysrgb&w=800",
-    inventory_quantity: 14,
-  },
-  {
-    id: "mock-featured-4",
-    title: "Minimal Essential Hoodie",
-    description: "Clean silhouette, pairs with everything.",
-    price: 59,
-    currency: "USD",
-    image_url:
-      "https://images.pexels.com/photos/7671167/pexels-photo-7671167.jpeg?auto=compress&cs=tinysrgb&w=800",
-    inventory_quantity: 22,
-  },
-];
-
 function normalizeQuery(raw: string | undefined | null): string {
   if (!raw) return "";
   const trimmed = raw.trim();
@@ -89,19 +44,12 @@ export async function callPivotaCreatorAgent(params: {
   personaPrompt: string;
   messages: CreatorAgentMessage[];
 }): Promise<CreatorAgentResponse> {
-  const url =
-    process.env.PIVOTA_AGENT_URL ||
-    "https://pivota-agent-production.up.railway.app/agent/shop/v1/invoke";
-  const useMock = !process.env.PIVOTA_AGENT_URL;
-
-  if (useMock) {
-    // 本地开发 mock 回复，避免真实网络请求
-    return {
-      reply:
-        "（本地 mock）我会在真实环境中帮你从 Creator 的内容里找适合的单品。先用这几件做 UI 演示 👇",
-      products: FALLBACK_PRODUCTS,
-    };
+  const urlEnv = process.env.PIVOTA_AGENT_URL as string | undefined;
+  if (!urlEnv) {
+    // 明确要求不再使用本地 mock，环境变量缺失时直接报错，避免误以为是真实数据。
+    throw new Error("PIVOTA_AGENT_URL is not configured for creator agent backend.");
   }
+  const url = urlEnv;
 
   const lastUserMessage = [...params.messages].reverse().find((m) => m.role === "user");
   const userQueryRaw = lastUserMessage?.content ?? "";
@@ -228,12 +176,12 @@ export async function callPivotaCreatorAgent(params: {
     return { reply, products: rawProducts, raw: data, agentUrlUsed: url };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    // 如果后端超时，返回友好提示而不是直接抛出
+    // 如果后端超时，返回友好提示（不再注入本地 mock 商品）
     if (message.includes("UPSTREAM_TIMEOUT") || message.includes("status 504")) {
       return {
         reply:
           "The shopping backend timed out. Please try again in a moment or rephrase your request.",
-        products: FALLBACK_PRODUCTS,
+        products: [],
         raw: { error: message },
         agentUrlUsed: url,
       };
