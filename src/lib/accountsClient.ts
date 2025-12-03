@@ -83,16 +83,21 @@ export async function accountsLogin(email: string) {
 }
 
 export async function accountsVerify(email: string, otp: string) {
-  return callAccounts("/auth/verify", {
+  const data = await callAccounts("/auth/verify", {
     method: "POST",
     body: JSON.stringify({ channel: "email", email, otp }),
   });
+
+  // Some deployments wrap the user inside { user, memberships, ... }.
+  return (data as any).user || data;
 }
 
 export async function accountsMe(): Promise<AccountsUser | null> {
   try {
-    const data = await callAccounts("/auth/me");
-    return data as AccountsUser;
+    const raw = await callAccounts("/auth/me");
+    const user = (raw as any).user || raw;
+    if (!user) return null;
+    return user as AccountsUser;
   } catch (err) {
     const e = err as ApiError;
     if (e.status === 401) return null;
@@ -111,4 +116,3 @@ export async function listMyOrders(
   const data = await callAccounts(`/orders/list?${params.toString()}`);
   return data as { items: OrdersListItem[]; next_cursor?: string | null };
 }
-
