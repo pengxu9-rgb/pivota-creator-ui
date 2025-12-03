@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import { Send, Users, ShoppingCart } from "lucide-react";
+import { Send, ShoppingCart } from "lucide-react";
 import { getCreatorBySlug, type CreatorAgentConfig } from "@/config/creatorAgents";
 import type { Product } from "@/types/product";
 import { ProductCard } from "@/components/product/ProductCard";
@@ -93,6 +93,9 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
   const [products, setProducts] = useState<Product[]>(RECOMMENDED_PRODUCTS);
   const [lastRequest, setLastRequest] = useState<any>(null);
   const [lastResponse, setLastResponse] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<"forYou" | "deals" | "categories" | "creators">(
+    "forYou",
+  );
 
   const searchParams = useSearchParams();
   const isDebug = useMemo(() => searchParams?.get("debug") === "1", [searchParams]);
@@ -269,10 +272,6 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-sm font-semibold text-slate-900 sm:text-base">{creator.name}</h1>
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] text-emerald-700">
-                  <Users className="h-3 w-3" />
-                  Creator Agent
-                </span>
               </div>
               {creator.tagline && (
                 <p className="mt-0.5 text-[11px] text-slate-600 sm:text-xs">{creator.tagline}</p>
@@ -282,16 +281,48 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
 
           <div className="flex items-center gap-4 sm:gap-6">
             <nav className="hidden items-center gap-1 text-xs sm:flex sm:text-sm">
-              <button className="rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-50 sm:px-4">
+              <button
+                type="button"
+                onClick={() => setActiveTab("forYou")}
+                className={
+                  activeTab === "forYou"
+                    ? "rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-50 sm:px-4"
+                    : "rounded-full px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-100 sm:px-4"
+                }
+              >
                 For You
               </button>
-              <button className="rounded-full px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-100 sm:px-4">
+              <button
+                type="button"
+                onClick={() => setActiveTab("deals")}
+                className={
+                  activeTab === "deals"
+                    ? "rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-50 sm:px-4"
+                    : "rounded-full px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-100 sm:px-4"
+                }
+              >
                 Deals
               </button>
-              <button className="hidden rounded-full px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-100 sm:inline-flex">
+              <button
+                type="button"
+                onClick={() => setActiveTab("categories")}
+                className={
+                  activeTab === "categories"
+                    ? "hidden rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-50 sm:inline-flex sm:px-4"
+                    : "hidden rounded-full px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-100 sm:inline-flex sm:px-4"
+                }
+              >
                 Categories
               </button>
-              <button className="hidden rounded-full px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-100 md:inline-flex">
+              <button
+                type="button"
+                onClick={() => setActiveTab("creators")}
+                className={
+                  activeTab === "creators"
+                    ? "hidden rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-50 md:inline-flex md:px-4"
+                    : "hidden rounded-full px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-100 md:inline-flex md:px-4"
+                }
+              >
                 Creators
               </button>
             </nav>
@@ -329,12 +360,12 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
                     className={m.role === "user" ? "flex justify-end" : "flex justify-start"}
                   >
                     <div
-                      className={
-                        m.role === "user"
-                          ? "max-w-[80%] rounded-3xl rounded-br-sm bg-slate-100 px-3 py-2 text-xs text-slate-800 shadow-sm"
-                          : "max-w-[80%] whitespace-pre-wrap rounded-3xl rounded-bl-sm bg-gradient-to-r from-[#7c8cff] via-[#62b2ff] to-[#7fffe1] px-4 py-3 text-xs text-slate-900 shadow-md"
-                      }
-                    >
+                    className={
+                      m.role === "user"
+                        ? "max-w-[80%] rounded-3xl rounded-br-sm bg-slate-100 px-3 py-2 text-xs text-slate-800 shadow-sm"
+                          : "max-w-[80%] whitespace-pre-wrap rounded-3xl rounded-bl-sm bg-gradient-to-r from-[#fb7185] via-[#e879f9] to-[#6366f1] px-4 py-3 text-xs text-slate-900 shadow-md"
+                    }
+                  >
                       {m.content}
                     </div>
                   </div>
@@ -374,61 +405,107 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
             </div>
           </section>
 
-          {/* Right: product feed column */}
+          {/* Right: product feed / tabs content column */}
           <section className="flex flex-1 flex-col bg-white/40 px-4 py-4 lg:px-8">
             <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-              {/* Featured for you */}
-              <div className="space-y-4">
-                <SectionHeader
-                  title="Featured for you"
-                  subtitle={`Based on ${creator.name}'s style and typical scenarios.`}
-                />
-                {isLoading && products.length === 0 ? (
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {Array.from({ length: 3 }).map((_, idx) => (
-                      <div key={idx} className="h-40 animate-pulse rounded-3xl bg-slate-100" />
-                    ))}
+              {activeTab === "forYou" && (
+                <>
+                  {/* Featured for you */}
+                  <div className="space-y-4">
+                    <SectionHeader
+                      title="Featured for you"
+                      subtitle={`Based on ${creator.name}'s style and typical scenarios.`}
+                    />
+                    {isLoading && products.length === 0 ? (
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {Array.from({ length: 3 }).map((_, idx) => (
+                          <div key={idx} className="h-40 animate-pulse rounded-3xl bg-slate-100" />
+                        ))}
+                      </div>
+                    ) : products.length === 0 ? (
+                      <div className="flex flex-1 items-center justify-center text-[12px] text-slate-500">
+                        No candidates yet. Tell me what you need on the left.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {products.slice(0, 4).map((p) => (
+                          <ProductCard key={p.id} product={p} creatorName={creator.name} />
+                        ))}
+                      </div>
+                    )}
                   </div>
-                ) : products.length === 0 ? (
-                  <div className="flex flex-1 items-center justify-center text-[12px] text-slate-500">
-                    No candidates yet. Tell me what you need on the left.
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {products.slice(0, 4).map((p) => (
-                      <ProductCard key={p.id} product={p} creatorName={creator.name} />
-                    ))}
-                  </div>
-                )}
-              </div>
 
-              {/* Continue from last chat - recent user queries */}
-              <div className="mt-6 space-y-3">
-                <SectionHeader
-                  title="Continue from last chat"
-                  subtitle="Recent queries we worked on together. Tap to reuse a prompt."
-                />
-                <div className="flex flex-wrap gap-2">
-                  {userQueries
-                    .slice(-5)
-                    .reverse()
-                    .map((m) => (
-                      <button
-                        key={m.id}
-                        type="button"
-                        className="max-w-xs rounded-full bg-slate-100 px-3 py-1.5 text-[11px] text-slate-700 hover:bg-slate-200"
-                        onClick={() => setInput(m.content)}
-                      >
-                        {m.content}
-                      </button>
-                    ))}
-                  {userQueries.length === 0 && (
-                    <p className="text-[11px] text-slate-400">
-                      Start chatting on the left to see recent queries here.
-                    </p>
-                  )}
+                  {/* Continue from last chat - recent user queries */}
+                  <div className="mt-6 space-y-3">
+                    <SectionHeader
+                      title="Continue from last chat"
+                      subtitle="Recent queries we worked on together. Tap to reuse a prompt."
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      {userQueries
+                        .slice(-5)
+                        .reverse()
+                        .map((m) => (
+                          <button
+                            key={m.id}
+                            type="button"
+                            className="max-w-xs rounded-full bg-slate-100 px-3 py-1.5 text-[11px] text-slate-700 hover:bg-slate-200"
+                            onClick={() => setInput(m.content)}
+                          >
+                            {m.content}
+                          </button>
+                        ))}
+                      {userQueries.length === 0 && (
+                        <p className="text-[11px] text-slate-400">
+                          Start chatting on the left to see recent queries here.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {activeTab === "deals" && (
+                <div className="space-y-4">
+                  <SectionHeader
+                    title="Deals"
+                    subtitle="Curated promotions and limited-time offers will appear here."
+                  />
+                  <p className="text-[12px] text-slate-600">
+                    We’re working on a dedicated Deals feed for Creator Agent. For now, you can ask Nina’s
+                    agent on the left for budget-specific recommendations, and we’ll surface the best value
+                    options here in the future.
+                  </p>
                 </div>
-              </div>
+              )}
+
+              {activeTab === "categories" && (
+                <div className="space-y-4">
+                  <SectionHeader
+                    title="Browse by category"
+                    subtitle="Soon you’ll be able to jump directly into tops, bottoms, shoes and more."
+                  />
+                  <p className="text-[12px] text-slate-600">
+                    Category-based browsing is coming soon. In the meantime, describe your scenario on the left
+                    (commute, weekend coffee, light workout, etc.) and the agent will pick pieces across
+                    categories for you.
+                  </p>
+                </div>
+              )}
+
+              {activeTab === "creators" && (
+                <div className="space-y-4">
+                  <SectionHeader
+                    title="More creators"
+                    subtitle="Future creator profiles and their dedicated agents will be listed here."
+                  />
+                  <p className="text-[12px] text-slate-600">
+                    This space will showcase other creators you can shop with via Pivota. For now, Nina Studio
+                    is the main demo. When we onboard more creators, you’ll be able to switch between them and
+                    compare styles in one place.
+                  </p>
+                </div>
+              )}
             </div>
           </section>
         </div>

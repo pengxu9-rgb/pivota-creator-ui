@@ -15,7 +15,7 @@ export const CREATOR_AGENTS: CreatorAgentConfig[] = [
     name: "Nina Studio",
     avatarUrl:
       "https://images.pexels.com/photos/7671166/pexels-photo-7671166.jpeg?auto=compress&cs=tinysrgb&w=800",
-    tagline: "都市通勤 & 轻运动穿搭",
+    tagline: "Urban commute & light athleisure looks",
     personaPrompt: `
 你是「Nina Studio」的 Creator Shopping Agent。
 
