@@ -1,11 +1,18 @@
 'use client';
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/components/cart/CartProvider";
 import { createOrderFromCart } from "@/lib/checkoutClient";
+import {
+  accountsLogin,
+  accountsVerify,
+  accountsMe,
+  type AccountsUser,
+} from "@/lib/accountsClient";
 
 type CheckoutStep = "form" | "submitting" | "success" | "error";
+type AuthStep = "checking" | "email" | "otp" | "authed";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -24,12 +31,93 @@ export default function CheckoutPage() {
   const [notes, setNotes] = useState("");
   const [orderId, setOrderId] = useState<string | undefined>();
 
+  // Auth state for inline email login
+  const [authStep, setAuthStep] = useState<AuthStep>("checking");
+  const [loginEmail, setLoginEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [accountsUser, setAccountsUser] = useState<AccountsUser | null>(null);
+
   const currency = items[0]?.currency || "USD";
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadMe = async () => {
+      try {
+        const me = await accountsMe();
+        if (cancelled) return;
+        if (me) {
+          setAccountsUser(me);
+          if (me.email) {
+            setEmail(me.email);
+            setLoginEmail(me.email);
+          }
+          setAuthStep("authed");
+        } else {
+          setAuthStep("email");
+        }
+      } catch (err) {
+        console.error(err);
+        if (!cancelled) {
+          setAuthStep("email");
+        }
+      }
+    };
+    loadMe();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleSendCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!loginEmail) {
+      setAuthError("Please enter your email.");
+      return;
+    }
+    setAuthError(null);
+    setAuthLoading(true);
+    try {
+      await accountsLogin(loginEmail);
+      setAuthStep("otp");
+    } catch (err) {
+      console.error(err);
+      setAuthError("We couldn’t send the code. Please check your email and try again.");
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleVerifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otp) {
+      setAuthError("Please enter the verification code.");
+      return;
+    }
+    setAuthError(null);
+    setAuthLoading(true);
+    try {
+      const user = await accountsVerify(loginEmail, otp);
+      setAccountsUser(user as AccountsUser);
+      setEmail(loginEmail);
+      setAuthStep("authed");
+    } catch (err) {
+      console.error(err);
+      setAuthError("The code seems incorrect or expired. Please try again.");
+    } finally {
+      setAuthLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!items.length) {
       setError("Your cart is empty.");
+      return;
+    }
+    if (authStep !== "authed" || !email) {
+      setError("Please verify your email before placing the order.");
       return;
     }
     if (!email || !name || !addressLine1 || !city || !country || !postalCode) {
@@ -156,21 +244,97 @@ export default function CheckoutPage() {
                 <div>
                   <h2 className="text-sm font-semibold text-slate-900">Contact & shipping</h2>
                   <p className="mt-1 text-[11px] text-slate-500">
-                    Use an email you can access so we can send order updates.
+                    Verify your email so we can send order updates and let you track your orders later.
                   </p>
                 </div>
 
+                {/* Inline email login / OTP */}
+                <div className="grid grid-cols-1 gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
+                  {authStep === "checking" && (
+                    <p className="text-[11px] text-slate-500">Checking your sign-in status…</p>
+                  )}
+                  {authStep === "email" && (
+                    <>
+                      <label className="text-[11px] font-medium text-slate-700">
+                        Email
+                        <input
+                          type="email"
+                          required
+                          value={loginEmail}
+                          onChange={(e) => setLoginEmail(e.target.value)}
+                          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 shadow-sm outline-none focus:border-slate-900"
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        disabled={authLoading}
+                        onClick={handleSendCode}
+                        className="w-full rounded-full bg-slate-900 px-4 py-1.5 text-[11px] font-medium text-white shadow-sm hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {authLoading ? "Sending code…" : "Send verification code"}
+                      </button>
+                    </>
+                  )}
+                  {authStep === "otp" && (
+                    <>
+                      <p className="text-[11px] text-slate-500">
+                        We’ve sent a 6-digit code to <span className="font-medium">{loginEmail}</span>.
+                        Enter it below to continue.
+                      </p>
+                      <label className="text-[11px] font-medium text-slate-700">
+                        Verification code
+                        <input
+                          required
+                          value={otp}
+                          onChange={(e) => setOtp(e.target.value)}
+                          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 shadow-sm outline-none focus:border-slate-900"
+                        />
+                      </label>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          disabled={authLoading}
+                          onClick={handleVerifyCode}
+                          className="flex-1 rounded-full bg-slate-900 px-4 py-1.5 text-[11px] font-medium text-white shadow-sm hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {authLoading ? "Signing in…" : "Verify and continue"}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={authLoading}
+                          onClick={() => {
+                            setOtp("");
+                            setAuthError(null);
+                            setAuthStep("email");
+                          }}
+                          className="rounded-full border border-slate-200 px-3 py-1.5 text-[11px] text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Use a different email
+                        </button>
+                      </div>
+                    </>
+                  )}
+                  {authStep === "authed" && (
+                    <div className="flex items-center justify-between rounded-xl bg-white px-3 py-2">
+                      <div className="text-[11px]">
+                        <p className="font-medium text-slate-900">
+                          Signed in
+                        </p>
+                        <p className="text-slate-600">{email}</p>
+                      </div>
+                      <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
+                        Verified
+                      </span>
+                    </div>
+                  )}
+                  {authError && (
+                    <p className="text-[11px] text-rose-500">
+                      {authError}
+                    </p>
+                  )}
+                </div>
+
                 <div className="grid grid-cols-1 gap-3">
-                  <label className="text-[11px] font-medium text-slate-700">
-                    Email
-                    <input
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 shadow-sm outline-none focus:border-slate-900"
-                    />
-                  </label>
                   <label className="text-[11px] font-medium text-slate-700">
                     Full name
                     <input
@@ -268,4 +432,3 @@ export default function CheckoutPage() {
     </main>
   );
 }
-

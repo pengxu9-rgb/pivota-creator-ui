@@ -9,10 +9,20 @@ export default function HomePage() {
         <div className="absolute right-0 top-32 h-72 w-72 rounded-full bg-cyan-500/20 blur-3xl" />
       </div>
 
-      <h1 className="mb-2 text-lg font-semibold">Pivota Creator Agent UI</h1>
-      <p className="mb-6 text-sm text-slate-400">
-        每一个 Creator 拥有一个独立的购物 Agent 页面。
-      </p>
+      <div className="mb-6 flex w-full max-w-3xl items-center justify-between">
+        <div>
+          <h1 className="text-lg font-semibold">Pivota Creator Agent UI</h1>
+          <p className="mt-1 text-sm text-slate-400">
+            Each creator has a dedicated shopping agent experience.
+          </p>
+        </div>
+        <Link
+          href="/account/login"
+          className="rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-medium text-slate-50 shadow-sm hover:border-cyan-400/70 hover:bg-white/10"
+        >
+          Sign in
+        </Link>
+      </div>
 
       <div className="grid w-full max-w-3xl grid-cols-1 gap-3 sm:grid-cols-2">
         {CREATOR_AGENTS.map((creator) => (
