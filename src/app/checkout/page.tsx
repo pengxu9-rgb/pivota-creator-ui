@@ -171,7 +171,7 @@ export default function CheckoutPage() {
             onClick={() => router.push("/creator/nina-studio")}
             className="rounded-full border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100"
           >
-            Back to creator agent
+            Back
           </button>
         </header>
 
