@@ -41,6 +41,9 @@ export default function CheckoutPage() {
 
   const currency = items[0]?.currency || "USD";
 
+  const displayEmail =
+    email || loginEmail || (accountsUser && accountsUser.email) || "";
+
   useEffect(() => {
     let cancelled = false;
     const loadMe = async () => {
@@ -316,16 +319,29 @@ export default function CheckoutPage() {
                     </>
                   )}
                   {authStep === "authed" && (
-                    <div className="flex items-center justify-between rounded-xl bg-white px-3 py-2">
+                    <div className="flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-2">
                       <div className="text-[11px]">
-                        <p className="font-medium text-slate-900">
-                          Signed in
+                        <p className="font-medium text-slate-900">Signed in</p>
+                        <p className="text-slate-600">
+                          {displayEmail || "Signed in with your Pivota account."}
                         </p>
-                        <p className="text-slate-600">{email}</p>
                       </div>
-                      <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
-                        Verified
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
+                          Verified
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOtp("");
+                            setAuthError(null);
+                            setAuthStep("email");
+                          }}
+                          className="text-[10px] text-slate-500 hover:text-slate-700"
+                        >
+                          Change
+                        </button>
+                      </div>
                     </div>
                   )}
                   {authError && (
