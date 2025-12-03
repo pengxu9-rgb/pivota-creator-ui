@@ -8,6 +8,7 @@ import type { Product } from "@/types/product";
 import { ProductCard } from "@/components/product/ProductCard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { useCart } from "@/components/cart/CartProvider";
+import { accountsMe, type AccountsUser } from "@/lib/accountsClient";
 
 type ChatMessage = {
   id: string;
@@ -59,6 +60,8 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
   const isDebug = useMemo(() => searchParams?.get("debug") === "1", [searchParams]);
   const router = useRouter();
   const { items: cartItems, open: openCart } = useCart();
+  const [accountsUser, setAccountsUser] = useState<AccountsUser | null>(null);
+  const [authChecking, setAuthChecking] = useState(true);
 
   const safeStringify = (value: any) => {
     try {
@@ -157,6 +160,29 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
   };
 
   const userQueries = messages.filter((m) => m.role === "user");
+
+  // Load signed-in user so we can reflect status in the creator header.
+  useEffect(() => {
+    let cancelled = false;
+    const loadMe = async () => {
+      try {
+        const me = await accountsMe();
+        if (!cancelled) {
+          setAccountsUser(me);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (!cancelled) {
+          setAuthChecking(false);
+        }
+      }
+    };
+    loadMe();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Initial "Featured for you" from real backend, so右侧列表尽量使用真实选品
   useEffect(() => {
@@ -297,13 +323,23 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
             >
               Orders
             </button>
-            <button
-              type="button"
-              onClick={() => router.push("/account/login")}
-              className="hidden rounded-full border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 sm:inline-flex"
-            >
-              Sign in
-            </button>
+            {!authChecking && (
+              accountsUser ? (
+                <div className="hidden items-center rounded-full border border-slate-200 px-3 py-1.5 text-[11px] text-slate-600 sm:inline-flex">
+                  <span className="truncate max-w-[160px]">
+                    Signed in as {accountsUser.email || "Pivota user"}
+                  </span>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => router.push("/account/login")}
+                  className="hidden rounded-full border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 sm:inline-flex"
+                >
+                  Sign in
+                </button>
+              )
+            )}
             <button
               type="button"
               onClick={openCart}
