@@ -119,12 +119,16 @@ export default function CheckoutPage() {
       setError("Your cart is empty.");
       return;
     }
+    const effectiveEmail =
+      displayEmail.trim() ||
+      email.trim();
+
     // Ensure we have some email to attach to the order.
-    if (!email) {
+    if (!effectiveEmail) {
       setError("Please enter a valid email before placing the order.");
       return;
     }
-    if (!email || !name || !addressLine1 || !city || !country || !postalCode) {
+    if (!name || !addressLine1 || !city || !country || !postalCode) {
       setError("Please fill in all required fields.");
       return;
     }
@@ -135,7 +139,7 @@ export default function CheckoutPage() {
     try {
       const res = await createOrderFromCart({
         items,
-        email,
+        email: effectiveEmail,
         name,
         addressLine1,
         addressLine2: addressLine2 || undefined,
