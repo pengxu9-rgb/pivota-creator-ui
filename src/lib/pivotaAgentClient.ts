@@ -179,15 +179,21 @@ export async function callPivotaCreatorAgent(params: {
         data.items ??
         data.output?.items ??
         [];
+      const backendReply: string | undefined =
+        data.reply ?? data.message ?? data.output?.reply ?? data.output?.final_text;
 
-      const reply: string =
-        data.reply ??
-        data.message ??
-        data.output?.reply ??
-        data.output?.final_text ??
-        (Array.isArray(rawProducts) && rawProducts.length === 0
-          ? "I couldn’t find good matches for that request. Try adjusting your budget, style, or category."
-          : "Sorry, I wasn’t able to get a useful reply from the backend this time.");
+      let reply: string;
+      if (backendReply) {
+        reply = backendReply;
+      } else if (Array.isArray(rawProducts) && rawProducts.length > 0) {
+        // 后端没返回文案但有商品时，用一个友好的英文提示，而不是“找不到”
+        reply = hasUserQuery
+          ? "Here are some product picks based on your request."
+          : "Here are some popular pieces to get you started.";
+      } else {
+        reply =
+          "I couldn’t find good matches for that request. Try adjusting your budget, style, or category.";
+      }
 
       return { data, rawProducts, reply };
     }
@@ -202,8 +208,8 @@ export async function callPivotaCreatorAgent(params: {
       if (fallback.rawProducts && fallback.rawProducts.length > 0) {
         rawProducts = fallback.rawProducts;
         data = { primary: primary.data, fallback: fallback.data };
-        reply =
-          "I couldn’t find exact matches for that request. Here are some popular or similar pieces instead.";
+        // 主查询 0 结果，但默认货盘有商品：不再强调“找不到”，直接给推荐。
+        reply = "Here are some popular or similar pieces I recommend based on your request.";
       }
     }
 
