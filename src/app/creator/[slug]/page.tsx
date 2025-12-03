@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from "react";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { Send, ShoppingCart } from "lucide-react";
 import { getCreatorBySlug, type CreatorAgentConfig } from "@/config/creatorAgents";
 import type { Product } from "@/types/product";
@@ -99,6 +99,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
 
   const searchParams = useSearchParams();
   const isDebug = useMemo(() => searchParams?.get("debug") === "1", [searchParams]);
+  const router = useRouter();
   const { items: cartItems, open: openCart } = useCart();
 
   const safeStringify = (value: any) => {
@@ -326,6 +327,13 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
                 Creators
               </button>
             </nav>
+            <button
+              type="button"
+              onClick={() => router.push("/account/orders")}
+              className="hidden rounded-full border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 sm:inline-flex"
+            >
+              Orders
+            </button>
             <button
               type="button"
               onClick={openCart}
