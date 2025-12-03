@@ -323,11 +323,14 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
             >
               Orders
             </button>
-            {!authChecking && (
-              accountsUser ? (
+            {!authChecking &&
+              (accountsUser ? (
                 <div className="hidden items-center rounded-full border border-slate-200 px-3 py-1.5 text-[11px] text-slate-600 sm:inline-flex">
-                  <span className="truncate max-w-[160px]">
-                    Signed in as {accountsUser.email || "Pivota user"}
+                  <span className="truncate max-w-[120px]">
+                    {(() => {
+                      const email = accountsUser.email || "Pivota user";
+                      return email.length > 8 ? `${email.slice(0, 8)}…` : email;
+                    })()}
                   </span>
                 </div>
               ) : (
@@ -338,8 +341,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
                 >
                   Sign in
                 </button>
-              )
-            )}
+              ))}
             <button
               type="button"
               onClick={openCart}
