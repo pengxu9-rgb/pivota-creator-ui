@@ -549,7 +549,7 @@ export default function CheckoutPage() {
 
                 <button
                   type="submit"
-                  disabled={step === "submitting" || !items.length}
+                  disabled={step === "submitting"}
                   className="mt-2 rounded-full bg-slate-900 px-4 py-2 text-xs font-medium text-white shadow-sm hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {step === "submitting" ? "Placing order…" : "Place order"}
