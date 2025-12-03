@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/components/cart/CartProvider";
 import {
@@ -50,6 +50,10 @@ export default function CheckoutPage() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
   const [accountsUser, setAccountsUser] = useState<AccountsUser | null>(null);
+
+  // Adyen drop-in state
+  const adyenContainerRef = useRef<HTMLDivElement | null>(null);
+  const [adyenMounted, setAdyenMounted] = useState(false);
 
   const currency = items[0]?.currency || "USD";
 
@@ -215,6 +219,88 @@ export default function CheckoutPage() {
         (paymentRes as any)?.next_action?.redirect_url;
 
       setPaymentStatus(statusFromGateway);
+
+      // Case 1: Adyen session – mount drop-in UI like Shopping Agent.
+      if (action?.type === "adyen_session") {
+        const sessionData = action?.client_secret;
+        let sessionId =
+          (action as any)?.raw?.id ||
+          (paymentRes as any)?.payment_intent_id ||
+          paymentRes.payment?.payment_intent_id ||
+          "";
+
+        if (sessionId && sessionId.startsWith("adyen_session_")) {
+          sessionId = sessionId.replace("adyen_session_", "");
+        }
+
+        const clientKey =
+          (action as any)?.raw?.clientKey ||
+          process.env.NEXT_PUBLIC_ADYEN_CLIENT_KEY ||
+          "";
+
+        if (!sessionData || !clientKey) {
+          setError(
+            "Payment provider is missing configuration. Please contact support or try again later.",
+          );
+          setStep("error");
+          return;
+        }
+
+        if (adyenMounted && adyenContainerRef.current) {
+          // Already mounted; do nothing further.
+          setStep("form");
+          return;
+        }
+
+        try {
+          const { default: AdyenCheckout } = await import("@adyen/adyen-web");
+          const checkout = await AdyenCheckout({
+            clientKey,
+            environment:
+              process.env.NEXT_PUBLIC_ADYEN_ENVIRONMENT || "test",
+            session: {
+              id: sessionId,
+              sessionData,
+            },
+            analytics: { enabled: false },
+            onPaymentCompleted: () => {
+              clear();
+              setPaymentStatus("succeeded");
+              setStep("success");
+            },
+            onError: (err: any) => {
+              // eslint-disable-next-line no-console
+              console.error("Adyen error:", err);
+              setError(
+                "Payment failed with Adyen. Please check your card details or try again.",
+              );
+              setStep("error");
+            },
+          });
+
+          if (adyenContainerRef.current) {
+            checkout.create("dropin").mount(adyenContainerRef.current);
+            setAdyenMounted(true);
+            setError(null);
+            setStep("form");
+            return;
+          }
+
+          setError(
+            "Payment form is not ready. Please refresh the page and try again.",
+          );
+          setStep("error");
+          return;
+        } catch (adyenErr) {
+          // eslint-disable-next-line no-console
+          console.error("Adyen init failed:", adyenErr);
+          setError(
+            "We couldn’t start the card payment form. Please try again in a moment.",
+          );
+          setStep("error");
+          return;
+        }
+      }
 
       // Case 1: gateway asks us to redirect to a hosted payment page.
       if (action?.type === "redirect_url" && redirectUrl) {
@@ -554,6 +640,12 @@ export default function CheckoutPage() {
                 >
                   {step === "submitting" ? "Placing order…" : "Place order"}
                 </button>
+
+                {/* Container for Adyen drop-in when needed */}
+                <div
+                  ref={adyenContainerRef}
+                  className="mt-3"
+                />
               </form>
             )}
           </section>
