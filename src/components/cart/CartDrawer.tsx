@@ -2,10 +2,12 @@
 
 import React from "react";
 import { X, Minus, Plus, ShoppingCart } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useCart } from "./CartProvider";
 
 export function CartDrawer() {
   const { items, isOpen, close, updateQuantity, removeItem, subtotal, clear } = useCart();
+  const router = useRouter();
 
   if (!isOpen) return null;
 
@@ -106,9 +108,14 @@ export function CartDrawer() {
           <div className="mt-3 flex gap-2">
             <button
               type="button"
-              className="flex-1 rounded-full bg-slate-900 px-4 py-2 text-xs font-medium text-white shadow-sm hover:bg-slate-800"
+              disabled={items.length === 0}
+              onClick={() => {
+                close();
+                router.push("/checkout");
+              }}
+              className="flex-1 rounded-full bg-slate-900 px-4 py-2 text-xs font-medium text-white shadow-sm hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Checkout (coming soon)
+              Checkout
             </button>
             {items.length > 0 && (
               <button
@@ -125,4 +132,3 @@ export function CartDrawer() {
     </>
   );
 }
-

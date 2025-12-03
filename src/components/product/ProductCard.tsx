@@ -62,6 +62,8 @@ export function ProductCard({ product, creatorName }: Props) {
             onClick={() =>
               addItem({
                 id: product.id,
+                productId: product.id,
+                merchantId: product.merchantId,
                 title: product.title,
                 price: product.price,
                 imageUrl: product.imageUrl,

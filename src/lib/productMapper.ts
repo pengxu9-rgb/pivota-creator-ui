@@ -9,6 +9,8 @@ export function mapRawProduct(raw: RawProduct): Product {
     currency: raw.currency,
     imageUrl: raw.image_url,
     inventoryQuantity: raw.inventory_quantity,
+    merchantId: raw.merchant_id,
+    merchantName: raw.merchant_name,
     // discountPercent / creatorMentions 后续可以从 raw 的扩展字段映射
     creatorMentions: raw.creator_mentions,
     fromCreatorDirectly: raw.from_creator_directly,

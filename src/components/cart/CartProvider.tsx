@@ -9,6 +9,8 @@ export type CartItem = {
   imageUrl?: string;
   quantity: number;
   currency?: string;
+  productId?: string;
+  merchantId?: string;
 };
 
 type CartContextValue = {
@@ -89,4 +91,3 @@ export function useCart() {
   }
   return ctx;
 }
-
