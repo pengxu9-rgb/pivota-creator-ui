@@ -16,12 +16,6 @@ export default function HomePage() {
             Each creator has a dedicated shopping agent experience.
           </p>
         </div>
-        <Link
-          href="/account/login"
-          className="rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-medium text-slate-50 shadow-sm hover:border-cyan-400/70 hover:bg-white/10"
-        >
-          Sign in
-        </Link>
       </div>
 
       <div className="grid w-full max-w-3xl grid-cols-1 gap-3 sm:grid-cols-2">

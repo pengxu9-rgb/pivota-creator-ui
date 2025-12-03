@@ -299,6 +299,13 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
             </button>
             <button
               type="button"
+              onClick={() => router.push("/account/login")}
+              className="hidden rounded-full border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 sm:inline-flex"
+            >
+              Sign in
+            </button>
+            <button
+              type="button"
               onClick={openCart}
               className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100"
             >
