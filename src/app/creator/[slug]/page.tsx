@@ -219,14 +219,14 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
   }, [creator.id, isDebug]);
 
   return (
-    <main className="h-screen bg-gradient-to-b from-[#f8fbff] via-[#eef3fb] to-[#e6ecf7] text-slate-900">
+    <main className="min-h-screen lg:h-screen bg-gradient-to-b from-[#f8fbff] via-[#eef3fb] to-[#e6ecf7] text-slate-900">
       <div className="pointer-events-none fixed inset-0 -z-10">
         <div className="absolute -left-24 top-0 h-72 w-72 rounded-full bg-indigo-300/20 blur-3xl" />
         <div className="absolute right-0 top-24 h-80 w-80 rounded-full bg-cyan-300/20 blur-3xl" />
         <div className="absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-purple-300/20 blur-3xl" />
       </div>
 
-      <div className="relative z-10 flex h-screen flex-col">
+      <div className="relative z-10 flex min-h-screen flex-col lg:h-screen">
         {/* Top header: creator brand + tabs + cart, full-width */}
         <header className="flex items-center justify-between border-b border-slate-200 bg-white/80 px-4 py-3 text-xs shadow-sm backdrop-blur-sm sm:text-sm md:px-6 lg:px-10">
           <div className="flex items-center gap-3">
@@ -313,8 +313,8 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
           </div>
         </header>
 
-        {/* Main content: full-screen split layout */}
-        <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
+        {/* Main content: split layout (stacked on small screens, side-by-side on large) */}
+        <div className="flex flex-1 flex-col lg:flex-row lg:overflow-hidden">
           {/* Left: chat column */}
           <section className="flex w-full flex-col border-b border-slate-200 bg-white/70 px-4 py-4 backdrop-blur-sm lg:w-[360px] lg:border-b-0 lg:border-r lg:px-6">
             <div className="mb-3 text-[12px] text-slate-600">
