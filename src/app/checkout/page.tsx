@@ -347,10 +347,25 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
               sessionData,
             },
             analytics: { enabled: false },
-            onPaymentCompleted: () => {
-              clear();
-              setPaymentStatus("succeeded");
-              setStep("success");
+            onPaymentCompleted: (result: any) => {
+              const code = result?.resultCode || result?.sessionResult;
+              if (
+                code === "Authorised" ||
+                code === "Pending" ||
+                code === "Received"
+              ) {
+                clear();
+                setPaymentStatus("succeeded");
+                setStep("success");
+              } else {
+                // Payment was created but not authorised. Keep the order and
+                // allow the user to try again.
+                setPaymentStatus(code || "payment_refused");
+                setError(
+                  "Your card was declined or the payment was not completed. You can try again with a different card.",
+                );
+                setStep("error");
+              }
             },
             onError: (err: any) => {
               // eslint-disable-next-line no-console
