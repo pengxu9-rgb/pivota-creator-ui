@@ -318,7 +318,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
             </nav>
             <button
               type="button"
-              onClick={() => router.push("/account/orders")}
+              onClick={() => router.push(`/account/orders?creator=${encodeURIComponent(creator.slug)}`)}
               className="hidden rounded-full border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 sm:inline-flex"
             >
               Orders

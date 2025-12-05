@@ -32,6 +32,9 @@ export type OrdersListItem = {
   shipping_country?: string | null;
   items_summary?: string;
   permissions?: OrdersPermissions;
+   creator_id?: string | null;
+   creator_name?: string | null;
+   creator_slug?: string | null;
 };
 
 async function callAccounts(

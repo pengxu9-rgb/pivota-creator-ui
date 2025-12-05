@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { listMyOrders, type OrdersListItem, accountsMe } from "@/lib/accountsClient";
+import { getCreatorBySlug } from "@/config/creatorAgents";
 
 export default function OrdersPage() {
   const router = useRouter();
@@ -10,6 +11,20 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAuthed, setIsAuthed] = useState<boolean | null>(null);
+  const [creatorSlug, setCreatorSlug] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const slug = params.get("creator") || params.get("creator_slug");
+      setCreatorSlug(slug);
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
+
+  const creatorConfig = creatorSlug ? getCreatorBySlug(creatorSlug) : undefined;
 
   useEffect(() => {
     let cancelled = false;
@@ -50,14 +65,31 @@ export default function OrdersPage() {
 
   const showLogin = isAuthed === false;
 
+  const visibleOrders = useMemo(() => {
+    if (!creatorSlug) return orders;
+    return orders.filter((order) => {
+      if (order.creator_slug && creatorSlug) {
+        return order.creator_slug === creatorSlug;
+      }
+      if (order.creator_id && creatorConfig?.id) {
+        return order.creator_id === creatorConfig.id;
+      }
+      return false;
+    });
+  }, [orders, creatorSlug, creatorConfig]);
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-[#f8fbff] via-[#eef3fb] to-[#e6ecf7] text-slate-900">
       <div className="mx-auto flex min-h-screen w-full max-w-4xl flex-col px-4 py-8 lg:px-8">
         <header className="mb-4 flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-lg font-semibold text-slate-900">Your orders</h1>
+            <h1 className="text-lg font-semibold text-slate-900">
+              {creatorConfig ? `Orders with ${creatorConfig.name}` : "Your orders"}
+            </h1>
             <p className="mt-1 text-sm text-slate-600">
-              Orders placed via Pivota shopping and creator agents.
+              {creatorConfig
+                ? "Orders placed via this creator’s shopping agent."
+                : "Orders placed via Pivota shopping and creator agents."}
             </p>
           </div>
           <button
@@ -75,8 +107,7 @@ export default function OrdersPage() {
           ) : showLogin ? (
             <div className="space-y-3 text-sm">
               <p className="text-slate-600">
-                You’re not signed in yet. Sign in with your email to see orders across Pivota and creator
-                agents.
+                You’re not signed in yet. Sign in with your email to see your orders.
               </p>
               <button
                 type="button"
@@ -88,13 +119,15 @@ export default function OrdersPage() {
             </div>
           ) : error ? (
             <p className="text-sm text-rose-500">{error}</p>
-          ) : orders.length === 0 ? (
+          ) : visibleOrders.length === 0 ? (
             <p className="text-sm text-slate-500">
-              You don’t have any orders yet. Start a chat with the creator agent to get some recommendations.
+              {creatorConfig
+                ? `You don’t have any orders with ${creatorConfig.name} yet. Start a chat with the creator agent to pick a few items.`
+                : "You don’t have any orders yet. Start a chat with the shopping agent to get some recommendations."}
             </p>
           ) : (
             <div className="space-y-3 text-sm">
-              {orders.map((order) => (
+              {visibleOrders.map((order) => (
                 <div
                   key={order.order_id}
                   className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
@@ -106,6 +139,11 @@ export default function OrdersPage() {
                     <p className="mt-0.5 text-[11px] text-slate-600">
                       {order.items_summary || "Order from creator agent"}
                     </p>
+                    {order.creator_name && (
+                      <p className="mt-0.5 text-[11px] text-slate-500">
+                        Creator: {order.creator_name}
+                      </p>
+                    )}
                     <p className="mt-0.5 text-[11px] text-slate-500">
                       {new Date(order.created_at).toLocaleString()}
                     </p>
