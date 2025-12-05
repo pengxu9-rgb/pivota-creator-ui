@@ -167,9 +167,15 @@ export default function OrdersPage() {
                     <p className="text-slate-500">
                       {order.payment_status === "paid"
                         ? "Paid"
-                        : order.payment_status === "pending"
-                          ? "Payment pending — please complete payment to confirm."
-                          : order.payment_status}
+                        : order.payment_status === "failed"
+                          ? order.permissions?.can_pay
+                            ? "Payment failed — continue payment to try another card."
+                            : "Payment failed."
+                          : order.payment_status === "pending"
+                            ? order.permissions?.can_pay
+                              ? "Payment pending — continue payment to complete this order."
+                              : "Payment pending — we’re still processing this payment."
+                            : order.payment_status}
                     </p>
                     {order.permissions?.can_pay && (
                       <button

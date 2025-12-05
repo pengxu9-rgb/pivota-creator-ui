@@ -914,19 +914,34 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
                   </p>
                 )}
 
-                <button
-                  type="submit"
-                  disabled={step === "submitting"}
-                  className="mt-2 rounded-full bg-slate-900 px-4 py-2 text-xs font-medium text-white shadow-sm hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {step === "submitting"
-                    ? isPaymentStep
-                      ? "Processing payment…"
-                      : "Preparing payment…"
-                    : isPaymentStep
-                      ? "Place order"
-                      : "Continue to payment"}
-                </button>
+                {(() => {
+                  let ctaLabel = "Continue to payment";
+
+                  if (step === "submitting") {
+                    ctaLabel = isPaymentStep ? "Processing payment…" : "Preparing payment…";
+                  } else if (isPaymentStep) {
+                    const lowerStatus = (paymentStatus || "").toLowerCase();
+                    if (
+                      lowerStatus === "payment_refused" ||
+                      lowerStatus === "refused" ||
+                      lowerStatus === "failed"
+                    ) {
+                      ctaLabel = "Try another card";
+                    } else {
+                      ctaLabel = "Place order";
+                    }
+                  }
+
+                  return (
+                    <button
+                      type="submit"
+                      disabled={step === "submitting"}
+                      className="mt-2 rounded-full bg-slate-900 px-4 py-2 text-xs font-medium text-white shadow-sm hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {ctaLabel}
+                    </button>
+                  );
+                })()}
 
                 {/* Container for Adyen drop-in when needed */}
                 <div
