@@ -193,11 +193,15 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
     }
 
     setError(null);
+    setStep("submitting");
 
-    // Step 1: details -> create order & reveal payment method
-    if (!isPaymentStep) {
-      setStep("submitting");
-      try {
+    try {
+      // Ensure we have an order id; if not, create the order first. This
+      // happens on the very first click, so the same "Place order" action
+      // both creates the order and initiates the payment flow.
+      let currentOrderId: string | undefined = orderId;
+
+      if (!currentOrderId) {
         // Snapshot current cart so we can render a stable summary after success.
         setPlacedItems(items);
         setPlacedSubtotal(subtotal);
@@ -218,72 +222,38 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
         const createdOrderId =
           (orderRes as CheckoutOrderResponse).order_id ||
           (orderRes as any).id;
-        setOrderId(createdOrderId);
 
         if (!createdOrderId) {
           throw new Error("Order was created but no order ID was returned.");
         }
+
+        setOrderId(createdOrderId);
+        currentOrderId = createdOrderId;
 
         // Try to infer PSP from the initial order response, similar to the
         // main Shopping Agent checkout flow. This lets us hide the Stripe
         // card box entirely when the merchant is routed to Adyen.
         const anyOrder = orderRes as any;
         const paymentObj = (anyOrder.payment || {}) as any;
-        let initialAction: any =
-          anyOrder.payment_action || paymentObj.payment_action || null;
 
         let orderPsp: string | null =
           (anyOrder.psp as string | null) ||
           (paymentObj.psp as string | null) ||
-          ((initialAction && initialAction.psp) as string | null) ||
           null;
 
         const paymentIntentId = paymentObj.payment_intent_id as
           | string
           | undefined;
-        const paymentClientSecret = paymentObj.client_secret as
-          | string
-          | undefined;
 
         if (!orderPsp && paymentIntentId?.startsWith("adyen_session")) {
           orderPsp = "adyen";
-          if (!initialAction && paymentClientSecret) {
-            initialAction = {
-              type: "adyen_session",
-              client_secret: paymentClientSecret,
-              url: null,
-              raw: null,
-            };
-          }
         }
 
         if (orderPsp) {
           setPspUsed(orderPsp);
         }
 
-        // Move into the payment step; UI will now show the appropriate
-        // payment method (Adyen drop-in vs. Stripe card) without immediately
-        // charging the card.
         setIsPaymentStep(true);
-        setStep("form");
-      } catch (createErr) {
-        console.error("createOrderFromCart error", createErr);
-        setError(
-          "We couldn’t create your order. Please check your details and try again.",
-        );
-        setStep("error");
-      }
-      return;
-    }
-
-    // Step 2: submit payment for the already-created order.
-    setStep("submitting");
-
-    try {
-      const createdOrderId = orderId;
-
-      if (!createdOrderId) {
-        throw new Error("Order ID is missing. Please refresh and try again.");
       }
 
       // Ask gateway to initiate payment. We will only show a "success" state
@@ -297,7 +267,7 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
             : undefined;
 
         paymentRes = await submitPaymentForOrder({
-          orderId: createdOrderId,
+          orderId: currentOrderId as string,
           amount: subtotal,
           currency,
           paymentMethodHint: "card",
