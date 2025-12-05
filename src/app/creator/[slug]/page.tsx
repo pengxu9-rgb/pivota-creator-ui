@@ -51,9 +51,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [lastRequest, setLastRequest] = useState<any>(null);
   const [lastResponse, setLastResponse] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<"forYou" | "deals" | "categories" | "creators">(
-    "forYou",
-  );
+  const [activeTab, setActiveTab] = useState<"forYou" | "deals" | "categories">("forYou");
   const [isFeaturedLoading, setIsFeaturedLoading] = useState(true);
 
   const searchParams = useSearchParams();
@@ -62,6 +60,12 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
   const { items: cartItems, open: openCart } = useCart();
   const [accountsUser, setAccountsUser] = useState<AccountsUser | null>(null);
   const [authChecking, setAuthChecking] = useState(true);
+  const [recentQueries, setRecentQueries] = useState<string[]>([]);
+
+  const recentQueriesStorageKey = useMemo(
+    () => `pivota_creator_recent_queries_${creator.slug}`,
+    [creator.slug],
+  );
 
   const safeStringify = (value: any) => {
     try {
@@ -89,6 +93,22 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setIsLoading(true);
+
+    // Update recent queries list and persist to localStorage so that
+    // "Continue from last chat" can show meaningful history even after
+    // a page refresh.
+    setRecentQueries((prev) => {
+      const withoutDuplicate = prev.filter((q) => q !== trimmed);
+      const updated = [...withoutDuplicate, trimmed].slice(-5);
+      if (typeof window !== "undefined") {
+        try {
+          window.localStorage.setItem(recentQueriesStorageKey, JSON.stringify(updated));
+        } catch (err) {
+          console.error("Failed to persist recent queries", err);
+        }
+      }
+      return updated;
+    });
 
     try {
       const res = await fetch("/api/creator-agent", {
@@ -183,6 +203,23 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
       cancelled = true;
     };
   }, []);
+
+  // Load recent queries from localStorage so "Continue from last chat"
+  // reflects the last few prompts across sessions.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem(recentQueriesStorageKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        const cleaned = parsed.filter((q) => typeof q === "string").slice(-5);
+        setRecentQueries(cleaned);
+      }
+    } catch (err) {
+      console.error("Failed to load recent queries", err);
+    }
+  }, [recentQueriesStorageKey]);
 
   // Initial "Featured for you" from real backend, so右侧列表尽量使用真实选品
   useEffect(() => {
@@ -303,17 +340,6 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
                 }
               >
                 Categories
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab("creators")}
-                className={
-                  activeTab === "creators"
-                    ? "hidden rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-50 md:inline-flex md:px-4"
-                    : "hidden rounded-full px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-100 md:inline-flex md:px-4"
-                }
-              >
-                Creators
               </button>
             </nav>
             <button
@@ -464,20 +490,20 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
                       subtitle="Recent queries we worked on together. Tap to reuse a prompt."
                     />
                     <div className="flex flex-wrap gap-2">
-                      {userQueries
-                        .slice(-5)
-                        .reverse()
-                        .map((m) => (
-                          <button
-                            key={m.id}
-                            type="button"
-                            className="max-w-xs rounded-full bg-slate-100 px-3 py-1.5 text-[11px] text-slate-700 hover:bg-slate-200"
-                            onClick={() => setInput(m.content)}
-                          >
-                            {m.content}
-                          </button>
-                        ))}
-                      {userQueries.length === 0 && (
+                      {(recentQueries.length > 0
+                        ? [...recentQueries].slice(-5).reverse()
+                        : userQueries.map((m) => m.content).slice(-5).reverse()
+                      ).map((query, idx) => (
+                        <button
+                          key={`${query}-${idx}`}
+                          type="button"
+                          className="max-w-xs rounded-full bg-slate-100 px-3 py-1.5 text-[11px] text-slate-700 hover:bg-slate-200"
+                          onClick={() => setInput(query)}
+                        >
+                          {query}
+                        </button>
+                      ))}
+                      {recentQueries.length === 0 && userQueries.length === 0 && (
                         <p className="text-[11px] text-slate-400">
                           Start chatting on the left to see recent queries here.
                         </p>
@@ -511,20 +537,6 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
                     Category-based browsing is coming soon. In the meantime, describe your scenario on the left
                     (commute, weekend coffee, light workout, etc.) and the agent will pick pieces across
                     categories for you.
-                  </p>
-                </div>
-              )}
-
-              {activeTab === "creators" && (
-                <div className="space-y-4">
-                  <SectionHeader
-                    title="More creators"
-                    subtitle="Future creator profiles and their dedicated agents will be listed here."
-                  />
-                  <p className="text-[12px] text-slate-600">
-                    This space will showcase other creators you can shop with via Pivota. For now, Nina Studio
-                    is the main demo. When we onboard more creators, you’ll be able to switch between them and
-                    compare styles in one place.
                   </p>
                 </div>
               )}
