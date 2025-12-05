@@ -431,7 +431,9 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
         (paymentRes as any).client_secret ||
         paymentRes.payment?.client_secret;
 
-      if (clientSecret && stripe && elements && hasStripe) {
+      const isStripePsp = !pspUsed || pspUsed === "stripe";
+
+      if (clientSecret && stripe && elements && hasStripe && isStripePsp) {
         const cardElement = elements.getElement(CardElement);
         if (!cardElement) {
           setError("Please enter your card details to pay.");
@@ -794,7 +796,7 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
                   </label>
                 </div>
 
-                {hasStripe && isPaymentStep && pspUsed !== "adyen" && (
+                {hasStripe && isPaymentStep && (!pspUsed || pspUsed === "stripe") && (
                   <div className="grid grid-cols-1 gap-2">
                     <label className="text-[11px] font-medium text-slate-700">
                       Card details
