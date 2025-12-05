@@ -168,7 +168,7 @@ export default function OrdersPage() {
                       {order.payment_status === "paid"
                         ? "Paid"
                         : order.payment_status === "pending"
-                          ? "Payment pending"
+                          ? "Payment pending — please complete payment to confirm."
                           : order.payment_status}
                     </p>
                     {order.permissions?.can_pay && (
@@ -176,7 +176,13 @@ export default function OrdersPage() {
                         type="button"
                         onClick={() =>
                           router.push(
-                            `/checkout?orderId=${encodeURIComponent(order.order_id)}&amount_minor=${order.total_amount_minor}&currency=${order.currency}`,
+                            `/checkout?orderId=${encodeURIComponent(
+                              order.order_id,
+                            )}&amount_minor=${
+                              order.total_amount_minor
+                            }&currency=${order.currency}&items_summary=${encodeURIComponent(
+                              order.items_summary || "",
+                            )}`,
                           )
                         }
                         className="mt-0.5 rounded-full bg-slate-900 px-3 py-1 text-[10px] font-medium text-white hover:bg-slate-800"

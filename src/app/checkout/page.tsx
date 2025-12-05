@@ -84,6 +84,7 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
   const [existingOrderId, setExistingOrderId] = useState<string | null>(null);
   const [existingTotalMinor, setExistingTotalMinor] = useState<number | null>(null);
   const [existingCurrency, setExistingCurrency] = useState<string | null>(null);
+  const [existingItemsSummary, setExistingItemsSummary] = useState<string | null>(null);
 
   // Auth state for inline email login
   const [authStep, setAuthStep] = useState<AuthStep>("checking");
@@ -143,6 +144,7 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
       const id = params.get("orderId") || params.get("order_id");
       const amount = params.get("amount_minor") || params.get("amount");
       const cur = params.get("currency");
+      const summary = params.get("items_summary");
       if (id) {
         setExistingOrderId(id);
       }
@@ -154,6 +156,9 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
       }
       if (cur) {
         setExistingCurrency(cur);
+      }
+      if (summary) {
+        setExistingItemsSummary(summary);
       }
     } catch (err) {
       console.error(err);
@@ -546,57 +551,86 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
         </header>
 
         <div className="grid flex-1 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-          {/* Left: cart summary */}
+          {/* Left: cart / existing order summary */}
           <section className="flex flex-col rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm">
             <h2 className="text-sm font-semibold text-slate-900">Order summary</h2>
-            <div className="mt-3 flex-1 space-y-3 overflow-y-auto">
-              {(step === "success" ? placedItems : items)?.length === 0 ||
-              !(step === "success" ? placedItems : items) ? (
-                <p className="text-sm text-slate-500">
-                  Your cart is empty. Go back to the creator agent to pick a few items.
+            {existingOrderId ? (
+              <div className="mt-3 flex-1 space-y-3 text-sm text-slate-600">
+                <p>
+                  You’re completing payment for an existing order. We’ll apply the payment to:
                 </p>
-              ) : (
-                (step === "success" ? placedItems! : items).map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3"
-                  >
-                    {item.imageUrl && (
-                      <img
-                        src={item.imageUrl}
-                        alt={item.title}
-                        className="h-16 w-16 rounded-xl object-cover"
-                      />
-                    )}
-                    <div className="flex flex-1 flex-col">
-                      <p className="line-clamp-2 text-xs font-medium text-slate-900">
-                        {item.title}
-                      </p>
-                      <div className="mt-1 flex items-center justify-between text-[11px] text-slate-600">
-                        <span>
-                          {currency} {item.price.toFixed(2)} × {item.quantity}
-                        </span>
-                        <span className="font-semibold text-slate-900">
-                          {currency} {(item.price * item.quantity).toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-            <div className="mt-3 border-t border-slate-200 pt-3 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-slate-600">Subtotal</span>
-                <span className="font-semibold text-slate-900">
-                  {currency}{" "}
-                  {(step === "success" && placedSubtotal != null
-                    ? placedSubtotal
-                    : subtotal
-                  ).toFixed(2)}
-                </span>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs">
+                  <p className="font-medium text-slate-900">
+                    Order {existingOrderId}
+                  </p>
+                  {existingItemsSummary && (
+                    <p className="mt-1 text-[11px] text-slate-600">
+                      {existingItemsSummary}
+                    </p>
+                  )}
+                  <p className="mt-2 text-[11px] text-slate-500">
+                    Total:{" "}
+                    <span className="font-semibold text-slate-900">
+                      {currency}{" "}
+                      {existingTotalMinor != null
+                        ? (existingTotalMinor / 100).toFixed(2)
+                        : (subtotal || 0).toFixed(2)}
+                    </span>
+                  </p>
+                </div>
               </div>
-            </div>
+            ) : (
+              <>
+                <div className="mt-3 flex-1 space-y-3 overflow-y-auto">
+                  {(step === "success" ? placedItems : items)?.length === 0 ||
+                  !(step === "success" ? placedItems : items) ? (
+                    <p className="text-sm text-slate-500">
+                      Your cart is empty. Go back to the creator agent to pick a few items.
+                    </p>
+                  ) : (
+                    (step === "success" ? placedItems! : items).map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3"
+                      >
+                        {item.imageUrl && (
+                          <img
+                            src={item.imageUrl}
+                            alt={item.title}
+                            className="h-16 w-16 rounded-xl object-cover"
+                          />
+                        )}
+                        <div className="flex flex-1 flex-col">
+                          <p className="line-clamp-2 text-xs font-medium text-slate-900">
+                            {item.title}
+                          </p>
+                          <div className="mt-1 flex items-center justify-between text-[11px] text-slate-600">
+                            <span>
+                              {currency} {item.price.toFixed(2)} × {item.quantity}
+                            </span>
+                            <span className="font-semibold text-slate-900">
+                              {currency} {(item.price * item.quantity).toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <div className="mt-3 border-t border-slate-200 pt-3 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-600">Subtotal</span>
+                    <span className="font-semibold text-slate-900">
+                      {currency}{" "}
+                      {(step === "success" && placedSubtotal != null
+                        ? placedSubtotal
+                        : subtotal
+                      ).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </>
+            )}
           </section>
 
           {/* Right: shipping + contact form */}
