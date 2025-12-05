@@ -160,13 +160,30 @@ export default function OrdersPage() {
                       {new Date(order.created_at).toLocaleString()}
                     </p>
                   </div>
-                  <div className="text-right text-[11px]">
+                  <div className="flex flex-col items-end gap-1 text-right text-[11px]">
                     <p className="font-semibold text-slate-900">
                       {order.currency} {(order.total_amount_minor / 100).toFixed(2)}
                     </p>
-                    <p className="mt-0.5 text-slate-500">
-                      {order.status} · {order.payment_status}
+                    <p className="text-slate-500">
+                      {order.payment_status === "paid"
+                        ? "Paid"
+                        : order.payment_status === "pending"
+                          ? "Payment pending"
+                          : order.payment_status}
                     </p>
+                    {order.permissions?.can_pay && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          router.push(
+                            `/checkout?orderId=${encodeURIComponent(order.order_id)}&amount_minor=${order.total_amount_minor}&currency=${order.currency}`,
+                          )
+                        }
+                        className="mt-0.5 rounded-full bg-slate-900 px-3 py-1 text-[10px] font-medium text-white hover:bg-slate-800"
+                      >
+                        Continue payment
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}

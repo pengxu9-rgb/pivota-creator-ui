@@ -81,6 +81,9 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
   const [orderId, setOrderId] = useState<string | undefined>();
   const [paymentStatus, setPaymentStatus] = useState<string | undefined>();
   const [cardError, setCardError] = useState<string | null>(null);
+  const [existingOrderId, setExistingOrderId] = useState<string | null>(null);
+  const [existingTotalMinor, setExistingTotalMinor] = useState<number | null>(null);
+  const [existingCurrency, setExistingCurrency] = useState<string | null>(null);
 
   // Auth state for inline email login
   const [authStep, setAuthStep] = useState<AuthStep>("checking");
@@ -96,7 +99,7 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
   const [pspUsed, setPspUsed] = useState<string | null>(null);
   const [isPaymentStep, setIsPaymentStep] = useState(false);
 
-  const currency = items[0]?.currency || "USD";
+  const currency = existingCurrency || items[0]?.currency || "USD";
 
   // Prefer the email coming from the accounts service, then fall back to any
   // local email the user has typed during this checkout session.
@@ -130,6 +133,31 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  // Support continuing payment for an existing order from the Orders page.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("orderId") || params.get("order_id");
+      const amount = params.get("amount_minor") || params.get("amount");
+      const cur = params.get("currency");
+      if (id) {
+        setExistingOrderId(id);
+      }
+      if (amount) {
+        const n = Number(amount);
+        if (!Number.isNaN(n)) {
+          setExistingTotalMinor(n);
+        }
+      }
+      if (cur) {
+        setExistingCurrency(cur);
+      }
+    } catch (err) {
+      console.error(err);
+    }
   }, []);
 
   const handleSendCode = async (e: React.FormEvent) => {
@@ -174,7 +202,7 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!items.length) {
+    if (!items.length && !existingOrderId) {
       setError("Your cart is empty.");
       return;
     }
@@ -199,7 +227,8 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
       // Ensure we have an order id; if not, create the order first. This
       // happens on the very first click, so the same "Place order" action
       // both creates the order and initiates the payment flow.
-      let currentOrderId: string | undefined = orderId;
+      let currentOrderId: string | undefined =
+        orderId || existingOrderId || undefined;
 
       if (!currentOrderId) {
         // Snapshot current cart so we can render a stable summary after success.
@@ -266,9 +295,12 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
             ? `${window.location.origin}/account/orders`
             : undefined;
 
+        const amountToCharge =
+          existingTotalMinor != null ? existingTotalMinor : subtotal;
+
         paymentRes = await submitPaymentForOrder({
           orderId: currentOrderId as string,
-          amount: subtotal,
+          amount: amountToCharge,
           currency,
           paymentMethodHint: "card",
           returnUrl,
