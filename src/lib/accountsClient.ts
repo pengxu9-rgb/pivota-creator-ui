@@ -117,5 +117,12 @@ export async function listMyOrders(
   if (cursor) params.set("cursor", cursor);
 
   const data = await callAccounts(`/orders/list?${params.toString()}`);
-  return data as { items: OrdersListItem[]; next_cursor?: string | null };
+
+  const anyData = data as any;
+  const items: OrdersListItem[] =
+    anyData.items || anyData.orders || [];
+  const nextCursor: string | null =
+    anyData.next_cursor ?? anyData.cursor ?? null;
+
+  return { items, next_cursor: nextCursor };
 }
