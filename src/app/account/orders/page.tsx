@@ -67,7 +67,8 @@ export default function OrdersPage() {
 
   const visibleOrders = useMemo(() => {
     if (!creatorSlug) return orders;
-    return orders.filter((order) => {
+
+    const filtered = orders.filter((order) => {
       if (order.creator_slug && creatorSlug) {
         return order.creator_slug === creatorSlug;
       }
@@ -76,6 +77,17 @@ export default function OrdersPage() {
       }
       return false;
     });
+
+    // 如果当前还没有任何订单带 creator 元数据（老数据或后端尚未部署），
+    // 即使带了 ?creator= 参数，也先回退展示全部订单，避免误导用户看不到订单。
+    const hasCreatorMetadata = orders.some(
+      (o) => o.creator_slug || o.creator_id,
+    );
+    if (!hasCreatorMetadata) {
+      return orders;
+    }
+
+    return filtered;
   }, [orders, creatorSlug, creatorConfig]);
 
   return (
