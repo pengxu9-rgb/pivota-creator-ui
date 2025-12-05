@@ -94,6 +94,7 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
   const adyenContainerRef = useRef<HTMLDivElement | null>(null);
   const [adyenMounted, setAdyenMounted] = useState(false);
   const [pspUsed, setPspUsed] = useState<string | null>(null);
+  const [isPaymentStep, setIsPaymentStep] = useState(false);
 
   const currency = items[0]?.currency || "USD";
 
@@ -188,6 +189,13 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
     }
     if (!name || !addressLine1 || !city || !country || !postalCode) {
       setError("Please fill in all required fields.");
+      return;
+    }
+
+    // Step 1: details -> payment. First submit just validates and moves to payment step.
+    if (!isPaymentStep) {
+      setError(null);
+      setIsPaymentStep(true);
       return;
     }
 

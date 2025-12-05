@@ -37,9 +37,9 @@ type CreateOrderPayload = {
   preferred_psp?: string;
   metadata?: {
     source?: string;
-    creatorId?: string;
-    creatorSlug?: string;
-    creatorName?: string;
+    creator_id?: string;
+    creator_slug?: string;
+    creator_name?: string;
   };
 };
 
@@ -151,9 +151,9 @@ export async function createOrderFromCart(params: {
     customer_notes: params.notes,
     metadata: {
       source: "creator-agent-ui",
-      ...(creatorId ? { creatorId } : {}),
-      ...(creatorSlug ? { creatorSlug } : {}),
-      ...(creatorName ? { creatorName } : {}),
+      ...(creatorId ? { creator_id: creatorId } : {}),
+      ...(creatorSlug ? { creator_slug: creatorSlug } : {}),
+      ...(creatorName ? { creator_name: creatorName } : {}),
     },
   };
 
