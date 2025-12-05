@@ -330,14 +330,13 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
           return;
         }
 
-        if (adyenMounted && adyenContainerRef.current) {
-          // Already mounted; do nothing further.
-          setStep("form");
-          return;
-        }
-
         try {
           const { default: AdyenCheckout } = await import("@adyen/adyen-web");
+          // Clear any previous drop-in so a new Adyen session can be mounted
+          // when the user retries payment after a refusal.
+          if (adyenContainerRef.current) {
+            adyenContainerRef.current.innerHTML = "";
+          }
           const checkout = await AdyenCheckout({
             clientKey,
             environment:
