@@ -32,9 +32,9 @@ export type OrdersListItem = {
   shipping_country?: string | null;
   items_summary?: string;
   permissions?: OrdersPermissions;
-   creator_id?: string | null;
-   creator_name?: string | null;
-   creator_slug?: string | null;
+  creator_id?: string | null;
+  creator_name?: string | null;
+  creator_slug?: string | null;
 };
 
 async function callAccounts(
@@ -125,4 +125,42 @@ export async function listMyOrders(
     anyData.next_cursor ?? anyData.cursor ?? null;
 
   return { items, next_cursor: nextCursor };
+}
+
+export type ShippingAddress = {
+  name?: string;
+  address_line1?: string;
+  address_line2?: string;
+  city?: string;
+  country?: string;
+  postal_code?: string;
+  phone?: string;
+};
+
+export async function getLatestPaidOrderShippingAddress(): Promise<ShippingAddress | null> {
+  const params = new URLSearchParams();
+  params.set("limit", "1");
+  params.set("payment_status", "paid");
+
+  const data = await callAccounts(`/orders/list?${params.toString()}`);
+  const anyData = data as any;
+  const orders: OrdersListItem[] = anyData.orders || anyData.items || [];
+  const latest = orders[0];
+
+  if (!latest?.order_id) return null;
+
+  // Fetch full order detail so we can read the complete shipping_address.
+  const detail = await callAccounts(`/orders/${encodeURIComponent(latest.order_id)}`);
+  const addr = (detail as any)?.order?.shipping_address;
+  if (!addr || typeof addr !== "object") return null;
+
+  return {
+    name: addr.name ?? "",
+    address_line1: addr.address_line1 ?? "",
+    address_line2: addr.address_line2 ?? "",
+    city: addr.city ?? "",
+    country: addr.country ?? "",
+    postal_code: addr.postal_code ?? "",
+    phone: addr.phone ?? "",
+  };
 }

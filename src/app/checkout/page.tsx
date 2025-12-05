@@ -15,6 +15,7 @@ import {
   accountsLogin,
   accountsVerify,
   accountsMe,
+  getLatestPaidOrderShippingAddress,
   type AccountsUser,
 } from "@/lib/accountsClient";
 import "@adyen/adyen-web/dist/adyen.css";
@@ -85,6 +86,7 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
   const [existingTotalMinor, setExistingTotalMinor] = useState<number | null>(null);
   const [existingCurrency, setExistingCurrency] = useState<string | null>(null);
   const [existingItemsSummary, setExistingItemsSummary] = useState<string | null>(null);
+  const [hasPrefilledAddress, setHasPrefilledAddress] = useState(false);
 
   // Auth state for inline email login
   const [authStep, setAuthStep] = useState<AuthStep>("checking");
@@ -123,6 +125,35 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
         } else {
           setAuthStep("email");
         }
+
+        // Prefill shipping address from the latest paid order on this account,
+        // but only when we are not continuing payment for an existing order
+        // and the user hasn't started typing their own address.
+        if (me && !existingOrderId && !cancelled) {
+          try {
+            const addr = await getLatestPaidOrderShippingAddress();
+            if (
+              addr &&
+              !hasPrefilledAddress &&
+              !name &&
+              !addressLine1 &&
+              !city &&
+              !country &&
+              !postalCode
+            ) {
+              setName(addr.name || "");
+              setAddressLine1(addr.address_line1 || "");
+              setAddressLine2(addr.address_line2 || "");
+              setCity(addr.city || "");
+              setCountry(addr.country || "");
+              setPostalCode(addr.postal_code || "");
+              setPhone(addr.phone || "");
+              setHasPrefilledAddress(true);
+            }
+          } catch (addrErr) {
+            console.error(addrErr);
+          }
+        }
       } catch (err) {
         console.error(err);
         if (!cancelled) {
@@ -134,7 +165,7 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [existingOrderId, hasPrefilledAddress, name, addressLine1, city, country, postalCode]);
 
   // Support continuing payment for an existing order from the Orders page.
   useEffect(() => {
@@ -666,6 +697,11 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
                   <p className="mt-1 text-[11px] text-slate-500">
                     Verify your email so we can send order updates and let you track your orders later.
                   </p>
+                  {hasPrefilledAddress && !existingOrderId && (
+                    <p className="mt-0.5 text-[11px] text-emerald-600">
+                      We pre-filled your shipping details from your last paid order. You can edit anything that changed.
+                    </p>
+                  )}
                 </div>
 
                 {/* Inline email login / OTP */}
