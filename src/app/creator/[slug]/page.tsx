@@ -9,6 +9,7 @@ import { ProductCard } from "@/components/product/ProductCard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { useCart } from "@/components/cart/CartProvider";
 import { accountsMe, type AccountsUser } from "@/lib/accountsClient";
+import { attachMockDeals, getMockSimilarProducts, MOCK_DEALS } from "@/config/dealsMock";
 
 type ChatMessage = {
   id: string;
@@ -61,11 +62,15 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
   const [accountsUser, setAccountsUser] = useState<AccountsUser | null>(null);
   const [authChecking, setAuthChecking] = useState(true);
   const [recentQueries, setRecentQueries] = useState<string[]>([]);
+  const [similarBaseProduct, setSimilarBaseProduct] = useState<Product | null>(null);
+  const [similarProducts, setSimilarProducts] = useState<Product[]>([]);
 
   const recentQueriesStorageKey = useMemo(
     () => `pivota_creator_recent_queries_${creator.slug}`,
     [creator.slug],
   );
+  const isMockMode =
+    !process.env.NEXT_PUBLIC_PIVOTA_AGENT_URL && !process.env.PIVOTA_AGENT_URL;
 
   const safeStringify = (value: any) => {
     try {
@@ -93,6 +98,20 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setIsLoading(true);
+
+    // Persist recent queries locally (last 5)
+    setRecentQueries((prev) => {
+      const withoutDuplicate = prev.filter((q) => q !== trimmed);
+      const updated = [...withoutDuplicate, trimmed].slice(-5);
+      if (typeof window !== "undefined") {
+        try {
+          window.localStorage.setItem(recentQueriesStorageKey, JSON.stringify(updated));
+        } catch (err) {
+          console.error("Failed to persist recent queries", err);
+        }
+      }
+      return updated;
+    });
 
     // Update recent queries list and persist to localStorage so that
     // "Continue from last chat" can show meaningful history even after
@@ -154,6 +173,9 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
 
       setLastResponse(data);
 
+      const normalizedProducts = data.products ?? [];
+      const withDeals = isMockMode ? attachMockDeals(normalizedProducts) : normalizedProducts;
+
       setMessages((prev) => [
         ...prev,
         {
@@ -162,7 +184,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
           content: data.reply,
         },
       ]);
-      setProducts(data.products ?? []);
+      setProducts(withDeals);
     } catch (error) {
       console.error(error);
       setLastResponse((prev: any) => prev ?? { error: "request failed", detail: String(error) });
@@ -180,6 +202,22 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
   };
 
   const userQueries = messages.filter((m) => m.role === "user");
+  const creatorDeals = useMemo(() => {
+    if (!isMockMode) {
+      const unique = new Map<string, any>();
+      products.forEach((p) => {
+        if (p.bestDeal) {
+          const id = p.bestDeal.dealId || `${p.id}-deal`;
+          if (!unique.has(id)) {
+            unique.set(id, p.bestDeal);
+          }
+        }
+      });
+      const deals = Array.from(unique.values());
+      if (deals.length > 0) return deals.slice(0, 3);
+    }
+    return MOCK_DEALS.slice(0, 3);
+  }, [isMockMode, products]);
 
   // Load signed-in user so we can reflect status in the creator header.
   useEffect(() => {
@@ -247,7 +285,8 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
 
         if (cancelled) return;
         if (data.products && data.products.length > 0) {
-          setProducts(data.products);
+          const withDeals = isMockMode ? attachMockDeals(data.products) : data.products;
+          setProducts(withDeals);
         }
 
         if (isDebug) {
@@ -279,7 +318,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
     return () => {
       cancelled = true;
     };
-  }, [creator.id, isDebug]);
+  }, [creator.id, isDebug, isMockMode]);
 
   return (
     <main className="min-h-screen lg:h-screen bg-gradient-to-b from-[#f8fbff] via-[#eef3fb] to-[#e6ecf7] text-slate-900">
@@ -452,6 +491,34 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
             <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
               {activeTab === "forYou" && (
                 <>
+                  {/* Creator deals */}
+                  <div className="mb-4 rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm">
+                    <h3 className="text-xs font-semibold text-slate-900">
+                      {creator.name}&apos;s deals
+                    </h3>
+                    <p className="mt-1 text-[11px] text-slate-500">
+                      Bundle discounts and flash deals curated for this creator.
+                    </p>
+                    <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      {creatorDeals.map((deal) => (
+                        <div
+                          key={deal.dealId}
+                          className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-[11px] text-slate-700"
+                        >
+                          <div className="mb-1 inline-flex items-center gap-2 rounded-full bg-slate-900 px-2 py-0.5 text-[10px] font-semibold text-white">
+                            {deal.type === "MULTI_BUY_DISCOUNT" ? "Bundle & save" : "Flash deal"}
+                          </div>
+                          <div className="text-xs font-semibold text-slate-900">{deal.label}</div>
+                          {deal.endAt && (
+                            <p className="mt-1 text-[10px] text-slate-500">
+                              Ends at {new Date(deal.endAt).toLocaleString()}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* Featured for you */}
                   <div className="space-y-4">
                     <SectionHeader
@@ -477,6 +544,12 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
                             creatorName={creator.name}
                             creatorId={creator.id}
                             creatorSlug={creator.slug}
+                            onSeeSimilar={(base) => {
+                              setSimilarBaseProduct(base);
+                              setSimilarProducts(
+                                getMockSimilarProducts(base, products, 6),
+                              );
+                            }}
                           />
                         ))}
                       </div>
@@ -543,6 +616,48 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
             </div>
           </section>
         </div>
+
+        {/* Similar items drawer */}
+        {similarBaseProduct && (
+          <div className="fixed inset-0 z-30 flex items-end justify-center bg-black/40 px-4 py-6 sm:items-center sm:p-6">
+            <div className="max-h-[80vh] w-full max-w-3xl overflow-hidden rounded-3xl bg-white p-4 shadow-2xl sm:p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-900">Similar items you may like</h3>
+                  <p className="mt-1 text-[11px] text-slate-600">
+                    Based on: {similarBaseProduct.title}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="rounded-full border border-slate-200 px-3 py-1 text-[11px] text-slate-600 hover:bg-slate-100"
+                  onClick={() => {
+                    setSimilarBaseProduct(null);
+                    setSimilarProducts([]);
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+                {similarProducts.map((p) => (
+                  <ProductCard
+                    key={p.id}
+                    product={p}
+                    creatorName={creator.name}
+                    creatorId={creator.id}
+                    creatorSlug={creator.slug}
+                  />
+                ))}
+                {similarProducts.length === 0 && (
+                  <p className="text-[12px] text-slate-500">
+                    No similar items yet. Try another product.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {isDebug && (
           <div className="border-t border-slate-200 bg-slate-950/90 px-4 py-4 text-[11px] leading-relaxed text-white md:px-6 lg:px-10">

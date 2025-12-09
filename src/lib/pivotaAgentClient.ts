@@ -41,8 +41,44 @@ export async function callPivotaCreatorAgent(params: {
 }): Promise<CreatorAgentResponse> {
   const urlEnv = process.env.PIVOTA_AGENT_URL as string | undefined;
   if (!urlEnv) {
-    // 明确要求不再使用本地 mock，环境变量缺失时直接报错，避免误以为是真实数据。
-    throw new Error("PIVOTA_AGENT_URL is not configured for creator agent backend.");
+    // Mock mode: return a short reply + a few mock products for local UI dev.
+    return {
+      reply:
+        "Here are some mock picks while the backend is not configured. Connect PIVOTA_AGENT_URL to see real items.",
+      products: [
+        {
+          id: "mock-1",
+          title: "Mock CloudFit Hoodie",
+          description: "A cozy hoodie for mock mode demos.",
+          price: 59,
+          currency: "USD",
+          image_url:
+            "https://images.pexels.com/photos/7671166/pexels-photo-7671166.jpeg?auto=compress&cs=tinysrgb&w=800",
+          inventory_quantity: 12,
+        },
+        {
+          id: "mock-2",
+          title: "Mock Everyday Bottle",
+          description: "Lightweight stainless bottle for desk or commute.",
+          price: 22,
+          currency: "USD",
+          image_url:
+            "https://images.pexels.com/photos/3735551/pexels-photo-3735551.jpeg?auto=compress&cs=tinysrgb&w=800",
+          inventory_quantity: 33,
+        },
+        {
+          id: "mock-3",
+          title: "Mock Urban Runner",
+          description: "Lightweight commuter sneakers with breathable mesh.",
+          price: 109,
+          currency: "USD",
+          image_url:
+            "https://images.pexels.com/photos/1124466/pexels-photo-1124466.jpeg?auto=compress&cs=tinysrgb&w=800",
+          inventory_quantity: 18,
+        },
+      ],
+      agentUrlUsed: "mock",
+    };
   }
   const url = urlEnv;
 

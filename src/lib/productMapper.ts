@@ -11,10 +11,11 @@ export function mapRawProduct(raw: RawProduct): Product {
     inventoryQuantity: raw.inventory_quantity,
     merchantId: raw.merchant_id,
     merchantName: raw.merchant_name,
-    // discountPercent / creatorMentions 后续可以从 raw 的扩展字段映射
     creatorMentions: raw.creator_mentions,
     fromCreatorDirectly: raw.from_creator_directly,
     detailUrl: raw.detail_url,
+    bestDeal: raw.best_deal,
+    allDeals: raw.all_deals,
   };
 }
 
