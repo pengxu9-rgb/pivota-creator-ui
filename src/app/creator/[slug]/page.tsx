@@ -491,34 +491,6 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
             <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
               {activeTab === "forYou" && (
                 <>
-                  {/* Creator deals */}
-                  <div className="mb-4 rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm">
-                    <h3 className="text-xs font-semibold text-slate-900">
-                      {creator.name}&apos;s deals
-                    </h3>
-                    <p className="mt-1 text-[11px] text-slate-500">
-                      Bundle discounts and flash deals curated for this creator.
-                    </p>
-                    <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      {creatorDeals.map((deal) => (
-                        <div
-                          key={deal.dealId}
-                          className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-[11px] text-slate-700"
-                        >
-                          <div className="mb-1 inline-flex items-center gap-2 rounded-full bg-slate-900 px-2 py-0.5 text-[10px] font-semibold text-white">
-                            {deal.type === "MULTI_BUY_DISCOUNT" ? "Bundle & save" : "Flash deal"}
-                          </div>
-                          <div className="text-xs font-semibold text-slate-900">{deal.label}</div>
-                          {deal.endAt && (
-                            <p className="mt-1 text-[10px] text-slate-500">
-                              Ends at {new Date(deal.endAt).toLocaleString()}
-                            </p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
                   {/* Featured for you */}
                   <div className="space-y-4">
                     <SectionHeader
@@ -589,14 +561,27 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
               {activeTab === "deals" && (
                 <div className="space-y-4">
                   <SectionHeader
-                    title="Deals"
-                    subtitle="Curated promotions and limited-time offers will appear here."
+                    title="Creator deals"
+                    subtitle="Bundle discounts and flash deals curated for this creator."
                   />
-                  <p className="text-[12px] text-slate-600">
-                    We’re working on a dedicated Deals feed for Creator Agent. For now, you can ask Nina’s
-                    agent on the left for budget-specific recommendations, and we’ll surface the best value
-                    options here in the future.
-                  </p>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {creatorDeals.map((deal) => (
+                      <div
+                        key={deal.dealId}
+                        className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-[11px] text-slate-700"
+                      >
+                        <div className="mb-1 inline-flex items-center gap-2 rounded-full bg-slate-900 px-2 py-0.5 text-[10px] font-semibold text-white">
+                          {deal.type === "MULTI_BUY_DISCOUNT" ? "Bundle & save" : "Flash deal"}
+                        </div>
+                        <div className="text-xs font-semibold text-slate-900">{deal.label}</div>
+                        {deal.endAt && (
+                          <p className="mt-1 text-[10px] text-slate-500">
+                            Ends at {new Date(deal.endAt).toLocaleString()}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
