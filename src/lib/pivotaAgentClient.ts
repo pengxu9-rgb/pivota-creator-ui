@@ -1,5 +1,4 @@
 import type { RawProduct } from "@/types/product";
-
 export type CreatorAgentMessage = {
   role: "user" | "assistant" | "system";
   content: string;
@@ -39,7 +38,9 @@ export async function callPivotaCreatorAgent(params: {
   personaPrompt: string;
   messages: CreatorAgentMessage[];
 }): Promise<CreatorAgentResponse> {
-  const urlEnv = process.env.PIVOTA_AGENT_URL as string | undefined;
+  const urlEnv = (process.env.PIVOTA_AGENT_URL || process.env.NEXT_PUBLIC_PIVOTA_AGENT_URL) as
+    | string
+    | undefined;
   if (!urlEnv) {
     // Mock mode: return a short reply + a few mock products for local UI dev.
     return {
@@ -219,4 +220,70 @@ export async function callPivotaCreatorAgent(params: {
     }
     throw error;
   }
+}
+
+export async function callPivotaFindSimilarProducts(params: {
+  creatorId: string;
+  productId: string;
+  limit?: number;
+}): Promise<RawProduct[]> {
+  const urlEnv = (process.env.PIVOTA_AGENT_URL || process.env.NEXT_PUBLIC_PIVOTA_AGENT_URL) as
+    | string
+    | undefined;
+
+  // Mock mode: reuse a small slice of products as "similar" when backend is unavailable.
+  if (!urlEnv) {
+    // We don't have access to the current product list here; return an empty array to let
+    // the caller decide a fallback (e.g., getMockSimilarProducts in the page).
+    return [];
+  }
+
+  const url = urlEnv;
+
+  const BEARER_API_KEY =
+    process.env.PIVOTA_AGENT_API_KEY || process.env.PIVOTA_API_KEY || "";
+
+  const X_AGENT_API_KEY =
+    process.env.NEXT_PUBLIC_AGENT_API_KEY ||
+    process.env.AGENT_API_KEY ||
+    process.env.SHOP_GATEWAY_AGENT_API_KEY ||
+    "";
+
+  const payload = {
+    action: "find_similar_products",
+    params: {
+      product_id: params.productId,
+      creator_id: params.creatorId,
+      limit: params.limit ?? 6,
+    },
+  };
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(BEARER_API_KEY ? { Authorization: `Bearer ${BEARER_API_KEY}` } : {}),
+      ...(X_AGENT_API_KEY ? { "X-Agent-API-Key": X_AGENT_API_KEY } : {}),
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    let errorBody: string | undefined;
+    try {
+      errorBody = await res.text();
+    } catch (err) {
+      errorBody = undefined;
+    }
+    throw new Error(
+      `Pivota agent similar request failed with status ${res.status}$${
+        errorBody ? ` body: ${errorBody}` : ""
+      }`,
+    );
+  }
+
+  const data = await res.json();
+  const rawProducts: RawProduct[] =
+    data.products ?? data.output?.products ?? data.items ?? data.output?.items ?? [];
+  return rawProducts;
 }

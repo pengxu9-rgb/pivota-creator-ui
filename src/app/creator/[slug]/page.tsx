@@ -64,6 +64,8 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
   const [recentQueries, setRecentQueries] = useState<string[]>([]);
   const [similarBaseProduct, setSimilarBaseProduct] = useState<Product | null>(null);
   const [similarProducts, setSimilarProducts] = useState<Product[]>([]);
+  const [isSimilarLoading, setIsSimilarLoading] = useState(false);
+  const [similarError, setSimilarError] = useState<string | null>(null);
 
   const recentQueriesStorageKey = useMemo(
     () => `pivota_creator_recent_queries_${creator.slug}`,
@@ -198,6 +200,40 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
       ]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSeeSimilar = async (base: Product) => {
+    setSimilarBaseProduct(base);
+    setIsSimilarLoading(true);
+    setSimilarError(null);
+    try {
+      const res = await fetch("/api/creator-agent/similar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          creatorSlug: creator.slug,
+          productId: base.id,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed with status ${res.status}`);
+      }
+      const data = (await res.json()) as { products?: Product[] };
+      setSimilarProducts(data.products ?? []);
+      // If backend returned nothing and we are in mock mode, show mock fallback for better UX.
+      if ((!data.products || data.products.length === 0) && isMockMode) {
+        setSimilarProducts(getMockSimilarProducts(base, products, 6));
+      }
+    } catch (error) {
+      console.error("See similar error", error);
+      setSimilarError("Failed to load similar items. Please try again.");
+      if (isMockMode) {
+        setSimilarProducts(getMockSimilarProducts(base, products, 6));
+      }
+    } finally {
+      setIsSimilarLoading(false);
     }
   };
 
@@ -516,12 +552,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
                             creatorName={creator.name}
                             creatorId={creator.id}
                             creatorSlug={creator.slug}
-                            onSeeSimilar={(base) => {
-                              setSimilarBaseProduct(base);
-                              setSimilarProducts(
-                                getMockSimilarProducts(base, products, 6),
-                              );
-                            }}
+                            onSeeSimilar={handleSeeSimilar}
                           />
                         ))}
                       </div>
@@ -604,41 +635,75 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
 
         {/* Similar items drawer */}
         {similarBaseProduct && (
-          <div className="fixed inset-0 z-30 flex items-end justify-center bg-black/40 px-4 py-6 sm:items-center sm:p-6">
-            <div className="max-h-[80vh] w-full max-w-3xl overflow-hidden rounded-3xl bg-white p-4 shadow-2xl sm:p-6">
-              <div className="flex items-start justify-between gap-4">
+          <div className="fixed inset-0 z-30 flex items-end bg-black/40 px-4 pb-6 sm:items-center sm:pb-6 sm:pt-6">
+            <div className="mx-auto max-h-[80vh] w-full max-w-3xl overflow-hidden rounded-3xl border border-white/10 bg-slate-950/95 p-4 text-slate-50 shadow-2xl backdrop-blur-xl sm:p-6">
+              <div className="flex items-center justify-between gap-2">
                 <div>
-                  <h3 className="text-sm font-semibold text-slate-900">Similar items you may like</h3>
-                  <p className="mt-1 text-[11px] text-slate-600">
+                  <h3 className="text-sm font-semibold text-slate-50">Similar items you may like</h3>
+                  <p className="text-[11px] text-slate-300">
                     Based on: {similarBaseProduct.title}
                   </p>
                 </div>
                 <button
                   type="button"
-                  className="rounded-full border border-slate-200 px-3 py-1 text-[11px] text-slate-600 hover:bg-slate-100"
+                  className="rounded-full bg-white/10 px-3 py-1 text-[11px] text-slate-100 hover:bg-white/20"
                   onClick={() => {
                     setSimilarBaseProduct(null);
                     setSimilarProducts([]);
+                    setSimilarError(null);
+                    setIsSimilarLoading(false);
                   }}
                 >
                   Close
                 </button>
               </div>
-              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
-                {similarProducts.map((p) => (
-                  <ProductCard
-                    key={p.id}
-                    product={p}
-                    creatorName={creator.name}
-                    creatorId={creator.id}
-                    creatorSlug={creator.slug}
-                  />
-                ))}
-                {similarProducts.length === 0 && (
-                  <p className="text-[12px] text-slate-500">
-                    No similar items yet. Try another product.
-                  </p>
+
+              <div className="mt-3 min-h-[140px]">
+                {isSimilarLoading && (
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+                    {Array.from({ length: 6 }).map((_, idx) => (
+                      <div key={idx} className="h-32 animate-pulse rounded-2xl bg-white/10" />
+                    ))}
+                  </div>
                 )}
+
+                {!isSimilarLoading && similarError && (
+                  <div className="space-y-2">
+                    <p className="text-[11px] text-red-300">{similarError}</p>
+                    <button
+                      type="button"
+                      className="rounded-full bg-white/10 px-3 py-1 text-[11px] text-slate-100 hover:bg-white/20"
+                      onClick={() => handleSeeSimilar(similarBaseProduct)}
+                    >
+                      Try again
+                    </button>
+                  </div>
+                )}
+
+                {!isSimilarLoading &&
+                  !similarError &&
+                  similarProducts.length === 0 && (
+                    <p className="text-[11px] text-slate-300">
+                      No similar items found yet.
+                    </p>
+                  )}
+
+                {!isSimilarLoading &&
+                  !similarError &&
+                  similarProducts.length > 0 && (
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+                      {similarProducts.map((p) => (
+                        <ProductCard
+                          key={p.id}
+                          product={p}
+                          creatorName={creator.name}
+                          creatorId={creator.id}
+                          creatorSlug={creator.slug}
+                          onSeeSimilar={handleSeeSimilar}
+                        />
+                      ))}
+                    </div>
+                  )}
               </div>
             </div>
           </div>
