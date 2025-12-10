@@ -37,6 +37,8 @@ export async function callPivotaCreatorAgent(params: {
   creatorName: string;
   personaPrompt: string;
   messages: CreatorAgentMessage[];
+  userId?: string | null;
+  recentQueries?: string[];
 }): Promise<CreatorAgentResponse> {
   const urlEnv = (process.env.PIVOTA_AGENT_URL || process.env.NEXT_PUBLIC_PIVOTA_AGENT_URL) as
     | string
@@ -87,25 +89,28 @@ export async function callPivotaCreatorAgent(params: {
   const userQueryRaw = lastUserMessage?.content ?? "";
   const hasUserQuery = userQueryRaw.trim().length > 0;
   const query = normalizeQuery(userQueryRaw);
+  const recentQueries = params.recentQueries?.filter(Boolean).slice(-5);
 
   // 与 Shopping Agent 前端保持一致的调用协议：顶层只使用 operation + payload，
   // 额外信息放在 metadata，方便后端按 creatorId 做过滤/打标。
   const basePayload = {
-    // 后端明确建议：跨商户搜索使用 find_products，
-    // 不填 merchant_id 即为跨商户。
-    operation: "find_products",
+    // 跨商户搜索：使用 find_products_multi，limit 支持多商户场景。
+    operation: "find_products_multi",
     payload: {
       search: {
-        // 与 Shopping Agent 的 sendMessage 逻辑对齐：
-        // page + page_size 分页，不强制只看有库存。
+        // page + limit 分页，不强制只看有库存。
         page: 1,
-        page_size: 8,
+        limit: 8,
         in_stock_only: false,
+      },
+      user: {
+        id: params.userId || undefined,
+        recent_queries: recentQueries,
       },
     },
     metadata: {
-      creatorId: params.creatorId,
-      creatorName: params.creatorName,
+      creator_id: params.creatorId,
+      creator_name: params.creatorName,
       // 目前后端不会使用 persona，只作为元信息占位，方便未来在网关/Agent 层接入。
       persona: params.personaPrompt,
       source: "creator-agent-ui",

@@ -141,6 +141,8 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
             role: m.role,
             content: m.content,
           })),
+          userId: accountsUser?.id || accountsUser?.email || null,
+          recentQueries,
         }),
       });
 
@@ -308,6 +310,8 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
           body: JSON.stringify({
             creatorId: creator.id,
             messages: [] as { role: "user" | "assistant"; content: string }[],
+            userId: accountsUser?.id || accountsUser?.email || null,
+            recentQueries,
           }),
         });
         if (!res.ok) return;
@@ -354,7 +358,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
     return () => {
       cancelled = true;
     };
-  }, [creator.id, isDebug, isMockMode]);
+  }, [creator.id, isDebug, isMockMode, accountsUser?.id, accountsUser?.email, recentQueries]);
 
   return (
     <main className="min-h-screen lg:h-screen bg-gradient-to-b from-[#f8fbff] via-[#eef3fb] to-[#e6ecf7] text-slate-900">

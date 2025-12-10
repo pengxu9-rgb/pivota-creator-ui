@@ -5,9 +5,11 @@ import { mapRawProducts } from "@/lib/productMapper";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { creatorId, messages } = body as {
+  const { creatorId, messages, userId, recentQueries } = body as {
     creatorId: string;
     messages: { role: "user" | "assistant"; content: string }[];
+    userId?: string | null;
+    recentQueries?: string[];
   };
 
   const creator = getCreatorById(creatorId);
@@ -21,6 +23,8 @@ export async function POST(req: NextRequest) {
       creatorName: creator.name,
       personaPrompt: creator.personaPrompt,
       messages: messages,
+      userId: userId ?? undefined,
+      recentQueries,
     });
 
     const products = mapRawProducts(response.products);
