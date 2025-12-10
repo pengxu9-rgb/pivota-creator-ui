@@ -25,8 +25,9 @@ export interface RawProduct {
   from_creator_directly?: boolean;
   detail_url?: string;
   // Deal info from backend
-  best_deal?: ProductBestDeal;
-  all_deals?: ProductBestDeal[];
+  // Backend uses snake_case; mapper will normalize.
+  best_deal?: any;
+  all_deals?: any[];
 }
 
 export interface Product {
