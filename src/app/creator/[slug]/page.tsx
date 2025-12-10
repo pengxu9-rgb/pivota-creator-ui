@@ -360,6 +360,20 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
     };
   }, [creator.id, isDebug, isMockMode, accountsUser?.id, accountsUser?.email, recentQueries]);
 
+  // Prevent background scroll when the similar drawer is open.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const original = document.body.style.overflow;
+    if (similarBaseProduct) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = original;
+    }
+    return () => {
+      document.body.style.overflow = original;
+    };
+  }, [similarBaseProduct]);
+
   return (
     <main className="min-h-screen lg:h-screen bg-gradient-to-b from-[#f8fbff] via-[#eef3fb] to-[#e6ecf7] text-slate-900">
       <div className="pointer-events-none fixed inset-0 -z-10">
@@ -662,7 +676,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
                 </button>
               </div>
 
-              <div className="mt-3 min-h-[140px]">
+              <div className="mt-3 min-h-[140px] overflow-y-auto">
                 {isSimilarLoading && (
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
                     {Array.from({ length: 6 }).map((_, idx) => (
