@@ -71,8 +71,10 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
     () => `pivota_creator_recent_queries_${creator.slug}`,
     [creator.slug],
   );
+  // Only use mock mode in non-production without an explicit agent URL.
   const isMockMode =
-    !process.env.NEXT_PUBLIC_PIVOTA_AGENT_URL && !process.env.PIVOTA_AGENT_URL;
+    process.env.NODE_ENV !== "production" &&
+    !process.env.NEXT_PUBLIC_PIVOTA_AGENT_URL;
 
   const safeStringify = (value: any) => {
     try {
