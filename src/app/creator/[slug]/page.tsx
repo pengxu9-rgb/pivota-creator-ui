@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { Send, ShoppingCart } from "lucide-react";
 import { getCreatorBySlug, type CreatorAgentConfig } from "@/config/creatorAgents";
-import type { Product } from "@/types/product";
+import type { Product, SimilarProductItem } from "@/types/product";
 import { ProductCard } from "@/components/product/ProductCard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { useCart } from "@/components/cart/CartProvider";
@@ -63,7 +63,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
   const [authChecking, setAuthChecking] = useState(true);
   const [recentQueries, setRecentQueries] = useState<string[]>([]);
   const [similarBaseProduct, setSimilarBaseProduct] = useState<Product | null>(null);
-  const [similarProducts, setSimilarProducts] = useState<Product[]>([]);
+  const [similarItems, setSimilarItems] = useState<SimilarProductItem[]>([]);
   const [isSimilarLoading, setIsSimilarLoading] = useState(false);
   const [similarError, setSimilarError] = useState<string | null>(null);
 
@@ -209,6 +209,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
     setSimilarBaseProduct(base);
     setIsSimilarLoading(true);
     setSimilarError(null);
+    setSimilarItems([]);
     try {
       const res = await fetch("/api/creator-agent/similar", {
         method: "POST",
@@ -222,18 +223,15 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
       if (!res.ok) {
         throw new Error(`Failed with status ${res.status}`);
       }
-      const data = (await res.json()) as { products?: Product[] };
-      setSimilarProducts(data.products ?? []);
-      // If backend returned nothing and we are in mock mode, show mock fallback for better UX.
-      if ((!data.products || data.products.length === 0) && isMockMode) {
-        setSimilarProducts(getMockSimilarProducts(base, products, 6));
-      }
+      const data = (await res.json()) as {
+        items?: SimilarProductItem[];
+        baseProductId?: string;
+        strategyUsed?: string;
+      };
+      setSimilarItems(data.items ?? []);
     } catch (error) {
       console.error("See similar error", error);
       setSimilarError("Failed to load similar items. Please try again.");
-      if (isMockMode) {
-        setSimilarProducts(getMockSimilarProducts(base, products, 6));
-      }
     } finally {
       setIsSimilarLoading(false);
     }
@@ -667,7 +665,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
                   className="rounded-full bg-white/10 px-3 py-1 text-[11px] text-slate-100 hover:bg-white/20"
                   onClick={() => {
                     setSimilarBaseProduct(null);
-                    setSimilarProducts([]);
+                    setSimilarItems([]);
                     setSimilarError(null);
                     setIsSimilarLoading(false);
                   }}
@@ -700,7 +698,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
 
                 {!isSimilarLoading &&
                   !similarError &&
-                  similarProducts.length === 0 && (
+                  similarItems.length === 0 && (
                     <p className="text-[11px] text-slate-300">
                       No similar items found yet.
                     </p>
@@ -708,12 +706,12 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
 
                 {!isSimilarLoading &&
                   !similarError &&
-                  similarProducts.length > 0 && (
+                  similarItems.length > 0 && (
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
-                      {similarProducts.map((p) => (
+                      {similarItems.map((item) => (
                         <ProductCard
-                          key={p.id}
-                          product={p}
+                          key={item.product.id}
+                          product={item.product}
                           creatorName={creator.name}
                           creatorId={creator.id}
                           creatorSlug={creator.slug}

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCreatorBySlug } from "@/config/creatorAgents";
 import { callPivotaFindSimilarProducts } from "@/lib/pivotaAgentClient";
-import { mapRawProducts } from "@/lib/productMapper";
 
 export async function POST(req: Request) {
   try {
@@ -21,15 +20,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Creator not found" }, { status: 404 });
     }
 
-    const rawProducts = await callPivotaFindSimilarProducts({
+    const similar = await callPivotaFindSimilarProducts({
       creatorId: creator.id,
       productId,
       limit,
     });
 
-    const products = mapRawProducts(rawProducts);
-
-    return NextResponse.json({ products });
+    return NextResponse.json({
+      baseProductId: similar.base_product_id,
+      strategyUsed: similar.strategy_used,
+      items: similar.items,
+    });
   } catch (error) {
     console.error("[creator-agent/similar] error", error);
     return NextResponse.json(

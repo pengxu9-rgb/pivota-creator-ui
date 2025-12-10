@@ -49,3 +49,23 @@ export interface Product {
   bestDeal?: ProductBestDeal;
   allDeals?: ProductBestDeal[];
 }
+
+// Treat ProductBestDeal as a reusable offer type for similarity responses.
+export type Offer = ProductBestDeal;
+
+export interface SimilarProductItem {
+  product: Product;
+  best_deal?: Offer;
+  all_deals?: Offer[];
+  scores?: {
+    similarity?: number;
+    personalization?: number;
+  };
+  reason?: string;
+}
+
+export interface FindSimilarProductsResponse {
+  base_product_id: string;
+  strategy_used: "content_embedding" | "co_view" | "same_merchant_first" | "auto";
+  items: SimilarProductItem[];
+}

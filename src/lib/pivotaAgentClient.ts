@@ -1,4 +1,9 @@
-import type { RawProduct } from "@/types/product";
+import type {
+  RawProduct,
+  FindSimilarProductsResponse,
+  SimilarProductItem,
+} from "@/types/product";
+import { mapRawProduct } from "@/lib/productMapper";
 export type CreatorAgentMessage = {
   role: "user" | "assistant" | "system";
   content: string;
@@ -228,19 +233,22 @@ export async function callPivotaCreatorAgent(params: {
 }
 
 export async function callPivotaFindSimilarProducts(params: {
-  creatorId: string;
+  creatorId?: string;
   productId: string;
   limit?: number;
-}): Promise<RawProduct[]> {
+  strategy?: "auto" | "content_embedding" | "co_view" | "same_merchant_first";
+}): Promise<FindSimilarProductsResponse> {
   const urlEnv = (process.env.PIVOTA_AGENT_URL || process.env.NEXT_PUBLIC_PIVOTA_AGENT_URL) as
     | string
     | undefined;
 
   // Mock mode: reuse a small slice of products as "similar" when backend is unavailable.
   if (!urlEnv) {
-    // We don't have access to the current product list here; return an empty array to let
-    // the caller decide a fallback (e.g., getMockSimilarProducts in the page).
-    return [];
+    return {
+      base_product_id: params.productId,
+      strategy_used: "auto",
+      items: [],
+    };
   }
 
   const url = urlEnv;
@@ -255,11 +263,16 @@ export async function callPivotaFindSimilarProducts(params: {
     "";
 
   const payload = {
-    action: "find_similar_products",
-    params: {
+    operation: "find_similar_products",
+    payload: {
       product_id: params.productId,
       creator_id: params.creatorId,
       limit: params.limit ?? 6,
+      strategy: params.strategy ?? "auto",
+    },
+    metadata: {
+      source: "creator-agent-ui",
+      creator_id: params.creatorId,
     },
   };
 
@@ -289,12 +302,38 @@ export async function callPivotaFindSimilarProducts(params: {
     }
 
     const data = await res.json();
-    const rawProducts: RawProduct[] =
-      data.products ?? data.output?.products ?? data.items ?? data.output?.items ?? [];
-    return rawProducts;
+    const itemsRaw: any[] = data.items ?? data.products ?? data.output?.items ?? [];
+    const mappedItems: SimilarProductItem[] = itemsRaw.map((item) => {
+      const rawProd: RawProduct | undefined =
+        item.product ?? item.raw_product ?? item.product_raw ?? item;
+      const product = rawProd ? mapRawProduct(rawProd) : (mapRawProduct as any)(item);
+      const bestDeal = item.best_deal ?? product.bestDeal;
+      const allDeals = item.all_deals ?? product.allDeals ?? [];
+      return {
+        product: {
+          ...product,
+          bestDeal: product.bestDeal ?? bestDeal,
+          allDeals: product.allDeals ?? allDeals,
+        },
+        best_deal: bestDeal,
+        all_deals: allDeals,
+        scores: item.scores,
+        reason: item.reason,
+      };
+    });
+
+    return {
+      base_product_id: data.base_product_id || params.productId,
+      strategy_used: data.strategy_used || "auto",
+      items: mappedItems,
+    };
   } catch (err) {
     console.error("callPivotaFindSimilarProducts error", err);
     // Graceful fallback: return empty and let caller decide UI handling.
-    return [];
+    return {
+      base_product_id: params.productId,
+      strategy_used: "auto",
+      items: [],
+    };
   }
 }
