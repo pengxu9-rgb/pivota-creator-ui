@@ -263,32 +263,38 @@ export async function callPivotaFindSimilarProducts(params: {
     },
   };
 
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(BEARER_API_KEY ? { Authorization: `Bearer ${BEARER_API_KEY}` } : {}),
-      ...(X_AGENT_API_KEY ? { "X-Agent-API-Key": X_AGENT_API_KEY } : {}),
-    },
-    body: JSON.stringify(payload),
-  });
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(BEARER_API_KEY ? { Authorization: `Bearer ${BEARER_API_KEY}` } : {}),
+        ...(X_AGENT_API_KEY ? { "X-Agent-API-Key": X_AGENT_API_KEY } : {}),
+      },
+      body: JSON.stringify(payload),
+    });
 
-  if (!res.ok) {
-    let errorBody: string | undefined;
-    try {
-      errorBody = await res.text();
-    } catch (err) {
-      errorBody = undefined;
+    if (!res.ok) {
+      let errorBody: string | undefined;
+      try {
+        errorBody = await res.text();
+      } catch (err) {
+        errorBody = undefined;
+      }
+      throw new Error(
+        `Pivota agent similar request failed with status ${res.status}${
+          errorBody ? ` body: ${errorBody}` : ""
+        }`,
+      );
     }
-    throw new Error(
-      `Pivota agent similar request failed with status ${res.status}$${
-        errorBody ? ` body: ${errorBody}` : ""
-      }`,
-    );
-  }
 
-  const data = await res.json();
-  const rawProducts: RawProduct[] =
-    data.products ?? data.output?.products ?? data.items ?? data.output?.items ?? [];
-  return rawProducts;
+    const data = await res.json();
+    const rawProducts: RawProduct[] =
+      data.products ?? data.output?.products ?? data.items ?? data.output?.items ?? [];
+    return rawProducts;
+  } catch (err) {
+    console.error("callPivotaFindSimilarProducts error", err);
+    // Graceful fallback: return empty and let caller decide UI handling.
+    return [];
+  }
 }
