@@ -1,5 +1,10 @@
 import type { Product, ProductBestDeal, RawProduct } from "@/types/product";
 
+function stripHtml(value: string | undefined | null): string {
+  if (!value) return "";
+  return value.replace(/<[^>]+>/g, "").trim();
+}
+
 function normalizeDeal(raw: any, productId: string): ProductBestDeal {
   if (!raw) {
     return {
@@ -45,7 +50,7 @@ export function mapRawProduct(raw: RawProduct): Product {
   return {
     id: raw.id,
     title: raw.title,
-    description: raw.description,
+    description: stripHtml(raw.description),
     price: raw.price,
     currency: raw.currency,
     imageUrl: raw.image_url,

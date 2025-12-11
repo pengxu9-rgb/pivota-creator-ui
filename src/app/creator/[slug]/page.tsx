@@ -58,7 +58,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
   const searchParams = useSearchParams();
   const isDebug = useMemo(() => searchParams?.get("debug") === "1", [searchParams]);
   const router = useRouter();
-  const { items: cartItems, open: openCart, addItem, clear } = useCart();
+  const { items: cartItems, open: openCart, addItem, clear, close } = useCart();
   const [accountsUser, setAccountsUser] = useState<AccountsUser | null>(null);
   const [authChecking, setAuthChecking] = useState(true);
   const [recentQueries, setRecentQueries] = useState<string[]>([]);
@@ -731,9 +731,15 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
         )}
 
         {detailProduct && (
-          <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4 py-6">
-            <div className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-3xl bg-white p-4 text-slate-900 shadow-2xl sm:p-6">
-              <div className="flex items-start justify-between gap-3">
+          <div
+            className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4 py-6"
+            onClick={() => setDetailProduct(null)}
+          >
+            <div
+              className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-4 text-slate-900 shadow-2xl sm:p-6 md:flex md:gap-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between gap-3 md:flex-[0_0_55%]">
                 <div>
                   <h3 className="text-sm font-semibold">{detailProduct.title}</h3>
                   {detailProduct.merchantName && (
@@ -752,7 +758,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
               </div>
 
               {detailProduct.imageUrl && (
-                <div className="mt-3 overflow-hidden rounded-2xl bg-slate-100">
+                <div className="mt-3 overflow-hidden rounded-2xl bg-slate-100 md:mt-0 md:flex-1">
                   <img
                     src={detailProduct.imageUrl}
                     alt={detailProduct.title}
@@ -783,19 +789,22 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
                     type="button"
                     className="flex-1 rounded-full bg-slate-900 px-3 py-2 text-[12px] font-medium text-white shadow-sm hover:bg-slate-800"
                     onClick={() => {
-                      addItem({
-                        id: detailProduct.id,
-                        productId: detailProduct.id,
-                        merchantId: detailProduct.merchantId,
-                        title: detailProduct.title,
-                        price: detailProduct.price,
-                        imageUrl: detailProduct.imageUrl,
-                        quantity: 1,
-                        currency: detailProduct.currency,
-                        creatorId: creator.id,
-                        creatorSlug: creator.slug,
-                        creatorName: creator.name,
-                      });
+                      addItem(
+                        {
+                          id: detailProduct.id,
+                          productId: detailProduct.id,
+                          merchantId: detailProduct.merchantId,
+                          title: detailProduct.title,
+                          price: detailProduct.price,
+                          imageUrl: detailProduct.imageUrl,
+                          quantity: 1,
+                          currency: detailProduct.currency,
+                          creatorId: creator.id,
+                          creatorSlug: creator.slug,
+                          creatorName: creator.name,
+                        },
+                        { openCart: true },
+                      );
                     }}
                   >
                     Add to cart
@@ -806,19 +815,23 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
                     onClick={() => {
                       // Buy now: checkout with this single item only.
                       clear();
-                      addItem({
-                        id: detailProduct.id,
-                        productId: detailProduct.id,
-                        merchantId: detailProduct.merchantId,
-                        title: detailProduct.title,
-                        price: detailProduct.price,
-                        imageUrl: detailProduct.imageUrl,
-                        quantity: 1,
-                        currency: detailProduct.currency,
-                        creatorId: creator.id,
-                        creatorSlug: creator.slug,
-                        creatorName: creator.name,
-                      });
+                      addItem(
+                        {
+                          id: detailProduct.id,
+                          productId: detailProduct.id,
+                          merchantId: detailProduct.merchantId,
+                          title: detailProduct.title,
+                          price: detailProduct.price,
+                          imageUrl: detailProduct.imageUrl,
+                          quantity: 1,
+                          currency: detailProduct.currency,
+                          creatorId: creator.id,
+                          creatorSlug: creator.slug,
+                          creatorName: creator.name,
+                        },
+                        { openCart: false },
+                      );
+                      close();
                       router.push("/checkout");
                     }}
                   >

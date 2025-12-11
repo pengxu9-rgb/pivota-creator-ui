@@ -124,19 +124,22 @@ export function ProductCard({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                addItem({
-                  id: product.id,
-                  productId: product.id,
-                  merchantId: product.merchantId,
-                  title: product.title,
-                  price: product.price,
-                  imageUrl: product.imageUrl,
-                  quantity: 1,
-                  currency: product.currency,
-                  creatorId,
-                  creatorSlug,
-                  creatorName,
-                });
+                addItem(
+                  {
+                    id: product.id,
+                    productId: product.id,
+                    merchantId: product.merchantId,
+                    title: product.title,
+                    price: product.price,
+                    imageUrl: product.imageUrl,
+                    quantity: 1,
+                    currency: product.currency,
+                    creatorId,
+                    creatorSlug,
+                    creatorName,
+                  },
+                  { openCart: true },
+                );
               }}
               className="ml-2 rounded-full bg-slate-900 px-3 py-1 text-[10px] font-medium text-white shadow-sm hover:bg-slate-800"
             >
