@@ -476,14 +476,22 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
             </button>
             {!authChecking &&
               (accountsUser ? (
-                <div className="inline-flex items-center rounded-full border border-slate-200 px-3 py-1.5 text-[11px] text-slate-600">
+                <button
+                  type="button"
+                  onClick={() =>
+                    router.push(
+                      `/account/orders?creator=${encodeURIComponent(creator.slug)}`,
+                    )
+                  }
+                  className="inline-flex items-center rounded-full border border-slate-200 px-3 py-1.5 text-[11px] text-slate-600 hover:bg-slate-100"
+                >
                   <span className="truncate max-w-[120px]">
                     {(() => {
                       const email = accountsUser.email || "Pivota user";
                       return email.length > 8 ? `${email.slice(0, 8)}…` : email;
                     })()}
                   </span>
-                </div>
+                </button>
               ) : (
                 <button
                   type="button"

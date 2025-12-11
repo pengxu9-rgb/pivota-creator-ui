@@ -44,8 +44,16 @@ export default function AccountLoginPage() {
     try {
       await accountsVerify(email, otp);
       setStep("success");
-      // After login, send user to orders list.
-      router.push("/account/orders");
+      // After login, send user back to where they came from (creator or home).
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        const returnTo = url.searchParams.get("return_to");
+        if (returnTo) {
+          router.push(returnTo);
+          return;
+        }
+      }
+      router.push("/");
     } catch (err) {
       console.error(err);
       setError("The code seems incorrect or expired. Please try again.");
@@ -124,4 +132,3 @@ export default function AccountLoginPage() {
     </main>
   );
 }
-
