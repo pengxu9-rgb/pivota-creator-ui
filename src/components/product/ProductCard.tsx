@@ -9,6 +9,7 @@ type Props = {
   creatorId?: string;
   creatorSlug?: string;
   onSeeSimilar?: (product: Product) => void;
+  onViewDetails?: (product: Product) => void;
 };
 
 export function ProductCard({
@@ -17,6 +18,7 @@ export function ProductCard({
   creatorId,
   creatorSlug,
   onSeeSimilar,
+  onViewDetails,
 }: Props) {
   const { addItem } = useCart();
 
@@ -117,15 +119,27 @@ export function ProductCard({
                 See similar
               </button>
             )}
-            {product.detailUrl && (
-              <a
-                href={product.detailUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="text-[10px] text-cyan-600 hover:underline"
-              >
-                View details
-              </a>
+            {(onViewDetails || product.detailUrl) && (
+              onViewDetails ? (
+                <button
+                  type="button"
+                  onClick={() => onViewDetails(product)}
+                  className="text-[10px] text-cyan-600 hover:underline"
+                >
+                  View details
+                </button>
+              ) : (
+                product.detailUrl && (
+                  <a
+                    href={product.detailUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[10px] text-cyan-600 hover:underline"
+                  >
+                    View details
+                  </a>
+                )
+              )
             )}
           </div>
         </div>

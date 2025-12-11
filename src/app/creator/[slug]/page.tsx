@@ -66,6 +66,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
   const [similarItems, setSimilarItems] = useState<SimilarProductItem[]>([]);
   const [isSimilarLoading, setIsSimilarLoading] = useState(false);
   const [similarError, setSimilarError] = useState<string | null>(null);
+  const [detailProduct, setDetailProduct] = useState<Product | null>(null);
 
   const recentQueriesStorageKey = useMemo(
     () => `pivota_creator_recent_queries_${creator.slug}`,
@@ -571,6 +572,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
                             creatorId={creator.id}
                             creatorSlug={creator.slug}
                             onSeeSimilar={handleSeeSimilar}
+                            onViewDetails={setDetailProduct}
                           />
                         ))}
                       </div>
@@ -718,10 +720,74 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
                           creatorId={creator.id}
                           creatorSlug={creator.slug}
                           onSeeSimilar={handleSeeSimilar}
+                          onViewDetails={setDetailProduct}
                         />
                       ))}
                     </div>
                   )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {detailProduct && (
+          <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4 py-6">
+            <div className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-3xl bg-white p-4 text-slate-900 shadow-2xl sm:p-6">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-semibold">{detailProduct.title}</h3>
+                  {detailProduct.merchantName && (
+                    <p className="mt-0.5 text-[11px] text-slate-500">
+                      Sold by {detailProduct.merchantName}
+                    </p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  className="rounded-full bg-slate-100 px-3 py-1 text-[11px] text-slate-700 hover:bg-slate-200"
+                  onClick={() => setDetailProduct(null)}
+                >
+                  Close
+                </button>
+              </div>
+
+              {detailProduct.imageUrl && (
+                <div className="mt-3 overflow-hidden rounded-2xl bg-slate-100">
+                  <img
+                    src={detailProduct.imageUrl}
+                    alt={detailProduct.title}
+                    className="w-full object-cover"
+                  />
+                </div>
+              )}
+
+              <div className="mt-3 space-y-2 text-[13px]">
+                <div className="text-lg font-semibold">
+                  {detailProduct.currency} {detailProduct.price.toFixed(2)}
+                </div>
+                {detailProduct.description && (
+                  <p className="text-[12px] leading-relaxed text-slate-700">
+                    {detailProduct.description}
+                  </p>
+                )}
+                {typeof detailProduct.inventoryQuantity === "number" && (
+                  <p className="text-[11px] text-slate-500">
+                    Stock:{" "}
+                    {detailProduct.inventoryQuantity > 0
+                      ? `${detailProduct.inventoryQuantity} available`
+                      : "Out of stock"}
+                  </p>
+                )}
+                {detailProduct.detailUrl && (
+                  <a
+                    href={detailProduct.detailUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex text-[11px] text-cyan-600 hover:underline"
+                  >
+                    Open store page
+                  </a>
+                )}
               </div>
             </div>
           </div>
