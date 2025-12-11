@@ -732,14 +732,15 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
 
         {detailProduct && (
           <div
-            className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4 py-6"
+            className="fixed inset-0 z-40 flex items-center justify-center bg-black/40"
             onClick={() => setDetailProduct(null)}
           >
             <div
-              className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-4 text-slate-900 shadow-2xl sm:p-6 md:flex md:gap-6"
+              className="flex h-[100vh] w-full max-w-md flex-col overflow-hidden bg-white p-4 text-slate-900 shadow-2xl sm:h-[90vh] sm:max-w-3xl sm:rounded-3xl sm:p-6"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-start justify-between gap-3 md:flex-[0_0_55%]">
+              {/* Header */}
+              <div className="flex items-start justify-between gap-3">
                 <div>
                   <h3 className="text-sm font-semibold">{detailProduct.title}</h3>
                   {detailProduct.merchantName && (
@@ -757,91 +758,100 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
                 </button>
               </div>
 
-              {detailProduct.imageUrl && (
-                <div className="mt-3 overflow-hidden rounded-2xl bg-slate-100 md:mt-0 md:flex-1">
-                  <img
-                    src={detailProduct.imageUrl}
-                    alt={detailProduct.title}
-                    className="w-full object-cover"
-                  />
-                </div>
-              )}
+              {/* Main content: image + text */}
+              <div className="mt-4 flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto md:flex-row">
+                {detailProduct.imageUrl && (
+                  <div className="md:w-1/2 w-full">
+                    <div className="relative w-full overflow-hidden rounded-2xl bg-slate-100 aspect-[3/4]">
+                      <img
+                        src={detailProduct.imageUrl}
+                        alt={detailProduct.title}
+                        className="absolute inset-0 h-full w-full object-cover"
+                      />
+                    </div>
+                  </div>
+                )}
 
-              <div className="mt-3 space-y-2 text-[13px]">
-                <div className="text-lg font-semibold">
-                  {detailProduct.currency} {detailProduct.price.toFixed(2)}
+                <div className="flex flex-1 flex-col space-y-3 text-[13px]">
+                  <div className="text-lg font-semibold">
+                    {detailProduct.currency} {detailProduct.price.toFixed(2)}
+                  </div>
+
+                  {detailProduct.description && (
+                    <p className="text-[12px] leading-relaxed text-slate-700">
+                      {detailProduct.description}
+                    </p>
+                  )}
+
+                  {typeof detailProduct.inventoryQuantity === "number" && (
+                    <p className="text-[11px] text-slate-500">
+                      Stock:{" "}
+                      {detailProduct.inventoryQuantity > 0
+                        ? `${detailProduct.inventoryQuantity} available`
+                        : "Out of stock"}
+                    </p>
+                  )}
+
+                  <div className="pt-2 flex gap-2">
+                    <button
+                      type="button"
+                      className="flex-1 rounded-full bg-slate-900 px-3 py-2 text-[12px] font-medium text-white shadow-sm hover:bg-slate-800"
+                      onClick={() => {
+                        addItem({
+                          id: detailProduct.id,
+                          productId: detailProduct.id,
+                          merchantId: detailProduct.merchantId,
+                          title: detailProduct.title,
+                          price: detailProduct.price,
+                          imageUrl: detailProduct.imageUrl,
+                          quantity: 1,
+                          currency: detailProduct.currency,
+                          creatorId: creator.id,
+                          creatorSlug: creator.slug,
+                          creatorName: creator.name,
+                        });
+                      }}
+                    >
+                      Add to cart
+                    </button>
+                    <button
+                      type="button"
+                      className="flex-1 rounded-full border border-slate-300 px-3 py-2 text-[12px] font-medium text-slate-800 hover:bg-slate-100"
+                      onClick={() => {
+                        // Buy now: checkout with this single item only.
+                        clear();
+                        addItem({
+                          id: detailProduct.id,
+                          productId: detailProduct.id,
+                          merchantId: detailProduct.merchantId,
+                          title: detailProduct.title,
+                          price: detailProduct.price,
+                          imageUrl: detailProduct.imageUrl,
+                          quantity: 1,
+                          currency: detailProduct.currency,
+                          creatorId: creator.id,
+                          creatorSlug: creator.slug,
+                          creatorName: creator.name,
+                        });
+                        close();
+                        router.push("/checkout");
+                      }}
+                    >
+                      Buy now
+                    </button>
+                  </div>
+
+                  {detailProduct.detailUrl && (
+                    <a
+                      href={detailProduct.detailUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex text-[11px] text-cyan-600 hover:underline"
+                    >
+                      Open store page
+                    </a>
+                  )}
                 </div>
-                {detailProduct.description && (
-                  <p className="text-[12px] leading-relaxed text-slate-700">
-                    {detailProduct.description}
-                  </p>
-                )}
-                {typeof detailProduct.inventoryQuantity === "number" && (
-                  <p className="text-[11px] text-slate-500">
-                    Stock:{" "}
-                    {detailProduct.inventoryQuantity > 0
-                      ? `${detailProduct.inventoryQuantity} available`
-                      : "Out of stock"}
-                  </p>
-                )}
-                <div className="pt-2 flex gap-2">
-                  <button
-                    type="button"
-                    className="flex-1 rounded-full bg-slate-900 px-3 py-2 text-[12px] font-medium text-white shadow-sm hover:bg-slate-800"
-                    onClick={() => {
-                      addItem({
-                        id: detailProduct.id,
-                        productId: detailProduct.id,
-                        merchantId: detailProduct.merchantId,
-                        title: detailProduct.title,
-                        price: detailProduct.price,
-                        imageUrl: detailProduct.imageUrl,
-                        quantity: 1,
-                        currency: detailProduct.currency,
-                        creatorId: creator.id,
-                        creatorSlug: creator.slug,
-                        creatorName: creator.name,
-                      });
-                    }}
-                  >
-                    Add to cart
-                  </button>
-                  <button
-                    type="button"
-                    className="flex-1 rounded-full border border-slate-300 px-3 py-2 text-[12px] font-medium text-slate-800 hover:bg-slate-100"
-                    onClick={() => {
-                      // Buy now: checkout with this single item only.
-                      clear();
-                      addItem({
-                        id: detailProduct.id,
-                        productId: detailProduct.id,
-                        merchantId: detailProduct.merchantId,
-                        title: detailProduct.title,
-                        price: detailProduct.price,
-                        imageUrl: detailProduct.imageUrl,
-                        quantity: 1,
-                        currency: detailProduct.currency,
-                        creatorId: creator.id,
-                        creatorSlug: creator.slug,
-                        creatorName: creator.name,
-                      });
-                      close();
-                      router.push("/checkout");
-                    }}
-                  >
-                    Buy now
-                  </button>
-                </div>
-                {detailProduct.detailUrl && (
-                  <a
-                    href={detailProduct.detailUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex text-[11px] text-cyan-600 hover:underline"
-                  >
-                    Open store page
-                  </a>
-                )}
               </div>
             </div>
           </div>
