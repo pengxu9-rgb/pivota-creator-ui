@@ -20,6 +20,87 @@ import {
 } from "@/lib/accountsClient";
 import "@adyen/adyen-web/dist/adyen.css";
 
+import type { CartItem } from "@/components/cart/CartProvider";
+
+function parseMultiBuyThreshold(label?: string | null): number | null {
+  if (!label) return null;
+  const match = label.match(/Buy\s+(\d+)/i);
+  if (!match) return null;
+  const value = Number(match[1]);
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
+
+function computeCartPromotionPreview(cartItems: CartItem[]) {
+  const subtotal = cartItems.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0,
+  );
+
+  if (!cartItems.length) {
+    return { subtotal, discount: 0, total: subtotal };
+  }
+
+  type GroupKey = string;
+  type Group = {
+    threshold: number;
+    discountPercent: number;
+    unitPrices: number[];
+  };
+
+  const groups = new Map<GroupKey, Group>();
+
+  for (const item of cartItems) {
+    const deal = item.bestDeal;
+    if (!deal || deal.type !== "MULTI_BUY_DISCOUNT" || !deal.discountPercent) {
+      continue;
+    }
+    const threshold = parseMultiBuyThreshold(deal.label);
+    if (!threshold) continue;
+
+    const merchantId = item.merchantId || "default";
+    const key = `${merchantId}:${deal.dealId}`;
+    let group = groups.get(key);
+    if (!group) {
+      group = {
+        threshold,
+        discountPercent: deal.discountPercent,
+        unitPrices: [],
+      };
+      groups.set(key, group);
+    }
+    if (group.threshold !== threshold) {
+      continue;
+    }
+    if (group.discountPercent !== deal.discountPercent) {
+      continue;
+    }
+
+    for (let i = 0; i < item.quantity; i += 1) {
+      group.unitPrices.push(item.price);
+    }
+  }
+
+  let discount = 0;
+  groups.forEach((group) => {
+    const { threshold, discountPercent } = group;
+    const unitPrices = [...group.unitPrices].sort((a, b) => b - a);
+    if (!unitPrices.length || threshold <= 0) return;
+
+    const totalQty = unitPrices.length;
+    const discountableQty = Math.floor(totalQty / threshold) * threshold;
+    if (discountableQty <= 0) return;
+
+    const discountBase = unitPrices
+      .slice(0, discountableQty)
+      .reduce((sum, price) => sum + price, 0);
+    discount += (discountBase * discountPercent) / 100;
+  });
+
+  const roundedDiscount = Math.round(discount * 100) / 100;
+  const total = Math.max(0, subtotal - roundedDiscount);
+  return { subtotal, discount: roundedDiscount, total };
+}
+
 type CheckoutStep = "form" | "submitting" | "success" | "error";
 type AuthStep = "checking" | "email" | "otp" | "authed";
 
@@ -202,6 +283,26 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
       console.error(err);
     }
   }, []);
+
+  useEffect(() => {
+    if (!items.length || existingOrderId) {
+      setPlacedItems(null);
+      setPlacedSubtotal(null);
+      setPlacedTotal(null);
+      setPlacedDiscount(null);
+      return;
+    }
+
+    const preview = computeCartPromotionPreview(items as CartItem[]);
+    setPlacedSubtotal(preview.subtotal);
+    if (preview.discount > 0) {
+      setPlacedTotal(preview.total);
+      setPlacedDiscount(preview.discount);
+    } else {
+      setPlacedTotal(preview.subtotal);
+      setPlacedDiscount(null);
+    }
+  }, [items, existingOrderId]);
 
   const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault();

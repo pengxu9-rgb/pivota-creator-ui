@@ -125,7 +125,7 @@ export function ProductCard({
             <button
               type="button"
               onClick={(e) => {
-                e.stopPropagation();
+              e.stopPropagation();
                 addItem({
                   id: product.id,
                   productId: product.id,
@@ -138,6 +138,8 @@ export function ProductCard({
                   creatorId,
                   creatorSlug,
                   creatorName,
+                  bestDeal: product.bestDeal ?? null,
+                  allDeals: product.allDeals ?? null,
                 });
               }}
               className="ml-2 rounded-full bg-slate-900 px-3 py-1 text-[10px] font-medium text-white shadow-sm hover:bg-slate-800"

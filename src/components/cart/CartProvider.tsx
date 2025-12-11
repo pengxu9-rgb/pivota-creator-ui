@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import type { ProductBestDeal } from "@/types/product";
 
 export type CartItem = {
   id: string;
@@ -14,6 +15,10 @@ export type CartItem = {
   creatorId?: string;
   creatorSlug?: string;
   creatorName?: string;
+  // Optional deal info so checkout can preview discounts before the order
+  // is actually created on the backend.
+  bestDeal?: ProductBestDeal | null;
+  allDeals?: ProductBestDeal[] | null;
 };
 
 type CartContextValue = {

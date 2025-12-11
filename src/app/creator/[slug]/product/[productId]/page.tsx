@@ -230,6 +230,8 @@ export default function CreatorProductDetailPage() {
                           creatorId: creator.id,
                           creatorSlug: creator.slug,
                           creatorName: creator.name,
+                          bestDeal: product.bestDeal ?? null,
+                          allDeals: product.allDeals ?? null,
                         });
                       }}
                     >
@@ -252,6 +254,8 @@ export default function CreatorProductDetailPage() {
                           creatorId: creator.id,
                           creatorSlug: creator.slug,
                           creatorName: creator.name,
+                          bestDeal: product.bestDeal ?? null,
+                          allDeals: product.allDeals ?? null,
                         });
                         close();
                         router.push("/checkout");
