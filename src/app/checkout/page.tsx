@@ -69,6 +69,8 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
   // has been cleared.
   const [placedItems, setPlacedItems] = useState<typeof items | null>(null);
   const [placedSubtotal, setPlacedSubtotal] = useState<number | null>(null);
+  const [placedTotal, setPlacedTotal] = useState<number | null>(null);
+  const [placedDiscount, setPlacedDiscount] = useState<number | null>(null);
 
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -103,6 +105,11 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
   const [isPaymentStep, setIsPaymentStep] = useState(false);
 
   const currency = existingCurrency || items[0]?.currency || "USD";
+  const effectiveSubtotal =
+    placedSubtotal != null ? placedSubtotal : subtotal;
+  const hasPromotionTotal = placedTotal != null;
+  const hasPromotionDiscount =
+    placedDiscount != null && placedDiscount > 0 && hasPromotionTotal;
 
   // Prefer the email coming from the accounts service, then fall back to any
   // local email the user has typed during this checkout session.
@@ -256,69 +263,129 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
       return;
     }
 
-    setError(null);
-    setStep("submitting");
-
     try {
-      // Ensure we have an order id; if not, create the order first. This
-      // happens on the very first click, so the same "Place order" action
-      // both creates the order and initiates the payment flow.
+      setError(null);
+
+      // Step 1: ensure we have an order id. For new orders, the first click
+      // only creates the order and prepares the payment step so that Stripe
+      // Elements / Adyen Drop-in can mount properly before we confirm.
       let currentOrderId: string | undefined =
         orderId || existingOrderId || undefined;
 
-      if (!currentOrderId) {
-        // Snapshot current cart so we can render a stable summary after success.
-        setPlacedItems(items);
-        setPlacedSubtotal(subtotal);
+      if (!isPaymentStep) {
+        setStep("submitting");
 
-        const orderRes = await createOrderFromCart({
-          items,
-          email: effectiveEmail,
-          name,
-          addressLine1,
-          addressLine2: addressLine2 || undefined,
-          city,
-          country,
-          postalCode,
-          phone: phone || undefined,
-          notes: notes || undefined,
-        });
+        if (!currentOrderId) {
+          // New order path: create the order first.
+          setPlacedItems(items);
+          setPlacedSubtotal(subtotal);
+          setPlacedTotal(null);
+          setPlacedDiscount(null);
 
-        const createdOrderId =
-          (orderRes as CheckoutOrderResponse).order_id ||
-          (orderRes as any).id;
+          const orderRes = await createOrderFromCart({
+            items,
+            email: effectiveEmail,
+            name,
+            addressLine1,
+            addressLine2: addressLine2 || undefined,
+            city,
+            country,
+            postalCode,
+            phone: phone || undefined,
+            notes: notes || undefined,
+          });
 
-        if (!createdOrderId) {
-          throw new Error("Order was created but no order ID was returned.");
+          const createdOrderId =
+            (orderRes as CheckoutOrderResponse).order_id ||
+            (orderRes as any).id;
+
+          if (!createdOrderId) {
+            throw new Error("Order was created but no order ID was returned.");
+          }
+
+          setOrderId(createdOrderId);
+          currentOrderId = createdOrderId;
+
+          // Try to infer PSP and any server-side discounted total from the
+          // initial order response so that checkout can display the actual
+          // charged amount (including promotions).
+          const anyOrder = orderRes as any;
+          const paymentObj = (anyOrder.payment || {}) as any;
+
+          let orderPsp: string | null =
+            (anyOrder.psp as string | null) ||
+            (paymentObj.psp as string | null) ||
+            null;
+
+          const paymentIntentId = paymentObj.payment_intent_id as
+            | string
+            | undefined;
+
+          if (!orderPsp && paymentIntentId?.startsWith("adyen_session")) {
+            orderPsp = "adyen";
+          }
+
+          if (orderPsp) {
+            setPspUsed(orderPsp);
+          }
+
+          // Server-side total (after promotions / discounts), if provided.
+          const serverTotal =
+            typeof anyOrder.total_amount === "number"
+              ? anyOrder.total_amount
+              : typeof anyOrder.total_amount_minor === "number"
+                ? anyOrder.total_amount_minor / 100
+                : null;
+
+          setPlacedSubtotal(subtotal);
+          if (serverTotal != null) {
+            setPlacedTotal(serverTotal);
+            const discount = Math.max(0, subtotal - serverTotal);
+            setPlacedDiscount(discount > 0 ? discount : null);
+          } else {
+            setPlacedTotal(subtotal);
+            setPlacedDiscount(null);
+          }
+        } else {
+          // Existing order (continue payment from Orders page): we only
+          // prepare the payment step so that card elements can mount.
+          setPlacedItems(items.length ? items : placedItems);
+          setPlacedSubtotal(
+            existingTotalMinor != null
+              ? existingTotalMinor / 100
+              : placedSubtotal ?? subtotal,
+          );
+          setPlacedTotal(
+            existingTotalMinor != null
+              ? existingTotalMinor / 100
+              : placedTotal ?? placedSubtotal ?? subtotal,
+          );
+          setPlacedDiscount(null);
         }
 
-        setOrderId(createdOrderId);
-        currentOrderId = createdOrderId;
-
-        // Try to infer PSP from the initial order response, similar to the
-        // main Shopping Agent checkout flow. This lets us hide the Stripe
-        // card box entirely when the merchant is routed to Adyen.
-        const anyOrder = orderRes as any;
-        const paymentObj = (anyOrder.payment || {}) as any;
-
-        let orderPsp: string | null =
-          (anyOrder.psp as string | null) ||
-          (paymentObj.psp as string | null) ||
-          null;
-
-        const paymentIntentId = paymentObj.payment_intent_id as
-          | string
-          | undefined;
-
-        if (!orderPsp && paymentIntentId?.startsWith("adyen_session")) {
-          orderPsp = "adyen";
-        }
-
-        if (orderPsp) {
-          setPspUsed(orderPsp);
-        }
-
+        // Enter payment step and return; the next click will actually trigger
+        // submit_payment + Stripe/Adyen flows once Elements are mounted.
         setIsPaymentStep(true);
+        setStep("form");
+        return;
+      }
+
+      // Step 2: we are already in the payment step; proceed with payment for
+      // the existing order id.
+      setStep("submitting");
+
+      if (!currentOrderId) {
+        throw new Error("Missing order id when trying to start payment.");
+      }
+
+      {
+        // Snapshot current cart so we can render a stable summary after success.
+        if (!placedItems) {
+          setPlacedItems(items);
+        }
+        if (placedSubtotal == null) {
+          setPlacedSubtotal(subtotal);
+        }
       }
 
       // Ask gateway to initiate payment. We will only show a "success" state
@@ -331,8 +398,16 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
             ? `${window.location.origin}/account/orders`
             : undefined;
 
+        // Use the server-side total when available so that expected_amount
+        // matches the discounted order amount (especially when promotions
+        // like multi-buy are applied). For existing orders we keep using the
+        // amount_minor passed from the Orders page.
         const amountToCharge =
-          existingTotalMinor != null ? existingTotalMinor : subtotal;
+          existingTotalMinor != null
+            ? existingTotalMinor / 100
+            : placedTotal != null
+              ? placedTotal
+              : subtotal;
 
         paymentRes = await submitPaymentForOrder({
           orderId: currentOrderId as string,
@@ -485,7 +560,15 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
 
       const isStripePsp = !pspUsed || pspUsed === "stripe";
 
-      if (clientSecret && stripe && elements && hasStripe && isStripePsp) {
+      if (clientSecret && hasStripe && isStripePsp) {
+        if (!stripe || !elements) {
+          setError(
+            "Payment form is not ready. Please refresh the page and try again.",
+          );
+          setStep("error");
+          return;
+        }
+
         const cardElement = elements.getElement(CardElement);
         if (!cardElement) {
           setError("Please enter your card details to pay.");
@@ -652,13 +735,27 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
                   <div className="flex items-center justify-between">
                     <span className="text-slate-600">Subtotal</span>
                     <span className="font-semibold text-slate-900">
-                      {currency}{" "}
-                      {(step === "success" && placedSubtotal != null
-                        ? placedSubtotal
-                        : subtotal
-                      ).toFixed(2)}
+                      {currency} {effectiveSubtotal.toFixed(2)}
                     </span>
                   </div>
+                  {hasPromotionTotal && (
+                    <>
+                      {hasPromotionDiscount && (
+                        <div className="mt-1 flex items-center justify-between text-[11px] text-slate-600">
+                          <span>Promotion discount</span>
+                          <span className="font-semibold text-emerald-600">
+                            -{currency} {placedDiscount!.toFixed(2)}
+                          </span>
+                        </div>
+                      )}
+                      <div className="mt-1 flex items-center justify-between">
+                        <span className="text-slate-900 font-semibold">Total</span>
+                        <span className="font-semibold text-slate-900">
+                          {currency} {placedTotal!.toFixed(2)}
+                        </span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </>
             )}
