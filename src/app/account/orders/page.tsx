@@ -123,7 +123,15 @@ export default function OrdersPage() {
               </p>
               <button
                 type="button"
-                onClick={() => router.push("/account/login")}
+                onClick={() => {
+                  const returnTo =
+                    typeof window !== "undefined"
+                      ? window.location.pathname + window.location.search
+                      : "/account/orders";
+                  router.push(
+                    `/account/login?return_to=${encodeURIComponent(returnTo)}`,
+                  );
+                }}
                 className="rounded-full bg-slate-900 px-4 py-2 text-xs font-medium text-white hover:bg-slate-800"
               >
                 Sign in with email

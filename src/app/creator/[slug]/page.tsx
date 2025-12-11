@@ -495,7 +495,15 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
               ) : (
                 <button
                   type="button"
-                  onClick={() => router.push("/account/login")}
+                  onClick={() => {
+                    const returnTo =
+                      typeof window !== "undefined"
+                        ? window.location.pathname + window.location.search
+                        : `/creator/${creator.slug}`;
+                    router.push(
+                      `/account/login?return_to=${encodeURIComponent(returnTo)}`,
+                    );
+                  }}
                   className="inline-flex rounded-full border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100"
                 >
                   Sign in
