@@ -78,7 +78,7 @@ export function ProductCard({
               e.stopPropagation();
               onSeeSimilar(product);
             }}
-            className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-full border border-white/40 bg-slate-900/30 px-2.5 py-1 text-[10px] font-medium text-slate-50 shadow-[0_0_0_1px_rgba(15,23,42,0.25),0_12px_30px_rgba(15,23,42,0.55)] backdrop-blur-md hover:bg-slate-900/45"
+            className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-full bg-slate-900/30 px-2.5 py-1 text-[10px] font-medium text-slate-50 shadow-[0_0_0_1px_rgba(15,23,42,0.25),0_12px_30px_rgba(15,23,42,0.55)] backdrop-blur-md hover:bg-slate-900/45"
           >
             <Search className="h-3 w-3" />
             <span>Find More</span>
