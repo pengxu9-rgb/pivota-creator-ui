@@ -2,6 +2,7 @@
 
 import type { Product } from "@/types/product";
 import { useCart } from "@/components/cart/CartProvider";
+import { Search } from "lucide-react";
 
 type Props = {
   product: Product;
@@ -70,6 +71,19 @@ export function ProductCard({
             {product.bestDeal.type === "MULTI_BUY_DISCOUNT" ? "Bundle & save" : "Flash deal"}
           </div>
         )}
+        {onSeeSimilar && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onSeeSimilar(product);
+            }}
+            className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-full bg-slate-900/85 px-2.5 py-1 text-[10px] font-medium text-slate-50 shadow-lg backdrop-blur-sm hover:bg-slate-900"
+          >
+            <Search className="h-3 w-3" />
+            <span>Find More</span>
+          </button>
+        )}
       </div>
       <div className="mt-2 flex flex-1 flex-col">
         <div className="line-clamp-2 text-xs font-medium text-slate-900">
@@ -108,18 +122,6 @@ export function ProductCard({
             )}
           </div>
           <div className="flex flex-col items-end gap-1">
-            {onSeeSimilar && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSeeSimilar(product);
-                }}
-                className="text-[10px] text-cyan-600 hover:text-cyan-500"
-              >
-                See similar
-              </button>
-            )}
             <button
               type="button"
               onClick={(e) => {

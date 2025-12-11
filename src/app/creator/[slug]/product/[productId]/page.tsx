@@ -237,7 +237,7 @@ export default function CreatorProductDetailPage() {
                     </button>
                     <button
                       type="button"
-                      className="flex-1 rounded-full border border-slate-300 px-3 py-2 text-[12px] font-medium text-slate-800 hover:bg-slate-100"
+                      className="flex-1 rounded-full bg-gradient-to-r from-[#7c8cff] via-[#62b2ff] to-[#7fffe1] px-3 py-2 text-[12px] font-medium text-slate-900 shadow-sm hover:brightness-110"
                       onClick={() => {
                         clear();
                         addItem({
@@ -280,4 +280,3 @@ export default function CreatorProductDetailPage() {
     </main>
   );
 }
-
