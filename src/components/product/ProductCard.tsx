@@ -36,8 +36,27 @@ export function ProductCard({
   const hasFlashPrice =
     typeof product.bestDeal?.flashPrice === "number" && product.bestDeal.flashPrice > 0;
 
+  const handleCardClick = () => {
+    if (onViewDetails) {
+      onViewDetails(product);
+    } else if (product.detailUrl) {
+      window.open(product.detailUrl, "_blank", "noreferrer");
+    }
+  };
+
   return (
-    <div className="group flex flex-col rounded-3xl border border-slate-200 bg-white/90 p-2.5 shadow-[0_18px_45px_rgba(15,23,42,0.18)] transition-all duration-300 hover:-translate-y-2 hover:border-cyan-300 hover:bg-white hover:shadow-[0_24px_80px_rgba(15,23,42,0.26)]">
+    <div
+      className="group flex cursor-pointer flex-col rounded-3xl border border-slate-200 bg-white/90 p-2.5 shadow-[0_18px_45px_rgba(15,23,42,0.18)] transition-all duration-300 hover:-translate-y-2 hover:border-cyan-300 hover:bg-white hover:shadow-[0_24px_80px_rgba(15,23,42,0.26)]"
+      role="button"
+      tabIndex={0}
+      onClick={handleCardClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleCardClick();
+        }
+      }}
+    >
       <div className="relative overflow-hidden rounded-2xl bg-slate-100">
         {product.imageUrl && (
           <img
@@ -91,7 +110,8 @@ export function ProductCard({
           <div className="flex flex-col items-end gap-1">
             <button
               type="button"
-              onClick={() =>
+              onClick={(e) => {
+                e.stopPropagation();
                 addItem({
                   id: product.id,
                   productId: product.id,
@@ -104,8 +124,8 @@ export function ProductCard({
                   creatorId,
                   creatorSlug,
                   creatorName,
-                })
-              }
+                });
+              }}
               className="ml-2 rounded-full bg-slate-900 px-3 py-1 text-[10px] font-medium text-white shadow-sm hover:bg-slate-800"
             >
               Add to cart
@@ -113,33 +133,14 @@ export function ProductCard({
             {onSeeSimilar && (
               <button
                 type="button"
-                onClick={() => onSeeSimilar(product)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSeeSimilar(product);
+                }}
                 className="text-[10px] text-cyan-600 hover:text-cyan-500"
               >
                 See similar
               </button>
-            )}
-            {(onViewDetails || product.detailUrl) && (
-              onViewDetails ? (
-                <button
-                  type="button"
-                  onClick={() => onViewDetails(product)}
-                  className="text-[10px] text-cyan-600 hover:underline"
-                >
-                  View details
-                </button>
-              ) : (
-                product.detailUrl && (
-                  <a
-                    href={product.detailUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-[10px] text-cyan-600 hover:underline"
-                  >
-                    View details
-                  </a>
-                )
-              )
             )}
           </div>
         </div>

@@ -58,7 +58,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
   const searchParams = useSearchParams();
   const isDebug = useMemo(() => searchParams?.get("debug") === "1", [searchParams]);
   const router = useRouter();
-  const { items: cartItems, open: openCart } = useCart();
+  const { items: cartItems, open: openCart, addItem } = useCart();
   const [accountsUser, setAccountsUser] = useState<AccountsUser | null>(null);
   const [authChecking, setAuthChecking] = useState(true);
   const [recentQueries, setRecentQueries] = useState<string[]>([]);
@@ -778,6 +778,51 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
                       : "Out of stock"}
                   </p>
                 )}
+                <div className="pt-2 flex gap-2">
+                  <button
+                    type="button"
+                    className="flex-1 rounded-full bg-slate-900 px-3 py-2 text-[12px] font-medium text-white shadow-sm hover:bg-slate-800"
+                    onClick={() => {
+                      addItem({
+                        id: detailProduct.id,
+                        productId: detailProduct.id,
+                        merchantId: detailProduct.merchantId,
+                        title: detailProduct.title,
+                        price: detailProduct.price,
+                        imageUrl: detailProduct.imageUrl,
+                        quantity: 1,
+                        currency: detailProduct.currency,
+                        creatorId: creator.id,
+                        creatorSlug: creator.slug,
+                        creatorName: creator.name,
+                      });
+                    }}
+                  >
+                    Add to cart
+                  </button>
+                  <button
+                    type="button"
+                    className="flex-1 rounded-full border border-slate-300 px-3 py-2 text-[12px] font-medium text-slate-800 hover:bg-slate-100"
+                    onClick={() => {
+                      addItem({
+                        id: detailProduct.id,
+                        productId: detailProduct.id,
+                        merchantId: detailProduct.merchantId,
+                        title: detailProduct.title,
+                        price: detailProduct.price,
+                        imageUrl: detailProduct.imageUrl,
+                        quantity: 1,
+                        currency: detailProduct.currency,
+                        creatorId: creator.id,
+                        creatorSlug: creator.slug,
+                        creatorName: creator.name,
+                      });
+                      router.push("/checkout");
+                    }}
+                  >
+                    Buy now
+                  </button>
+                </div>
                 {detailProduct.detailUrl && (
                   <a
                     href={detailProduct.detailUrl}
