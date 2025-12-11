@@ -2,6 +2,7 @@ import type {
   RawProduct,
   FindSimilarProductsResponse,
   SimilarProductItem,
+  Product,
 } from "@/types/product";
 import { mapRawProduct } from "@/lib/productMapper";
 export type CreatorAgentMessage = {
@@ -230,6 +231,77 @@ export async function callPivotaCreatorAgent(params: {
     }
     throw error;
   }
+}
+
+export async function callPivotaGetProductDetail(params: {
+  merchantId: string;
+  productId: string;
+}): Promise<{ product: Product; raw: any }> {
+  const urlEnv = (process.env.PIVOTA_AGENT_URL || process.env.NEXT_PUBLIC_PIVOTA_AGENT_URL) as
+    | string
+    | undefined;
+
+  if (!urlEnv) {
+    throw new Error("PIVOTA_AGENT_URL or NEXT_PUBLIC_PIVOTA_AGENT_URL is not configured");
+  }
+
+  const url = urlEnv;
+
+  const BEARER_API_KEY =
+    process.env.PIVOTA_AGENT_API_KEY || process.env.PIVOTA_API_KEY || "";
+
+  const X_AGENT_API_KEY =
+    process.env.NEXT_PUBLIC_AGENT_API_KEY ||
+    process.env.AGENT_API_KEY ||
+    process.env.SHOP_GATEWAY_AGENT_API_KEY ||
+    "";
+
+  const payload = {
+    operation: "get_product_detail",
+    payload: {
+      product: {
+        merchant_id: params.merchantId,
+        product_id: params.productId,
+      },
+    },
+    metadata: {
+      source: "creator-agent-ui",
+    },
+  };
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(BEARER_API_KEY ? { Authorization: `Bearer ${BEARER_API_KEY}` } : {}),
+      ...(X_AGENT_API_KEY ? { "X-Agent-API-Key": X_AGENT_API_KEY } : {}),
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    let bodyText: string | undefined;
+    try {
+      bodyText = await res.text();
+    } catch {
+      bodyText = undefined;
+    }
+    throw new Error(
+      `get_product_detail failed with status ${res.status}${
+        bodyText ? ` body: ${bodyText}` : ""
+      }`,
+    );
+  }
+
+  const data = await res.json();
+  const raw: RawProduct =
+    data.product ??
+    data.output?.product ??
+    data.product_raw ??
+    data;
+
+  const product = mapRawProduct(raw);
+  return { product, raw: data };
 }
 
 export async function callPivotaFindSimilarProducts(params: {

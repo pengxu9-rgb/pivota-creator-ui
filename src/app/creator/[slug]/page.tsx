@@ -67,6 +67,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
   const [isSimilarLoading, setIsSimilarLoading] = useState(false);
   const [similarError, setSimilarError] = useState<string | null>(null);
   const [detailProduct, setDetailProduct] = useState<Product | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   const recentQueriesStorageKey = useMemo(
     () => `pivota_creator_recent_queries_${creator.slug}`,
@@ -240,6 +241,23 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
     }
   };
 
+  const handleViewDetails = (base: Product) => {
+    if (isMobile) {
+      const params = new URLSearchParams();
+      if (base.merchantId) {
+        params.set("merchant_id", base.merchantId);
+      }
+      const query = params.toString();
+      router.push(
+        `/creator/${creator.slug}/product/${encodeURIComponent(base.id)}${
+          query ? `?${query}` : ""
+        }`,
+      );
+    } else {
+      setDetailProduct(base);
+    }
+  };
+
   const userQueries = messages.filter((m) => m.role === "user");
   const creatorDeals = useMemo(() => {
     if (!isMockMode) {
@@ -278,6 +296,19 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
     loadMe();
     return () => {
       cancelled = true;
+    };
+  }, []);
+
+  // Track viewport size so that mobile uses a full page for product detail.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const check = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    check();
+    window.addEventListener("resize", check);
+    return () => {
+      window.removeEventListener("resize", check);
     };
   }, []);
 
@@ -572,7 +603,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
                             creatorId={creator.id}
                             creatorSlug={creator.slug}
                             onSeeSimilar={handleSeeSimilar}
-                            onViewDetails={setDetailProduct}
+                            onViewDetails={handleViewDetails}
                           />
                         ))}
                       </div>
@@ -720,7 +751,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
                           creatorId={creator.id}
                           creatorSlug={creator.slug}
                           onSeeSimilar={handleSeeSimilar}
-                          onViewDetails={setDetailProduct}
+                          onViewDetails={handleViewDetails}
                         />
                       ))}
                     </div>
