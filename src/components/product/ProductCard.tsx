@@ -108,6 +108,18 @@ export function ProductCard({
             )}
           </div>
           <div className="flex flex-col items-end gap-1">
+            {onSeeSimilar && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSeeSimilar(product);
+                }}
+                className="text-[10px] text-cyan-600 hover:text-cyan-500"
+              >
+                See similar
+              </button>
+            )}
             <button
               type="button"
               onClick={(e) => {
@@ -130,18 +142,6 @@ export function ProductCard({
             >
               Add to cart
             </button>
-            {onSeeSimilar && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSeeSimilar(product);
-                }}
-                className="text-[10px] text-cyan-600 hover:text-cyan-500"
-              >
-                See similar
-              </button>
-            )}
           </div>
         </div>
       </div>
