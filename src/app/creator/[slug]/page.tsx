@@ -654,7 +654,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
         {/* Similar items drawer */}
         {similarBaseProduct && (
           <div className="fixed inset-0 z-30 flex items-end bg-black/40 px-4 pb-6 sm:items-center sm:pb-6 sm:pt-6">
-            <div className="mx-auto max-h-[80vh] w-full max-w-3xl overflow-hidden rounded-3xl border border-white/10 bg-slate-950/95 p-4 text-slate-50 shadow-2xl backdrop-blur-xl sm:p-6">
+            <div className="mx-auto flex max-h-[80vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-slate-950/95 p-4 text-slate-50 shadow-2xl backdrop-blur-xl sm:p-6">
               <div className="flex items-center justify-between gap-2">
                 <div>
                   <h3 className="text-sm font-semibold text-slate-50">Similar items you may like</h3>
@@ -676,7 +676,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
                 </button>
               </div>
 
-              <div className="mt-3 min-h-[140px] overflow-y-auto">
+              <div className="mt-3 min-h-[140px] flex-1 overflow-y-auto">
                 {isSimilarLoading && (
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
                     {Array.from({ length: 6 }).map((_, idx) => (
