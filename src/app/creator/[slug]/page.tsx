@@ -476,7 +476,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
             </button>
             {!authChecking &&
               (accountsUser ? (
-                <div className="hidden items-center rounded-full border border-slate-200 px-3 py-1.5 text-[11px] text-slate-600 sm:inline-flex">
+                <div className="inline-flex items-center rounded-full border border-slate-200 px-3 py-1.5 text-[11px] text-slate-600">
                   <span className="truncate max-w-[120px]">
                     {(() => {
                       const email = accountsUser.email || "Pivota user";
@@ -488,7 +488,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
                 <button
                   type="button"
                   onClick={() => router.push("/account/login")}
-                  className="hidden rounded-full border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 sm:inline-flex"
+                  className="inline-flex rounded-full border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100"
                 >
                   Sign in
                 </button>
