@@ -221,6 +221,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
         body: JSON.stringify({
           creatorSlug: creator.slug,
           productId: base.id,
+          limit: 9,
         }),
       });
 
@@ -611,7 +612,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                        {products.slice(0, 4).map((p) => (
+                        {products.slice(0, 6).map((p) => (
                           <ProductCard
                             key={p.id}
                             product={p}
@@ -728,7 +729,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
               <div className="mt-3 min-h-[140px] flex-1 overflow-y-auto">
                 {isSimilarLoading && (
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
-                    {Array.from({ length: 6 }).map((_, idx) => (
+                    {Array.from({ length: 9 }).map((_, idx) => (
                       <div key={idx} className="h-32 animate-pulse rounded-2xl bg-white/10" />
                     ))}
                   </div>
@@ -759,7 +760,7 @@ function CreatorAgentShell({ creator }: { creator: CreatorAgentConfig }) {
                   !similarError &&
                   similarItems.length > 0 && (
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
-                      {similarItems.map((item) => (
+                      {similarItems.slice(0, 9).map((item) => (
                         <ProductCard
                           key={item.product.id}
                           product={item.product}

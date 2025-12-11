@@ -127,6 +127,13 @@ export async function listMyOrders(
   return { items, next_cursor: nextCursor };
 }
 
+export async function cancelOrder(orderId: string, reason?: string): Promise<void> {
+  await callAccounts(`/orders/${encodeURIComponent(orderId)}/cancel`, {
+    method: "POST",
+    body: reason ? JSON.stringify({ reason }) : undefined,
+  });
+}
+
 export type ShippingAddress = {
   name?: string;
   address_line1?: string;

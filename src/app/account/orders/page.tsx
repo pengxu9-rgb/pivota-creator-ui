@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { listMyOrders, type OrdersListItem, accountsMe } from "@/lib/accountsClient";
+import { listMyOrders, type OrdersListItem, accountsMe, cancelOrder } from "@/lib/accountsClient";
 import { getCreatorBySlug } from "@/config/creatorAgents";
 
 export default function OrdersPage() {
@@ -147,66 +147,96 @@ export default function OrdersPage() {
             </p>
           ) : (
             <div className="space-y-3 text-sm">
-              {visibleOrders.map((order) => (
-                <div
-                  key={order.order_id}
-                  className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
-                >
-                  <div>
-                    <p className="text-xs font-medium text-slate-900">
-                      Order {order.order_id}
-                    </p>
-                    <p className="mt-0.5 text-[11px] text-slate-600">
-                      {order.items_summary || "Order from creator agent"}
-                    </p>
-                    {order.creator_name && (
-                      <p className="mt-0.5 text-[11px] text-slate-500">
-                        Creator: {order.creator_name}
+              {visibleOrders.map((order) => {
+                const canCancel = order.permissions?.can_cancel;
+                const isPending = order.payment_status === "pending";
+                return (
+                  <div
+                    key={order.order_id}
+                    className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
+                  >
+                    <div>
+                      <p className="text-xs font-medium text-slate-900">
+                        Order {order.order_id}
                       </p>
-                    )}
-                    <p className="mt-0.5 text-[11px] text-slate-500">
-                      {new Date(order.created_at).toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="flex flex-col items-end gap-1 text-right text-[11px]">
-                    <p className="font-semibold text-slate-900">
-                      {order.currency} {(order.total_amount_minor / 100).toFixed(2)}
-                    </p>
-                    <p className="text-slate-500">
-                      {order.payment_status === "paid"
-                        ? "Paid"
-                        : order.payment_status === "failed"
-                          ? order.permissions?.can_pay
-                            ? "Payment failed — continue payment to try another card."
-                            : "Payment failed."
-                          : order.payment_status === "pending"
+                      <p className="mt-0.5 text-[11px] text-slate-600">
+                        {order.items_summary || "Order from creator agent"}
+                      </p>
+                      {order.creator_name && (
+                        <p className="mt-0.5 text-[11px] text-slate-500">
+                          Creator: {order.creator_name}
+                        </p>
+                      )}
+                      <p className="mt-0.5 text-[11px] text-slate-500">
+                        {new Date(order.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1 text-right text-[11px]">
+                      <p className="font-semibold text-slate-900">
+                        {order.currency} {(order.total_amount_minor / 100).toFixed(2)}
+                      </p>
+                      <p className="text-slate-500">
+                        {order.payment_status === "paid"
+                          ? "Paid"
+                          : order.payment_status === "failed"
                             ? order.permissions?.can_pay
-                              ? "Payment pending — continue payment to complete this order."
-                              : "Payment pending — we’re still processing this payment."
-                            : order.payment_status}
-                    </p>
-                    {order.permissions?.can_pay && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          router.push(
-                            `/checkout?orderId=${encodeURIComponent(
-                              order.order_id,
-                            )}&amount_minor=${
-                              order.total_amount_minor
-                            }&currency=${order.currency}&items_summary=${encodeURIComponent(
-                              order.items_summary || "",
-                            )}`,
-                          )
-                        }
-                        className="mt-0.5 rounded-full bg-slate-900 px-3 py-1 text-[10px] font-medium text-white hover:bg-slate-800"
-                      >
-                        Continue payment
-                      </button>
-                    )}
+                              ? "Payment failed — continue payment to try another card."
+                              : "Payment failed."
+                            : order.payment_status === "pending"
+                              ? order.permissions?.can_pay
+                                ? "Payment pending — continue payment to complete this order."
+                                : "Payment pending — we’re still processing this payment."
+                              : order.payment_status}
+                      </p>
+                      <div className="mt-0.5 flex gap-2">
+                        {order.permissions?.can_pay && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              router.push(
+                                `/checkout?orderId=${encodeURIComponent(
+                                  order.order_id,
+                                )}&amount_minor=${
+                                  order.total_amount_minor
+                                }&currency=${order.currency}&items_summary=${encodeURIComponent(
+                                  order.items_summary || "",
+                                )}`,
+                              )
+                            }
+                            className="rounded-full bg-slate-900 px-3 py-1 text-[10px] font-medium text-white hover:bg-slate-800"
+                          >
+                            Continue payment
+                          </button>
+                        )}
+                        {canCancel && isPending && (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              try {
+                                const reason = window.prompt(
+                                  "Optional: tell us why you’re cancelling this order (leave empty to skip).",
+                                );
+                                await cancelOrder(order.order_id, reason || undefined);
+                                // Refresh list after cancellation
+                                const data = await listMyOrders(null, 20);
+                                setOrders(data.items || []);
+                              } catch (err) {
+                                console.error(err);
+                                alert(
+                                  "We couldn’t cancel this order right now. Please try again or contact support.",
+                                );
+                              }
+                            }}
+                            className="rounded-full border border-slate-300 px-3 py-1 text-[10px] font-medium text-slate-700 hover:bg-slate-100"
+                          >
+                            Cancel order
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </section>

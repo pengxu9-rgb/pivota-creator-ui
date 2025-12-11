@@ -339,7 +339,7 @@ export async function callPivotaFindSimilarProducts(params: {
     payload: {
       product_id: params.productId,
       creator_id: params.creatorId,
-      limit: params.limit ?? 6,
+      limit: params.limit ?? 9,
       strategy: params.strategy ?? "auto",
     },
     metadata: {
