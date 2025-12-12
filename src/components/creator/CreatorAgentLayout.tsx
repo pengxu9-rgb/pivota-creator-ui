@@ -303,7 +303,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
         )}
 
         {similarBaseProduct && (
-          <div className="fixed inset-0 z-30 flex items-end bg-black/40 px-4 pb-6 sm:items-center sm:pb-6 sm:pt-6">
+          <div className="fixed inset-0 z-50 flex items-end bg-black/40 px-4 pb-6 sm:items-center sm:pb-6 sm:pt-6">
             <div className="mx-auto flex max-h-[80vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-[#f0e2d6] bg-[#fffdf9] text-[#3f3125] shadow-xl sm:p-0">
               <div className="flex items-center justify-between gap-2 border-b border-[#f0e2d6] px-4 py-3 sm:px-6">
                 <div>
@@ -527,7 +527,11 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                     <button
                       type="button"
                       className="flex-1 rounded-full border border-[#f0e2d6] bg-white px-3 py-2 text-[12px] font-medium text-[#8c715c] shadow-sm hover:bg-[#fff0e3]"
-                      onClick={() => handleSeeSimilar(detailProduct)}
+                      onClick={() => {
+                        if (!detailProduct) return;
+                        closeDetail();
+                        handleSeeSimilar(detailProduct);
+                      }}
                     >
                       Find more like this
                     </button>
