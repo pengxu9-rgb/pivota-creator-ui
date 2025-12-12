@@ -2,7 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { listMyOrders, type OrdersListItem, accountsMe, cancelOrder } from "@/lib/accountsClient";
+import {
+  listMyOrders,
+  type OrdersListItem,
+  accountsMe,
+  cancelOrder,
+} from "@/lib/accountsClient";
 import { getCreatorBySlug } from "@/config/creatorAgents";
 
 export default function OrdersPage() {
@@ -91,65 +96,87 @@ export default function OrdersPage() {
   }, [orders, creatorSlug, creatorConfig]);
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#f8fbff] via-[#eef3fb] to-[#e6ecf7] text-slate-900">
-      <div className="mx-auto flex min-h-screen w-full max-w-4xl flex-col px-4 py-8 lg:px-8">
-        <header className="mb-4 flex items-center justify-between gap-4">
+    <main className="min-h-screen bg-gradient-to-b from-[#fffefc] via-[#fffaf6] to-[#fff7f2] text-[#3f3125]">
+      <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 py-6 lg:px-8">
+        <header className="mb-5 flex items-center justify-between gap-4 border-b border-[#f4e2d4] pb-4">
           <div>
-            <h1 className="text-lg font-semibold text-slate-900">
-              {creatorConfig ? `Orders with ${creatorConfig.name}` : "Your orders"}
+            <h1 className="text-xl font-semibold text-[#3f3125]">
+              My Orders
             </h1>
-            <p className="mt-1 text-sm text-slate-600">
+            <p className="mt-1 text-xs text-[#a38b78]">
               {creatorConfig
-                ? "Orders placed via this creator’s shopping agent."
-                : "Orders placed via Pivota shopping and creator agents."}
+                ? `Orders placed via ${creatorConfig.name}’s shopping agent.`
+                : "Track and manage your purchases from Pivota shopping and creator agents."}
             </p>
           </div>
           <button
             type="button"
-            onClick={() => router.push("/creator/nina-studio")}
-            className="rounded-full border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100"
+            onClick={() =>
+              creatorConfig
+                ? router.push(`/creator/${encodeURIComponent(creatorConfig.slug)}`)
+                : router.push("/creator/nina-studio")
+            }
+            className="rounded-full border border-[#f0e2d6] bg-white px-3 py-1.5 text-xs text-[#8c715c] shadow-sm hover:bg-[#fff0e3]"
           >
-            Back
+            Back to shopping
           </button>
         </header>
 
-        <section className="flex flex-1 flex-col rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm">
-          {loading ? (
-            <p className="text-sm text-slate-500">Loading your orders…</p>
-          ) : showLogin ? (
-            <div className="space-y-3 text-sm">
-              <p className="text-slate-600">
-                You’re not signed in yet. Sign in with your email to see your orders.
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  const returnTo =
-                    typeof window !== "undefined"
-                      ? window.location.pathname + window.location.search
-                      : "/account/orders";
-                  router.push(
-                    `/account/login?return_to=${encodeURIComponent(returnTo)}`,
-                  );
-                }}
-                className="rounded-full bg-slate-900 px-4 py-2 text-xs font-medium text-white hover:bg-slate-800"
+        {loading ? (
+          <section className="flex flex-1 flex-col gap-3 pb-8">
+            {Array.from({ length: 3 }).map((_, idx) => (
+              <div
+                key={idx}
+                className="flex items-center gap-4 rounded-3xl border border-[#f4e2d4] bg-white/70 px-4 py-4 shadow-sm"
               >
-                Sign in with email
-              </button>
-            </div>
-          ) : error ? (
+                <div className="hidden h-16 w-16 rounded-2xl bg-[#f5e3d4] sm:block" />
+                <div className="flex flex-1 flex-col gap-2">
+                  <div className="h-3 w-32 rounded-full bg-[#f2e3d8]" />
+                  <div className="h-3 w-48 rounded-full bg-[#f2e3d8]" />
+                </div>
+                <div className="h-3 w-20 rounded-full bg-[#f2e3d8]" />
+              </div>
+            ))}
+          </section>
+        ) : showLogin ? (
+          <section className="flex flex-1 flex-col items-start justify-center gap-3 pb-8 text-sm">
+            <p className="text-[#8c715c]">
+              You’re not signed in yet. Sign in with your email to see your
+              orders.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                const returnTo =
+                  typeof window !== "undefined"
+                    ? window.location.pathname + window.location.search
+                    : "/account/orders";
+                router.push(
+                  `/account/login?return_to=${encodeURIComponent(returnTo)}`,
+                );
+              }}
+              className="rounded-full bg-[#3f3125] px-4 py-2 text-xs font-medium text-white shadow-sm hover:bg-black"
+            >
+              Sign in with email
+            </button>
+          </section>
+        ) : error ? (
+          <section className="flex flex-1 items-center pb-8">
             <p className="text-sm text-rose-500">{error}</p>
-          ) : visibleOrders.length === 0 ? (
-            <p className="text-sm text-slate-500">
+          </section>
+        ) : visibleOrders.length === 0 ? (
+          <section className="flex flex-1 items-center pb-8">
+            <p className="text-sm text-[#8c715c]">
               {creatorConfig
                 ? `You don’t have any orders with ${creatorConfig.name} yet. Start a chat with the creator agent to pick a few items.`
                 : "You don’t have any orders yet. Start a chat with the shopping agent to get some recommendations."}
             </p>
-          ) : (
-            <div className="space-y-3 text-sm">
-              {visibleOrders.map((order) => {
-                const isCancelled =
-                  order.status === "cancelled" || order.status === "refunded";
+          </section>
+        ) : (
+          <section className="flex flex-1 flex-col gap-3 pb-8 text-sm">
+            {visibleOrders.map((order) => {
+              const isCancelled =
+                order.status === "cancelled" || order.status === "refunded";
 
                 const statusLabel = (() => {
                   if (order.status === "cancelled") return "Cancelled";
@@ -173,6 +200,40 @@ export default function OrdersPage() {
                   return order.payment_status || order.status;
                 })();
 
+                const shortStatus = (() => {
+                  if (order.status === "cancelled") return "Cancelled";
+                  if (order.status === "refunded") return "Refunded";
+                  if (
+                    order.delivery_status === "delivered" ||
+                    order.fulfillment_status === "delivered"
+                  ) {
+                    return "Delivered";
+                  }
+                  if (order.fulfillment_status === "shipped") return "Shipped";
+                  if (order.payment_status === "pending") return "Payment pending";
+                  if (order.payment_status === "paid") return "Paid";
+                  return order.status || "Processing";
+                })();
+
+                const statusToneClasses = (() => {
+                  if (order.status === "cancelled" || order.status === "refunded") {
+                    return "bg-rose-50 text-rose-600 border border-rose-100";
+                  }
+                  if (
+                    order.delivery_status === "delivered" ||
+                    order.fulfillment_status === "delivered"
+                  ) {
+                    return "bg-emerald-50 text-emerald-700 border border-emerald-100";
+                  }
+                  if (order.fulfillment_status === "shipped") {
+                    return "bg-sky-50 text-sky-700 border border-sky-100";
+                  }
+                  if (order.payment_status === "pending") {
+                    return "bg-amber-50 text-amber-700 border border-amber-100";
+                  }
+                  return "bg-slate-100 text-slate-700 border border-slate-200";
+                })();
+
                 const canCancel =
                   order.payment_status === "pending" && !isCancelled;
 
@@ -182,30 +243,55 @@ export default function OrdersPage() {
                 return (
                   <div
                     key={order.order_id}
-                    className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
+                    className="flex items-center gap-4 rounded-3xl border border-[#f4e2d4] bg-white px-3 py-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:px-4 sm:py-4"
                   >
-                    <div>
-                      <p className="text-xs font-medium text-slate-900">
-                        Order {order.order_id}
-                      </p>
-                      <p className="mt-0.5 text-[11px] text-slate-600">
-                        {order.items_summary || "Order from creator agent"}
-                      </p>
+                    <div className="hidden h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-[#f5e3d4] sm:block">
+                      <div className="flex h-full w-full items-center justify-center text-[10px] font-medium text-[#8c715c]">
+                        Order
+                      </div>
+                    </div>
+
+                    <div className="flex flex-1 flex-col gap-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <p className="text-[13px] font-semibold text-[#3f3125]">
+                            {order.order_id}
+                          </p>
+                          <p className="mt-0.5 text-[11px] text-[#a38b78]">
+                            {new Date(order.created_at).toLocaleDateString(
+                              undefined,
+                              {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              },
+                            )}{" "}
+                            {order.items_summary ? "·" : ""}{" "}
+                            {order.items_summary || "Order from creator agent"}
+                          </p>
+                        </div>
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-medium ${statusToneClasses}`}
+                        >
+                          {shortStatus}
+                        </span>
+                      </div>
+
                       {order.creator_name && (
-                        <p className="mt-0.5 text-[11px] text-slate-500">
+                        <p className="text-[10px] text-[#b29a84]">
                           Creator: {order.creator_name}
                         </p>
                       )}
-                      <p className="mt-0.5 text-[11px] text-slate-500">
-                        {new Date(order.created_at).toLocaleString()}
-                      </p>
                     </div>
+
                     <div className="flex flex-col items-end gap-1 text-right text-[11px]">
-                      <p className="font-semibold text-slate-900">
+                      <p className="text-sm font-semibold text-[#3f3125]">
                         {order.currency} {(order.total_amount_minor / 100).toFixed(2)}
                       </p>
-                      <p className="text-slate-500">{statusLabel}</p>
-                      <div className="mt-0.5 flex gap-2">
+                      <p className="max-w-[200px] text-[10px] text-[#a38b78]">
+                        {statusLabel}
+                      </p>
+                      <div className="mt-1 flex gap-2">
                         {canContinuePayment && (
                           <button
                             type="button"
@@ -220,7 +306,7 @@ export default function OrdersPage() {
                                 )}`,
                               )
                             }
-                            className="rounded-full bg-slate-900 px-3 py-1 text-[10px] font-medium text-white hover:bg-slate-800"
+                            className="rounded-full bg-[#3f3125] px-3 py-1 text-[10px] font-medium text-white shadow-sm hover:bg-black"
                           >
                             Continue payment
                           </button>
@@ -259,7 +345,7 @@ export default function OrdersPage() {
                                 }
                               }
                             }}
-                            className="rounded-full border border-slate-300 px-3 py-1 text-[10px] font-medium text-slate-700 hover:bg-slate-100"
+                            className="rounded-full border border-[#f0e2d6] px-3 py-1 text-[10px] font-medium text-[#8c715c] hover:bg-[#fff0e3]"
                           >
                             Cancel order
                           </button>
@@ -269,9 +355,8 @@ export default function OrdersPage() {
                   </div>
                 );
               })}
-            </div>
-          )}
-        </section>
+          </section>
+        )}
       </div>
     </main>
   );
