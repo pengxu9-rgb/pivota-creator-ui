@@ -148,7 +148,10 @@ export default function OrdersPage() {
           ) : (
             <div className="space-y-3 text-sm">
               {visibleOrders.map((order) => {
-                const canCancel = order.permissions?.can_cancel;
+                const canCancel =
+                  !!order.permissions?.can_cancel &&
+                  order.status !== "cancelled" &&
+                  order.status !== "refunded";
                 const isPending = order.payment_status === "pending";
                 return (
                   <div
@@ -217,14 +220,29 @@ export default function OrdersPage() {
                                   "Optional: tell us why you’re cancelling this order (leave empty to skip).",
                                 );
                                 await cancelOrder(order.order_id, reason || undefined);
-                                // Refresh list after cancellation
                                 const data = await listMyOrders(null, 20);
                                 setOrders(data.items || []);
                               } catch (err) {
                                 console.error(err);
-                                alert(
-                                  "We couldn’t cancel this order right now. Please try again or contact support.",
-                                );
+                                const anyErr = err as any;
+                                const code: string | undefined =
+                                  anyErr?.detail?.error?.code ||
+                                  anyErr?.detail?.error_code;
+                                if (code === "INVALID_STATE") {
+                                  alert(
+                                    "This order has already been cancelled or refunded. The list will be refreshed.",
+                                  );
+                                  try {
+                                    const data = await listMyOrders(null, 20);
+                                    setOrders(data.items || []);
+                                  } catch (reloadErr) {
+                                    console.error("reload orders after cancel failed", reloadErr);
+                                  }
+                                } else {
+                                  alert(
+                                    "We couldn’t cancel this order right now. Please try again or contact support.",
+                                  );
+                                }
                               }
                             }}
                             className="rounded-full border border-slate-300 px-3 py-1 text-[10px] font-medium text-slate-700 hover:bg-slate-100"
