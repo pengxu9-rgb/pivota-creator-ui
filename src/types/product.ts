@@ -10,6 +10,11 @@ export interface ProductBestDeal {
   urgencyLevel?: "LOW" | "MEDIUM" | "HIGH";
 }
 
+export interface ProductOption {
+  name: string;
+  values: string[];
+}
+
 export interface RawProduct {
   id: string;
   title: string;
@@ -28,6 +33,9 @@ export interface RawProduct {
   // Backend uses snake_case; mapper will normalize.
   best_deal?: any;
   all_deals?: any[];
+  // Optional structured options/specs (e.g., color / size) from backend product detail.
+  options?: any;
+  product_options?: any;
 }
 
 export interface Product {
@@ -49,6 +57,8 @@ export interface Product {
   // Deal info (do not invent client-side; map from backend or attach mock in mock mode only)
   bestDeal?: ProductBestDeal;
   allDeals?: ProductBestDeal[];
+  // Structured options/specs mapped from backend product detail.
+  options?: ProductOption[];
 }
 
 // Treat ProductBestDeal as a reusable offer type for similarity responses.

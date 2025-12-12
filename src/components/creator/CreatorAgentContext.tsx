@@ -306,7 +306,7 @@ export function CreatorAgentProvider({
         }`,
       );
     } else {
-      setDetailProduct(base);
+      openDetail(base);
     }
   };
 
@@ -380,6 +380,44 @@ export function CreatorAgentProvider({
       console.error("Failed to load recent queries", err);
     }
   }, [recentQueriesStorageKey]);
+
+  // When a detail product is opened on desktop, enrich it with backend product-detail
+  // so that options/specs (color, size, etc.) are available if the backend provides them.
+  useEffect(() => {
+    if (!detailProduct || !detailProduct.id || !detailProduct.merchantId || isMobile) {
+      return;
+    }
+    let cancelled = false;
+
+    const loadDetail = async () => {
+      try {
+        const res = await fetch("/api/creator-agent/product-detail", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            merchantId: detailProduct.merchantId,
+            productId: detailProduct.id,
+          }),
+        });
+
+        if (!res.ok) return;
+        const data = (await res.json()) as { product?: Product };
+        if (!cancelled && data.product) {
+          setDetailProduct((prev) =>
+            prev && prev.id === detailProduct.id ? { ...prev, ...data.product } : prev,
+          );
+        }
+      } catch (err) {
+        console.error("[creator detail] enrich error", err);
+      }
+    };
+
+    loadDetail();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [detailProduct?.id, detailProduct?.merchantId, isMobile]);
 
   useEffect(() => {
     let cancelled = false;

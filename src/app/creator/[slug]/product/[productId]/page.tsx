@@ -182,7 +182,7 @@ export default function CreatorProductDetailPage() {
                   </div>
                 )}
 
-                <div className="flex flex-1 flex-col space-y-3 text-[13px]">
+                <div className="flex flex-1 flex-col gap-4 text-[13px]">
                   <div>
                     <h1 className="text-base font-semibold text-slate-900 sm:text-lg">
                       {product.title}
@@ -194,15 +194,54 @@ export default function CreatorProductDetailPage() {
                     )}
                   </div>
 
-                  <div className="text-lg font-semibold">
-                    {product.currency} {product.price.toFixed(2)}
-                  </div>
-
                   {product.description && (
                     <p className="text-[12px] leading-relaxed text-slate-700">
                       {product.description}
                     </p>
                   )}
+
+                  <div className="space-y-2 text-[13px]">
+                    <div className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                      Price
+                    </div>
+                    <div className="text-lg font-semibold">
+                      {product.currency} {product.price.toFixed(2)}
+                    </div>
+                    {product.bestDeal?.label && (
+                      <div className="text-[12px] font-medium text-cyan-700">
+                        {product.bestDeal.label}
+                      </div>
+                    )}
+                  </div>
+
+                  {Array.isArray(product.options) &&
+                    product.options.length > 0 && (
+                      <div className="space-y-3 text-[12px]">
+                        {product.options
+                          .filter(
+                            (opt) =>
+                              opt.values && opt.values.length > 0,
+                          )
+                          .map((opt) => (
+                            <div key={opt.name}>
+                              <div className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                                {opt.name}
+                              </div>
+                              <div className="mt-1 flex flex-wrap gap-2">
+                                {opt.values.map((value) => (
+                                  <button
+                                    key={value}
+                                    type="button"
+                                    className="min-w-[2.5rem] rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] text-slate-700"
+                                  >
+                                    {value}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    )}
 
                   {typeof product.inventoryQuantity === "number" && (
                     <p className="text-[11px] text-slate-500">

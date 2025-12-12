@@ -452,55 +452,37 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                     )}
                   </div>
 
-                  <div className="space-y-3 text-[12px]">
-                    <div>
-                      <div className="text-[11px] font-medium uppercase tracking-wide text-[#a38b78]">
-                        Color
+                  {Array.isArray(detailProduct.options) &&
+                    detailProduct.options.length > 0 && (
+                      <div className="space-y-3 text-[12px]">
+                        {detailProduct.options
+                          .filter(
+                            (opt) =>
+                              opt &&
+                              typeof opt.name === "string" &&
+                              Array.isArray(opt.values) &&
+                              opt.values.length > 0,
+                          )
+                          .map((opt) => (
+                            <div key={opt.name}>
+                              <div className="text-[11px] font-medium uppercase tracking-wide text-[#a38b78]">
+                                {opt.name}
+                              </div>
+                              <div className="mt-1 flex flex-wrap gap-2">
+                                {opt.values.map((value) => (
+                                  <button
+                                    key={value}
+                                    type="button"
+                                    className="min-w-[2.5rem] rounded-full border border-[#f0e2d6] bg-white px-3 py-1 text-[11px] text-[#8c715c]"
+                                  >
+                                    {value}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
                       </div>
-                      <div className="mt-1 flex gap-2">
-                        <button
-                          type="button"
-                          className="h-7 w-7 rounded-full border-2 border-[#f28b7a] bg-[#e7c7aa]"
-                          aria-label="Color Nude"
-                        />
-                        <button
-                          type="button"
-                          className="h-7 w-7 rounded-full border border-[#f0e2d6] bg-[#f7c5c8]"
-                          aria-label="Color Blush"
-                        />
-                        <button
-                          type="button"
-                          className="h-7 w-7 rounded-full border border-[#f0e2d6] bg-[#f7e6d6]"
-                          aria-label="Color Cream"
-                        />
-                        <button
-                          type="button"
-                          className="h-7 w-7 rounded-full border border-[#f0e2d6] bg-[#f6b59b]"
-                          aria-label="Color Apricot"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="text-[11px] font-medium uppercase tracking-wide text-[#a38b78]">
-                        Size
-                      </div>
-                      <div className="mt-1 flex flex-wrap gap-2">
-                        {["XS", "S", "M", "L", "XL"].map((size) => (
-                          <button
-                            key={size}
-                            type="button"
-                            className={
-                              size === "M"
-                                ? "min-w-[2.5rem] rounded-full border border-[#f28b7a] bg-[#fff0e3] px-3 py-1 text-[11px] font-medium text-[#f28b7a]"
-                                : "min-w-[2.5rem] rounded-full border border-[#f0e2d6] bg-white px-3 py-1 text-[11px] text-[#8c715c]"
-                            }
-                          >
-                            {size}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                    )}
 
                     <div>
                       <div className="text-[11px] font-medium uppercase tracking-wide text-[#a38b78]">

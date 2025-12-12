@@ -1,4 +1,9 @@
-import type { Product, ProductBestDeal, RawProduct } from "@/types/product";
+import type {
+  Product,
+  ProductBestDeal,
+  ProductOption,
+  RawProduct,
+} from "@/types/product";
 
 function stripHtml(value: string | undefined | null): string {
   if (!value) return "";
@@ -41,11 +46,40 @@ function normalizeDeal(raw: any, productId: string): ProductBestDeal {
   };
 }
 
+function normalizeOptions(raw: RawProduct): ProductOption[] | undefined {
+  const source: any = (raw as any).options || (raw as any).product_options;
+  if (!Array.isArray(source)) return undefined;
+
+  const result: ProductOption[] = [];
+  for (const opt of source) {
+    if (!opt) continue;
+    const name: string =
+      typeof opt.name === "string"
+        ? opt.name
+        : typeof opt.label === "string"
+        ? opt.label
+        : "";
+    if (!name) continue;
+
+    const valuesSource =
+      opt.values || opt.options || opt.value_list || opt.valueList;
+    const values = Array.isArray(valuesSource)
+      ? valuesSource.map((v: any) => String(v))
+      : [];
+    if (!values.length) continue;
+
+    result.push({ name, values });
+  }
+
+  return result.length > 0 ? result : undefined;
+}
+
 export function mapRawProduct(raw: RawProduct): Product {
   const bestDeal = raw.best_deal ? normalizeDeal(raw.best_deal, raw.id) : undefined;
   const allDeals = Array.isArray(raw.all_deals)
     ? raw.all_deals.map((d) => normalizeDeal(d, raw.id))
     : undefined;
+  const options = normalizeOptions(raw);
 
   return {
     id: raw.id,
@@ -62,6 +96,7 @@ export function mapRawProduct(raw: RawProduct): Product {
     detailUrl: raw.detail_url,
     bestDeal,
     allDeals,
+    options,
   };
 }
 
