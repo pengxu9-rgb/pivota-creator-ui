@@ -432,6 +432,12 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                     </button>
                   </div>
 
+                  {detailProduct.description && (
+                    <p className="text-[12px] leading-relaxed text-[#8c715c]">
+                      {detailProduct.description}
+                    </p>
+                  )}
+
                   <div className="space-y-2 text-[13px]">
                     <div className="text-[11px] font-medium uppercase tracking-wide text-[#a38b78]">
                       Price
@@ -446,11 +452,79 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                     )}
                   </div>
 
-                  {detailProduct.description && (
-                    <p className="text-[12px] leading-relaxed text-[#8c715c]">
-                      {detailProduct.description}
-                    </p>
-                  )}
+                  <div className="space-y-3 text-[12px]">
+                    <div>
+                      <div className="text-[11px] font-medium uppercase tracking-wide text-[#a38b78]">
+                        Color
+                      </div>
+                      <div className="mt-1 flex gap-2">
+                        <button
+                          type="button"
+                          className="h-7 w-7 rounded-full border-2 border-[#f28b7a] bg-[#e7c7aa]"
+                          aria-label="Color Nude"
+                        />
+                        <button
+                          type="button"
+                          className="h-7 w-7 rounded-full border border-[#f0e2d6] bg-[#f7c5c8]"
+                          aria-label="Color Blush"
+                        />
+                        <button
+                          type="button"
+                          className="h-7 w-7 rounded-full border border-[#f0e2d6] bg-[#f7e6d6]"
+                          aria-label="Color Cream"
+                        />
+                        <button
+                          type="button"
+                          className="h-7 w-7 rounded-full border border-[#f0e2d6] bg-[#f6b59b]"
+                          aria-label="Color Apricot"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-[11px] font-medium uppercase tracking-wide text-[#a38b78]">
+                        Size
+                      </div>
+                      <div className="mt-1 flex flex-wrap gap-2">
+                        {["XS", "S", "M", "L", "XL"].map((size) => (
+                          <button
+                            key={size}
+                            type="button"
+                            className={
+                              size === "M"
+                                ? "min-w-[2.5rem] rounded-full border border-[#f28b7a] bg-[#fff0e3] px-3 py-1 text-[11px] font-medium text-[#f28b7a]"
+                                : "min-w-[2.5rem] rounded-full border border-[#f0e2d6] bg-white px-3 py-1 text-[11px] text-[#8c715c]"
+                            }
+                          >
+                            {size}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-[11px] font-medium uppercase tracking-wide text-[#a38b78]">
+                        Quantity
+                      </div>
+                      <div className="mt-1 inline-flex items-center gap-2">
+                        <button
+                          type="button"
+                          className="flex h-7 w-7 items-center justify-center rounded-full border border-[#f0e2d6] bg-white text-[13px] text-[#8c715c]"
+                        >
+                          –
+                        </button>
+                        <span className="min-w-[2rem] text-center text-[12px] text-[#3f3125]">
+                          1
+                        </span>
+                        <button
+                          type="button"
+                          className="flex h-7 w-7 items-center justify-center rounded-full border border-[#f0e2d6] bg-white text-[13px] text-[#8c715c]"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  </div>
 
                   {typeof detailProduct.inventoryQuantity === "number" && (
                     <p className="text-[11px] text-[#a38b78]">

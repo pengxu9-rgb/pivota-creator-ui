@@ -60,7 +60,7 @@ export default function CreatorCategoryProductsPage() {
             creatorSlug,
           )}/category/${encodeURIComponent(
             categorySlug,
-          )}/products?limit=60&page=1`,
+          )}/products?limit=500&page=1`,
           { signal: controller.signal },
         );
         if (!res.ok) {

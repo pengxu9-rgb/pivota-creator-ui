@@ -69,7 +69,7 @@ export async function GET(req: NextRequest, { params }: any) {
 
   const url = new URL(req.url);
   const page = url.searchParams.get("page") ?? "1";
-  const limit = url.searchParams.get("limit") ?? "60";
+  const limit = url.searchParams.get("limit") ?? "500";
 
   if (!rawBase) {
     const mockProducts = getMockCategoryProducts(creatorSlug, categorySlug);
