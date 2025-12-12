@@ -234,6 +234,12 @@ export default function OrdersPage() {
                   return "bg-slate-100 text-slate-700 border border-slate-200";
                 })();
 
+                const previewImageUrl =
+                  (order as any).first_item_image_url ||
+                  (order as any).thumbnail_url ||
+                  (order as any).image_url ||
+                  null;
+
                 const canCancel =
                   order.payment_status === "pending" && !isCancelled;
 
@@ -246,9 +252,18 @@ export default function OrdersPage() {
                     className="flex items-center gap-4 rounded-3xl border border-[#f4e2d4] bg-white px-3 py-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:px-4 sm:py-4"
                   >
                     <div className="hidden h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-[#f5e3d4] sm:block">
-                      <div className="flex h-full w-full items-center justify-center text-[10px] font-medium text-[#8c715c]">
-                        Order
-                      </div>
+                      {previewImageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={previewImageUrl}
+                          alt={order.items_summary || "Order items"}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-[10px] font-medium text-[#8c715c]">
+                          Order
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex flex-1 flex-col gap-1">
