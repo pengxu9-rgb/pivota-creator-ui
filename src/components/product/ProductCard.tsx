@@ -85,7 +85,7 @@ export function ProductCard({
           </button>
         )}
       </div>
-      <div className="mt-3 flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col px-3 pb-3 pt-3">
         <div className="line-clamp-2 text-[13px] font-semibold text-[#3f3125]">
           {product.title}
         </div>
