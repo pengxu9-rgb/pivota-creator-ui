@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { ProductCard } from "@/components/product/ProductCard";
@@ -26,6 +26,40 @@ export default function CreatorAgentPage() {
     const tab = searchParams?.get("tab");
     return tab === "deals" ? "deals" : "forYou";
   }, [searchParams]);
+
+  const [visibleCount, setVisibleCount] = useState(6);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+
+  // Reset visible items when products or tab changes.
+  useEffect(() => {
+    if (activeTab === "forYou") {
+      setVisibleCount(6);
+    }
+  }, [activeTab, products]);
+
+  // Infinite scroll: when sentinel进入视口，增加展示数量。
+  useEffect(() => {
+    if (!loadMoreRef.current) return;
+    if (typeof IntersectionObserver === "undefined") return;
+
+    const el = loadMoreRef.current;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (!entry.isIntersecting) return;
+        setVisibleCount((current) => {
+          const next = current + 6;
+          return Math.min(next, products.length || next);
+        });
+      },
+      { root: null, rootMargin: "200px", threshold: 0.1 },
+    );
+
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+    };
+  }, [products.length]);
 
   const recentQueryList = useMemo(
     () =>
@@ -77,19 +111,28 @@ export default function CreatorAgentPage() {
                 No candidates yet. Tell me what you need on the left.
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {products.slice(0, 6).map((p) => (
-                  <ProductCard
-                    key={p.id}
-                    product={p}
-                    creatorName={creator.name}
-                    creatorId={creator.id}
-                    creatorSlug={creator.slug}
-                    onSeeSimilar={handleSeeSimilar}
-                    onViewDetails={handleViewDetails}
+              <>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {products.slice(0, visibleCount).map((p) => (
+                    <ProductCard
+                      key={p.id}
+                      product={p}
+                      creatorName={creator.name}
+                      creatorId={creator.id}
+                      creatorSlug={creator.slug}
+                      onSeeSimilar={handleSeeSimilar}
+                      onViewDetails={handleViewDetails}
+                    />
+                  ))}
+                </div>
+                {products.length > visibleCount && (
+                  <div
+                    ref={loadMoreRef}
+                    className="mt-4 h-8 w-full"
+                    aria-hidden="true"
                   />
-                ))}
-              </div>
+                )}
+              </>
             )}
           </div>
 
