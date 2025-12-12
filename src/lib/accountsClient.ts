@@ -28,6 +28,8 @@ export type OrdersListItem = {
   fulfillment_status: string;
   delivery_status: string;
   created_at: string;
+  // Optional lightweight metadata for Creator-style order cards
+  first_item_image_url?: string | null;
   shipping_city?: string | null;
   shipping_country?: string | null;
   items_summary?: string;

@@ -370,7 +370,10 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                           creatorId={creator.id}
                           creatorSlug={creator.slug}
                           onSeeSimilar={handleSeeSimilar}
-                          onViewDetails={handleViewDetails}
+                          onViewDetails={(p) => {
+                            closeSimilar();
+                            handleViewDetails(p);
+                          }}
                         />
                       ))}
                     </div>
