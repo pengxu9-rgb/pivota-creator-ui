@@ -1,17 +1,22 @@
 'use client';
 
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import type { Product } from "@/types/product";
 import { ProductCard } from "@/components/product/ProductCard";
-import { SectionHeader } from "@/components/ui/SectionHeader";
 import { useCreatorAgent } from "@/components/creator/CreatorAgentContext";
 
+interface CategoryProductsResponse {
+  products: Product[];
+  pagination?: {
+    page: number;
+    limit: number;
+    total?: number;
+  };
+}
+
 export default function CreatorCategoryProductsPage() {
-  const params = useParams<{
-    slug: string;
-    categorySlug: string;
-  }>();
+  const params = useParams<{ slug: string; categorySlug: string }>();
   const slugParam = params?.slug;
   const categorySlugParam = params?.categorySlug;
   const creatorSlug = Array.isArray(slugParam) ? slugParam[0] : slugParam;
@@ -19,7 +24,13 @@ export default function CreatorCategoryProductsPage() {
     ? categorySlugParam[0]
     : categorySlugParam;
 
-  const { creator, setPromptFromContext } = useCreatorAgent();
+  const router = useRouter();
+  const {
+    creator,
+    handleSeeSimilar,
+    handleViewDetails,
+    setPromptFromContext,
+  } = useCreatorAgent();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -27,109 +38,151 @@ export default function CreatorCategoryProductsPage() {
 
   const categoryTitle = useMemo(() => {
     if (!categorySlug) return "Category";
-    const pretty = categorySlug.replace(/-/g, " ");
-    return pretty.charAt(0).toUpperCase() + pretty.slice(1);
+    return categorySlug
+      .split("-")
+      .map((part: string) =>
+        part.length > 0 ? part[0]!.toUpperCase() + part.slice(1) : part,
+      )
+      .join(" ");
   }, [categorySlug]);
 
   useEffect(() => {
     if (!creatorSlug || !categorySlug) return;
-    let cancelled = false;
+
+    const controller = new AbortController();
 
     const load = async () => {
       setIsLoading(true);
       setError(null);
       try {
         const res = await fetch(
-          `/api/creator/${creatorSlug}/category/${categorySlug}/products`,
+          `/api/creator/${encodeURIComponent(
+            creatorSlug,
+          )}/category/${encodeURIComponent(
+            categorySlug,
+          )}/products?limit=60&page=1`,
+          { signal: controller.signal },
         );
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`);
         }
-        const data = (await res.json()) as { products?: Product[] };
-        if (cancelled) return;
-        setProducts(data.products ?? []);
-      } catch (err) {
+        const data = (await res.json()) as CategoryProductsResponse;
+        setProducts(data.products || []);
+      } catch (err: any) {
+        if (err?.name === "AbortError") return;
         console.error("Failed to load category products", err);
-        if (!cancelled) {
-          setError("Failed to load products for this category.");
-        }
+        setError("Failed to load products for this category.");
       } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     };
 
     load();
 
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [creatorSlug, categorySlug]);
 
   const handleShopWithAI = () => {
     setPromptFromContext(
-      `Browsing category: ${categoryTitle}. Show me deals and highly relevant products in this category.`,
+      `Browsing category: ${categoryTitle}. Show me great deals and highly relevant pieces in this category.`,
     );
   };
 
   return (
-    <>
-      <div className="flex items-center justify-between gap-2">
-        <div className="space-y-1">
-          <div className="text-xs text-slate-500">
-            Categories / {categoryTitle}
+    <div className="flex h-full flex-col gap-4">
+      <header className="space-y-3">
+        <nav className="text-[11px] text-[#b29a84]">
+          <button
+            type="button"
+            onClick={() =>
+              router.push(
+                `/creator/${encodeURIComponent(
+                  creatorSlug || creator.slug,
+                )}/categories`,
+              )
+            }
+            className="underline-offset-2 hover:underline"
+          >
+            Categories
+          </button>
+          <span className="mx-1">/</span>
+          <span className="text-[#8c715c]">{categoryTitle}</span>
+        </nav>
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-lg font-semibold text-[#3f3125] sm:text-2xl">
+              {categoryTitle}
+            </h1>
+            <p className="mt-1 text-xs text-[#8c715c] sm:text-sm">
+              Browse products in this category curated for {creator.name}.
+            </p>
           </div>
-          <SectionHeader
-            title={categoryTitle}
-            subtitle="Products in this category, with deals integrated."
-          />
+          <button
+            type="button"
+            onClick={handleShopWithAI}
+            className="hidden rounded-full bg-[#3f3125] px-4 py-2 text-[11px] font-medium text-white shadow-sm hover:bg-black sm:inline-flex"
+          >
+            Shop this category with AI
+          </button>
         </div>
+
         <button
           type="button"
           onClick={handleShopWithAI}
-          className="hidden rounded-full border border-slate-300 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100 sm:inline-flex"
+          className="inline-flex w-full items-center justify-center rounded-full bg-[#3f3125] px-4 py-2 text-[11px] font-medium text-white shadow-sm hover:bg-black sm:hidden"
         >
           Shop this category with AI
         </button>
-      </div>
+      </header>
 
-      {isLoading && (
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, idx) => (
-            <div
-              key={idx}
-              className="h-40 animate-pulse rounded-3xl bg-slate-100"
-            />
-          ))}
+      {error && (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] text-rose-700">
+          {error}
         </div>
       )}
 
-      {!isLoading && error && (
-        <p className="mt-4 text-sm text-rose-600">{error}</p>
+      {isLoading && (
+        <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, idx) => (
+            <div
+              key={idx}
+              className="h-40 animate-pulse rounded-3xl bg-[#f4e2d4]"
+            />
+          ))}
+        </div>
       )}
 
       {!isLoading && !error && products.length === 0 && (
-        <p className="mt-4 text-sm text-slate-500">
-          No products were found in this category yet. Try asking the agent on
-          the left for alternatives.
+        <p className="mt-4 text-sm text-[#8c715c]">
+          No products found in this category yet. Try switching to another
+          category or ask the shopping agent on the left.
         </p>
       )}
 
-      {!isLoading && !error && products.length > 0 && (
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {products.map((p) => (
-            <ProductCard
-              key={p.id}
-              product={p}
-              creatorName={creator.name}
-              creatorId={creator.id}
-              creatorSlug={creator.slug}
-            />
-          ))}
-        </div>
+      {!isLoading && products.length > 0 && (
+        <section className="mt-2">
+          <div className="mb-3 text-[11px] text-[#b29a84]">
+            Showing {products.length} item
+            {products.length > 1 ? "s" : ""} in this category.
+          </div>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+            {products.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                creatorName={creator.name}
+                creatorId={creator.id}
+                creatorSlug={creator.slug}
+                onSeeSimilar={handleSeeSimilar}
+                onViewDetails={handleViewDetails}
+              />
+            ))}
+          </div>
+        </section>
       )}
-    </>
+    </div>
   );
 }
-

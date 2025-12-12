@@ -114,15 +114,15 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
   );
 
   return (
-    <main className="min-h-screen lg:h-screen bg-gradient-to-b from-[#fff9f2] via-[#fff5ec] to-[#ffeede] text-[#3f3125]">
+    <main className="min-h-screen lg:h-screen bg-gradient-to-b from-[#fffdf9] via-[#fffaf5] to-[#fff7f1] text-[#3f3125]">
       <div className="pointer-events-none fixed inset-0 -z-10">
-        <div className="absolute -left-24 top-0 h-72 w-72 rounded-full bg-[#ffe0cc]/40 blur-3xl" />
-        <div className="absolute right-0 top-24 h-80 w-80 rounded-full bg-[#ffd3be]/40 blur-3xl" />
-        <div className="absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-[#ffe9d6]/40 blur-3xl" />
+        <div className="absolute -left-24 top-0 h-72 w-72 rounded-full bg-[#ffe7d6]/30 blur-3xl" />
+        <div className="absolute right-0 top-24 h-80 w-80 rounded-full bg-[#ffe0cc]/25 blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-[#fff2e3]/30 blur-3xl" />
       </div>
 
       <div className="relative z-10 flex min-h-screen flex-col lg:h-screen">
-        <header className="border-b border-[#f0e2d6] bg-[#fff7f1] px-4 py-3 lg:px-8">
+        <header className="border-b border-[#f4e6da] bg-[#fffaf5] px-4 py-3 lg:px-8">
           <div className="mx-auto flex max-w-6xl items-center gap-3">
             <div className="flex items-center gap-3">
               <div className="relative h-9 w-9 overflow-hidden rounded-full bg-[#f6b59b]">
@@ -252,12 +252,12 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <div className="flex flex-1 flex-col lg:flex-row lg:overflow-hidden">
+        <div className="flex flex-1 flex-col bg-[#fffaf5]/80 lg:flex-row lg:overflow-hidden">
           {renderChatPanel(
-            "hidden w-full flex-col border-b border-[#f0e2d6] bg-[#fff7f1] px-4 py-4 lg:flex lg:w-[360px] lg:border-b-0 lg:border-r lg:px-6",
+            "hidden w-full flex-col border-b border-[#f4e6da] bg-[#fffaf5] px-4 py-4 lg:flex lg:w-[360px] lg:border-b-0 lg:border-r lg:px-6",
           )}
 
-          <section className="flex flex-1 flex-col bg-[#fff7f1] px-4 py-4 lg:px-8">
+          <section className="flex flex-1 flex-col bg-[#fffdf9] px-4 py-4 lg:px-8">
             <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
               {children}
             </div>
