@@ -4,7 +4,7 @@
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Home, Percent, Send, ShoppingCart, User } from "lucide-react";
+import { Home, Percent, Send, ShoppingCart, User, X } from "lucide-react";
 import { useCreatorAgent } from "@/components/creator/CreatorAgentContext";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { ProductCard } from "@/components/product/ProductCard";
@@ -122,7 +122,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
       </div>
 
       <div className="relative z-10 flex min-h-screen flex-col lg:h-screen">
-        <header className="border-b border-[#f4e6da] bg-[#fffaf5] px-4 py-3 lg:px-8">
+        <header className="border-b border-[#f4e6da] bg-[#fffdf9] px-4 py-3 lg:px-8">
           <div className="mx-auto flex max-w-6xl items-center gap-3">
             <div className="flex items-center gap-3">
               <div className="relative h-9 w-9 overflow-hidden rounded-full bg-[#f6b59b]">
@@ -257,7 +257,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
             "hidden w-full flex-col border-b border-[#f4e6da] bg-[#fffdf9] px-4 py-4 lg:flex lg:w-[360px] lg:border-b-0 lg:border-r lg:px-6",
           )}
 
-          <section className="flex flex-1 flex-col bg-[#fffaf5] px-4 py-4 lg:px-8">
+          <section className="flex flex-1 flex-col bg-[#fffdf9] px-4 py-4 lg:px-8">
             <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
               {children}
             </div>
@@ -393,56 +393,67 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
             onClick={closeDetail}
           >
             <div
-              className="flex h-[100vh] w-full max-w-md flex-col overflow-hidden bg-white p-4 text-slate-900 shadow-2xl sm:h-[90vh] sm:max-w-3xl sm:rounded-3xl sm:p-6"
+              className="flex h-[90vh] w-full max-w-5xl flex-col overflow-hidden bg-[#fffaf5] text-[#3f3125] shadow-2xl sm:rounded-3xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h3 className="text-sm font-semibold">
-                    {detailProduct.title}
-                  </h3>
-                  {detailProduct.merchantName && (
-                    <p className="mt-0.5 text-[11px] text-slate-500">
-                      Sold by {detailProduct.merchantName}
-                    </p>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  className="rounded-full bg-slate-100 px-3 py-1 text-[11px] text-slate-700 hover:bg-slate-200"
-                  onClick={closeDetail}
-                >
-                  Close
-                </button>
-              </div>
-
-              <div className="mt-4 flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto md:flex-row">
+              <div className="flex h-full flex-col overflow-y-auto sm:flex-row">
                 {detailProduct.imageUrl && (
-                  <div className="md:w-1/2 w-full">
-                    <div className="relative w-full overflow-hidden rounded-2xl bg-slate-100 aspect-[3/4]">
+                  <div className="w-full bg-[#f5e3d4] sm:w-1/2">
+                    <div className="relative h-full min-h-[280px] w-full overflow-hidden bg-[#f5e3d4] sm:aspect-[4/5]">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={detailProduct.imageUrl}
                         alt={detailProduct.title}
-                        className="absolute inset-0 h-full w-full object-cover"
+                        className="h-full w-full object-cover"
                       />
                     </div>
                   </div>
                 )}
 
-                <div className="flex flex-1 flex-col space-y-3 text-[13px]">
-                  <div className="text-lg font-semibold">
-                    {detailProduct.currency} {detailProduct.price.toFixed(2)}
+                <div className="flex flex-1 flex-col gap-4 p-4 sm:p-6">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-base font-semibold text-[#3f3125]">
+                        {detailProduct.title}
+                      </h3>
+                      {detailProduct.merchantName && (
+                        <p className="mt-0.5 text-[11px] text-[#a38b78]">
+                          Sold by {detailProduct.merchantName}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#fff0e3] text-[#8c715c] shadow-sm hover:bg-[#ffd9c2]"
+                      onClick={closeDetail}
+                      aria-label="Close"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+
+                  <div className="space-y-2 text-[13px]">
+                    <div className="text-[11px] font-medium uppercase tracking-wide text-[#a38b78]">
+                      Price
+                    </div>
+                    <div className="text-2xl font-semibold">
+                      {detailProduct.currency} {detailProduct.price.toFixed(2)}
+                    </div>
+                    {detailProduct.bestDeal?.label && (
+                      <div className="text-[12px] font-medium text-[#f28b7a]">
+                        {detailProduct.bestDeal.label}
+                      </div>
+                    )}
                   </div>
 
                   {detailProduct.description && (
-                    <p className="text-[12px] leading-relaxed text-slate-700">
+                    <p className="text-[12px] leading-relaxed text-[#8c715c]">
                       {detailProduct.description}
                     </p>
                   )}
 
                   {typeof detailProduct.inventoryQuantity === "number" && (
-                    <p className="text-[11px] text-slate-500">
+                    <p className="text-[11px] text-[#a38b78]">
                       Stock:{" "}
                       {detailProduct.inventoryQuantity > 0
                         ? `${detailProduct.inventoryQuantity} available`
@@ -450,20 +461,20 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                     </p>
                   )}
 
-                  <div className="pt-2 flex gap-2">
+                  <div className="mt-auto flex flex-col gap-2 pt-2 sm:flex-row">
                     <button
                       type="button"
-                      className="flex-1 rounded-full bg-slate-900 px-3 py-2 text-[12px] font-medium text-white shadow-sm hover:bg-slate-800"
+                      className="flex-1 rounded-full bg-[#f6b59b] px-3 py-2 text-[12px] font-medium text-white shadow-sm hover:bg-[#f29b7f]"
                       onClick={() => addToCart(detailProduct)}
                     >
                       Add to cart
                     </button>
                     <button
                       type="button"
-                      className="flex-1 rounded-full bg-gradient-to-r from-[#7c8cff] via-[#62b2ff] to-[#7fffe1] px-3 py-2 text-[12px] font-medium text-slate-900 shadow-sm hover:brightness-110"
-                      onClick={() => buyNow(detailProduct)}
+                      className="flex-1 rounded-full border border-[#f0e2d6] bg-white px-3 py-2 text-[12px] font-medium text-[#8c715c] shadow-sm hover:bg-[#fff0e3]"
+                      onClick={() => handleSeeSimilar(detailProduct)}
                     >
-                      Buy now
+                      Find more like this
                     </button>
                   </div>
                 </div>
