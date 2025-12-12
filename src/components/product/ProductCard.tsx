@@ -47,7 +47,7 @@ export function ProductCard({
 
   return (
     <div
-      className="group flex cursor-pointer flex-col rounded-3xl border border-[#f0e2d6] bg-white p-3 shadow-[0_18px_40px_rgba(63,49,37,0.12)] transition-all duration-300 hover:-translate-y-1.5 hover:border-[#f6b59b] hover:bg-white hover:shadow-[0_24px_70px_rgba(63,49,37,0.16)]"
+      className="group flex cursor-pointer flex-col overflow-hidden rounded-3xl bg-white shadow-[0_18px_40px_rgba(63,49,37,0.12)] transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_70px_rgba(63,49,37,0.16)]"
       role="button"
       tabIndex={0}
       onClick={handleCardClick}
@@ -58,7 +58,7 @@ export function ProductCard({
         }
       }}
     >
-      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-3xl bg-[#f5e3d4]">
+      <div className="relative aspect-[4/5] w-full bg-[#f5e3d4]">
         {product.imageUrl && (
           <img
             src={product.imageUrl}
@@ -100,34 +100,34 @@ export function ProductCard({
           </p>
         )}
         <div className="mt-2 flex items-center justify-between">
-        <div className="flex flex-col">
-          <div className="flex items-baseline gap-2">
-            {hasFlashPrice ? (
-              <>
-                <span className="text-[11px] text-[#b29a84] line-through">
+          <div className="flex flex-col">
+            <div className="flex items-baseline gap-2">
+              {hasFlashPrice ? (
+                <>
+                  <span className="text-[11px] text-[#b29a84] line-through">
+                    {product.currency} {product.price.toFixed(2)}
+                  </span>
+                  <span className="text-base font-semibold text-[#3f3125]">
+                    {product.currency} {product.bestDeal?.flashPrice?.toFixed(2)}
+                  </span>
+                </>
+              ) : (
+                <span className="text-base font-semibold text-[#3f3125]">
                   {product.currency} {product.price.toFixed(2)}
                 </span>
-                <span className="text-base font-semibold text-[#3f3125]">
-                  {product.currency} {product.bestDeal?.flashPrice?.toFixed(2)}
-                </span>
-              </>
-            ) : (
-              <span className="text-base font-semibold text-[#3f3125]">
-                {product.currency} {product.price.toFixed(2)}
+              )}
+            </div>
+            {product.bestDeal?.label && (
+              <span className="text-[11px] font-medium text-[#f28b7a]">
+                {product.bestDeal.label}
               </span>
             )}
           </div>
-          {product.bestDeal?.label && (
-            <span className="text-[11px] font-medium text-[#f28b7a]">
-              {product.bestDeal.label}
-            </span>
-          )}
-        </div>
-        <div className="flex flex-col items-end gap-1">
-          <button
-            type="button"
+          <div className="flex flex-col items-end gap-1">
+            <button
+              type="button"
               onClick={(e) => {
-              e.stopPropagation();
+                e.stopPropagation();
                 addItem({
                   id: product.id,
                   productId: product.id,
@@ -144,7 +144,7 @@ export function ProductCard({
                   allDeals: product.allDeals ?? null,
                 });
               }}
-              className="ml-2 inline-flex items-center gap-1.5 rounded-full bg-[#3f3125] px-4 py-2 text-[11px] font-medium text-white shadow-sm hover:bg-black"
+              className="ml-2 inline-flex items-center gap-1.5 rounded-full bg-[#f6b59b] px-4 py-2 text-[11px] font-medium text-[#3f3125] shadow-sm hover:bg-[#f29b7f]"
             >
               <ShoppingCart className="h-3.5 w-3.5" />
               <span>Add to cart</span>
