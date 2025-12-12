@@ -2,7 +2,7 @@
 
 import type { Product } from "@/types/product";
 import { useCart } from "@/components/cart/CartProvider";
-import { Search } from "lucide-react";
+import { Search, ShoppingCart } from "lucide-react";
 
 type Props = {
   product: Product;
@@ -47,7 +47,7 @@ export function ProductCard({
 
   return (
     <div
-      className="group flex cursor-pointer flex-col rounded-3xl border border-[#f0e2d6] bg-[#fffaf5] p-3 shadow-[0_18px_40px_rgba(63,49,37,0.12)] transition-all duration-300 hover:-translate-y-1.5 hover:border-[#f6b59b] hover:bg-white hover:shadow-[0_24px_70px_rgba(63,49,37,0.16)]"
+      className="group flex cursor-pointer flex-col rounded-3xl border border-[#f0e2d6] bg-white p-3 shadow-[0_18px_40px_rgba(63,49,37,0.12)] transition-all duration-300 hover:-translate-y-1.5 hover:border-[#f6b59b] hover:bg-white hover:shadow-[0_24px_70px_rgba(63,49,37,0.16)]"
       role="button"
       tabIndex={0}
       onClick={handleCardClick}
@@ -100,30 +100,32 @@ export function ProductCard({
           </p>
         )}
         <div className="mt-2 flex items-center justify-between">
-          <div className="flex flex-col">
-            <div className="flex items-baseline gap-2">
-              {hasFlashPrice ? (
-                <>
-                  <span className="text-[11px] text-[#b29a84] line-through">
-                    {product.currency} {product.price.toFixed(2)}
-                  </span>
-                  <span className="text-sm font-semibold text-[#3f3125]">
-                    {product.currency} {product.bestDeal?.flashPrice?.toFixed(2)}
-                  </span>
-                </>
-              ) : (
-                <span className="text-sm font-semibold text-[#3f3125]">
+        <div className="flex flex-col">
+          <div className="flex items-baseline gap-2">
+            {hasFlashPrice ? (
+              <>
+                <span className="text-[11px] text-[#b29a84] line-through">
                   {product.currency} {product.price.toFixed(2)}
                 </span>
-              )}
-            </div>
-            {product.bestDeal?.label && (
-              <span className="text-[10px] text-[#a38b78]">{product.bestDeal.label}</span>
+                <span className="text-base font-semibold text-[#3f3125]">
+                  {product.currency} {product.bestDeal?.flashPrice?.toFixed(2)}
+                </span>
+              </>
+            ) : (
+              <span className="text-base font-semibold text-[#3f3125]">
+                {product.currency} {product.price.toFixed(2)}
+              </span>
             )}
           </div>
-          <div className="flex flex-col items-end gap-1">
-            <button
-              type="button"
+          {product.bestDeal?.label && (
+            <span className="text-[11px] font-medium text-[#f28b7a]">
+              {product.bestDeal.label}
+            </span>
+          )}
+        </div>
+        <div className="flex flex-col items-end gap-1">
+          <button
+            type="button"
               onClick={(e) => {
               e.stopPropagation();
                 addItem({
@@ -142,9 +144,10 @@ export function ProductCard({
                   allDeals: product.allDeals ?? null,
                 });
               }}
-              className="ml-2 rounded-full bg-[#3f3125] px-3 py-1 text-[10px] font-medium text-white shadow-sm hover:bg-black"
+              className="ml-2 inline-flex items-center gap-1.5 rounded-full bg-[#3f3125] px-4 py-2 text-[11px] font-medium text-white shadow-sm hover:bg-black"
             >
-              Add to cart
+              <ShoppingCart className="h-3.5 w-3.5" />
+              <span>Add to cart</span>
             </button>
           </div>
         </div>
