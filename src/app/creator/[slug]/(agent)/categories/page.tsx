@@ -41,6 +41,15 @@ export default function CreatorCategoriesPage() {
     sortedRoots.find((node) => node.category.id === effectiveActiveRootId) ??
     sortedRoots[0];
 
+  const visibleNodes: CategoryNode[] = useMemo(() => {
+    if (!activeRoot) return [];
+    if (activeRoot.children && activeRoot.children.length > 0) {
+      return activeRoot.children;
+    }
+    // Fallback: when backend only has root-level categories, treat roots as clickable tiles.
+    return sortedRoots;
+  }, [activeRoot, sortedRoots]);
+
   function handleSubcategoryClick(node: CategoryNode) {
     const sub = node.category;
     const creatorSlugSafe = creatorSlug || "creator";
@@ -195,14 +204,13 @@ export default function CreatorCategoriesPage() {
                     {activeRoot?.category.name ?? "Categories"}
                   </h2>
                   <p className="mt-1 text-xs text-slate-500">
-                    {activeRoot?.children.length ?? 0} subcategories curated for
-                    this creator.
+                    {visibleNodes.length} categories curated for this creator.
                   </p>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
-                {activeRoot?.children.map((node) => {
+                {visibleNodes.map((node) => {
                   const sub = node.category;
                   const hasDeals = (sub.deals?.length ?? 0) > 0;
                   return (

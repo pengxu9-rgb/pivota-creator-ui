@@ -44,6 +44,25 @@ export default function CreatorAgentPage() {
               title="Featured for you"
               subtitle={`Based on ${creator.name}'s style and typical scenarios.`}
             />
+            <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
+              <div className="flex flex-wrap gap-2">
+                <span className="inline-flex items-center rounded-full bg-slate-900 px-3 py-1.5 text-[11px] font-medium text-slate-50">
+                  All picks
+                </span>
+                <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] text-slate-600">
+                  Creator picks
+                </span>
+                <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] text-slate-600">
+                  On sale
+                </span>
+              </div>
+              <button
+                type="button"
+                className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+              >
+                Refine with {creator.name}
+              </button>
+            </div>
             {isFeaturedLoading || (isLoading && products.length === 0) ? (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {Array.from({ length: 3 }).map((_, idx) => (
@@ -133,4 +152,3 @@ export default function CreatorAgentPage() {
     </>
   );
 }
-

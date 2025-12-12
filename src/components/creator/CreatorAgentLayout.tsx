@@ -1,8 +1,10 @@
-'use client';
+/* eslint-disable @next/next/no-img-element */
+ "use client";
 
 import type { ReactNode } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import { Send, ShoppingCart } from "lucide-react";
+import { useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Home, Percent, Send, ShoppingCart, User } from "lucide-react";
 import { useCreatorAgent } from "@/components/creator/CreatorAgentContext";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { ProductCard } from "@/components/product/ProductCard";
@@ -38,12 +40,78 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
 
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const activeTab = (() => {
+    const tabParam = searchParams?.get("tab");
     if (pathname?.includes("/categories")) return "categories";
     if (pathname?.includes("/category/")) return "categories";
+    if (tabParam === "deals") return "deals";
     return "forYou";
   })();
+
+  const [isMobileChatOpen, setIsMobileChatOpen] = useState(false);
+
+  const renderChatPanel = (sectionClassName: string) => (
+    <section className={sectionClassName}>
+      <div className="mb-3 text-[12px] text-slate-600">
+        Describe your needs (scenario, budget, style). I’ll start with pieces
+        the creator featured, then similar matches.
+      </div>
+
+      <div className="flex min-h-0 flex-1 flex-col">
+        <div className="flex-1 space-y-3 overflow-y-auto pr-1 text-[13px] leading-relaxed text-slate-800">
+          {messages.map((m) => (
+            <div
+              key={m.id}
+              className={m.role === "user" ? "flex justify-end" : "flex justify-start"}
+            >
+              <div
+                className={
+                  m.role === "user"
+                    ? "max-w-[80%] rounded-3xl rounded-br-sm bg-slate-100 px-3 py-2 text-xs text-slate-800 shadow-sm"
+                    : "max-w-[80%] whitespace-pre-wrap rounded-3xl rounded-bl-sm bg-gradient-to-r from-[#fdf2ff] via-[#e0f2fe] to-[#f5f3ff] px-4 py-3 text-xs text-slate-900 shadow-md"
+                }
+              >
+                {m.content}
+              </div>
+            </div>
+          ))}
+          {isLoading && (
+            <div className="flex items-center gap-2 text-[11px] text-slate-500">
+              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-slate-400" />
+              Finding options for you…
+            </div>
+          )}
+        </div>
+
+        {isLoading && (
+          <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-slate-200">
+            <div className="h-full w-1/2 animate-[pulse_1.2s_ease-in-out_infinite] bg-gradient-to-r from-[#7c8cff] via-[#62b2ff] to-[#7fffe1]" />
+          </div>
+        )}
+
+        <div className="mt-3 space-y-2">
+          <div className="flex items-center gap-2 rounded-full bg-white px-3 py-2 ring-1 ring-inset ring-slate-200 focus-within:ring-2 focus-within:ring-cyan-300/60">
+            <input
+              className="flex-1 bg-transparent px-1 text-[13px] text-slate-800 placeholder:text-slate-400 focus:outline-none"
+              placeholder="e.g., commuter jacket under $120, clean and minimal…"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+            />
+            <button
+              onClick={handleSend}
+              disabled={isLoading}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#7c8cff] via-[#62b2ff] to-[#7fffe1] text-[11px] text-slate-900 shadow-lg transition hover:brightness-110 disabled:opacity-60"
+            >
+              <Send className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 
   return (
     <main className="min-h-screen lg:h-screen bg-gradient-to-b from-[#f8fbff] via-[#eef3fb] to-[#e6ecf7] text-slate-900">
@@ -54,15 +122,16 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
       </div>
 
       <div className="relative z-10 flex min-h-screen flex-col lg:h-screen">
-        <header className="border-b border-slate-200 bg-white/70 px-4 py-3 backdrop-blur-sm lg:px-8">
-          <div className="mx-auto flex max-w-6xl items-center gap-3">
+        <header className="px-4 py-4 lg:px-8">
+          <div className="mx-auto flex max-w-6xl items-center gap-3 rounded-3xl border border-slate-200 bg-white/80 px-4 py-2.5 shadow-sm backdrop-blur-sm">
             <div className="flex items-center gap-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={creator.avatarUrl}
-                alt={creator.name}
-                className="h-9 w-9 rounded-full border border-slate-200 object-cover"
-              />
+              <div className="relative h-9 w-9 overflow-hidden rounded-full border border-slate-200 bg-gradient-to-tr from-sky-100 via-indigo-100 to-emerald-100 p-[2px]">
+                <img
+                  src={creator.avatarUrl}
+                  alt={creator.name}
+                  className="h-full w-full rounded-full object-cover"
+                />
+              </div>
               <div className="space-y-0.5">
                 <div className="text-sm font-semibold text-slate-900">
                   {creator.name}
@@ -97,7 +166,11 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                       )}?tab=deals#creator-deals`,
                     )
                   }
-                  className="rounded-full px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-200 sm:px-4"
+                  className={
+                    activeTab === "deals"
+                      ? "rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-50 sm:px-4"
+                      : "rounded-full px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-200 sm:px-4"
+                  }
                 >
                   Deals
                 </button>
@@ -180,66 +253,9 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
         </header>
 
         <div className="flex flex-1 flex-col lg:flex-row lg:overflow-hidden">
-          <section className="flex w-full flex-col border-b border-slate-200 bg-white/70 px-4 py-4 backdrop-blur-sm lg:w-[360px] lg:border-b-0 lg:border-r lg:px-6">
-            <div className="mb-3 text-[12px] text-slate-600">
-              Describe your needs (scenario, budget, style). I’ll start with
-              pieces the creator featured, then similar matches.
-            </div>
-
-            <div className="flex min-h-0 flex-1 flex-col">
-              <div className="flex-1 space-y-3 overflow-y-auto pr-1 text-[13px] leading-relaxed text-slate-800">
-                {messages.map((m) => (
-                  <div
-                    key={m.id}
-                    className={
-                      m.role === "user" ? "flex justify-end" : "flex justify-start"
-                    }
-                  >
-                    <div
-                      className={
-                        m.role === "user"
-                          ? "max-w-[80%] rounded-3xl rounded-br-sm bg-slate-100 px-3 py-2 text-xs text-slate-800 shadow-sm"
-                          : "max-w-[80%] whitespace-pre-wrap rounded-3xl rounded-bl-sm bg-gradient-to-r from-[#fdf2ff] via-[#e0f2fe] to-[#f5f3ff] px-4 py-3 text-xs text-slate-900 shadow-md"
-                      }
-                    >
-                      {m.content}
-                    </div>
-                  </div>
-                ))}
-                {isLoading && (
-                  <div className="flex items-center gap-2 text-[11px] text-slate-500">
-                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-slate-400" />
-                    Finding options for you…
-                  </div>
-                )}
-              </div>
-
-              {isLoading && (
-                <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-slate-200">
-                  <div className="h-full w-1/2 animate-[pulse_1.2s_ease-in-out_infinite] bg-gradient-to-r from-[#7c8cff] via-[#62b2ff] to-[#7fffe1]" />
-                </div>
-              )}
-
-              <div className="mt-3 space-y-2">
-                <div className="flex items-center gap-2 rounded-full bg-white px-3 py-2 ring-1 ring-inset ring-slate-200 focus-within:ring-2 focus-within:ring-cyan-300/60">
-                  <input
-                    className="flex-1 bg-transparent px-1 text-[13px] text-slate-800 placeholder:text-slate-400 focus:outline-none"
-                    placeholder="e.g., commuter jacket under $120, clean and minimal…"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                  />
-                  <button
-                    onClick={handleSend}
-                    disabled={isLoading}
-                    className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#7c8cff] via-[#62b2ff] to-[#7fffe1] text-[11px] text-slate-900 shadow-lg transition hover:brightness-110 disabled:opacity-60"
-                  >
-                    <Send className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </section>
+          {renderChatPanel(
+            "hidden w-full flex-col border-b border-slate-200 bg-white/70 px-4 py-4 backdrop-blur-sm lg:flex lg:w-[360px] lg:border-b-0 lg:border-r lg:px-6",
+          )}
 
           <section className="flex flex-1 flex-col bg-white/40 px-4 py-4 lg:px-8">
             <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
@@ -247,6 +263,51 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
             </div>
           </section>
         </div>
+
+        {/* Mobile chat floating button */}
+        <button
+          type="button"
+          onClick={() => setIsMobileChatOpen(true)}
+          className="fixed bottom-16 right-4 z-20 inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-xs font-medium text-white shadow-lg hover:bg-slate-800 lg:hidden"
+        >
+          <Send className="h-3.5 w-3.5" />
+          <span>Chat with {creator.name}</span>
+        </button>
+
+        {/* Mobile chat sheet */}
+        {isMobileChatOpen && (
+          <div className="fixed inset-0 z-30 flex flex-col bg-slate-50/95 backdrop-blur-sm lg:hidden">
+            <div className="flex items-center justify-between border-b border-slate-200 bg-white/80 px-4 py-3">
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 overflow-hidden rounded-full border border-slate-200">
+                  <img
+                    src={creator.avatarUrl}
+                    alt={creator.name}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                <div>
+                  <div className="text-xs font-semibold text-slate-900">
+                    {creator.name}
+                  </div>
+                  <div className="text-[11px] text-slate-500">Chat assistant</div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMobileChatOpen(false)}
+                className="rounded-full bg-slate-100 px-3 py-1 text-[11px] text-slate-700 hover:bg-slate-200"
+              >
+                Close
+              </button>
+            </div>
+            <div className="flex flex-1 flex-col bg-white/80 px-4 py-4">
+              {renderChatPanel(
+                "flex h-full w-full flex-col bg-transparent px-0 py-0 border-0",
+              )}
+            </div>
+          </div>
+        )}
 
         {similarBaseProduct && (
           <div className="fixed inset-0 z-30 flex items-end bg-black/40 px-4 pb-6 sm:items-center sm:pb-6 sm:pt-6">
@@ -410,6 +471,83 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
             </div>
           </div>
         )}
+
+        {/* Mobile bottom navigation */}
+        <nav className="fixed inset-x-0 bottom-0 z-10 border-t border-slate-200 bg-white/95 py-1.5 shadow-[0_-4px_12px_rgba(15,23,42,0.1)] lg:hidden">
+          <div className="mx-auto flex max-w-6xl items-center justify-between px-6 text-[11px] text-slate-600">
+            <button
+              type="button"
+              onClick={() =>
+                router.push(`/creator/${encodeURIComponent(creator.slug)}`)
+              }
+              className={
+                activeTab === "forYou"
+                  ? "flex flex-1 flex-col items-center gap-0.5 text-slate-900"
+                  : "flex flex-1 flex-col items-center gap-0.5 text-slate-500"
+              }
+            >
+              <Home className="h-4 w-4" />
+              <span>For You</span>
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                router.push(
+                  `/creator/${encodeURIComponent(
+                    creator.slug,
+                  )}?tab=deals#creator-deals`,
+                )
+              }
+              className={
+                activeTab === "deals"
+                  ? "flex flex-1 flex-col items-center gap-0.5 text-slate-900"
+                  : "flex flex-1 flex-col items-center gap-0.5 text-slate-500"
+              }
+            >
+              <Percent className="h-4 w-4" />
+              <span>Deals</span>
+            </button>
+            <button
+              type="button"
+              onClick={openCart}
+              className="flex flex-1 flex-col items-center gap-0.5 text-slate-500"
+            >
+              <div className="relative">
+                <ShoppingCart className="h-4 w-4" />
+                {cartItemsCount > 0 && (
+                  <span className="absolute -right-2 -top-1 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-slate-900 px-1 text-[9px] font-semibold text-white">
+                    {cartItemsCount}
+                  </span>
+                )}
+              </div>
+              <span>Cart</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (accountsUser) {
+                  router.push(
+                    `/account/orders?creator=${encodeURIComponent(
+                      creator.slug,
+                    )}`,
+                  );
+                } else {
+                  const returnTo =
+                    typeof window !== "undefined"
+                      ? window.location.pathname + window.location.search
+                      : `/creator/${creator.slug}`;
+                  router.push(
+                    `/account/login?return_to=${encodeURIComponent(returnTo)}`,
+                  );
+                }
+              }}
+              className="flex flex-1 flex-col items-center gap-0.5 text-slate-500"
+            >
+              <User className="h-4 w-4" />
+              <span>Account</span>
+            </button>
+          </div>
+        </nav>
 
         {isDebug && (
           <div className="border-t border-slate-200 bg-slate-950/90 px-4 py-4 text-[11px] leading-relaxed text-white md:px-6 lg:px-10">
