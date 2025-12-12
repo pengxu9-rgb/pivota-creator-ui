@@ -204,8 +204,9 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                         )}`,
                       )
                     }
-                    className="inline-flex items-center rounded-full border border-[#f0e2d6] bg-white px-3 py-1.5 text-[11px] text-[#8c715c] hover:bg-[#fff0e3]"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-[#f0e2d6] bg-white px-3 py-1.5 text-[11px] text-[#8c715c] hover:bg-[#fff0e3]"
                   >
+                    <User className="h-3.5 w-3.5 text-[#b29a84]" />
                     <span className="truncate max-w-[120px]">
                       {(() => {
                         const email = accountsUser.email || "Pivota user";
