@@ -148,10 +148,37 @@ export default function OrdersPage() {
           ) : (
             <div className="space-y-3 text-sm">
               {visibleOrders.map((order) => {
+                const isCancelled =
+                  order.status === "cancelled" || order.status === "refunded";
+
+                const statusLabel = (() => {
+                  if (order.status === "cancelled") return "Cancelled";
+                  if (order.status === "refunded") return "Refunded";
+
+                  if (order.payment_status === "paid") return "Paid";
+
+                  if (order.payment_status === "failed") {
+                    return order.permissions?.can_pay
+                      ? "Payment failed — continue payment to try another card."
+                      : "Payment failed.";
+                  }
+
+                  if (order.payment_status === "pending") {
+                    return order.permissions?.can_pay
+                      ? "Payment pending — continue payment to complete this order."
+                      : "Payment pending — we’re still processing this payment.";
+                  }
+
+                  // Fallback to whatever backend sent so we at least show something.
+                  return order.payment_status || order.status;
+                })();
+
                 const canCancel =
-                  order.payment_status === "pending" &&
-                  order.status !== "cancelled" &&
-                  order.status !== "refunded";
+                  order.payment_status === "pending" && !isCancelled;
+
+                const canContinuePayment =
+                  order.permissions?.can_pay && !isCancelled;
+
                 return (
                   <div
                     key={order.order_id}
@@ -177,21 +204,9 @@ export default function OrdersPage() {
                       <p className="font-semibold text-slate-900">
                         {order.currency} {(order.total_amount_minor / 100).toFixed(2)}
                       </p>
-                      <p className="text-slate-500">
-                        {order.payment_status === "paid"
-                          ? "Paid"
-                          : order.payment_status === "failed"
-                            ? order.permissions?.can_pay
-                              ? "Payment failed — continue payment to try another card."
-                              : "Payment failed."
-                            : order.payment_status === "pending"
-                              ? order.permissions?.can_pay
-                                ? "Payment pending — continue payment to complete this order."
-                                : "Payment pending — we’re still processing this payment."
-                              : order.payment_status}
-                      </p>
+                      <p className="text-slate-500">{statusLabel}</p>
                       <div className="mt-0.5 flex gap-2">
-                        {order.permissions?.can_pay && (
+                        {canContinuePayment && (
                           <button
                             type="button"
                             onClick={() =>
