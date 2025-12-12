@@ -179,32 +179,32 @@ export default function CreatorProductDetailPage() {
 
   if (!creator) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-50 text-slate-900">
-        <div className="text-sm text-slate-500">Creator agent not found.</div>
+      <main className="flex min-h-screen items-center justify-center bg-[#fffefc] text-[#3f3125]">
+        <div className="text-sm text-[#a38b78]">Creator agent not found.</div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#f8fbff] via-[#eef3fb] to-[#e6ecf7] text-slate-900">
+    <main className="min-h-screen bg-gradient-to-b from-[#fffefc] via-[#fffaf6] to-[#fff7f2] text-[#3f3125]">
       <div className="pointer-events-none fixed inset-0 -z-10">
-        <div className="absolute -left-24 top-0 h-72 w-72 rounded-full bg-indigo-300/20 blur-3xl" />
-        <div className="absolute right-0 top-24 h-80 w-80 rounded-full bg-cyan-300/20 blur-3xl" />
-        <div className="absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-purple-300/20 blur-3xl" />
+        <div className="absolute -left-24 top-0 h-72 w-72 rounded-full bg-[#ffe7d6]/20 blur-3xl" />
+        <div className="absolute right-0 top-24 h-80 w-80 rounded-full bg-[#ffe0cc]/18 blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-[#fff2e3]/22 blur-3xl" />
       </div>
 
       <div className="relative z-10 flex min-h-screen flex-col">
         {/* Top bar */}
-        <header className="flex items-center justify-between border-b border-slate-200 bg-white/80 px-4 py-3 text-xs shadow-sm backdrop-blur-sm sm:px-6 lg:px-10">
+        <header className="flex items-center justify-between border-b border-[#f6ebe0] bg-white/90 px-4 py-3 text-xs shadow-sm backdrop-blur-sm sm:px-6 lg:px-10">
           <button
             type="button"
             onClick={handleBack}
-            className="rounded-full border border-slate-200 px-3 py-1 text-[11px] text-slate-700 hover:bg-slate-100"
+            className="rounded-full border border-[#f0e2d6] px-3 py-1 text-[11px] text-[#8c715c] hover:bg-[#fff0e3]"
           >
             ← Back
           </button>
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 overflow-hidden rounded-full border border-slate-200 shadow-sm sm:h-10 sm:w-10">
+            <div className="h-9 w-9 overflow-hidden rounded-full border border-[#f6ebe0] shadow-sm sm:h-10 sm:w-10">
               <img
                 src={creator.avatarUrl}
                 alt={creator.name}
@@ -212,11 +212,11 @@ export default function CreatorProductDetailPage() {
               />
             </div>
             <div className="text-right">
-              <div className="text-xs font-semibold text-slate-900 sm:text-sm">
+              <div className="text-xs font-semibold text-[#3f3125] sm:text-sm">
                 {creator.name}
               </div>
               {creator.tagline && (
-                <p className="mt-0.5 text-[11px] text-slate-600">
+                <p className="mt-0.5 text-[11px] text-[#a38b78]">
                   {creator.tagline}
                 </p>
               )}
@@ -225,19 +225,19 @@ export default function CreatorProductDetailPage() {
         </header>
 
         <div className="flex flex-1 justify-center px-4 py-4 sm:px-6 lg:px-10">
-          <div className="flex w-full max-w-4xl flex-col gap-6 rounded-3xl bg-white/95 p-4 shadow-xl sm:p-6 lg:p-8">
+          <div className="flex w-full max-w-4xl flex-col gap-6 rounded-3xl bg-[#fffaf5]/95 p-4 shadow-xl sm:p-6 lg:p-8">
             {loading && (
-              <div className="flex flex-1 items-center justify-center text-sm text-slate-500">
+              <div className="flex flex-1 items-center justify-center text-sm text-[#a38b78]">
                 Loading product…
               </div>
             )}
 
             {!loading && error && (
               <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
-                <p className="text-sm text-slate-600">{error}</p>
+                <p className="text-sm text-[#a38b78]">{error}</p>
                 <button
                   type="button"
-                  className="rounded-full bg-slate-900 px-4 py-2 text-xs font-medium text-white hover:bg-slate-800"
+                  className="rounded-full bg-[#f6b59b] px-4 py-2 text-xs font-medium text-white shadow-sm hover:bg-[#f29b7f]"
                   onClick={handleBack}
                 >
                   Back to creator
@@ -249,7 +249,7 @@ export default function CreatorProductDetailPage() {
               <div className="flex flex-1 flex-col gap-6 md:flex-row">
                 {images.length > 0 && (
                   <div className="md:w-1/2 w-full flex flex-col gap-3">
-                    <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-slate-100">
+                    <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-[#f5e3d4]">
                       <img
                         src={
                           images[
@@ -272,9 +272,9 @@ export default function CreatorProductDetailPage() {
                             onClick={() => setActiveImageIndex(idx)}
                             className={`h-16 w-12 flex-shrink-0 overflow-hidden rounded-xl border ${
                               idx === activeImageIndex
-                                ? "border-slate-900"
-                                : "border-slate-200"
-                            } bg-slate-50`}
+                                ? "border-[#3f3125]"
+                                : "border-[#f0e2d6]"
+                            } bg-[#f6e6d8]`}
                           >
                             <img
                               src={url}
@@ -290,31 +290,31 @@ export default function CreatorProductDetailPage() {
 
                 <div className="flex flex-1 flex-col gap-4 text-[13px]">
                   <div>
-                    <h1 className="text-base font-semibold text-slate-900 sm:text-lg">
+                    <h1 className="text-base font-semibold text-[#3f3125] sm:text-lg">
                       {product.title}
                     </h1>
                     {product.merchantName && (
-                      <p className="mt-0.5 text-[11px] text-slate-500">
+                      <p className="mt-0.5 text-[11px] text-[#a38b78]">
                         Sold by {product.merchantName}
                       </p>
                     )}
                   </div>
 
                   {product.description && (
-                    <p className="text-[12px] leading-relaxed text-slate-700">
+                    <p className="text-[12px] leading-relaxed text-[#8c715c]">
                       {product.description}
                     </p>
                   )}
 
                   <div className="space-y-2 text-[13px]">
-                    <div className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                    <div className="text-[11px] font-medium uppercase tracking-wide text-[#a38b78]">
                       Price
                     </div>
-                    <div className="text-lg font-semibold">
+                    <div className="text-lg font-semibold text-[#3f3125]">
                       {product.currency} {displayPrice.toFixed(2)}
                     </div>
                     {product.bestDeal?.label && (
-                      <div className="text-[12px] font-medium text-cyan-700">
+                      <div className="text-[12px] font-medium text-[#f28b7a]">
                         {product.bestDeal.label}
                       </div>
                     )}
@@ -330,7 +330,7 @@ export default function CreatorProductDetailPage() {
                           )
                           .map((opt) => (
                             <div key={opt.name}>
-                              <div className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                              <div className="text-[11px] font-medium uppercase tracking-wide text-[#a38b78]">
                                 {opt.name}
                               </div>
                               <div className="mt-1 flex flex-wrap gap-2">
@@ -367,8 +367,8 @@ export default function CreatorProductDetailPage() {
                                     }}
                                     className={`min-w-[2.5rem] rounded-full border px-3 py-1 text-[11px] ${
                                       selectedOptions[opt.name] === value
-                                        ? "border-slate-900 bg-slate-900 text-white"
-                                        : "border-slate-200 bg-white text-slate-700"
+                                        ? "border-[#3f3125] bg-[#3f3125] text-white"
+                                        : "border-[#f0e2d6] bg-white text-[#8c715c]"
                                     }`}
                                   >
                                     {value}
@@ -381,7 +381,7 @@ export default function CreatorProductDetailPage() {
                     )}
 
                   {typeof displayInventory === "number" && (
-                    <p className="text-[11px] text-slate-500">
+                    <p className="text-[11px] text-[#a38b78]">
                       Stock:{" "}
                       {displayInventory > 0
                         ? `${displayInventory} available`
@@ -392,7 +392,7 @@ export default function CreatorProductDetailPage() {
                   <div className="pt-2 flex gap-2">
                     <button
                       type="button"
-                      className="flex-1 rounded-full bg-slate-900 px-3 py-2 text-[12px] font-medium text-white shadow-sm hover:bg-slate-800"
+                      className="flex-1 rounded-full bg-[#f6b59b] px-3 py-2 text-[12px] font-medium text-white shadow-sm hover:bg-[#f29b7f]"
                       onClick={() => {
                         const variant = selectedVariant;
                         const variantKey = variant?.id || "default";
@@ -426,7 +426,7 @@ export default function CreatorProductDetailPage() {
                     </button>
                     <button
                       type="button"
-                      className="flex-1 rounded-full bg-gradient-to-r from-[#7c8cff] via-[#62b2ff] to-[#7fffe1] px-3 py-2 text-[12px] font-medium text-slate-900 shadow-sm hover:brightness-110"
+                      className="flex-1 rounded-full border border-[#f0e2d6] bg-white px-3 py-2 text-[12px] font-medium text-[#8c715c] shadow-sm hover:bg-[#fff0e3]"
                       onClick={() => {
                         clear();
                         const variant = selectedVariant;
@@ -468,7 +468,7 @@ export default function CreatorProductDetailPage() {
                       href={product.detailUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex text-[11px] text-cyan-600 hover:underline"
+                      className="inline-flex text-[11px] text-[#a38b78] hover:underline"
                     >
                       Open store page
                     </a>
