@@ -149,10 +149,9 @@ export default function OrdersPage() {
             <div className="space-y-3 text-sm">
               {visibleOrders.map((order) => {
                 const canCancel =
-                  !!order.permissions?.can_cancel &&
+                  order.payment_status === "pending" &&
                   order.status !== "cancelled" &&
                   order.status !== "refunded";
-                const isPending = order.payment_status === "pending";
                 return (
                   <div
                     key={order.order_id}
@@ -211,7 +210,7 @@ export default function OrdersPage() {
                             Continue payment
                           </button>
                         )}
-                        {canCancel && isPending && (
+                        {canCancel && (
                           <button
                             type="button"
                             onClick={async () => {
