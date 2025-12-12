@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { getCreatorBySlug } from "@/config/creatorAgents";
 import type { Product } from "@/types/product";
@@ -27,6 +27,9 @@ export default function CreatorProductDetailPage() {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   const { addItem, clear, close } = useCart();
 
@@ -66,6 +69,9 @@ export default function CreatorProductDetailPage() {
         if (!cancelled) {
           if (data.product) {
             setProduct(data.product);
+            setSelectedOptions({});
+            setSelectedVariantId(null);
+            setActiveImageIndex(0);
             setError(null);
           } else {
             setError("Product not found.");
@@ -89,6 +95,77 @@ export default function CreatorProductDetailPage() {
       cancelled = true;
     };
   }, [creator, merchantId, productId]);
+
+  // Initialise selection state when product loads.
+  useEffect(() => {
+    if (!product) return;
+
+    const nextSelected: Record<string, string> = {};
+
+    if (product.variants && product.variants.length > 0) {
+      const first = product.variants[0];
+      if (first.options) {
+        for (const [name, value] of Object.entries(first.options)) {
+          if (value != null) {
+            nextSelected[name] = String(value);
+          }
+        }
+      }
+      setSelectedVariantId(first.id);
+    } else if (product.options && product.options.length > 0) {
+      for (const opt of product.options) {
+        if (opt.values && opt.values.length > 0) {
+          nextSelected[opt.name] = opt.values[0];
+        }
+      }
+      setSelectedVariantId(null);
+    }
+
+    setSelectedOptions(nextSelected);
+    setActiveImageIndex(0);
+  }, [product]);
+
+  const selectedVariant = useMemo(() => {
+    if (!product?.variants || product.variants.length === 0) return null;
+
+    if (selectedVariantId) {
+      const byId = product.variants.find((v) => v.id === selectedVariantId);
+      if (byId) return byId;
+    }
+
+    const entries = Object.entries(selectedOptions).filter(
+      ([, v]) => typeof v === "string" && v,
+    );
+    if (!entries.length) {
+      return product.variants[0];
+    }
+
+    const match =
+      product.variants.find((v) => {
+        if (!v.options) return false;
+        return entries.every(
+          ([name, value]) =>
+            String(v.options?.[name] ?? "").trim() === String(value),
+        );
+      }) ?? null;
+
+    return match || product.variants[0];
+  }, [product, selectedOptions, selectedVariantId]);
+
+  const images = useMemo(() => {
+    if (!product) return [];
+    if (Array.isArray(product.images) && product.images.length > 0) {
+      return product.images;
+    }
+    return product.imageUrl ? [product.imageUrl] : [];
+  }, [product]);
+
+  const displayPrice =
+    (selectedVariant && selectedVariant.price) ?? product?.price ?? 0;
+  const displayInventory =
+    (selectedVariant && selectedVariant.inventoryQuantity) ??
+    product?.inventoryQuantity ??
+    undefined;
 
   const handleBack = () => {
     if (typeof window !== "undefined" && window.history.length > 1) {
@@ -170,15 +247,44 @@ export default function CreatorProductDetailPage() {
 
             {!loading && !error && product && (
               <div className="flex flex-1 flex-col gap-6 md:flex-row">
-                {product.imageUrl && (
-                  <div className="md:w-1/2 w-full">
+                {images.length > 0 && (
+                  <div className="md:w-1/2 w-full flex flex-col gap-3">
                     <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-slate-100">
                       <img
-                        src={product.imageUrl}
+                        src={
+                          images[
+                            Math.max(
+                              0,
+                              Math.min(activeImageIndex, images.length - 1),
+                            )
+                          ]
+                        }
                         alt={product.title}
                         className="absolute inset-0 h-full w-full object-cover"
                       />
                     </div>
+                    {images.length > 1 && (
+                      <div className="flex gap-2 overflow-x-auto pt-1">
+                        {images.map((url, idx) => (
+                          <button
+                            key={url + idx.toString()}
+                            type="button"
+                            onClick={() => setActiveImageIndex(idx)}
+                            className={`h-16 w-12 flex-shrink-0 overflow-hidden rounded-xl border ${
+                              idx === activeImageIndex
+                                ? "border-slate-900"
+                                : "border-slate-200"
+                            } bg-slate-50`}
+                          >
+                            <img
+                              src={url}
+                              alt={product.title}
+                              className="h-full w-full object-cover"
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -205,7 +311,7 @@ export default function CreatorProductDetailPage() {
                       Price
                     </div>
                     <div className="text-lg font-semibold">
-                      {product.currency} {product.price.toFixed(2)}
+                      {product.currency} {displayPrice.toFixed(2)}
                     </div>
                     {product.bestDeal?.label && (
                       <div className="text-[12px] font-medium text-cyan-700">
@@ -232,7 +338,38 @@ export default function CreatorProductDetailPage() {
                                   <button
                                     key={value}
                                     type="button"
-                                    className="min-w-[2.5rem] rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] text-slate-700"
+                                    onClick={() => {
+                                      const next = {
+                                        ...selectedOptions,
+                                        [opt.name]: value,
+                                      };
+                                      setSelectedOptions(next);
+                                      if (product.variants && product.variants.length > 0) {
+                                        const match =
+                                          product.variants.find((v) => {
+                                            if (!v.options) return false;
+                                            return Object.entries(next).every(
+                                              ([name, val]) =>
+                                                String(v.options?.[name] ?? "").trim() ===
+                                                String(val),
+                                            );
+                                          }) ?? product.variants[0];
+                                        setSelectedVariantId(match.id);
+                                        if (match.imageUrl) {
+                                          const idx = images.findIndex(
+                                            (url) => url === match.imageUrl,
+                                          );
+                                          if (idx >= 0) {
+                                            setActiveImageIndex(idx);
+                                          }
+                                        }
+                                      }
+                                    }}
+                                    className={`min-w-[2.5rem] rounded-full border px-3 py-1 text-[11px] ${
+                                      selectedOptions[opt.name] === value
+                                        ? "border-slate-900 bg-slate-900 text-white"
+                                        : "border-slate-200 bg-white text-slate-700"
+                                    }`}
                                   >
                                     {value}
                                   </button>
@@ -243,11 +380,11 @@ export default function CreatorProductDetailPage() {
                       </div>
                     )}
 
-                  {typeof product.inventoryQuantity === "number" && (
+                  {typeof displayInventory === "number" && (
                     <p className="text-[11px] text-slate-500">
                       Stock:{" "}
-                      {product.inventoryQuantity > 0
-                        ? `${product.inventoryQuantity} available`
+                      {displayInventory > 0
+                        ? `${displayInventory} available`
                         : "Out of stock"}
                     </p>
                   )}
@@ -257,18 +394,29 @@ export default function CreatorProductDetailPage() {
                       type="button"
                       className="flex-1 rounded-full bg-slate-900 px-3 py-2 text-[12px] font-medium text-white shadow-sm hover:bg-slate-800"
                       onClick={() => {
+                        const variant = selectedVariant;
+                        const variantKey = variant?.id || "default";
                         addItem({
-                          id: product.id,
+                          id: `${product.id}:${variantKey}`,
                           productId: product.id,
                           merchantId: product.merchantId,
                           title: product.title,
-                          price: product.price,
-                          imageUrl: product.imageUrl,
+                          price: displayPrice,
+                          imageUrl:
+                            (variant && variant.imageUrl) ||
+                            images[0] ||
+                            product.imageUrl,
                           quantity: 1,
                           currency: product.currency,
                           creatorId: creator.id,
                           creatorSlug: creator.slug,
                           creatorName: creator.name,
+                          variantId: variant?.id,
+                          variantSku: variant?.sku,
+                          selectedOptions:
+                            Object.keys(selectedOptions).length > 0
+                              ? selectedOptions
+                              : undefined,
                           bestDeal: product.bestDeal ?? null,
                           allDeals: product.allDeals ?? null,
                         });
@@ -281,18 +429,29 @@ export default function CreatorProductDetailPage() {
                       className="flex-1 rounded-full bg-gradient-to-r from-[#7c8cff] via-[#62b2ff] to-[#7fffe1] px-3 py-2 text-[12px] font-medium text-slate-900 shadow-sm hover:brightness-110"
                       onClick={() => {
                         clear();
+                        const variant = selectedVariant;
+                        const variantKey = variant?.id || "default";
                         addItem({
-                          id: product.id,
+                          id: `${product.id}:${variantKey}`,
                           productId: product.id,
                           merchantId: product.merchantId,
                           title: product.title,
-                          price: product.price,
-                          imageUrl: product.imageUrl,
+                          price: displayPrice,
+                          imageUrl:
+                            (variant && variant.imageUrl) ||
+                            images[0] ||
+                            product.imageUrl,
                           quantity: 1,
                           currency: product.currency,
                           creatorId: creator.id,
                           creatorSlug: creator.slug,
                           creatorName: creator.name,
+                          variantId: variant?.id,
+                          variantSku: variant?.sku,
+                          selectedOptions:
+                            Object.keys(selectedOptions).length > 0
+                              ? selectedOptions
+                              : undefined,
                           bestDeal: product.bestDeal ?? null,
                           allDeals: product.allDeals ?? null,
                         });

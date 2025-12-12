@@ -15,6 +15,16 @@ export interface ProductOption {
   values: string[];
 }
 
+export interface ProductVariant {
+  id: string;
+  title: string;
+  price: number;
+  sku?: string;
+  inventoryQuantity?: number;
+  options?: Record<string, string>;
+  imageUrl?: string;
+}
+
 export interface RawProduct {
   id: string;
   title: string;
@@ -36,6 +46,10 @@ export interface RawProduct {
   // Optional structured options/specs (e.g., color / size) from backend product detail.
   options?: any;
   product_options?: any;
+  // Optional rich fields for detail views
+  images?: any;
+  variants?: any;
+  attributes?: any;
 }
 
 export interface Product {
@@ -59,6 +73,9 @@ export interface Product {
   allDeals?: ProductBestDeal[];
   // Structured options/specs mapped from backend product detail.
   options?: ProductOption[];
+  // Optional rich detail fields for variant / gallery UI
+  images?: string[];
+  variants?: ProductVariant[];
 }
 
 // Treat ProductBestDeal as a reusable offer type for similarity responses.

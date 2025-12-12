@@ -15,6 +15,10 @@ export type CartItem = {
   creatorId?: string;
   creatorSlug?: string;
   creatorName?: string;
+  // Variant / SKU selection (for multi-variant products)
+  variantId?: string;
+  variantSku?: string;
+  selectedOptions?: Record<string, string>;
   // Optional deal info so checkout can preview discounts before the order
   // is actually created on the backend.
   bestDeal?: ProductBestDeal | null;

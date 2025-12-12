@@ -133,6 +133,9 @@ export async function createOrderFromCart(params: {
     quantity: item.quantity,
     unit_price: item.price,
     subtotal: item.price * item.quantity,
+    ...(item.variantId ? { variant_id: item.variantId } : {}),
+    ...(item.variantSku ? { sku: item.variantSku } : {}),
+    ...(item.selectedOptions ? { selected_options: item.selectedOptions } : {}),
   }));
 
   const orderPayload: CreateOrderPayload = {
