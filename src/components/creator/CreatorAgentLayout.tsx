@@ -252,12 +252,12 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <div className="flex flex-1 flex-col bg-[#fffaf5]/80 lg:flex-row lg:overflow-hidden">
+        <div className="flex flex-1 flex-col bg-[#fffdf9] lg:flex-row lg:overflow-hidden">
           {renderChatPanel(
-            "hidden w-full flex-col border-b border-[#f4e6da] bg-[#fffaf5] px-4 py-4 lg:flex lg:w-[360px] lg:border-b-0 lg:border-r lg:px-6",
+            "hidden w-full flex-col border-b border-[#f4e6da] bg-[#fffdf9] px-4 py-4 lg:flex lg:w-[360px] lg:border-b-0 lg:border-r lg:px-6",
           )}
 
-          <section className="flex flex-1 flex-col bg-[#fffdf9] px-4 py-4 lg:px-8">
+          <section className="flex flex-1 flex-col bg-[#fffaf5] px-4 py-4 lg:px-8">
             <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
               {children}
             </div>
