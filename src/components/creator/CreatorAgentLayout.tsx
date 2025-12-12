@@ -346,7 +346,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                                 )
                               ]
                             }
-                            alt={detailProduct.title}
+                            alt={detailProduct?.title ?? ""}
                             className="absolute inset-0 h-full w-full object-cover"
                           />
                         </div>
@@ -365,7 +365,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                               >
                                 <img
                                   src={url}
-                                  alt={detailProduct.title}
+                                  alt={detailProduct?.title ?? ""}
                                   className="h-full w-full object-cover"
                                 />
                               </button>
@@ -702,7 +702,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                             )
                           ]
                         }
-                        alt={detailProduct.title}
+                        alt={detailProduct?.title ?? ""}
                         className="h-full w-full object-cover"
                       />
                     </div>
@@ -721,7 +721,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                           >
                             <img
                               src={url}
-                              alt={detailProduct.title}
+                              alt={detailProduct?.title ?? ""}
                               className="h-full w-full object-cover"
                             />
                           </button>
