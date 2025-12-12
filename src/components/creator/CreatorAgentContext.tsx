@@ -5,7 +5,9 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
+  useCallback,
   type ReactNode,
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -48,6 +50,7 @@ interface CreatorAgentContextValue {
   similarError: string | null;
   detailProduct: Product | null;
   isMobile: boolean;
+  prefetchProductDetail: (product: Product) => void;
   openDetail: (product: Product) => void;
   closeDetail: () => void;
   closeSimilar: () => void;
@@ -112,6 +115,58 @@ export function CreatorAgentProvider({
   const [similarError, setSimilarError] = useState<string | null>(null);
   const [detailProduct, setDetailProduct] = useState<Product | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+
+  // Cache for enriched product-detail responses so that desktop modals
+  // can open with full Style/Size and images immediately when possible.
+  const detailCacheRef = useRef<Map<string, Product>>(new Map());
+  const detailInFlightRef = useRef<Set<string>>(new Set());
+
+  const makeCacheKey = (p: { id?: string; merchantId?: string | null }) => {
+    if (!p.id) return "";
+    return p.merchantId ? `${p.merchantId}:${p.id}` : String(p.id);
+  };
+
+  const prefetchProductDetail = useCallback(
+    async (base: Product) => {
+      if (!base.id || !base.merchantId) return;
+      const key = makeCacheKey(base);
+      if (!key) return;
+      if (detailCacheRef.current.has(key) || detailInFlightRef.current.has(key)) {
+        return;
+      }
+
+      detailInFlightRef.current.add(key);
+      try {
+        const res = await fetch("/api/creator-agent/product-detail", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            merchantId: base.merchantId,
+            productId: base.id,
+          }),
+        });
+
+        if (!res.ok) return;
+        const data = (await res.json()) as { product?: Product };
+        if (!data.product) return;
+
+        const merged: Product = { ...base, ...data.product };
+        detailCacheRef.current.set(key, merged);
+
+        // If the modal is currently showing this product, update it in-place.
+        setDetailProduct((prev) => {
+          if (!prev) return prev;
+          const prevKey = makeCacheKey(prev);
+          return prevKey === key ? merged : prev;
+        });
+      } catch (err) {
+        console.error("[creator detail] prefetch error", err);
+      } finally {
+        detailInFlightRef.current.delete(key);
+      }
+    },
+    [],
+  );
 
   const isMockMode =
     process.env.NODE_ENV !== "production" &&
@@ -477,7 +532,16 @@ export function CreatorAgentProvider({
   );
 
   const openDetail = (product: Product) => {
-    setDetailProduct(product);
+    // Prefer cached enriched detail if available, otherwise fall back to
+    // the base product and start a prefetch in the background.
+    const cachedKey = makeCacheKey(product);
+    const cached =
+      cachedKey && detailCacheRef.current.has(cachedKey)
+        ? detailCacheRef.current.get(cachedKey)!
+        : null;
+    setDetailProduct(cached ?? product);
+    // Fire and forget; prefetch will update the modal when data arrives.
+    void prefetchProductDetail(product);
   };
 
   const closeDetail = () => {
@@ -543,6 +607,7 @@ export function CreatorAgentProvider({
     similarError,
     detailProduct,
     isMobile,
+    prefetchProductDetail,
     openDetail,
     closeDetail,
     closeSimilar,

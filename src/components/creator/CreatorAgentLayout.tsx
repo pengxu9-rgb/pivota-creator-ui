@@ -36,6 +36,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
     openCart,
     cartItemsCount,
     addToCart,
+    prefetchProductDetail,
   } = useCreatorAgent();
 
   const router = useRouter();

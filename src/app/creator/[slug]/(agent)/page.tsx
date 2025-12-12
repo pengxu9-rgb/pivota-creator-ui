@@ -19,6 +19,7 @@ export default function CreatorAgentPage() {
     setInput,
     handleSeeSimilar,
     handleViewDetails,
+    prefetchProductDetail,
   } = useCreatorAgent();
 
   const searchParams = useSearchParams();
@@ -60,6 +61,14 @@ export default function CreatorAgentPage() {
       observer.disconnect();
     };
   }, [products.length]);
+
+  // Prefetch product-detail for currently visible products so that
+  // desktop detail modal can open with full Style/Size and images.
+  useEffect(() => {
+    if (!products.length) return;
+    const slice = products.slice(0, visibleCount);
+    slice.forEach((p) => prefetchProductDetail(p));
+  }, [products, visibleCount, prefetchProductDetail]);
 
   const recentQueryList = useMemo(
     () =>
