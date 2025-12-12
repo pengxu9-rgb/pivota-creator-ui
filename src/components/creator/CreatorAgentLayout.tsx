@@ -311,14 +311,14 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
 
         {similarBaseProduct && (
           <div className="fixed inset-0 z-30 flex items-end bg-black/40 px-4 pb-6 sm:items-center sm:pb-6 sm:pt-6">
-            <div className="mx-auto flex max-h-[80vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-[#f0e2d6] bg-[#fffdf9] text-[#3f3125] shadow-[0_20px_70px_rgba(63,49,37,0.22)] sm:p-0">
+            <div className="mx-auto flex max-h-[80vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-[#f0e2d6] bg-[#fffdf9] text-[#3f3125] shadow-xl sm:p-0">
               <div className="flex items-center justify-between gap-2 border-b border-[#f0e2d6] px-4 py-3 sm:px-6">
                 <div>
                   <h3 className="text-sm font-semibold text-[#3f3125] sm:text-base">
                     Similar styles
                   </h3>
                   <p className="mt-0.5 line-clamp-1 text-[11px] text-[#a38b78] sm:text-xs">
-                    Based on "{similarBaseProduct.title}"
+                    Based on “{similarBaseProduct.title}”
                   </p>
                 </div>
                 <button
@@ -394,7 +394,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
           >
             <div
               className="flex h-[90vh] w-full max-w-5xl flex-col overflow-hidden bg-[#fffaf5] text-[#3f3125] shadow-2xl sm:rounded-3xl"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(event) => event.stopPropagation()}
             >
               <div className="flex h-full flex-col overflow-y-auto sm:flex-row">
                 {detailProduct.imageUrl && (
@@ -411,6 +411,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                 )}
 
                 <div className="flex flex-1 flex-col gap-4 p-4 sm:p-6">
+                  {/* Title + merchant */}
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <h3 className="text-base font-semibold text-[#3f3125]">
@@ -432,12 +433,14 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                     </button>
                   </div>
 
+                  {/* Description */}
                   {detailProduct.description && (
                     <p className="text-[12px] leading-relaxed text-[#8c715c]">
                       {detailProduct.description}
                     </p>
                   )}
 
+                  {/* Price + best deal */}
                   <div className="space-y-2 text-[13px]">
                     <div className="text-[11px] font-medium uppercase tracking-wide text-[#a38b78]">
                       Price
@@ -452,24 +455,25 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                     )}
                   </div>
 
+                  {/* Dynamic options from backend (Color, Size, etc.) */}
                   {Array.isArray(detailProduct.options) &&
                     detailProduct.options.length > 0 && (
                       <div className="space-y-3 text-[12px]">
                         {detailProduct.options
                           .filter(
-                            (opt) =>
-                              opt &&
-                              typeof opt.name === "string" &&
-                              Array.isArray(opt.values) &&
-                              opt.values.length > 0,
+                            (option) =>
+                              option &&
+                              typeof option.name === "string" &&
+                              Array.isArray(option.values) &&
+                              option.values.length > 0,
                           )
-                          .map((opt) => (
-                            <div key={opt.name}>
+                          .map((option) => (
+                            <div key={option.name}>
                               <div className="text-[11px] font-medium uppercase tracking-wide text-[#a38b78]">
-                                {opt.name}
+                                {option.name}
                               </div>
                               <div className="mt-1 flex flex-wrap gap-2">
-                                {opt.values.map((value) => (
+                                {option.values.map((value) => (
                                   <button
                                     key={value}
                                     type="button"
@@ -484,30 +488,31 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                       </div>
                     )}
 
-                    <div>
-                      <div className="text-[11px] font-medium uppercase tracking-wide text-[#a38b78]">
-                        Quantity
-                      </div>
-                      <div className="mt-1 inline-flex items-center gap-2">
-                        <button
-                          type="button"
-                          className="flex h-7 w-7 items-center justify-center rounded-full border border-[#f0e2d6] bg-white text-[13px] text-[#8c715c]"
-                        >
-                          –
-                        </button>
-                        <span className="min-w-[2rem] text-center text-[12px] text-[#3f3125]">
-                          1
-                        </span>
-                        <button
-                          type="button"
-                          className="flex h-7 w-7 items-center justify-center rounded-full border border-[#f0e2d6] bg-white text-[13px] text-[#8c715c]"
-                        >
-                          +
-                        </button>
-                      </div>
+                  {/* Quantity (UI only for now) */}
+                  <div>
+                    <div className="text-[11px] font-medium uppercase tracking-wide text-[#a38b78]">
+                      Quantity
+                    </div>
+                    <div className="mt-1 inline-flex items-center gap-2">
+                      <button
+                        type="button"
+                        className="flex h-7 w-7 items-center justify-center rounded-full border border-[#f0e2d6] bg-white text-[13px] text-[#8c715c]"
+                      >
+                        –
+                      </button>
+                      <span className="min-w-[2rem] text-center text-[12px] text-[#3f3125]">
+                        1
+                      </span>
+                      <button
+                        type="button"
+                        className="flex h-7 w-7 items-center justify-center rounded-full border border-[#f0e2d6] bg-white text-[13px] text-[#8c715c]"
+                      >
+                        +
+                      </button>
                     </div>
                   </div>
 
+                  {/* Inventory info */}
                   {typeof detailProduct.inventoryQuantity === "number" && (
                     <p className="text-[11px] text-[#a38b78]">
                       Stock:{" "}
@@ -517,6 +522,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                     </p>
                   )}
 
+                  {/* Primary actions */}
                   <div className="mt-auto flex flex-col gap-2 pt-2 sm:flex-row">
                     <button
                       type="button"
@@ -538,83 +544,6 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
             </div>
           </div>
         )}
-
-        {/* Mobile bottom navigation */}
-        <nav className="fixed inset-x-0 bottom-0 z-10 border-t border-[#f0e2d6] bg-[#fff7f1]/98 py-1.5 shadow-[0_-4px_12px_rgba(63,49,37,0.08)] lg:hidden">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-6 text-[11px] text-[#a38b78]">
-            <button
-              type="button"
-              onClick={() =>
-                router.push(`/creator/${encodeURIComponent(creator.slug)}`)
-              }
-              className={
-                activeTab === "forYou"
-                  ? "flex flex-1 flex-col items-center gap-0.5 text-[#f28b7a]"
-                  : "flex flex-1 flex-col items-center gap-0.5 text-[#a38b78]"
-              }
-            >
-              <Home className="h-4 w-4" />
-              <span>For You</span>
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                router.push(
-                  `/creator/${encodeURIComponent(
-                    creator.slug,
-                  )}?tab=deals#creator-deals`,
-                )
-              }
-              className={
-                activeTab === "deals"
-                  ? "flex flex-1 flex-col items-center gap-0.5 text-[#f28b7a]"
-                  : "flex flex-1 flex-col items-center gap-0.5 text-[#a38b78]"
-              }
-            >
-              <Percent className="h-4 w-4" />
-              <span>Deals</span>
-            </button>
-            <button
-              type="button"
-              onClick={openCart}
-              className="flex flex-1 flex-col items-center gap-0.5 text-[#a38b78]"
-            >
-              <div className="relative">
-                <ShoppingCart className="h-4 w-4" />
-                {cartItemsCount > 0 && (
-                  <span className="absolute -right-2 -top-1 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-[#f6b59b] px-1 text-[9px] font-semibold text-white">
-                    {cartItemsCount}
-                  </span>
-                )}
-              </div>
-              <span>Cart</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (accountsUser) {
-                  router.push(
-                    `/account/orders?creator=${encodeURIComponent(
-                      creator.slug,
-                    )}`,
-                  );
-                } else {
-                  const returnTo =
-                    typeof window !== "undefined"
-                      ? window.location.pathname + window.location.search
-                      : `/creator/${creator.slug}`;
-                  router.push(
-                    `/account/login?return_to=${encodeURIComponent(returnTo)}`,
-                  );
-                }
-              }}
-              className="flex flex-1 flex-col items-center gap-0.5 text-[#a38b78]"
-            >
-              <User className="h-4 w-4" />
-              <span>Account</span>
-            </button>
-          </div>
-        </nav>
 
         {isDebug && (
           <div className="border-t border-slate-200 bg-slate-950/90 px-4 py-4 text-[11px] leading-relaxed text-white md:px-6 lg:px-10">
