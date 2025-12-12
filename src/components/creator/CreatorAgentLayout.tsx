@@ -311,32 +311,32 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
 
         {similarBaseProduct && (
           <div className="fixed inset-0 z-30 flex items-end bg-black/40 px-4 pb-6 sm:items-center sm:pb-6 sm:pt-6">
-            <div className="mx-auto flex max-h-[80vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-slate-950/95 p-4 text-slate-50 shadow-2xl backdrop-blur-xl sm:p-6">
-              <div className="flex items-center justify-between gap-2">
+            <div className="mx-auto flex max-h-[80vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-[#f0e2d6] bg-[#fffdf9] text-[#3f3125] shadow-[0_20px_70px_rgba(63,49,37,0.22)] sm:p-0">
+              <div className="flex items-center justify-between gap-2 border-b border-[#f0e2d6] px-4 py-3 sm:px-6">
                 <div>
-                  <h3 className="text-sm font-semibold text-slate-50">
-                    Similar items you may like
+                  <h3 className="text-sm font-semibold text-[#3f3125] sm:text-base">
+                    Similar styles
                   </h3>
-                  <p className="text-[11px] text-slate-300">
-                    Based on: {similarBaseProduct.title}
+                  <p className="mt-0.5 line-clamp-1 text-[11px] text-[#a38b78] sm:text-xs">
+                    Based on "{similarBaseProduct.title}"
                   </p>
                 </div>
                 <button
                   type="button"
-                  className="rounded-full bg-white/10 px-3 py-1 text-[11px] text-slate-100 hover:bg-white/20"
+                  className="rounded-full bg-transparent px-3 py-1 text-[11px] text-[#8c715c] hover:bg-[#fff2e3]"
                   onClick={closeSimilar}
                 >
                   Close
                 </button>
               </div>
 
-              <div className="mt-3 min-h-[140px] flex-1 overflow-y-auto">
+              <div className="min-h-[160px] flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
                 {isSimilarLoading && (
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                     {Array.from({ length: 9 }).map((_, idx) => (
                       <div
                         key={idx}
-                        className="h-32 animate-pulse rounded-2xl bg-white/10"
+                        className="h-44 animate-pulse rounded-3xl bg-[#f5e3d4]"
                       />
                     ))}
                   </div>
@@ -344,10 +344,10 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
 
                 {!isSimilarLoading && similarError && (
                   <div className="space-y-2">
-                    <p className="text-[11px] text-red-300">{similarError}</p>
+                    <p className="text-[11px] text-red-500">{similarError}</p>
                     <button
                       type="button"
-                      className="rounded-full bg-white/10 px-3 py-1 text-[11px] text-slate-100 hover:bg-white/20"
+                      className="rounded-full bg-[#3f3125] px-3 py-1 text-[11px] text-white shadow-sm hover:bg-black"
                       onClick={() =>
                         handleSeeSimilar(similarBaseProduct as any)
                       }
@@ -360,7 +360,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                 {!isSimilarLoading &&
                   !similarError &&
                   similarItems.length === 0 && (
-                    <p className="text-[11px] text-slate-300">
+                    <p className="text-[11px] text-[#a38b78]">
                       No similar items found yet.
                     </p>
                   )}
@@ -368,7 +368,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                 {!isSimilarLoading &&
                   !similarError &&
                   similarItems.length > 0 && (
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                       {similarItems.slice(0, 9).map((item) => (
                         <ProductCard
                           key={item.product.id}
