@@ -240,6 +240,20 @@ export default function OrdersPage() {
                   (order as any).image_url ||
                   null;
 
+                const firstItemOptions = (order as any)
+                  .first_item_selected_options as
+                  | Record<string, string>
+                  | null
+                  | undefined;
+                const firstItemSku = (order as any)
+                  .first_item_variant_sku as string | null | undefined;
+                const firstItemOptionsText =
+                  firstItemOptions && typeof firstItemOptions === "object"
+                    ? Object.entries(firstItemOptions)
+                        .map(([name, value]) => `${name}: ${value}`)
+                        .join(" · ")
+                    : null;
+
                 const canCancel =
                   order.payment_status === "pending" && !isCancelled;
 
@@ -295,6 +309,13 @@ export default function OrdersPage() {
                       {order.creator_name && (
                         <p className="text-[10px] text-[#b29a84]">
                           Creator: {order.creator_name}
+                        </p>
+                      )}
+                      {(firstItemOptionsText || firstItemSku) && (
+                        <p className="text-[10px] text-[#b29a84]">
+                          {firstItemOptionsText}
+                          {firstItemOptionsText && firstItemSku ? " · " : ""}
+                          {firstItemSku ? `SKU: ${firstItemSku}` : ""}
                         </p>
                       )}
                     </div>

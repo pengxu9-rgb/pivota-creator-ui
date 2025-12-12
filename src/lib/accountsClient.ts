@@ -30,6 +30,10 @@ export type OrdersListItem = {
   created_at: string;
   // Optional lightweight metadata for Creator-style order cards
   first_item_image_url?: string | null;
+   // Optional SKU and option snapshot for the first item,
+   // if the backend provides them.
+  first_item_variant_sku?: string | null;
+  first_item_selected_options?: Record<string, string> | null;
   shipping_city?: string | null;
   shipping_country?: string | null;
   items_summary?: string;

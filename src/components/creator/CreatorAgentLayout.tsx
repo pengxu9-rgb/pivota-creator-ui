@@ -23,7 +23,10 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
     similarItems,
     isSimilarLoading,
     similarError,
+    detailProduct,
+    isMobile,
     closeSimilar,
+    closeDetail,
     handleSeeSimilar,
     handleViewDetails,
     lastRequest,
@@ -32,6 +35,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
     isDebug,
     openCart,
     cartItemsCount,
+    addToCart,
   } = useCreatorAgent();
 
   const router = useRouter();
@@ -374,6 +378,119 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                       ))}
                     </div>
                   )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Desktop product quick-view modal */}
+        {detailProduct && !isMobile && (
+          <div
+            className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4 sm:px-6"
+            onClick={closeDetail}
+          >
+            <div
+              className="flex w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-[#f0e2d6] bg-[#fffaf5] text-[#3f3125] shadow-2xl sm:flex-row"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="w-full bg-[#f5e3d4] sm:w-1/2">
+                <div className="relative aspect-[3/4] w-full overflow-hidden">
+                  <img
+                    src={
+                      (detailProduct.images && detailProduct.images[0]) ||
+                      detailProduct.imageUrl ||
+                      "/placeholder.png"
+                    }
+                    alt={detailProduct.title}
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-1 flex-col gap-3 p-4 sm:p-6">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-base font-semibold text-[#3f3125]">
+                      {detailProduct.title}
+                    </h3>
+                    {detailProduct.merchantName && (
+                      <p className="mt-0.5 text-[11px] text-[#a38b78]">
+                        Sold by {detailProduct.merchantName}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#fff0e3] text-[#8c715c] shadow-sm hover:bg-[#ffd9c2]"
+                    onClick={closeDetail}
+                    aria-label="Close"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+
+                {detailProduct.description && (
+                  <p className="text-[12px] leading-relaxed text-[#8c715c] line-clamp-4">
+                    {detailProduct.description}
+                  </p>
+                )}
+
+                <div className="space-y-1 text-[13px]">
+                  <div className="text-[11px] font-medium uppercase tracking-wide text-[#a38b78]">
+                    Price
+                  </div>
+                  <div className="text-lg font-semibold text-[#3f3125]">
+                    {detailProduct.currency}{" "}
+                    {detailProduct.price?.toFixed
+                      ? detailProduct.price.toFixed(2)
+                      : detailProduct.price}
+                  </div>
+                  {detailProduct.bestDeal?.label && (
+                    <div className="text-[12px] font-medium text-[#f28b7a]">
+                      {detailProduct.bestDeal.label}
+                    </div>
+                  )}
+                </div>
+
+                <p className="mt-1 text-[11px] text-[#b29a84]">
+                  For full style / size selection and all images, open the
+                  detailed view.
+                </p>
+
+                <div className="mt-auto flex flex-col gap-2 pt-2 sm:flex-row">
+                  <button
+                    type="button"
+                    className="flex-1 rounded-full bg-[#f6b59b] px-3 py-2 text-[12px] font-medium text-white shadow-sm hover:bg-[#f29b7f]"
+                    onClick={() => {
+                      // Use the generic addToCart helper from context.
+                      // It adds the base product (no variant selection here).
+                      addToCart(detailProduct);
+                    }}
+                  >
+                    Add to cart
+                  </button>
+                  <button
+                    type="button"
+                    className="flex-1 rounded-full border border-[#f0e2d6] bg-white px-3 py-2 text-[12px] font-medium text-[#8c715c] shadow-sm hover:bg-[#fff0e3]"
+                    onClick={() => {
+                      const params = new URLSearchParams();
+                      if (detailProduct.merchantId) {
+                        params.set("merchant_id", detailProduct.merchantId);
+                      }
+                      const query = params.toString();
+                      closeDetail();
+                      router.push(
+                        `/creator/${encodeURIComponent(
+                          creator.slug,
+                        )}/product/${encodeURIComponent(detailProduct.id)}${
+                          query ? `?${query}` : ""
+                        }`,
+                      );
+                    }}
+                  >
+                    View full details
+                  </button>
+                </div>
               </div>
             </div>
           </div>

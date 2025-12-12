@@ -294,16 +294,22 @@ export function CreatorAgentProvider({
   };
 
   const handleViewDetails = (base: Product) => {
-    const params = new URLSearchParams();
-    if (base.merchantId) {
-      params.set("merchant_id", base.merchantId);
+    // On mobile, navigate to full product detail page.
+    // On desktop, open the inline detail modal and let the layout render it.
+    if (isMobile) {
+      const params = new URLSearchParams();
+      if (base.merchantId) {
+        params.set("merchant_id", base.merchantId);
+      }
+      const query = params.toString();
+      router.push(
+        `/creator/${creator.slug}/product/${encodeURIComponent(base.id)}${
+          query ? `?${query}` : ""
+        }`,
+      );
+    } else {
+      openDetail(base);
     }
-    const query = params.toString();
-    router.push(
-      `/creator/${creator.slug}/product/${encodeURIComponent(base.id)}${
-        query ? `?${query}` : ""
-      }`,
-    );
   };
 
   const userQueries = useMemo(
@@ -376,44 +382,6 @@ export function CreatorAgentProvider({
       console.error("Failed to load recent queries", err);
     }
   }, [recentQueriesStorageKey]);
-
-  // When a detail product is opened on desktop, enrich it with backend product-detail
-  // so that options/specs (color, size, etc.) are available if the backend provides them.
-  useEffect(() => {
-    if (!detailProduct || !detailProduct.id || !detailProduct.merchantId || isMobile) {
-      return;
-    }
-    let cancelled = false;
-
-    const loadDetail = async () => {
-      try {
-        const res = await fetch("/api/creator-agent/product-detail", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            merchantId: detailProduct.merchantId,
-            productId: detailProduct.id,
-          }),
-        });
-
-        if (!res.ok) return;
-        const data = (await res.json()) as { product?: Product };
-        if (!cancelled && data.product) {
-          setDetailProduct((prev) =>
-            prev && prev.id === detailProduct.id ? { ...prev, ...data.product } : prev,
-          );
-        }
-      } catch (err) {
-        console.error("[creator detail] enrich error", err);
-      }
-    };
-
-    loadDetail();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [detailProduct?.id, detailProduct?.merchantId, isMobile]);
 
   useEffect(() => {
     let cancelled = false;

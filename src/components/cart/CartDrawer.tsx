@@ -60,6 +60,19 @@ export function CartDrawer() {
                         <p className="line-clamp-2 text-xs font-medium text-slate-900">
                           {item.title}
                         </p>
+                        {item.selectedOptions &&
+                          Object.keys(item.selectedOptions).length > 0 && (
+                            <p className="mt-0.5 text-[11px] text-slate-500">
+                              {Object.entries(item.selectedOptions)
+                                .map(([name, value]) => `${name}: ${value}`)
+                                .join(" · ")}
+                            </p>
+                          )}
+                        {item.variantSku && (
+                          <p className="mt-0.5 text-[11px] text-slate-500">
+                            SKU: {item.variantSku}
+                          </p>
+                        )}
                         <p className="mt-1 text-xs text-slate-600">
                           {currency} {item.price.toFixed(2)}
                         </p>
