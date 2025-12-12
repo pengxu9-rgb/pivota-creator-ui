@@ -294,16 +294,20 @@ export function CreatorAgentProvider({
   };
 
   const handleViewDetails = (base: Product) => {
-    const params = new URLSearchParams();
-    if (base.merchantId) {
-      params.set("merchant_id", base.merchantId);
+    if (isMobile) {
+      const params = new URLSearchParams();
+      if (base.merchantId) {
+        params.set("merchant_id", base.merchantId);
+      }
+      const query = params.toString();
+      router.push(
+        `/creator/${creator.slug}/product/${encodeURIComponent(base.id)}${
+          query ? `?${query}` : ""
+        }`,
+      );
+    } else {
+      openDetail(base);
     }
-    const query = params.toString();
-    router.push(
-      `/creator/${creator.slug}/product/${encodeURIComponent(base.id)}${
-        query ? `?${query}` : ""
-      }`,
-    );
   };
 
   const userQueries = useMemo(
