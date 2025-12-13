@@ -82,71 +82,67 @@ export default function CreatorAgentPage() {
     <>
       {activeTab === "forYou" && (
         <>
-          <div className="space-y-3">
+          <div className="space-y-4">
             <SectionHeader
               title="Featured for you"
               subtitle={`Based on ${creator.name}'s style and typical scenarios.`}
             />
-            <div className="rounded-3xl border border-[#f0e2d6] bg-[#fff2e6] px-4 py-4 shadow-[0_18px_45px_rgba(63,49,37,0.06)] sm:px-5 sm:py-5">
-              <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
-                <div className="flex flex-wrap gap-2">
-                  <span className="inline-flex items-center rounded-full bg-slate-900 px-3 py-1.5 text-[11px] font-medium text-slate-50">
-                    All picks
-                  </span>
-                  <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] text-slate-600">
-                    Creator picks
-                  </span>
-                  <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] text-slate-600">
-                    On sale
-                  </span>
+            <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
+              <div className="flex flex-wrap gap-2">
+                <span className="inline-flex items-center rounded-full bg-slate-900 px-3 py-1.5 text-[11px] font-medium text-slate-50">
+                  All picks
+                </span>
+                <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] text-slate-600">
+                  Creator picks
+                </span>
+                <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] text-slate-600">
+                  On sale
+                </span>
+              </div>
+              <button
+                type="button"
+                className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+              >
+                Refine with {creator.name}
+              </button>
+            </div>
+            {isFeaturedLoading || (isLoading && products.length === 0) ? (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 3 }).map((_, idx) => (
+                  <div
+                    key={idx}
+                    className="h-40 animate-pulse rounded-3xl bg-slate-100"
+                  />
+                ))}
+              </div>
+            ) : products.length === 0 ? (
+              <div className="flex flex-1 items-center justify-center text-[12px] text-slate-500">
+                No candidates yet. Tell me what you need on the left.
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {products.slice(0, visibleCount).map((p) => (
+                    <ProductCard
+                      key={p.id}
+                      product={p}
+                      creatorName={creator.name}
+                      creatorId={creator.id}
+                      creatorSlug={creator.slug}
+                      onSeeSimilar={handleSeeSimilar}
+                      onViewDetails={handleViewDetails}
+                    />
+                  ))}
                 </div>
-                <button
-                  type="button"
-                  className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-700 shadow-sm hover:bg-slate-50"
-                >
-                  Refine with {creator.name}
-                </button>
-              </div>
-
-              <div className="mt-3">
-                {isFeaturedLoading || (isLoading && products.length === 0) ? (
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {Array.from({ length: 3 }).map((_, idx) => (
-                      <div
-                        key={idx}
-                        className="h-40 animate-pulse rounded-3xl bg-[#f6e6d8]"
-                      />
-                    ))}
-                  </div>
-                ) : products.length === 0 ? (
-                  <div className="flex flex-1 items-center justify-center text-[12px] text-slate-500">
-                    No candidates yet. Tell me what you need on the left.
-                  </div>
-                ) : (
-                  <>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                      {products.slice(0, visibleCount).map((p) => (
-                        <ProductCard
-                          key={p.id}
-                          product={p}
-                          creatorName={creator.name}
-                          creatorId={creator.id}
-                          creatorSlug={creator.slug}
-                          onSeeSimilar={handleSeeSimilar}
-                          onViewDetails={handleViewDetails}
-                        />
-                      ))}
-                    </div>
-                    {products.length > visibleCount && (
-                      <div
-                        ref={loadMoreRef}
-                        className="mt-4 h-8 w-full"
-                        aria-hidden="true"
-                      />
-                    )}
-                  </>
+                {products.length > visibleCount && (
+                  <div
+                    ref={loadMoreRef}
+                    className="mt-4 h-8 w-full"
+                    aria-hidden="true"
+                  />
                 )}
-              </div>
+              </>
+            )}
             </div>
           </div>
 
