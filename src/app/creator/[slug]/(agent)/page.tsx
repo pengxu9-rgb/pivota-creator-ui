@@ -107,7 +107,7 @@ export default function CreatorAgentPage() {
               </button>
             </div>
             {isFeaturedLoading || (isLoading && products.length === 0) ? (
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {Array.from({ length: 3 }).map((_, idx) => (
                   <div
                     key={idx}
@@ -121,7 +121,7 @@ export default function CreatorAgentPage() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {products.slice(0, visibleCount).map((p) => (
                     <ProductCard
                       key={p.id}

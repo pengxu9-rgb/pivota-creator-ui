@@ -475,7 +475,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
         )}
 
         {/* Mobile bottom navigation */}
-        <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-[#f0e2d6] bg-[#fffefc]/98 py-1.5 shadow-[0_-6px_30px_rgba(63,49,37,0.16)] lg:hidden">
+        <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-[#f0e2d6] bg-[#fffefc] py-1.5 shadow-[0_-6px_30px_rgba(63,49,37,0.16)] lg:hidden">
           <div className="mx-auto flex max-w-6xl items-center justify-around px-4 text-[11px] text-[#b29a84]">
             <button
               type="button"
