@@ -562,8 +562,8 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
               <div className="flex h-full w-full flex-col overflow-y-auto sm:flex-row">
                 {/* Left: image gallery */}
                 {detailImages.length > 0 && (
-                  <div className="w-full bg-[#f5e3d4] sm:w-1/2">
-                    <div className="relative aspect-[3/4] w-full overflow-hidden">
+                  <div className="flex w-full flex-col bg-[#f5e3d4] sm:w-1/2">
+                    <div className="relative w-full flex-1 overflow-hidden">
                       <img
                         src={
                           detailImages[
@@ -574,11 +574,46 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                           ]
                         }
                         alt={detailProduct.title}
-                        className="absolute inset-0 h-full w-full object-cover"
+                        className="absolute inset-0 h-full w-full object-contain"
                       />
+
+                      {detailImages.length > 1 && (
+                        <>
+                          <button
+                            type="button"
+                            aria-label="Previous image"
+                            className="absolute left-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white shadow hover:bg-black/60"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveImageIndex((prev) =>
+                                prev <= 0
+                                  ? detailImages.length - 1
+                                  : prev - 1,
+                              );
+                            }}
+                          >
+                            ‹
+                          </button>
+                          <button
+                            type="button"
+                            aria-label="Next image"
+                            className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white shadow hover:bg-black/60"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveImageIndex((prev) =>
+                                prev >= detailImages.length - 1
+                                  ? 0
+                                  : prev + 1,
+                              );
+                            }}
+                          >
+                            ›
+                          </button>
+                        </>
+                      )}
                     </div>
                     {detailImages.length > 1 && (
-                      <div className="flex gap-2 overflow-x-auto px-3 py-2">
+                      <div className="flex gap-2 overflow-x-auto px-3 py-2 shrink-0">
                         {detailImages.map((url, idx) => (
                           <button
                             key={url + idx.toString()}
@@ -603,7 +638,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                 )}
 
                 {/* Right: full detail content with style / size selection */}
-                <div className="flex flex-1 flex-col gap-3 p-4 sm:p-6">
+                <div className="flex flex-1 flex-col gap-2 p-4 sm:p-6">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h3 className="text-base font-semibold text-[#3f3125] sm:text-lg">
@@ -631,7 +666,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                   </p>
                 )}
 
-                <div className="space-y-2 text-[13px]">
+                <div className="space-y-1.5 text-[13px]">
                   <div className="text-[11px] font-medium uppercase tracking-wide text-[#a38b78]">
                     Price
                   </div>
@@ -647,7 +682,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
 
                 {Array.isArray(detailProduct.options) &&
                   detailProduct.options.length > 0 && (
-                    <div className="space-y-3 text-[12px]">
+                    <div className="space-y-2.5 text-[12px]">
                       {detailProduct.options
                         .filter((opt) => opt.values && opt.values.length > 0)
                         .map((opt) => (
@@ -715,7 +750,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                     </p>
                   )}
 
-                  <div className="mt-auto flex flex-col gap-2 pt-2 sm:flex-row">
+                  <div className="mt-2 flex flex-col gap-2 pt-1 sm:flex-row">
                     <button
                       type="button"
                       className="flex-1 rounded-full bg-[#f6b59b] px-3 py-2 text-[12px] font-medium text-white shadow-sm hover:bg-[#f29b7f]"

@@ -552,7 +552,8 @@ export function CreatorAgentProvider({
   useEffect(() => {
     if (typeof document === "undefined") return;
     const original = document.body.style.overflow;
-    if (similarBaseProduct) {
+    const shouldLock = Boolean(similarBaseProduct || detailProduct);
+    if (shouldLock) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = original;
@@ -560,7 +561,7 @@ export function CreatorAgentProvider({
     return () => {
       document.body.style.overflow = original;
     };
-  }, [similarBaseProduct]);
+  }, [similarBaseProduct, detailProduct]);
 
   const cartItemsCount = useMemo(
     () => cartItems.reduce((sum, item) => sum + item.quantity, 0),
