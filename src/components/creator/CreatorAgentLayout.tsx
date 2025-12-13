@@ -678,22 +678,13 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                     type="button"
                     className="flex-1 rounded-full border border-[#f0e2d6] bg-white px-3 py-2 text-[12px] font-medium text-[#8c715c] shadow-sm hover:bg-[#fff0e3]"
                     onClick={() => {
-                      const params = new URLSearchParams();
-                      if (detailProduct.merchantId) {
-                        params.set("merchant_id", detailProduct.merchantId);
-                      }
-                      const query = params.toString();
+                      // Close detail modal and open the "similar styles" sheet
+                      // using the same handler as product cards.
                       closeDetail();
-                      router.push(
-                        `/creator/${encodeURIComponent(
-                          creator.slug,
-                        )}/product/${encodeURIComponent(detailProduct.id)}${
-                          query ? `?${query}` : ""
-                        }`,
-                      );
+                      handleSeeSimilar(detailProduct);
                     }}
                   >
-                    View full details
+                    Find more
                   </button>
                 </div>
               </div>

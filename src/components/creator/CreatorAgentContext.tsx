@@ -472,6 +472,13 @@ export function CreatorAgentProvider({
             ? attachMockDeals(data.products)
             : data.products;
           setProducts(withDeals);
+
+          // Optimistically prefetch detail for the first batch of featured
+          // products so desktop detail modals can open with Style/Size and
+          // images immediately.
+          withDeals.slice(0, 6).forEach((p) => {
+            void prefetchProductDetail(p);
+          });
         }
 
         if (isDebug) {
