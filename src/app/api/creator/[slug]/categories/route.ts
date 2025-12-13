@@ -15,11 +15,12 @@ export async function GET(req: NextRequest, { params }: any) {
     url.searchParams.get("includeCounts") ?? "true";
   const dealsOnly = url.searchParams.get("dealsOnly") ?? "false";
 
-  // In production, fall back to the shared gateway URL so that
-  // creator categories use real data instead of mock when env
-  // vars are missing or misconfigured.
-  if (!rawBase && process.env.NODE_ENV === "production") {
-    rawBase = "https://pivota-agent-production.up.railway.app/agent/shop/v1/invoke";
+  // Fall back to the shared gateway URL so that creator categories
+  // use real data instead of mock when env vars are missing or
+  // misconfigured in hosted environments.
+  if (!rawBase) {
+    rawBase =
+      "https://pivota-agent-production.up.railway.app/agent/shop/v1/invoke";
   }
 
   if (!rawBase) {

@@ -71,11 +71,12 @@ export async function GET(req: NextRequest, { params }: any) {
   const page = url.searchParams.get("page") ?? "1";
   const limit = url.searchParams.get("limit") ?? "500";
 
-  // In production, fall back to the shared gateway URL so that
-  // category products use real data instead of local mocks when
-  // env vars are misconfigured.
-  if (!rawBase && process.env.NODE_ENV === "production") {
-    rawBase = "https://pivota-agent-production.up.railway.app/agent/shop/v1/invoke";
+  // Fall back to the shared gateway URL so that category products
+  // use real data instead of local mocks when env vars are missing
+  // or misconfigured in hosted environments.
+  if (!rawBase) {
+    rawBase =
+      "https://pivota-agent-production.up.railway.app/agent/shop/v1/invoke";
   }
 
   if (!rawBase) {
