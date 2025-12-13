@@ -153,6 +153,35 @@ export function CreatorAgentProvider({
         const merged: Product = { ...base, ...data.product };
         detailCacheRef.current.set(key, merged);
 
+         // Eagerly prefetch primary images so that when the user opens
+         // the desktop detail modal, the gallery can render without an
+         // extra image round-trip.
+         if (typeof window !== "undefined") {
+           try {
+             const urls = new Set<string>();
+             if (merged.imageUrl) {
+               urls.add(merged.imageUrl);
+             }
+             if (Array.isArray(merged.images) && merged.images.length > 0) {
+               merged.images.slice(0, 4).forEach((u) => {
+                 if (typeof u === "string" && u.trim()) {
+                   urls.add(u);
+                 }
+               });
+             }
+             urls.forEach((url) => {
+               try {
+                 const img = new Image();
+                 img.src = url;
+               } catch {
+                 // ignore individual preload errors
+               }
+             });
+           } catch (err) {
+             console.error("[creator detail] image preload error", err);
+           }
+         }
+
         // If the modal is currently showing this product, update it in-place.
         setDetailProduct((prev) => {
           if (!prev) return prev;
