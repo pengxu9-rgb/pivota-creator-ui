@@ -2,6 +2,15 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getMockCreatorCategoryTree } from "@/config/categoriesMock";
 import type { CreatorCategoryTreeResponse } from "@/types/category";
 
+function resolveLocale(req: NextRequest, explicit?: string | null): string | undefined {
+  const raw = explicit?.trim();
+  if (raw) return raw;
+  const accept = req.headers.get("accept-language") || "";
+  const lower = accept.toLowerCase();
+  if (lower.includes("zh")) return "zh-CN";
+  return "en-US";
+}
+
 export async function GET(req: NextRequest, { params }: any) {
   const creatorSlug = params.slug;
   let rawBase =
@@ -14,6 +23,8 @@ export async function GET(req: NextRequest, { params }: any) {
   const includeCounts =
     url.searchParams.get("includeCounts") ?? "true";
   const dealsOnly = url.searchParams.get("dealsOnly") ?? "false";
+  const view = url.searchParams.get("view") ?? undefined;
+  const locale = resolveLocale(req, url.searchParams.get("locale"));
 
   // In production, never silently fall back to mock:
   // if gateway URL is missing, surface an explicit error.
@@ -35,10 +46,13 @@ export async function GET(req: NextRequest, { params }: any) {
   const baseUrl = rawBase.replace(/\/agent\/shop\/v1\/invoke\/?$/, "");
 
   try {
-    const qs = new URLSearchParams({
+    const qsParams = new URLSearchParams({
       includeCounts,
       dealsOnly,
-    }).toString();
+      ...(view ? { view } : {}),
+      ...(locale ? { locale } : {}),
+    });
+    const qs = qsParams.toString();
 
     const res = await fetch(
       `${baseUrl}/creator/${creatorSlug}/categories?${qs}`,
@@ -64,6 +78,11 @@ export async function GET(req: NextRequest, { params }: any) {
 
     const normalized: CreatorCategoryTreeResponse = {
       creatorId: data.creatorId ?? creatorSlug,
+      taxonomyVersion: data.taxonomyVersion,
+      market: data.market,
+      locale: data.locale ?? locale,
+      viewId: data.viewId ?? view,
+      source: data.source,
       roots: data.roots ?? [],
       hotDeals: data.hotDeals ?? [],
     };

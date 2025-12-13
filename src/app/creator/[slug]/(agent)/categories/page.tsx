@@ -1,129 +1,70 @@
 'use client';
 
-import { useMemo, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCreatorCategories } from "@/lib/useCreatorCategories";
 import type { CategoryNode } from "@/types/category";
 import { cn } from "@/lib/utils";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { useCreatorAgent } from "@/components/creator/CreatorAgentContext";
 
-const TOP_CATEGORY_SLUGS = new Set(["sportswear", "lingerie-set", "toys"]);
-const FEATURED_CATEGORY_SLUGS = new Set([
-  "sportswear",
-  "lingerie-set",
-  "toys",
-  "womens-loungewear",
-]);
+const CATEGORY_VIEWS = [
+  { id: "GLOBAL_FASHION", label: "Fashion" },
+  { id: "GLOBAL_BEAUTY", label: "Beauty" },
+  { id: "GLOBAL_OUTDOOR", label: "Outdoor" },
+  { id: "GLOBAL_PETS", label: "Pets" },
+  { id: "GLOBAL_TOYS", label: "Toys" },
+] as const;
 
-const FEATURED_CATEGORIES: CategoryNode[] = [
-  {
-    category: {
-      id: "sportswear",
-      slug: "sportswear",
-      name: "Sportswear",
-      parentId: null,
-      level: 0,
-      imageUrl: "/mock-categories/sportswear.svg",
-      productCount: 0,
-      path: ["Sportswear"],
-      priority: 100,
-    },
-    children: [],
-  },
-  {
-    category: {
-      id: "lingerie-set",
-      slug: "lingerie-set",
-      name: "Lingerie Set",
-      parentId: null,
-      level: 0,
-      imageUrl: "/mock-categories/lingerie-set.svg",
-      productCount: 0,
-      path: ["Lingerie Set"],
-      priority: 90,
-    },
-    children: [],
-  },
-  {
-    category: {
-      id: "toys",
-      slug: "toys",
-      name: "Toys",
-      parentId: null,
-      level: 0,
-      imageUrl: "/mock-categories/toys.svg",
-      productCount: 0,
-      path: ["Toys"],
-      priority: 80,
-    },
-    children: [],
-  },
-];
+const DEFAULT_VIEW = "GLOBAL_FASHION";
 
-const EXTRA_FEATURED_CATEGORIES: CategoryNode[] = [
-  {
-    category: {
-      id: "womens-loungewear",
-      slug: "womens-loungewear",
-      name: "Women’s Loungewear",
-      parentId: null,
-      level: 0,
-      imageUrl: "/mock-categories/womens-loungewear.svg",
-      productCount: 0,
-      path: ["Women’s Loungewear"],
-      priority: 70,
-    },
-    children: [],
-  },
-];
-
-const TOP_CATEGORY_SORT_WEIGHT: Record<string, number> = {
-  sportswear: 3,
-  "lingerie-set": 2,
-  toys: 1,
-};
 const CATEGORY_IMAGE_FALLBACK: Record<string, string> = {
   sportswear: "/mock-categories/sportswear.svg",
   "lingerie-set": "/mock-categories/lingerie-set.svg",
   toys: "/mock-categories/toys.svg",
   "womens-loungewear": "/mock-categories/womens-loungewear.svg",
+  "designer-toys": "/mock-categories/toys.svg",
 };
 
 export default function CreatorCategoriesPage() {
   const params = useParams<{ slug: string }>();
   const slugParam = params?.slug;
   const creatorSlug = Array.isArray(slugParam) ? slugParam[0] : slugParam;
+  const searchParams = useSearchParams();
 
   const [showDealsOnly, setShowDealsOnly] = useState(false);
+  const [activeView, setActiveView] = useState(DEFAULT_VIEW);
 
-  const { roots, hotDeals, isLoading, error } = useCreatorCategories(
+  useEffect(() => {
+    const view = searchParams?.get("view");
+    const allowed = CATEGORY_VIEWS.some((v) => v.id === view);
+    setActiveView(allowed && view ? view : DEFAULT_VIEW);
+  }, [searchParams]);
+
+  const { roots, hotDeals, isLoading, error, source } = useCreatorCategories(
     creatorSlug,
-    { dealsOnly: showDealsOnly },
+    { dealsOnly: showDealsOnly, view: activeView },
   );
   const router = useRouter();
   const { setPromptFromContext } = useCreatorAgent();
 
   const sortedRoots = useMemo(
-    () =>
-      [...roots].sort((a, b) => {
-        const aBoost = TOP_CATEGORY_SORT_WEIGHT[a.category.slug] ?? 0;
-        const bBoost = TOP_CATEGORY_SORT_WEIGHT[b.category.slug] ?? 0;
-        if (aBoost !== bBoost) return bBoost - aBoost;
-        return (b.category.priority ?? 0) - (a.category.priority ?? 0);
-      }),
+    () => [...roots].sort((a, b) => (b.category.priority ?? 0) - (a.category.priority ?? 0)),
     [roots],
   );
 
-  const nonFeaturedRoots = useMemo(
-    () => sortedRoots.filter((node) => !FEATURED_CATEGORY_SLUGS.has(node.category.slug)),
+  const heroCategories = useMemo(() => sortedRoots.slice(0, 3), [sortedRoots]);
+  const restCategories = useMemo(
+    () => (sortedRoots.length > 3 ? sortedRoots.slice(3) : []),
     [sortedRoots],
   );
 
   function handleCategoryClick(node: CategoryNode) {
     const cat = node.category;
     const creatorSlugSafe = creatorSlug || "creator";
-    router.push(`/creator/${creatorSlugSafe}/category/${cat.slug}`);
+    router.push(
+      `/creator/${creatorSlugSafe}/category/${cat.slug}?view=${encodeURIComponent(activeView)}`,
+    );
     setPromptFromContext(
       `Browsing category: ${cat.name}. Show me deals and highly relevant products in this category.`,
     );
@@ -135,6 +76,16 @@ export default function CreatorCategoriesPage() {
 
   const handleToggleDealsOnly = () => {
     setShowDealsOnly(true);
+  };
+
+  const handleViewChange = (viewId: string) => {
+    setActiveView(viewId);
+    const creatorSlugSafe = creatorSlug || "creator";
+    router.replace(
+      `/creator/${encodeURIComponent(creatorSlugSafe)}/categories?view=${encodeURIComponent(
+        viewId,
+      )}`,
+    );
   };
 
   return (
@@ -171,6 +122,29 @@ export default function CreatorCategoriesPage() {
               Deals only
             </button>
           </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="inline-flex items-center rounded-full bg-slate-100 p-1 text-[11px] text-slate-600">
+            {CATEGORY_VIEWS.map((v) => (
+              <button
+                key={v.id}
+                type="button"
+                onClick={() => handleViewChange(v.id)}
+                className={cn(
+                  "rounded-full px-2.5 py-1",
+                  activeView === v.id && "bg-white text-slate-900 shadow-sm",
+                )}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
+          {source && source !== "canonical" && (
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] text-slate-600">
+              Source: {source}
+            </span>
+          )}
         </div>
 
         {hotDeals.length > 0 && (
@@ -221,26 +195,25 @@ export default function CreatorCategoriesPage() {
         <div className="mt-6 space-y-8">
           <SectionHeader
             title="Top categories"
-            subtitle="Sportswear, Lingerie Set, and Toys are prioritized."
+            subtitle="Pinned categories and high-signal groups appear first."
           />
 
           {/* Hero row: large cards (desktop) */}
           <section className="hidden gap-4 md:grid md:grid-cols-3">
-            {FEATURED_CATEGORIES.map((node) => {
+            {heroCategories.map((node, index) => {
               const cat = node.category;
               const count = cat.productCount ?? 0;
               const hasDeals = (cat.deals?.length ?? 0) > 0;
-              const isTopCategory = TOP_CATEGORY_SLUGS.has(cat.slug);
               const imageUrl =
                 cat.imageUrl || CATEGORY_IMAGE_FALLBACK[cat.slug] || "";
+              const isTopCard = index === 0;
               return (
                 <button
                   key={cat.id}
                   onClick={() => handleCategoryClick(node)}
                   className={cn(
                     "group flex h-64 flex-col overflow-hidden rounded-3xl bg-slate-100 text-left text-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl",
-                    isTopCategory &&
-                      "ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white",
+                    isTopCard && "ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white",
                   )}
                 >
                   <div className="relative flex-1">
@@ -257,7 +230,7 @@ export default function CreatorCategoriesPage() {
                       </div>
                     )}
                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                    {isTopCategory && (
+                    {isTopCard && (
                       <div className="pointer-events-none absolute left-4 top-4">
                         <span className="inline-flex items-center rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold text-slate-900 shadow-sm">
                           Top
@@ -294,21 +267,20 @@ export default function CreatorCategoriesPage() {
 
           {/* Hero row on mobile: horizontal scroll */}
           <section className="mt-4 flex gap-4 overflow-x-auto md:hidden">
-            {FEATURED_CATEGORIES.map((node) => {
+            {heroCategories.map((node, index) => {
               const cat = node.category;
               const count = cat.productCount ?? 0;
               const hasDeals = (cat.deals?.length ?? 0) > 0;
-              const isTopCategory = TOP_CATEGORY_SLUGS.has(cat.slug);
               const imageUrl =
                 cat.imageUrl || CATEGORY_IMAGE_FALLBACK[cat.slug] || "";
+              const isTopCard = index === 0;
               return (
                 <button
                   key={cat.id}
                   onClick={() => handleCategoryClick(node)}
                   className={cn(
                     "group flex w-60 flex-col overflow-hidden rounded-3xl bg-slate-100 text-left text-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl",
-                    isTopCategory &&
-                      "ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white",
+                    isTopCard && "ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white",
                   )}
                 >
                   <div className="relative h-56">
@@ -325,7 +297,7 @@ export default function CreatorCategoriesPage() {
                       </div>
                     )}
                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                    {isTopCategory && (
+                    {isTopCard && (
                       <div className="pointer-events-none absolute left-4 top-4">
                         <span className="inline-flex items-center rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold text-slate-900 shadow-sm">
                           Top
@@ -366,7 +338,7 @@ export default function CreatorCategoriesPage() {
               All categories
             </h2>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-              {[...EXTRA_FEATURED_CATEGORIES, ...nonFeaturedRoots].map(
+              {(restCategories.length > 0 ? restCategories : sortedRoots).map(
                 (node) => {
                   const cat = node.category;
                   const count = cat.productCount ?? 0;

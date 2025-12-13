@@ -8,11 +8,18 @@ import type {
 interface UseCreatorCategoriesOptions {
   includeCounts?: boolean;
   dealsOnly?: boolean;
+  view?: string;
+  locale?: string;
 }
 
 interface UseCreatorCategoriesResult {
   roots: CategoryNode[];
   hotDeals: CategoryDealSummary[];
+  taxonomyVersion?: string;
+  market?: string;
+  locale?: string;
+  viewId?: string;
+  source?: string;
   isLoading: boolean;
   error: string | null;
 }
@@ -23,6 +30,13 @@ export function useCreatorCategories(
 ): UseCreatorCategoriesResult {
   const [roots, setRoots] = useState<CategoryNode[]>([]);
   const [hotDeals, setHotDeals] = useState<CategoryDealSummary[]>([]);
+  const [meta, setMeta] = useState<{
+    taxonomyVersion?: string;
+    market?: string;
+    locale?: string;
+    viewId?: string;
+    source?: string;
+  }>({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,6 +55,12 @@ export function useCreatorCategories(
         if (options?.dealsOnly !== undefined) {
           params.set("dealsOnly", String(options.dealsOnly));
         }
+        if (options?.view) {
+          params.set("view", options.view);
+        }
+        if (options?.locale) {
+          params.set("locale", options.locale);
+        }
         const qs = params.toString();
         const url = qs
           ? `/api/creator/${slug}/categories?${qs}`
@@ -54,6 +74,13 @@ export function useCreatorCategories(
         if (cancelled) return;
         setRoots(data.roots || []);
         setHotDeals(data.hotDeals || []);
+        setMeta({
+          taxonomyVersion: data.taxonomyVersion,
+          market: data.market,
+          locale: data.locale,
+          viewId: data.viewId,
+          source: data.source,
+        });
       } catch (err) {
         console.error("Failed to load creator categories", err);
         if (!cancelled) {
@@ -71,8 +98,7 @@ export function useCreatorCategories(
     return () => {
       cancelled = true;
     };
-  }, [slug, options?.includeCounts, options?.dealsOnly]);
+  }, [slug, options?.includeCounts, options?.dealsOnly, options?.view, options?.locale]);
 
-  return { roots, hotDeals, isLoading, error };
+  return { roots, hotDeals, ...meta, isLoading, error };
 }
-

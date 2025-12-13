@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import type { Product } from "@/types/product";
 import { ProductCard } from "@/components/product/ProductCard";
 import { useCreatorAgent } from "@/components/creator/CreatorAgentContext";
@@ -10,7 +10,10 @@ const CATEGORY_NAME_OVERRIDES: Record<string, string> = {
   sportswear: "Sportswear",
   "lingerie-set": "Lingerie Set",
   toys: "Toys",
+  "designer-toys": "Designer Toys",
   "womens-loungewear": "Women’s Loungewear",
+  "womens-dress": "Women’s Dress",
+  "outdoor-clothing": "Outdoor Clothing",
 };
 
 interface CategoryProductsResponse {
@@ -30,6 +33,8 @@ export default function CreatorCategoryProductsPage() {
   const categorySlug = Array.isArray(categorySlugParam)
     ? categorySlugParam[0]
     : categorySlugParam;
+  const searchParams = useSearchParams();
+  const view = searchParams?.get("view");
 
   const router = useRouter();
   const {
@@ -69,7 +74,7 @@ export default function CreatorCategoryProductsPage() {
             creatorSlug,
           )}/category/${encodeURIComponent(
             categorySlug,
-          )}/products?limit=500&page=1`,
+          )}/products?limit=500&page=1${view ? `&view=${encodeURIComponent(view)}` : ""}`,
           { signal: controller.signal },
         );
         if (!res.ok) {
@@ -91,7 +96,7 @@ export default function CreatorCategoryProductsPage() {
     return () => {
       controller.abort();
     };
-  }, [creatorSlug, categorySlug]);
+  }, [creatorSlug, categorySlug, view]);
 
   const handleShopWithAI = () => {
     setPromptFromContext(
@@ -109,7 +114,7 @@ export default function CreatorCategoryProductsPage() {
               router.push(
                 `/creator/${encodeURIComponent(
                   creatorSlug || creator.slug,
-                )}/categories`,
+                )}/categories${view ? `?view=${encodeURIComponent(view)}` : ""}`,
               )
             }
             className="underline-offset-2 hover:underline"

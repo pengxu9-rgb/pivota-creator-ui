@@ -29,7 +29,11 @@ export interface CategoryDealSummary {
 
 export interface CreatorCategoryTreeResponse {
   creatorId: string;
+  taxonomyVersion?: string;
+  market?: string;
+  locale?: string;
+  viewId?: string;
+  source?: "canonical" | "legacy" | string;
   roots: CategoryNode[];
   hotDeals?: CategoryDealSummary[];
 }
-
