@@ -143,7 +143,6 @@ export default function CreatorAgentPage() {
                 )}
               </>
             )}
-            </div>
           </div>
 
           <div className="mt-6 space-y-3">
