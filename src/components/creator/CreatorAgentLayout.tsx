@@ -556,10 +556,10 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
             onClick={closeDetail}
           >
             <div
-              className="flex w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-3xl border border-[#f0e2d6] bg-[#fffaf5] text-[#3f3125] shadow-2xl"
+              className="flex w-full max-w-4xl rounded-3xl border border-[#f0e2d6] bg-[#fffaf5] text-[#3f3125] shadow-2xl"
               onClick={(event) => event.stopPropagation()}
             >
-              <div className="flex h-full w-full flex-col overflow-y-auto sm:flex-row">
+              <div className="flex max-h-[90vh] h-full w-full flex-col overflow-y-auto sm:flex-row">
                 {/* Left: image gallery */}
                 {detailImages.length > 0 && (
                   <div className="flex w-full flex-col bg-[#f5e3d4] sm:w-1/2">
