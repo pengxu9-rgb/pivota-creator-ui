@@ -15,14 +15,18 @@ export async function GET(req: NextRequest, { params }: any) {
     url.searchParams.get("includeCounts") ?? "true";
   const dealsOnly = url.searchParams.get("dealsOnly") ?? "false";
 
-  // Fall back to the shared gateway URL so that creator categories
-  // use real data instead of mock when env vars are missing or
-  // misconfigured in hosted environments.
-  if (!rawBase) {
-    rawBase =
-      "https://pivota-agent-production.up.railway.app/agent/shop/v1/invoke";
+  // In production, never silently fall back to mock:
+  // if gateway URL is missing, surface an explicit error.
+  if (!rawBase && process.env.NODE_ENV === "production") {
+    return NextResponse.json(
+      {
+        error: "PIVOTA_AGENT_URL not configured for creator categories",
+      },
+      { status: 500 },
+    );
   }
 
+  // In development, allow local mock when backend URL is absent.
   if (!rawBase) {
     const mock = getMockCreatorCategoryTree(creatorSlug);
     return NextResponse.json<CreatorCategoryTreeResponse>(mock);
@@ -46,6 +50,12 @@ export async function GET(req: NextRequest, { params }: any) {
 
     if (!res.ok) {
       console.error("Failed to fetch creator categories", res.status);
+      if (process.env.NODE_ENV === "production") {
+        return NextResponse.json(
+          { error: "Upstream error for creator categories" },
+          { status: res.status },
+        );
+      }
       const fallback = getMockCreatorCategoryTree(creatorSlug);
       return NextResponse.json<CreatorCategoryTreeResponse>(fallback);
     }
@@ -61,6 +71,12 @@ export async function GET(req: NextRequest, { params }: any) {
     return NextResponse.json<CreatorCategoryTreeResponse>(normalized);
   } catch (error) {
     console.error("Error fetching creator categories", error);
+    if (process.env.NODE_ENV === "production") {
+      return NextResponse.json(
+        { error: "Internal error fetching creator categories" },
+        { status: 500 },
+      );
+    }
     const fallback = getMockCreatorCategoryTree(creatorSlug);
     return NextResponse.json<CreatorCategoryTreeResponse>(fallback);
   }

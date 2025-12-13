@@ -71,14 +71,18 @@ export async function GET(req: NextRequest, { params }: any) {
   const page = url.searchParams.get("page") ?? "1";
   const limit = url.searchParams.get("limit") ?? "500";
 
-  // Fall back to the shared gateway URL so that category products
-  // use real data instead of local mocks when env vars are missing
-  // or misconfigured in hosted environments.
-  if (!rawBase) {
-    rawBase =
-      "https://pivota-agent-production.up.railway.app/agent/shop/v1/invoke";
+  // In production, never silently fall back to mock:
+  // if gateway URL is missing, surface an explicit error.
+  if (!rawBase && process.env.NODE_ENV === "production") {
+    return NextResponse.json(
+      {
+        error: "PIVOTA_AGENT_URL not configured for creator category products",
+      },
+      { status: 500 },
+    );
   }
 
+  // In development, allow local mock when backend URL is absent.
   if (!rawBase) {
     const mockProducts = getMockCategoryProducts(creatorSlug, categorySlug);
     return NextResponse.json<{
@@ -114,6 +118,12 @@ export async function GET(req: NextRequest, { params }: any) {
         creatorSlug,
         categorySlug,
       );
+      if (process.env.NODE_ENV === "production") {
+        return NextResponse.json(
+          { error: "Upstream error for creator category products" },
+          { status: res.status },
+        );
+      }
       const mockProducts = getMockCategoryProducts(creatorSlug, categorySlug);
       return NextResponse.json<{
         products: Product[];
@@ -149,6 +159,12 @@ export async function GET(req: NextRequest, { params }: any) {
       creatorSlug,
       categorySlug,
     );
+    if (process.env.NODE_ENV === "production") {
+      return NextResponse.json(
+        { error: "Internal error fetching creator category products" },
+        { status: 500 },
+      );
+    }
     const mockProducts = getMockCategoryProducts(creatorSlug, categorySlug);
     return NextResponse.json<{
       products: Product[];
