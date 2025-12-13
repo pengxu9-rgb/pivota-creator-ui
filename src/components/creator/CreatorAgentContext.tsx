@@ -34,6 +34,7 @@ interface CreatorAgentContextValue {
   setInput: (value: string) => void;
   isLoading: boolean;
   products: Product[];
+  chatRecommendations: Product[];
   lastRequest: any;
   lastResponse: any;
   isFeaturedLoading: boolean;
@@ -102,6 +103,7 @@ export function CreatorAgentProvider({
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
+  const [chatRecommendations, setChatRecommendations] = useState<Product[]>([]);
   const [lastRequest, setLastRequest] = useState<any>(null);
   const [lastResponse, setLastResponse] = useState<any>(null);
   const [isFeaturedLoading, setIsFeaturedLoading] = useState(true);
@@ -325,6 +327,9 @@ export function CreatorAgentProvider({
         },
       ]);
       setProducts(withDeals);
+      if (withDeals.length > 0) {
+        setChatRecommendations(withDeals);
+      }
     } catch (error) {
       console.error(error);
       setLastResponse((prev: any) =>
@@ -501,6 +506,7 @@ export function CreatorAgentProvider({
             ? attachMockDeals(data.products)
             : data.products;
           setProducts(withDeals);
+          // Do not overwrite chatRecommendations here; keep these for Featured section only.
 
           // Optimistically prefetch detail for the first batch of featured
           // products so desktop detail modals can open with Style/Size and
@@ -628,6 +634,7 @@ export function CreatorAgentProvider({
     setInput,
     isLoading,
     products,
+    chatRecommendations,
     lastRequest,
     lastResponse,
     isFeaturedLoading,

@@ -18,6 +18,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
     setInput,
     isLoading,
     products,
+    chatRecommendations,
     accountsUser,
     authChecking,
     handleSend,
@@ -181,22 +182,26 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
               </div>
             </div>
           ))}
-          {isMobile && products.length > 0 && (
+          {isMobile && chatRecommendations.length > 0 && (
             <div className="mt-2 space-y-2">
               <p className="text-[11px] text-[#a38b78]">
                 Recommended pieces based on this chat:
               </p>
-              <div className="grid grid-cols-2 gap-2">
-                {products.slice(0, 4).map((p) => (
-                  <ProductCard
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {chatRecommendations.slice(0, 10).map((p) => (
+                  <div
                     key={`chat-rec-${p.id}`}
-                    product={p}
-                    creatorName={creator.name}
-                    creatorId={creator.id}
-                    creatorSlug={creator.slug}
-                    onSeeSimilar={handleSeeSimilar}
-                    onViewDetails={handleViewDetails}
-                  />
+                    className="w-[68%] flex-shrink-0"
+                  >
+                    <ProductCard
+                      product={p}
+                      creatorName={creator.name}
+                      creatorId={creator.id}
+                      creatorSlug={creator.slug}
+                      onSeeSimilar={handleSeeSimilar}
+                      onViewDetails={handleViewDetails}
+                    />
+                  </div>
                 ))}
               </div>
             </div>
