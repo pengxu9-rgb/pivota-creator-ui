@@ -8,6 +8,19 @@ import { cn } from "@/lib/utils";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { useCreatorAgent } from "@/components/creator/CreatorAgentContext";
 
+const TOP_CATEGORY_SLUGS = new Set(["sportswear", "lingerie-set", "toys"]);
+const TOP_CATEGORY_SORT_WEIGHT: Record<string, number> = {
+  sportswear: 3,
+  "lingerie-set": 2,
+  toys: 1,
+};
+const CATEGORY_IMAGE_FALLBACK: Record<string, string> = {
+  sportswear: "/mock-categories/sportswear.svg",
+  "lingerie-set": "/mock-categories/lingerie-set.svg",
+  toys: "/mock-categories/toys.svg",
+  "womens-loungewear": "/mock-categories/womens-loungewear.svg",
+};
+
 export default function CreatorCategoriesPage() {
   const params = useParams<{ slug: string }>();
   const slugParam = params?.slug;
@@ -24,9 +37,12 @@ export default function CreatorCategoriesPage() {
 
   const sortedRoots = useMemo(
     () =>
-      [...roots].sort(
-        (a, b) => (b.category.priority ?? 0) - (a.category.priority ?? 0),
-      ),
+      [...roots].sort((a, b) => {
+        const aBoost = TOP_CATEGORY_SORT_WEIGHT[a.category.slug] ?? 0;
+        const bBoost = TOP_CATEGORY_SORT_WEIGHT[b.category.slug] ?? 0;
+        if (aBoost !== bBoost) return bBoost - aBoost;
+        return (b.category.priority ?? 0) - (a.category.priority ?? 0);
+      }),
     [roots],
   );
 
@@ -138,23 +154,35 @@ export default function CreatorCategoriesPage() {
 
       {!isLoading && sortedRoots.length > 0 && (
         <div className="mt-6 space-y-8">
+          <SectionHeader
+            title="Top categories"
+            subtitle="Sportswear, Lingerie Set, and Toys are prioritized."
+          />
+
           {/* Hero row: large cards (desktop) */}
           <section className="hidden gap-4 md:grid md:grid-cols-3">
             {heroCategories.map((node) => {
               const cat = node.category;
               const count = cat.productCount ?? 0;
               const hasDeals = (cat.deals?.length ?? 0) > 0;
+              const isTopCategory = TOP_CATEGORY_SLUGS.has(cat.slug);
+              const imageUrl =
+                cat.imageUrl || CATEGORY_IMAGE_FALLBACK[cat.slug] || "";
               return (
                 <button
                   key={cat.id}
                   onClick={() => handleCategoryClick(node)}
-                  className="group flex h-64 flex-col overflow-hidden rounded-3xl bg-slate-100 text-left text-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+                  className={cn(
+                    "group flex h-64 flex-col overflow-hidden rounded-3xl bg-slate-100 text-left text-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl",
+                    isTopCategory &&
+                      "ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white",
+                  )}
                 >
                   <div className="relative flex-1">
-                    {cat.imageUrl ? (
+                    {imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={cat.imageUrl}
+                        src={imageUrl}
                         alt={cat.name}
                         className="h-full w-full object-cover"
                       />
@@ -164,6 +192,13 @@ export default function CreatorCategoriesPage() {
                       </div>
                     )}
                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                    {isTopCategory && (
+                      <div className="pointer-events-none absolute left-4 top-4">
+                        <span className="inline-flex items-center rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold text-slate-900 shadow-sm">
+                          Top
+                        </span>
+                      </div>
+                    )}
                     <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between p-4">
                       <div>
                         <div className="text-sm font-semibold">
@@ -198,17 +233,24 @@ export default function CreatorCategoriesPage() {
               const cat = node.category;
               const count = cat.productCount ?? 0;
               const hasDeals = (cat.deals?.length ?? 0) > 0;
+              const isTopCategory = TOP_CATEGORY_SLUGS.has(cat.slug);
+              const imageUrl =
+                cat.imageUrl || CATEGORY_IMAGE_FALLBACK[cat.slug] || "";
               return (
                 <button
                   key={cat.id}
                   onClick={() => handleCategoryClick(node)}
-                  className="group flex w-60 flex-col overflow-hidden rounded-3xl bg-slate-100 text-left text-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+                  className={cn(
+                    "group flex w-60 flex-col overflow-hidden rounded-3xl bg-slate-100 text-left text-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl",
+                    isTopCategory &&
+                      "ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white",
+                  )}
                 >
                   <div className="relative h-56">
-                    {cat.imageUrl ? (
+                    {imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={cat.imageUrl}
+                        src={imageUrl}
                         alt={cat.name}
                         className="h-full w-full object-cover"
                       />
@@ -218,6 +260,13 @@ export default function CreatorCategoriesPage() {
                       </div>
                     )}
                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                    {isTopCategory && (
+                      <div className="pointer-events-none absolute left-4 top-4">
+                        <span className="inline-flex items-center rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold text-slate-900 shadow-sm">
+                          Top
+                        </span>
+                      </div>
+                    )}
                     <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between p-4">
                       <div>
                         <div className="text-sm font-semibold">
@@ -257,6 +306,8 @@ export default function CreatorCategoriesPage() {
                   const cat = node.category;
                   const count = cat.productCount ?? 0;
                   const hasDeals = (cat.deals?.length ?? 0) > 0;
+                  const imageUrl =
+                    cat.imageUrl || CATEGORY_IMAGE_FALLBACK[cat.slug] || "";
                   return (
                     <button
                       key={cat.id}
@@ -264,10 +315,10 @@ export default function CreatorCategoriesPage() {
                       className="group flex flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white text-left text-slate-900 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
                     >
                       <div className="h-32 w-full overflow-hidden bg-slate-100">
-                        {cat.imageUrl ? (
+                        {imageUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
-                            src={cat.imageUrl}
+                            src={imageUrl}
                             alt={cat.name}
                             className="h-full w-full object-cover"
                           />
