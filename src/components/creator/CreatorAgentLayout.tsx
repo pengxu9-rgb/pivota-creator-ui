@@ -232,7 +232,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
               </div>
             </div>
             <div className="ml-auto flex items-center gap-2">
-              <nav className="flex items-center gap-1 rounded-full bg-[#f4e2d4] p-1 text-xs">
+              <nav className="hidden items-center gap-1 rounded-full bg-[#f4e2d4] p-1 text-xs sm:flex">
                 <button
                   type="button"
                   onClick={() =>
@@ -350,10 +350,12 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
         <button
           type="button"
           onClick={() => setIsMobileChatOpen(true)}
-          className="fixed bottom-16 right-4 z-20 inline-flex items-center gap-2 rounded-full bg-[#f6b59b] px-4 py-2 text-xs font-medium text-white shadow-lg hover:bg-[#f29b7f] lg:hidden"
+          className="fixed inset-x-0 bottom-16 z-20 flex justify-center lg:hidden"
         >
-          <Send className="h-3.5 w-3.5" />
-          <span>Chat with {creator.name}</span>
+          <span className="inline-flex items-center gap-2 rounded-full bg-[#f6b59b] px-5 py-2 text-xs font-medium text-white shadow-lg hover:bg-[#f29b7f]">
+            <Send className="h-3.5 w-3.5" />
+            <span>Chat with {creator.name}</span>
+          </span>
         </button>
 
         {/* Mobile chat sheet */}
@@ -392,7 +394,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
         )}
 
         {similarBaseProduct && (
-          <div className="fixed inset-0 z-50 flex items-end bg-black/40 px-4 pb-6 sm:items-center sm:pb-6 sm:pt-6">
+          <div className="fixed inset-0 z-50 flex items-end bg-black/40 px-4 pb-20 sm:items-center sm:pb-6 sm:pt-6">
             <div className="mx-auto flex max-h-[80vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-[#f0e2d6] bg-[#fffdf9] text-[#3f3125] shadow-xl sm:p-0">
               <div className="flex items-center justify-between gap-2 border-b border-[#f0e2d6] px-4 py-3 sm:px-6">
                 <div>
@@ -472,6 +474,81 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
           </div>
         )}
 
+        {/* Mobile bottom navigation */}
+        <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-[#f0e2d6] bg-[#fffefc]/98 py-1.5 shadow-[0_-6px_30px_rgba(63,49,37,0.16)] lg:hidden">
+          <div className="mx-auto flex max-w-6xl items-center justify-around px-4 text-[11px] text-[#b29a84]">
+            <button
+              type="button"
+              onClick={() =>
+                router.push(`/creator/${encodeURIComponent(creator.slug)}`)
+              }
+              className={
+                activeTab === "forYou"
+                  ? "flex flex-col items-center gap-0.5 text-[#f28b7a]"
+                  : "flex flex-col items-center gap-0.5 text-[#b29a84]"
+              }
+            >
+              <Home className="h-4 w-4" />
+              <span>For You</span>
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                router.push(
+                  `/creator/${encodeURIComponent(creator.slug)}/categories`,
+                )
+              }
+              className={
+                activeTab === "categories"
+                  ? "flex flex-col items-center gap-0.5 text-[#f28b7a]"
+                  : "flex flex-col items-center gap-0.5 text-[#b29a84]"
+              }
+            >
+              <Percent className="h-4 w-4" />
+              <span>Categories</span>
+            </button>
+            <button
+              type="button"
+              onClick={openCart}
+              className="relative flex flex-col items-center gap-0.5 text-[#b29a84]"
+            >
+              <div className="relative">
+                <ShoppingCart className="h-4 w-4" />
+                {cartItemsCount > 0 && (
+                  <span className="absolute -right-2 -top-1 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-[#f6b59b] px-1 text-[9px] font-semibold text-white">
+                    {cartItemsCount}
+                  </span>
+                )}
+              </div>
+              <span>Cart</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (accountsUser) {
+                  router.push(
+                    `/account/orders?creator=${encodeURIComponent(
+                      creator.slug,
+                    )}`,
+                  );
+                } else {
+                  const returnTo =
+                    typeof window !== "undefined"
+                      ? window.location.pathname + window.location.search
+                      : `/creator/${creator.slug}`;
+                  router.push(
+                    `/account/login?return_to=${encodeURIComponent(returnTo)}`,
+                  );
+                }
+              }}
+              className="flex flex-col items-center gap-0.5 text-[#b29a84]"
+            >
+              <User className="h-4 w-4" />
+              <span>Profile</span>
+            </button>
+          </div>
+        </nav>
+
         {/* Desktop product full-detail modal */}
         {detailProduct && !isMobile && (
           <div
@@ -479,53 +556,54 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
             onClick={closeDetail}
           >
             <div
-              className="flex w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-[#f0e2d6] bg-[#fffaf5] text-[#3f3125] shadow-2xl sm:flex-row"
+              className="flex w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-3xl border border-[#f0e2d6] bg-[#fffaf5] text-[#3f3125] shadow-2xl"
               onClick={(event) => event.stopPropagation()}
             >
-              {/* Left: image gallery */}
-              {detailImages.length > 0 && (
-                <div className="w-full bg-[#f5e3d4] sm:w-1/2">
-                  <div className="relative aspect-[3/4] w-full overflow-hidden">
-                    <img
-                      src={
-                        detailImages[
-                          Math.max(
-                            0,
-                            Math.min(activeImageIndex, detailImages.length - 1),
-                          )
-                        ]
-                      }
-                      alt={detailProduct.title}
-                      className="absolute inset-0 h-full w-full object-cover"
-                    />
-                  </div>
-                  {detailImages.length > 1 && (
-                    <div className="flex gap-2 overflow-x-auto px-3 py-2">
-                      {detailImages.map((url, idx) => (
-                        <button
-                          key={url + idx.toString()}
-                          type="button"
-                          onClick={() => setActiveImageIndex(idx)}
-                          className={`h-16 w-12 flex-shrink-0 overflow-hidden rounded-xl border ${
-                            idx === activeImageIndex
-                              ? "border-[#3f3125]"
-                              : "border-[#f0e2d6]"
-                          } bg-[#f6e6d8]`}
-                        >
-                          <img
-                            src={url}
-                            alt={detailProduct.title}
-                            className="h-full w-full object-cover"
-                          />
-                        </button>
-                      ))}
+              <div className="flex h-full w-full flex-col overflow-y-auto sm:flex-row">
+                {/* Left: image gallery */}
+                {detailImages.length > 0 && (
+                  <div className="w-full bg-[#f5e3d4] sm:w-1/2">
+                    <div className="relative aspect-[3/4] w-full overflow-hidden">
+                      <img
+                        src={
+                          detailImages[
+                            Math.max(
+                              0,
+                              Math.min(activeImageIndex, detailImages.length - 1),
+                            )
+                          ]
+                        }
+                        alt={detailProduct.title}
+                        className="absolute inset-0 h-full w-full object-cover"
+                      />
                     </div>
-                  )}
-                </div>
-              )}
+                    {detailImages.length > 1 && (
+                      <div className="flex gap-2 overflow-x-auto px-3 py-2">
+                        {detailImages.map((url, idx) => (
+                          <button
+                            key={url + idx.toString()}
+                            type="button"
+                            onClick={() => setActiveImageIndex(idx)}
+                            className={`h-16 w-12 flex-shrink-0 overflow-hidden rounded-xl border ${
+                              idx === activeImageIndex
+                                ? "border-[#3f3125]"
+                                : "border-[#f0e2d6]"
+                            } bg-[#f6e6d8]`}
+                          >
+                            <img
+                              src={url}
+                              alt={detailProduct.title}
+                              className="h-full w-full object-cover"
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
 
-              {/* Right: full detail content with style / size selection */}
-              <div className="flex flex-1 flex-col gap-3 p-4 sm:p-6">
+                {/* Right: full detail content with style / size selection */}
+                <div className="flex flex-1 flex-col gap-3 p-4 sm:p-6">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h3 className="text-base font-semibold text-[#3f3125] sm:text-lg">
@@ -628,64 +706,65 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                     </div>
                   )}
 
-                {typeof displayInventory === "number" && (
-                  <p className="text-[11px] text-[#a38b78]">
-                    Stock:{" "}
-                    {displayInventory > 0
-                      ? `${displayInventory} available`
-                      : "Out of stock"}
-                  </p>
-                )}
+                  {typeof displayInventory === "number" && (
+                    <p className="text-[11px] text-[#a38b78]">
+                      Stock:{" "}
+                      {displayInventory > 0
+                        ? `${displayInventory} available`
+                        : "Out of stock"}
+                    </p>
+                  )}
 
-                <div className="mt-auto flex flex-col gap-2 pt-2 sm:flex-row">
-                  <button
-                    type="button"
-                    className="flex-1 rounded-full bg-[#f6b59b] px-3 py-2 text-[12px] font-medium text-white shadow-sm hover:bg-[#f29b7f]"
-                    onClick={() => {
-                      const product = detailProduct;
-                      const variant = selectedVariant;
-                      const images = detailImages;
-                      const variantKey = variant?.id || "default";
-                      addItem({
-                        id: `${product.id}:${variantKey}`,
-                        productId: product.id,
-                        merchantId: product.merchantId,
-                        title: product.title,
-                        price: displayPrice,
-                        imageUrl:
-                          (variant && variant.imageUrl) ||
-                          images[0] ||
-                          product.imageUrl,
-                        quantity: 1,
-                        currency: product.currency,
-                        creatorId: creator.id,
-                        creatorSlug: creator.slug,
-                        creatorName: creator.name,
-                        variantId: variant?.id,
-                        variantSku: variant?.sku,
-                        selectedOptions:
-                          Object.keys(selectedOptions).length > 0
-                            ? selectedOptions
-                            : undefined,
-                        bestDeal: product.bestDeal ?? null,
-                        allDeals: product.allDeals ?? null,
-                      });
-                    }}
-                  >
-                    Add to cart
-                  </button>
-                  <button
-                    type="button"
-                    className="flex-1 rounded-full border border-[#f0e2d6] bg-white px-3 py-2 text-[12px] font-medium text-[#8c715c] shadow-sm hover:bg-[#fff0e3]"
-                    onClick={() => {
-                      // Close detail modal and open the "similar styles" sheet
-                      // using the same handler as product cards.
-                      closeDetail();
-                      handleSeeSimilar(detailProduct);
-                    }}
-                  >
-                    Find more
-                  </button>
+                  <div className="mt-auto flex flex-col gap-2 pt-2 sm:flex-row">
+                    <button
+                      type="button"
+                      className="flex-1 rounded-full bg-[#f6b59b] px-3 py-2 text-[12px] font-medium text-white shadow-sm hover:bg-[#f29b7f]"
+                      onClick={() => {
+                        const product = detailProduct;
+                        const variant = selectedVariant;
+                        const images = detailImages;
+                        const variantKey = variant?.id || "default";
+                        addItem({
+                          id: `${product.id}:${variantKey}`,
+                          productId: product.id,
+                          merchantId: product.merchantId,
+                          title: product.title,
+                          price: displayPrice,
+                          imageUrl:
+                            (variant && variant.imageUrl) ||
+                            images[0] ||
+                            product.imageUrl,
+                          quantity: 1,
+                          currency: product.currency,
+                          creatorId: creator.id,
+                          creatorSlug: creator.slug,
+                          creatorName: creator.name,
+                          variantId: variant?.id,
+                          variantSku: variant?.sku,
+                          selectedOptions:
+                            Object.keys(selectedOptions).length > 0
+                              ? selectedOptions
+                              : undefined,
+                          bestDeal: product.bestDeal ?? null,
+                          allDeals: product.allDeals ?? null,
+                        });
+                      }}
+                    >
+                      Add to cart
+                    </button>
+                    <button
+                      type="button"
+                      className="flex-1 rounded-full border border-[#f0e2d6] bg-white px-3 py-2 text-[12px] font-medium text-[#8c715c] shadow-sm hover:bg-[#fff0e3]"
+                      onClick={() => {
+                        // Close detail modal and open the "similar styles" sheet
+                        // using the same handler as product cards.
+                        closeDetail();
+                        handleSeeSimilar(detailProduct);
+                      }}
+                    >
+                      Find more
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
