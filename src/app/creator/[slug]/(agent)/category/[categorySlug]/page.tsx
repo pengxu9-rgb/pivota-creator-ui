@@ -6,6 +6,13 @@ import type { Product } from "@/types/product";
 import { ProductCard } from "@/components/product/ProductCard";
 import { useCreatorAgent } from "@/components/creator/CreatorAgentContext";
 
+const CATEGORY_NAME_OVERRIDES: Record<string, string> = {
+  sportswear: "Sportswear",
+  "lingerie-set": "Lingerie Set",
+  toys: "Toys",
+  "womens-loungewear": "Women’s Loungewear",
+};
+
 interface CategoryProductsResponse {
   products: Product[];
   pagination?: {
@@ -38,6 +45,8 @@ export default function CreatorCategoryProductsPage() {
 
   const categoryTitle = useMemo(() => {
     if (!categorySlug) return "Category";
+    const overridden = CATEGORY_NAME_OVERRIDES[categorySlug];
+    if (overridden) return overridden;
     return categorySlug
       .split("-")
       .map((part: string) =>

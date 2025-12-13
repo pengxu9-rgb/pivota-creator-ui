@@ -30,6 +30,19 @@ interface CreatorCategoryProductsResponse {
   };
 }
 
+const CURATED_CATEGORY_QUERY: Record<string, string> = {
+  sportswear: "Sportswear",
+  "lingerie-set": "Lingerie Set",
+  "womens-loungewear": "Women’s Loungewear",
+  toys: "Toys",
+};
+
+function getInvokeUrl(rawBase: string): string {
+  const trimmed = rawBase.replace(/\/$/, "");
+  if (trimmed.endsWith("/agent/shop/v1/invoke")) return trimmed;
+  return `${trimmed}/agent/shop/v1/invoke`;
+}
+
 function getMockCategoryProducts(
   _creatorSlug: string,
   categorySlug: string,
@@ -99,8 +112,90 @@ export async function GET(req: NextRequest, { params }: any) {
   }
 
   const baseUrl = rawBase.replace(/\/agent\/shop\/v1\/invoke\/?$/, "");
+  const curatedQuery = CURATED_CATEGORY_QUERY[categorySlug];
 
   try {
+    if (curatedQuery) {
+      const invokeUrl = getInvokeUrl(rawBase);
+      const safeLimit = Math.min(Math.max(Number(limit) || 100, 1), 500);
+      const payload = {
+        operation: "find_products_multi",
+        payload: {
+          search: {
+            query: curatedQuery,
+            page: 1,
+            limit: safeLimit,
+            in_stock_only: false,
+          },
+        },
+        metadata: {
+          creator_id: creatorSlug,
+          source: "creator-categories",
+        },
+      };
+
+      const res = await fetch(invokeUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(apiKey ? { "x-api-key": apiKey } : {}),
+          ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
+        },
+        body: JSON.stringify(payload),
+        cache: "no-store",
+      });
+
+      if (!res.ok) {
+        console.error(
+          "Failed to fetch curated category products",
+          res.status,
+          creatorSlug,
+          categorySlug,
+        );
+        if (process.env.NODE_ENV === "production") {
+          return NextResponse.json(
+            { error: "Upstream error for creator category products" },
+            { status: res.status },
+          );
+        }
+        const mockProducts = getMockCategoryProducts(creatorSlug, categorySlug);
+        return NextResponse.json<{
+          products: Product[];
+          pagination: { page: number; limit: number; total: number };
+        }>({
+          products: mockProducts,
+          pagination: {
+            page: 1,
+            limit: safeLimit,
+            total: mockProducts.length,
+          },
+        });
+      }
+
+      const data = await res.json();
+      const backendProducts: BackendProduct[] =
+        data.products ??
+        data.output?.products ??
+        data.items ??
+        data.output?.items ??
+        [];
+      const normalized: Product[] = backendProducts.map((raw) =>
+        mapRawProduct(raw as any),
+      );
+
+      return NextResponse.json<{
+        products: Product[];
+        pagination: { page: number; limit: number; total: number };
+      }>({
+        products: normalized,
+        pagination: {
+          page: 1,
+          limit: safeLimit,
+          total: normalized.length,
+        },
+      });
+    }
+
     const res = await fetch(
       `${baseUrl}/creator/${creatorSlug}/categories/${categorySlug}/products?page=${encodeURIComponent(
         page,

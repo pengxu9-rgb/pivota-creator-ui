@@ -9,6 +9,75 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { useCreatorAgent } from "@/components/creator/CreatorAgentContext";
 
 const TOP_CATEGORY_SLUGS = new Set(["sportswear", "lingerie-set", "toys"]);
+const FEATURED_CATEGORY_SLUGS = new Set([
+  "sportswear",
+  "lingerie-set",
+  "toys",
+  "womens-loungewear",
+]);
+
+const FEATURED_CATEGORIES: CategoryNode[] = [
+  {
+    category: {
+      id: "sportswear",
+      slug: "sportswear",
+      name: "Sportswear",
+      parentId: null,
+      level: 0,
+      imageUrl: "/mock-categories/sportswear.svg",
+      productCount: 0,
+      path: ["Sportswear"],
+      priority: 100,
+    },
+    children: [],
+  },
+  {
+    category: {
+      id: "lingerie-set",
+      slug: "lingerie-set",
+      name: "Lingerie Set",
+      parentId: null,
+      level: 0,
+      imageUrl: "/mock-categories/lingerie-set.svg",
+      productCount: 0,
+      path: ["Lingerie Set"],
+      priority: 90,
+    },
+    children: [],
+  },
+  {
+    category: {
+      id: "toys",
+      slug: "toys",
+      name: "Toys",
+      parentId: null,
+      level: 0,
+      imageUrl: "/mock-categories/toys.svg",
+      productCount: 0,
+      path: ["Toys"],
+      priority: 80,
+    },
+    children: [],
+  },
+];
+
+const EXTRA_FEATURED_CATEGORIES: CategoryNode[] = [
+  {
+    category: {
+      id: "womens-loungewear",
+      slug: "womens-loungewear",
+      name: "Women’s Loungewear",
+      parentId: null,
+      level: 0,
+      imageUrl: "/mock-categories/womens-loungewear.svg",
+      productCount: 0,
+      path: ["Women’s Loungewear"],
+      priority: 70,
+    },
+    children: [],
+  },
+];
+
 const TOP_CATEGORY_SORT_WEIGHT: Record<string, number> = {
   sportswear: 3,
   "lingerie-set": 2,
@@ -46,12 +115,8 @@ export default function CreatorCategoriesPage() {
     [roots],
   );
 
-  const heroCategories = useMemo(
-    () => sortedRoots.slice(0, 3),
-    [sortedRoots],
-  );
-  const restCategories = useMemo(
-    () => (sortedRoots.length > 3 ? sortedRoots.slice(3) : []),
+  const nonFeaturedRoots = useMemo(
+    () => sortedRoots.filter((node) => !FEATURED_CATEGORY_SLUGS.has(node.category.slug)),
     [sortedRoots],
   );
 
@@ -161,7 +226,7 @@ export default function CreatorCategoriesPage() {
 
           {/* Hero row: large cards (desktop) */}
           <section className="hidden gap-4 md:grid md:grid-cols-3">
-            {heroCategories.map((node) => {
+            {FEATURED_CATEGORIES.map((node) => {
               const cat = node.category;
               const count = cat.productCount ?? 0;
               const hasDeals = (cat.deals?.length ?? 0) > 0;
@@ -229,7 +294,7 @@ export default function CreatorCategoriesPage() {
 
           {/* Hero row on mobile: horizontal scroll */}
           <section className="mt-4 flex gap-4 overflow-x-auto md:hidden">
-            {heroCategories.map((node) => {
+            {FEATURED_CATEGORIES.map((node) => {
               const cat = node.category;
               const count = cat.productCount ?? 0;
               const hasDeals = (cat.deals?.length ?? 0) > 0;
@@ -301,7 +366,7 @@ export default function CreatorCategoriesPage() {
               All categories
             </h2>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-              {(restCategories.length > 0 ? restCategories : sortedRoots).map(
+              {[...EXTRA_FEATURED_CATEGORIES, ...nonFeaturedRoots].map(
                 (node) => {
                   const cat = node.category;
                   const count = cat.productCount ?? 0;
