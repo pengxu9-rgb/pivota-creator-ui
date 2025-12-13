@@ -141,6 +141,20 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
     detailProduct?.inventoryQuantity ??
     undefined;
 
+  // Prevent background scroll when mobile chat sheet is open
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const original = document.body.style.overflow;
+    if (isMobileChatOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = original;
+    }
+    return () => {
+      document.body.style.overflow = original;
+    };
+  }, [isMobileChatOpen]);
+
   const renderChatPanel = (sectionClassName: string) => (
     <section className={sectionClassName}>
       <div className="mb-3 text-[12px] text-[#8c715c]">
@@ -360,7 +374,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
 
         {/* Mobile chat sheet */}
         {isMobileChatOpen && (
-          <div className="fixed inset-x-0 top-0 bottom-[64px] z-40 flex flex-col bg-[#fffefc]/95 backdrop-blur-sm lg:hidden">
+          <div className="fixed inset-x-0 top-0 bottom-[56px] z-40 flex flex-col bg-[#fffefc]/95 backdrop-blur-sm lg:hidden">
             <div className="flex items-center justify-between border-b border-[#f6ebe0] bg-[#fffefc]/92 px-4 py-3">
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 overflow-hidden rounded-full bg-[#f6b59b]">
@@ -385,7 +399,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                 Close
               </button>
             </div>
-            <div className="flex flex-1 flex-col bg-[#fffefc]/94 px-4 py-4">
+            <div className="flex flex-1 flex-col bg-[#fffefc]/94 px-4 pt-4 pb-0">
               {renderChatPanel(
                 "flex h-full w-full flex-col bg-transparent px-0 py-0 border-0",
               )}
