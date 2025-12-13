@@ -22,6 +22,7 @@ export async function GET(req: NextRequest, { params }: any) {
   const url = new URL(req.url);
   const includeCounts =
     url.searchParams.get("includeCounts") ?? "true";
+  const includeEmpty = url.searchParams.get("includeEmpty") ?? undefined;
   const dealsOnly = url.searchParams.get("dealsOnly") ?? "false";
   const view = url.searchParams.get("view") ?? undefined;
   const locale = resolveLocale(req, url.searchParams.get("locale"));
@@ -49,6 +50,7 @@ export async function GET(req: NextRequest, { params }: any) {
     const qsParams = new URLSearchParams({
       includeCounts,
       dealsOnly,
+      ...(includeEmpty ? { includeEmpty } : {}),
       ...(view ? { view } : {}),
       ...(locale ? { locale } : {}),
     });

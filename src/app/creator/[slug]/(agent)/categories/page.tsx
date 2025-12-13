@@ -17,6 +17,9 @@ const CATEGORY_VIEWS = [
 ] as const;
 
 const DEFAULT_VIEW = "GLOBAL_FASHION";
+const FORCED_LOCALE = "en-US";
+
+const TOP_CATEGORY_SLUGS = ["sportswear", "lingerie-set", "toys"] as const;
 
 const CATEGORY_IMAGE_FALLBACK: Record<string, string> = {
   sportswear: "/mock-categories/sportswear.svg",
@@ -24,6 +27,21 @@ const CATEGORY_IMAGE_FALLBACK: Record<string, string> = {
   toys: "/mock-categories/toys.svg",
   "womens-loungewear": "/mock-categories/womens-loungewear.svg",
   "designer-toys": "/mock-categories/toys.svg",
+  "outdoor-clothing": "/mock-categories/outdoor-clothing.svg",
+  "womens-dress": "/mock-categories/womens-dress.svg",
+  makeup: "/mock-categories/makeup.svg",
+  "facial-care": "/mock-categories/facial-care.svg",
+  "skin-care": "/mock-categories/skin-care.svg",
+  "nail-polish": "/mock-categories/nail-polish.svg",
+  "press-on-nails": "/mock-categories/press-on-nails.svg",
+  eyelashes: "/mock-categories/eyelashes.svg",
+  haircare: "/mock-categories/haircare.svg",
+  "beauty-tools": "/mock-categories/beauty-tools.svg",
+  "beauty-devices": "/mock-categories/beauty-devices.svg",
+  "contact-lens": "/mock-categories/contact-lens.svg",
+  "camping-gear": "/mock-categories/camping-gear.svg",
+  "hunting-accessories": "/mock-categories/hunting-accessories.svg",
+  "pet-toys": "/mock-categories/pet-toys.svg",
 };
 
 export default function CreatorCategoriesPage() {
@@ -43,27 +61,56 @@ export default function CreatorCategoriesPage() {
 
   const { roots, hotDeals, isLoading, error, source } = useCreatorCategories(
     creatorSlug,
-    { dealsOnly: showDealsOnly, view: activeView },
+    { dealsOnly: showDealsOnly, view: activeView, locale: FORCED_LOCALE, includeEmpty: true },
   );
   const router = useRouter();
   const { setPromptFromContext } = useCreatorAgent();
 
+  const displayNodes = useMemo(() => {
+    if (activeView !== "GLOBAL_BEAUTY") return roots;
+    const out: CategoryNode[] = [];
+    for (const node of roots) {
+      out.push(node);
+      if (Array.isArray(node.children) && node.children.length > 0) {
+        out.push(...node.children);
+      }
+    }
+    return out;
+  }, [activeView, roots]);
+
   const sortedRoots = useMemo(
-    () => [...roots].sort((a, b) => (b.category.priority ?? 0) - (a.category.priority ?? 0)),
-    [roots],
+    () => [...displayNodes].sort((a, b) => (b.category.priority ?? 0) - (a.category.priority ?? 0)),
+    [displayNodes],
   );
 
-  const heroCategories = useMemo(() => sortedRoots.slice(0, 3), [sortedRoots]);
-  const restCategories = useMemo(
-    () => (sortedRoots.length > 3 ? sortedRoots.slice(3) : []),
-    [sortedRoots],
-  );
+  const heroCategories = useMemo(() => {
+    if (sortedRoots.length === 0) return [];
+    const picked: CategoryNode[] = [];
+    const remaining = [...sortedRoots];
+    for (const slug of TOP_CATEGORY_SLUGS) {
+      const idx = remaining.findIndex((n) => n.category.slug === slug);
+      if (idx >= 0) {
+        picked.push(remaining[idx]);
+        remaining.splice(idx, 1);
+      }
+    }
+    while (picked.length < 3 && remaining.length > 0) {
+      picked.push(remaining.shift()!);
+    }
+    return picked;
+  }, [sortedRoots]);
+  const restCategories = useMemo(() => {
+    const heroIds = new Set(heroCategories.map((n) => n.category.id));
+    return sortedRoots.filter((n) => !heroIds.has(n.category.id));
+  }, [heroCategories, sortedRoots]);
 
   function handleCategoryClick(node: CategoryNode) {
     const cat = node.category;
     const creatorSlugSafe = creatorSlug || "creator";
     router.push(
-      `/creator/${creatorSlugSafe}/category/${cat.slug}?view=${encodeURIComponent(activeView)}`,
+      `/creator/${creatorSlugSafe}/category/${cat.slug}?view=${encodeURIComponent(
+        activeView,
+      )}&locale=${encodeURIComponent(FORCED_LOCALE)}`,
     );
     setPromptFromContext(
       `Browsing category: ${cat.name}. Show me deals and highly relevant products in this category.`,
@@ -84,7 +131,7 @@ export default function CreatorCategoriesPage() {
     router.replace(
       `/creator/${encodeURIComponent(creatorSlugSafe)}/categories?view=${encodeURIComponent(
         viewId,
-      )}`,
+      )}&locale=${encodeURIComponent(FORCED_LOCALE)}`,
     );
   };
 
@@ -200,20 +247,20 @@ export default function CreatorCategoriesPage() {
 
           {/* Hero row: large cards (desktop) */}
           <section className="hidden gap-4 md:grid md:grid-cols-3">
-            {heroCategories.map((node, index) => {
+            {heroCategories.map((node) => {
               const cat = node.category;
               const count = cat.productCount ?? 0;
               const hasDeals = (cat.deals?.length ?? 0) > 0;
               const imageUrl =
                 cat.imageUrl || CATEGORY_IMAGE_FALLBACK[cat.slug] || "";
-              const isTopCard = index === 0;
+              const isTopCategory = TOP_CATEGORY_SLUGS.includes(cat.slug as any);
               return (
                 <button
                   key={cat.id}
                   onClick={() => handleCategoryClick(node)}
                   className={cn(
                     "group flex h-64 flex-col overflow-hidden rounded-3xl bg-slate-100 text-left text-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl",
-                    isTopCard && "ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white",
+                    isTopCategory && "ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white",
                   )}
                 >
                   <div className="relative flex-1">
@@ -230,7 +277,7 @@ export default function CreatorCategoriesPage() {
                       </div>
                     )}
                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                    {isTopCard && (
+                    {isTopCategory && (
                       <div className="pointer-events-none absolute left-4 top-4">
                         <span className="inline-flex items-center rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold text-slate-900 shadow-sm">
                           Top
@@ -267,20 +314,20 @@ export default function CreatorCategoriesPage() {
 
           {/* Hero row on mobile: horizontal scroll */}
           <section className="mt-4 flex gap-4 overflow-x-auto md:hidden">
-            {heroCategories.map((node, index) => {
+            {heroCategories.map((node) => {
               const cat = node.category;
               const count = cat.productCount ?? 0;
               const hasDeals = (cat.deals?.length ?? 0) > 0;
               const imageUrl =
                 cat.imageUrl || CATEGORY_IMAGE_FALLBACK[cat.slug] || "";
-              const isTopCard = index === 0;
+              const isTopCategory = TOP_CATEGORY_SLUGS.includes(cat.slug as any);
               return (
                 <button
                   key={cat.id}
                   onClick={() => handleCategoryClick(node)}
                   className={cn(
                     "group flex w-60 flex-col overflow-hidden rounded-3xl bg-slate-100 text-left text-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl",
-                    isTopCard && "ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white",
+                    isTopCategory && "ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white",
                   )}
                 >
                   <div className="relative h-56">
@@ -297,7 +344,7 @@ export default function CreatorCategoriesPage() {
                       </div>
                     )}
                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                    {isTopCard && (
+                    {isTopCategory && (
                       <div className="pointer-events-none absolute left-4 top-4">
                         <span className="inline-flex items-center rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold text-slate-900 shadow-sm">
                           Top
@@ -349,7 +396,11 @@ export default function CreatorCategoriesPage() {
                     <button
                       key={cat.id}
                       onClick={() => handleCategoryClick(node)}
-                      className="group flex flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white text-left text-slate-900 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                      className={cn(
+                        "group flex flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white text-left text-slate-900 shadow-sm transition hover:-translate-y-1 hover:shadow-md",
+                        TOP_CATEGORY_SLUGS.includes(cat.slug as any) &&
+                          "ring-1 ring-amber-200/80 ring-offset-1 ring-offset-white",
+                      )}
                     >
                       <div className="h-32 w-full overflow-hidden bg-slate-100">
                         {imageUrl ? (
@@ -377,11 +428,18 @@ export default function CreatorCategoriesPage() {
                           </div>
                         </div>
                         <div className="mt-1 flex items-center justify-between">
-                          {hasDeals && (
-                            <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] text-emerald-700">
-                              Deals
-                            </span>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {TOP_CATEGORY_SLUGS.includes(cat.slug as any) && (
+                              <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[10px] text-amber-700">
+                                Top
+                              </span>
+                            )}
+                            {hasDeals && (
+                              <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] text-emerald-700">
+                                Deals
+                              </span>
+                            )}
+                          </div>
                           <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-[11px] text-white shadow-sm group-hover:bg-slate-800">
                             →
                           </span>

@@ -16,6 +16,8 @@ const CATEGORY_NAME_OVERRIDES: Record<string, string> = {
   "outdoor-clothing": "Outdoor Clothing",
 };
 
+const FORCED_LOCALE = "en-US";
+
 interface CategoryProductsResponse {
   products: Product[];
   pagination?: {
@@ -74,7 +76,7 @@ export default function CreatorCategoryProductsPage() {
             creatorSlug,
           )}/category/${encodeURIComponent(
             categorySlug,
-          )}/products?limit=500&page=1${view ? `&view=${encodeURIComponent(view)}` : ""}`,
+          )}/products?limit=500&page=1${view ? `&view=${encodeURIComponent(view)}` : ""}&locale=${encodeURIComponent(FORCED_LOCALE)}`,
           { signal: controller.signal },
         );
         if (!res.ok) {
@@ -114,7 +116,9 @@ export default function CreatorCategoryProductsPage() {
               router.push(
                 `/creator/${encodeURIComponent(
                   creatorSlug || creator.slug,
-                )}/categories${view ? `?view=${encodeURIComponent(view)}` : ""}`,
+                )}/categories?view=${encodeURIComponent(
+                  view || "GLOBAL_FASHION",
+                )}&locale=${encodeURIComponent(FORCED_LOCALE)}`,
               )
             }
             className="underline-offset-2 hover:underline"

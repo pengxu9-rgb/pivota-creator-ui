@@ -7,6 +7,7 @@ import type {
 
 interface UseCreatorCategoriesOptions {
   includeCounts?: boolean;
+  includeEmpty?: boolean;
   dealsOnly?: boolean;
   view?: string;
   locale?: string;
@@ -55,6 +56,9 @@ export function useCreatorCategories(
         if (options?.dealsOnly !== undefined) {
           params.set("dealsOnly", String(options.dealsOnly));
         }
+        if (options?.includeEmpty !== undefined) {
+          params.set("includeEmpty", String(options.includeEmpty));
+        }
         if (options?.view) {
           params.set("view", options.view);
         }
@@ -98,7 +102,14 @@ export function useCreatorCategories(
     return () => {
       cancelled = true;
     };
-  }, [slug, options?.includeCounts, options?.dealsOnly, options?.view, options?.locale]);
+  }, [
+    slug,
+    options?.includeCounts,
+    options?.dealsOnly,
+    options?.includeEmpty,
+    options?.view,
+    options?.locale,
+  ]);
 
   return { roots, hotDeals, ...meta, isLoading, error };
 }
