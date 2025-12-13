@@ -89,11 +89,6 @@ export function ProductCard({
         <div className="line-clamp-2 text-[13px] font-semibold text-[#3f3125]">
           {product.title}
         </div>
-        {product.description && (
-          <p className="mt-1 line-clamp-2 text-[12px] text-[#8c715c]">
-            {product.description}
-          </p>
-        )}
         {creatorMeta && (
           <p className="mt-1 text-[10px] text-[#a38b78]">
             {creatorMeta}
@@ -107,12 +102,12 @@ export function ProductCard({
                   <span className="text-[11px] text-[#b29a84] line-through">
                     {product.currency} {product.price.toFixed(2)}
                   </span>
-                  <span className="text-base font-semibold text-[#3f3125]">
+                  <span className="text-sm font-semibold text-[#3f3125]">
                     {product.currency} {product.bestDeal?.flashPrice?.toFixed(2)}
                   </span>
                 </>
               ) : (
-                <span className="text-base font-semibold text-[#3f3125]">
+                <span className="text-sm font-semibold text-[#3f3125]">
                   {product.currency} {product.price.toFixed(2)}
                 </span>
               )}
@@ -144,10 +139,9 @@ export function ProductCard({
                   allDeals: product.allDeals ?? null,
                 });
               }}
-              className="ml-2 inline-flex items-center gap-1.5 rounded-full bg-[#f6b59b] px-4 py-2 text-[11px] font-medium text-[#3f3125] shadow-sm hover:bg-[#f29b7f]"
+              className="ml-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#f6b59b] text-[11px] text-[#3f3125] shadow-sm hover:bg-[#f29b7f]"
             >
               <ShoppingCart className="h-3.5 w-3.5" />
-              <span>Add to cart</span>
             </button>
           </div>
         </div>
