@@ -17,6 +17,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
     input,
     setInput,
     isLoading,
+    products,
     accountsUser,
     authChecking,
     handleSend,
@@ -162,7 +163,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
         the creator featured, then similar matches.
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col">
+        <div className="flex min-h-0 flex-1 flex-col">
         <div className="flex-1 space-y-3 overflow-y-auto pr-1 text-[13px] leading-relaxed text-[#4a3727]">
           {messages.map((m) => (
             <div
@@ -180,6 +181,26 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
               </div>
             </div>
           ))}
+          {isMobile && products.length > 0 && (
+            <div className="mt-2 space-y-2">
+              <p className="text-[11px] text-[#a38b78]">
+                Recommended pieces based on this chat:
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {products.slice(0, 4).map((p) => (
+                  <ProductCard
+                    key={`chat-rec-${p.id}`}
+                    product={p}
+                    creatorName={creator.name}
+                    creatorId={creator.id}
+                    creatorSlug={creator.slug}
+                    onSeeSimilar={handleSeeSimilar}
+                    onViewDetails={handleViewDetails}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
           {isLoading && (
             <div className="flex items-center gap-2 text-[11px] text-[#a38b78]">
               <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#f6b59b]" />
