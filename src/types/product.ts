@@ -5,6 +5,9 @@ export interface ProductBestDeal {
   type: DealType;
   label: string;
   discountPercent?: number;
+   // For MULTI_BUY_DISCOUNT, thresholdQuantity indicates how many items
+   // must be bought together to trigger the discount.
+   thresholdQuantity?: number;
   flashPrice?: number;
   endAt?: string;
   urgencyLevel?: "LOW" | "MEDIUM" | "HIGH";

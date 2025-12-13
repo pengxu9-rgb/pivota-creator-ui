@@ -35,12 +35,19 @@ function normalizeDeal(raw: any, productId: string): ProductBestDeal {
       : undefined;
   const endAt = raw.endAt || raw.end_at || undefined;
   const urgencyLevel = raw.urgencyLevel || raw.urgency_level || undefined;
+  const thresholdQuantity =
+    typeof raw.thresholdQuantity === "number"
+      ? raw.thresholdQuantity
+      : typeof raw.threshold_quantity === "number"
+      ? raw.threshold_quantity
+      : undefined;
 
   return {
     dealId,
     type: raw.type,
     label: raw.label,
     discountPercent,
+    thresholdQuantity,
     flashPrice,
     endAt,
     urgencyLevel,

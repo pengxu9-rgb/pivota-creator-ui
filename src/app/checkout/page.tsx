@@ -54,7 +54,10 @@ function computeCartPromotionPreview(cartItems: CartItem[]) {
     if (!deal || deal.type !== "MULTI_BUY_DISCOUNT" || !deal.discountPercent) {
       continue;
     }
-    const threshold = parseMultiBuyThreshold(deal.label);
+    const threshold =
+      typeof deal.thresholdQuantity === "number" && deal.thresholdQuantity > 0
+        ? deal.thresholdQuantity
+        : parseMultiBuyThreshold(deal.label);
     if (!threshold) continue;
 
     const merchantId = item.merchantId || "default";
