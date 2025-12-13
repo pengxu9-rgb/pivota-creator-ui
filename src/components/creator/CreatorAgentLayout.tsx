@@ -293,7 +293,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                         )}`,
                       )
                     }
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#f0e2d6] bg-white text-[11px] text-[#8c715c] hover:bg-[#fff0e3]"
+                    className="hidden h-8 w-8 items-center justify-center rounded-full border border-[#f0e2d6] bg-white text-[11px] text-[#8c715c] hover:bg-[#fff0e3] sm:inline-flex"
                   >
                     <User className="h-3.5 w-3.5 text-[#b29a84]" />
                   </button>
@@ -305,13 +305,13 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                         typeof window !== "undefined"
                           ? window.location.pathname + window.location.search
                           : `/creator/${creator.slug}`;
-                  router.push(
-                    `/account/login?return_to=${encodeURIComponent(
-                      returnTo,
-                    )}`,
-                  );
-                }}
-                    className="inline-flex rounded-full border border-[#f0e2d6] bg-white px-3 py-1.5 text-xs text-[#8c715c] hover:bg-[#fff0e3]"
+                      router.push(
+                        `/account/login?return_to=${encodeURIComponent(
+                          returnTo,
+                        )}`,
+                      );
+                    }}
+                    className="hidden items-center rounded-full border border-[#f0e2d6] bg-white px-3 py-1.5 text-xs text-[#8c715c] hover:bg-[#fff0e3] sm:inline-flex"
                   >
                     Sign in
                   </button>
@@ -320,7 +320,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
               <button
                 type="button"
                 onClick={openCart}
-                className="inline-flex items-center gap-2 rounded-full border border-[#f0e2d6] bg-white px-3 py-1.5 text-xs text-[#8c715c] hover:bg-[#fff0e3]"
+                className="hidden items-center gap-2 rounded-full border border-[#f0e2d6] bg-white px-3 py-1.5 text-xs text-[#8c715c] hover:bg-[#fff0e3] sm:inline-flex"
               >
                 <ShoppingCart className="h-4 w-4" />
                 <span>Cart</span>
@@ -394,7 +394,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
         )}
 
         {similarBaseProduct && (
-          <div className="fixed inset-0 z-50 flex items-end bg-black/40 px-4 pb-20 sm:items-center sm:pb-6 sm:pt-6">
+          <div className="fixed inset-0 z-50 flex items-center bg-black/40 px-4 py-20 sm:py-10">
             <div className="mx-auto flex max-h-[80vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-[#f0e2d6] bg-[#fffdf9] text-[#3f3125] shadow-xl sm:p-0">
               <div className="flex items-center justify-between gap-2 border-b border-[#f0e2d6] px-4 py-3 sm:px-6">
                 <div>
@@ -556,14 +556,14 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
             onClick={closeDetail}
           >
             <div
-              className="flex w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-3xl border border-[#f0e2d6] bg-[#fffaf5] text-[#3f3125] shadow-2xl"
+              className="flex w-full max-w-4xl rounded-3xl border border-[#f0e2d6] bg-[#fffaf5] text-[#3f3125] shadow-2xl"
               onClick={(event) => event.stopPropagation()}
             >
-              <div className="flex h-full w-full flex-col sm:flex-row">
+              <div className="flex h-full w-full max-h-[90vh] flex-col sm:flex-row overflow-hidden">
                 {/* Left: image gallery */}
                 {detailImages.length > 0 && (
-                  <div className="flex w-full flex-col bg-[#f5e3d4] sm:w-1/2">
-                    <div className="relative w-full flex-1 overflow-hidden">
+                  <div className="flex w-full flex-col bg-[#f5e3d4] sm:w-1/2 min-h-0">
+                    <div className="relative w-full flex-1 min-h-0 overflow-hidden">
                       <img
                         src={
                           detailImages[
@@ -638,7 +638,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                 )}
 
                 {/* Right: full detail content with style / size selection */}
-                <div className="flex flex-1 flex-col gap-2 p-4 sm:p-6 overflow-y-auto">
+                <div className="flex flex-1 flex-col gap-2 p-4 sm:p-6 overflow-y-auto min-h-0">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h3 className="text-base font-semibold text-[#3f3125] sm:text-lg">
