@@ -8,6 +8,7 @@ import { Home, Percent, Send, ShoppingCart, User, X } from "lucide-react";
 import { useCreatorAgent } from "@/components/creator/CreatorAgentContext";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { ProductCard } from "@/components/product/ProductCard";
+import { useCart } from "@/components/cart/CartProvider";
 
 export function CreatorAgentLayout({ children }: { children: ReactNode }) {
   const {
@@ -39,6 +40,8 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
     prefetchProductDetail,
   } = useCreatorAgent();
 
+  const { addItem } = useCart();
+
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -52,6 +55,91 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
   })();
 
   const [isMobileChatOpen, setIsMobileChatOpen] = useState(false);
+
+  // Local state for desktop detail modal (style / size selection and gallery)
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(
+    {},
+  );
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+
+  // Initialise selection whenever a new detail product is opened.
+  useEffect(() => {
+    if (!detailProduct) {
+      setSelectedOptions({});
+      setSelectedVariantId(null);
+      setActiveImageIndex(0);
+      return;
+    }
+
+    const nextSelected: Record<string, string> = {};
+
+    if (detailProduct.variants && detailProduct.variants.length > 0) {
+      const first = detailProduct.variants[0];
+      if (first.options) {
+        for (const [name, value] of Object.entries(first.options)) {
+          if (value != null) {
+            nextSelected[name] = String(value);
+          }
+        }
+      }
+      setSelectedVariantId(first.id);
+    } else if (detailProduct.options && detailProduct.options.length > 0) {
+      for (const opt of detailProduct.options) {
+        if (opt.values && opt.values.length > 0) {
+          nextSelected[opt.name] = opt.values[0];
+        }
+      }
+      setSelectedVariantId(null);
+    }
+
+    setSelectedOptions(nextSelected);
+    setActiveImageIndex(0);
+  }, [detailProduct]);
+
+  const selectedVariant = useMemo(() => {
+    if (!detailProduct?.variants || detailProduct.variants.length === 0) {
+      return null;
+    }
+
+    if (selectedVariantId) {
+      const byId = detailProduct.variants.find((v) => v.id === selectedVariantId);
+      if (byId) return byId;
+    }
+
+    const entries = Object.entries(selectedOptions).filter(
+      ([, v]) => typeof v === "string" && v,
+    );
+    if (!entries.length) {
+      return detailProduct.variants[0];
+    }
+
+    const match =
+      detailProduct.variants.find((v) => {
+        if (!v.options) return false;
+        return entries.every(
+          ([name, value]) =>
+            String(v.options?.[name] ?? "").trim() === String(value),
+        );
+      }) ?? null;
+
+    return match || detailProduct.variants[0];
+  }, [detailProduct, selectedOptions, selectedVariantId]);
+
+  const detailImages = useMemo(() => {
+    if (!detailProduct) return [] as string[];
+    if (Array.isArray(detailProduct.images) && detailProduct.images.length > 0) {
+      return detailProduct.images;
+    }
+    return detailProduct.imageUrl ? [detailProduct.imageUrl] : [];
+  }, [detailProduct]);
+
+  const displayPrice =
+    (selectedVariant && selectedVariant.price) ?? detailProduct?.price ?? 0;
+  const displayInventory =
+    (selectedVariant && selectedVariant.inventoryQuantity) ??
+    detailProduct?.inventoryQuantity ??
+    undefined;
 
   const renderChatPanel = (sectionClassName: string) => (
     <section className={sectionClassName}>
@@ -384,7 +472,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
           </div>
         )}
 
-        {/* Desktop product quick-view modal */}
+        {/* Desktop product full-detail modal */}
         {detailProduct && !isMobile && (
           <div
             className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4 sm:px-6"
@@ -394,24 +482,53 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
               className="flex w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-[#f0e2d6] bg-[#fffaf5] text-[#3f3125] shadow-2xl sm:flex-row"
               onClick={(event) => event.stopPropagation()}
             >
-              <div className="w-full bg-[#f5e3d4] sm:w-1/2">
-                <div className="relative aspect-[3/4] w-full overflow-hidden">
-                  <img
-                    src={
-                      (detailProduct.images && detailProduct.images[0]) ||
-                      detailProduct.imageUrl ||
-                      "/placeholder.png"
-                    }
-                    alt={detailProduct.title}
-                    className="absolute inset-0 h-full w-full object-cover"
-                  />
+              {/* Left: image gallery */}
+              {detailImages.length > 0 && (
+                <div className="w-full bg-[#f5e3d4] sm:w-1/2">
+                  <div className="relative aspect-[3/4] w-full overflow-hidden">
+                    <img
+                      src={
+                        detailImages[
+                          Math.max(
+                            0,
+                            Math.min(activeImageIndex, detailImages.length - 1),
+                          )
+                        ]
+                      }
+                      alt={detailProduct.title}
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                  </div>
+                  {detailImages.length > 1 && (
+                    <div className="flex gap-2 overflow-x-auto px-3 py-2">
+                      {detailImages.map((url, idx) => (
+                        <button
+                          key={url + idx.toString()}
+                          type="button"
+                          onClick={() => setActiveImageIndex(idx)}
+                          className={`h-16 w-12 flex-shrink-0 overflow-hidden rounded-xl border ${
+                            idx === activeImageIndex
+                              ? "border-[#3f3125]"
+                              : "border-[#f0e2d6]"
+                          } bg-[#f6e6d8]`}
+                        >
+                          <img
+                            src={url}
+                            alt={detailProduct.title}
+                            className="h-full w-full object-cover"
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </div>
+              )}
 
+              {/* Right: full detail content with style / size selection */}
               <div className="flex flex-1 flex-col gap-3 p-4 sm:p-6">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <h3 className="text-base font-semibold text-[#3f3125]">
+                    <h3 className="text-base font-semibold text-[#3f3125] sm:text-lg">
                       {detailProduct.title}
                     </h3>
                     {detailProduct.merchantName && (
@@ -431,20 +548,17 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                 </div>
 
                 {detailProduct.description && (
-                  <p className="text-[12px] leading-relaxed text-[#8c715c] line-clamp-4">
+                  <p className="text-[12px] leading-relaxed text-[#8c715c]">
                     {detailProduct.description}
                   </p>
                 )}
 
-                <div className="space-y-1 text-[13px]">
+                <div className="space-y-2 text-[13px]">
                   <div className="text-[11px] font-medium uppercase tracking-wide text-[#a38b78]">
                     Price
                   </div>
                   <div className="text-lg font-semibold text-[#3f3125]">
-                    {detailProduct.currency}{" "}
-                    {detailProduct.price?.toFixed
-                      ? detailProduct.price.toFixed(2)
-                      : detailProduct.price}
+                    {detailProduct.currency} {displayPrice.toFixed(2)}
                   </div>
                   {detailProduct.bestDeal?.label && (
                     <div className="text-[12px] font-medium text-[#f28b7a]">
@@ -453,19 +567,109 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                   )}
                 </div>
 
-                <p className="mt-1 text-[11px] text-[#b29a84]">
-                  For full style / size selection and all images, open the
-                  detailed view.
-                </p>
+                {Array.isArray(detailProduct.options) &&
+                  detailProduct.options.length > 0 && (
+                    <div className="space-y-3 text-[12px]">
+                      {detailProduct.options
+                        .filter((opt) => opt.values && opt.values.length > 0)
+                        .map((opt) => (
+                          <div key={opt.name}>
+                            <div className="text-[11px] font-medium uppercase tracking-wide text-[#a38b78]">
+                              {opt.name}
+                            </div>
+                            <div className="mt-1 flex flex-wrap gap-2">
+                              {opt.values.map((value) => (
+                                <button
+                                  key={value}
+                                  type="button"
+                                  onClick={() => {
+                                    const next = {
+                                      ...selectedOptions,
+                                      [opt.name]: value,
+                                    };
+                                    setSelectedOptions(next);
+                                    if (
+                                      detailProduct.variants &&
+                                      detailProduct.variants.length > 0
+                                    ) {
+                                      const match =
+                                        detailProduct.variants.find((v) => {
+                                          if (!v.options) return false;
+                                          return Object.entries(next).every(
+                                            ([name, val]) =>
+                                              String(
+                                                v.options?.[name] ?? "",
+                                              ).trim() === String(val),
+                                          );
+                                        }) ?? detailProduct.variants[0];
+                                      setSelectedVariantId(match.id);
+                                      if (match.imageUrl) {
+                                        const idx = detailImages.findIndex(
+                                          (url) => url === match.imageUrl,
+                                        );
+                                        if (idx >= 0) {
+                                          setActiveImageIndex(idx);
+                                        }
+                                      }
+                                    }
+                                  }}
+                                  className={`rounded-full border px-3 py-1 text-[11px] transition ${
+                                    selectedOptions[opt.name] === value
+                                      ? "border-[#3f3125] bg-[#3f3125] text-white"
+                                      : "border-[#f0e2d6] bg-white text-[#8c715c]"
+                                  }`}
+                                >
+                                  {value}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+
+                {typeof displayInventory === "number" && (
+                  <p className="text-[11px] text-[#a38b78]">
+                    Stock:{" "}
+                    {displayInventory > 0
+                      ? `${displayInventory} available`
+                      : "Out of stock"}
+                  </p>
+                )}
 
                 <div className="mt-auto flex flex-col gap-2 pt-2 sm:flex-row">
                   <button
                     type="button"
                     className="flex-1 rounded-full bg-[#f6b59b] px-3 py-2 text-[12px] font-medium text-white shadow-sm hover:bg-[#f29b7f]"
                     onClick={() => {
-                      // Use the generic addToCart helper from context.
-                      // It adds the base product (no variant selection here).
-                      addToCart(detailProduct);
+                      const product = detailProduct;
+                      const variant = selectedVariant;
+                      const images = detailImages;
+                      const variantKey = variant?.id || "default";
+                      addItem({
+                        id: `${product.id}:${variantKey}`,
+                        productId: product.id,
+                        merchantId: product.merchantId,
+                        title: product.title,
+                        price: displayPrice,
+                        imageUrl:
+                          (variant && variant.imageUrl) ||
+                          images[0] ||
+                          product.imageUrl,
+                        quantity: 1,
+                        currency: product.currency,
+                        creatorId: creator.id,
+                        creatorSlug: creator.slug,
+                        creatorName: creator.name,
+                        variantId: variant?.id,
+                        variantSku: variant?.sku,
+                        selectedOptions:
+                          Object.keys(selectedOptions).length > 0
+                            ? selectedOptions
+                            : undefined,
+                        bestDeal: product.bestDeal ?? null,
+                        allDeals: product.allDeals ?? null,
+                      });
                     }}
                   >
                     Add to cart
