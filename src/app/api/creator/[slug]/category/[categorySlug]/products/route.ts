@@ -61,7 +61,7 @@ function getMockCategoryProducts(
 export async function GET(req: NextRequest, { params }: any) {
   const creatorSlug = params.slug;
   const categorySlug = params.categorySlug;
-  const rawBase =
+  let rawBase =
     process.env.PIVOTA_AGENT_BASE_URL ||
     process.env.PIVOTA_AGENT_URL ||
     process.env.NEXT_PUBLIC_PIVOTA_AGENT_URL;
@@ -70,6 +70,13 @@ export async function GET(req: NextRequest, { params }: any) {
   const url = new URL(req.url);
   const page = url.searchParams.get("page") ?? "1";
   const limit = url.searchParams.get("limit") ?? "500";
+
+  // In production, fall back to the shared gateway URL so that
+  // category products use real data instead of local mocks when
+  // env vars are misconfigured.
+  if (!rawBase && process.env.NODE_ENV === "production") {
+    rawBase = "https://pivota-agent-production.up.railway.app/agent/shop/v1/invoke";
+  }
 
   if (!rawBase) {
     const mockProducts = getMockCategoryProducts(creatorSlug, categorySlug);
