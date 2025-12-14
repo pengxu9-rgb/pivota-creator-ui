@@ -287,7 +287,7 @@ export default function CreatorCategoriesPage() {
                         {cat.name}
                       </div>
                     )}
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent" />
+                    <div className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent" />
                     {isTopCategory && (
                       <div className="pointer-events-none absolute left-4 top-4">
                         <span className="inline-flex items-center rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold text-slate-900 shadow-sm">
@@ -295,7 +295,7 @@ export default function CreatorCategoriesPage() {
                         </span>
                       </div>
                     )}
-                    <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between p-4">
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-end justify-between p-4">
                       <div>
                         <div className="text-base font-semibold">
                           {cat.name}
@@ -357,7 +357,7 @@ export default function CreatorCategoriesPage() {
                         {cat.name}
                       </div>
                     )}
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent" />
+                    <div className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent" />
                     {isTopCategory && (
                       <div className="pointer-events-none absolute left-4 top-4">
                         <span className="inline-flex items-center rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold text-slate-900 shadow-sm">
@@ -365,7 +365,7 @@ export default function CreatorCategoriesPage() {
                         </span>
                       </div>
                     )}
-                    <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between p-4">
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-end justify-between p-4">
                       <div>
                         <div className="text-base font-semibold">
                           {cat.name}
