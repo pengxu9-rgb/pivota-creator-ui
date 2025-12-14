@@ -274,7 +274,7 @@ export default function CreatorCategoriesPage() {
                         {cat.name}
                       </div>
                     )}
-                    <div className="absolute inset-0 z-10 flex flex-col justify-end bg-gradient-to-t from-black/70 via-black/25 to-transparent p-4 text-white">
+                    <div className="absolute inset-x-0 bottom-0 z-10 bg-black/60 px-4 pb-4 pt-6 text-white">
                       <div className="flex items-end justify-between">
                         <div className="space-y-1">
                           <div className="text-base font-semibold">
@@ -321,7 +321,7 @@ export default function CreatorCategoriesPage() {
                         {cat.name}
                       </div>
                     )}
-                    <div className="absolute inset-0 z-10 flex flex-col justify-end bg-gradient-to-t from-black/70 via-black/25 to-transparent p-4 text-white">
+                    <div className="absolute inset-x-0 bottom-0 z-10 bg-black/60 px-4 pb-4 pt-6 text-white">
                       <div className="flex items-end justify-between">
                         <div className="space-y-1">
                           <div className="text-base font-semibold">
