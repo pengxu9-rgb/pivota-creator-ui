@@ -21,15 +21,6 @@ const FORCED_LOCALE = "en-US";
 
 const TOP_CATEGORY_SLUGS = ["sportswear", "lingerie-set", "toys"] as const;
 
-const CATEGORY_TAGLINES: Record<string, string> = {
-  sportswear: "Train, move, and perform.",
-  "lingerie-set": "Elegant, curated essentials.",
-  toys: "Cute picks and gifts.",
-  "womens-loungewear": "Cozy sets for home days.",
-  "womens-dress": "From day to night elegance.",
-  "outdoor-clothing": "Ready for any weather.",
-};
-
 const CATEGORY_IMAGE_FALLBACK: Record<string, string> = {
   sportswear: "/mock-categories/sportswear.jpg",
   "lingerie-set": "/mock-categories/lingerie-set.jpg",
@@ -258,13 +249,9 @@ export default function CreatorCategoriesPage() {
           <section className="hidden gap-4 md:grid md:grid-cols-3">
             {heroCategories.map((node) => {
               const cat = node.category;
-              const count = cat.productCount ?? 0;
-              const hasDeals = (cat.deals?.length ?? 0) > 0;
               const imageUrl =
                 cat.imageUrl || CATEGORY_IMAGE_FALLBACK[cat.slug] || "";
               const isTopCategory = TOP_CATEGORY_SLUGS.includes(cat.slug as any);
-              const tagline =
-                CATEGORY_TAGLINES[cat.slug] ?? "Browse items in this category.";
               return (
                 <button
                   key={cat.id}
@@ -287,36 +274,16 @@ export default function CreatorCategoriesPage() {
                         {cat.name}
                       </div>
                     )}
-                    <div className="absolute inset-0 flex flex-col justify-between">
-                      <div className="p-4">
-                        {isTopCategory && (
-                          <span className="inline-flex items-center rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold text-slate-900 shadow-sm">
-                            Top
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-end justify-between bg-gradient-to-t from-black/70 via-black/25 to-transparent p-4">
-                        <div>
+                    <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/70 via-black/25 to-transparent p-4">
+                      <div className="flex items-end justify-between">
+                        <div className="space-y-1">
                           <div className="text-base font-semibold">
                             {cat.name}
                           </div>
-                          <div className="mt-1 text-xs text-slate-50/90">
-                            {tagline}
-                          </div>
-                          <div className="mt-1 text-[11px] text-slate-100/80">
-                            {count > 0 ? `${count} items` : "No items yet"}
-                          </div>
                         </div>
-                        <div className="flex flex-col items-end gap-1">
-                          {hasDeals && (
-                            <span className="inline-flex items-center rounded-full bg-emerald-500/80 px-2 py-0.5 text-[10px] text-white">
-                              Deals
-                            </span>
-                          )}
-                          <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-slate-900 shadow-sm group-hover:bg-white">
-                            →
-                          </span>
-                        </div>
+                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-slate-900 shadow-sm group-hover:bg-white">
+                          →
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -329,13 +296,9 @@ export default function CreatorCategoriesPage() {
           <section className="mt-4 flex gap-4 overflow-x-auto md:hidden">
             {heroCategories.map((node) => {
               const cat = node.category;
-              const count = cat.productCount ?? 0;
-              const hasDeals = (cat.deals?.length ?? 0) > 0;
               const imageUrl =
                 cat.imageUrl || CATEGORY_IMAGE_FALLBACK[cat.slug] || "";
               const isTopCategory = TOP_CATEGORY_SLUGS.includes(cat.slug as any);
-              const tagline =
-                CATEGORY_TAGLINES[cat.slug] ?? "Browse items in this category.";
               return (
                 <button
                   key={cat.id}
@@ -358,36 +321,16 @@ export default function CreatorCategoriesPage() {
                         {cat.name}
                       </div>
                     )}
-                    <div className="absolute inset-0 flex flex-col justify-between">
-                      <div className="p-4">
-                        {isTopCategory && (
-                          <span className="inline-flex items-center rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold text-slate-900 shadow-sm">
-                            Top
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-end justify-between bg-gradient-to-t from-black/70 via-black/25 to-transparent p-4">
-                        <div>
+                    <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/70 via-black/25 to-transparent p-4">
+                      <div className="flex items-end justify-between">
+                        <div className="space-y-1">
                           <div className="text-base font-semibold">
                             {cat.name}
                           </div>
-                          <div className="mt-1 text-xs text-slate-50/90">
-                            {tagline}
-                          </div>
-                          <div className="mt-1 text-[11px] text-slate-100/80">
-                            {count > 0 ? `${count} items` : "No items yet"}
-                          </div>
                         </div>
-                        <div className="flex flex-col items-end gap-1">
-                          {hasDeals && (
-                            <span className="inline-flex items-center rounded-full bg-emerald-500/80 px-2 py-0.5 text-[10px] text-white">
-                              Deals
-                            </span>
-                          )}
-                          <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-slate-900 shadow-sm group-hover:bg-white">
-                            →
-                          </span>
-                        </div>
+                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-slate-900 shadow-sm group-hover:bg-white">
+                          →
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -405,8 +348,6 @@ export default function CreatorCategoriesPage() {
               {(restCategories.length > 0 ? restCategories : sortedRoots).map(
                 (node) => {
                   const cat = node.category;
-                  const count = cat.productCount ?? 0;
-                  const hasDeals = (cat.deals?.length ?? 0) > 0;
                   const imageUrl =
                     cat.imageUrl || CATEGORY_IMAGE_FALLBACK[cat.slug] || "";
                   return (
@@ -434,29 +375,8 @@ export default function CreatorCategoriesPage() {
                         )}
                       </div>
                       <div className="flex flex-1 flex-col justify-between gap-1 px-3 py-3">
-                        <div>
-                          <div className="text-sm font-semibold">
-                            {cat.name}
-                          </div>
-                          <div className="mt-0.5 text-[11px] text-slate-500">
-                            {count > 0
-                              ? `${count} items`
-                              : "Browse items in this category"}
-                          </div>
-                        </div>
-                        <div className="mt-1 flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            {TOP_CATEGORY_SLUGS.includes(cat.slug as any) && (
-                              <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[10px] text-amber-700">
-                                Top
-                              </span>
-                            )}
-                            {hasDeals && (
-                              <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] text-emerald-700">
-                                Deals
-                              </span>
-                            )}
-                          </div>
+                        <div className="text-sm font-semibold">{cat.name}</div>
+                        <div className="mt-1 flex justify-end">
                           <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-[11px] text-white shadow-sm group-hover:bg-slate-800">
                             →
                           </span>
