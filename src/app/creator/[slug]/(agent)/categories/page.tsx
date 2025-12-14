@@ -257,11 +257,11 @@ export default function CreatorCategoriesPage() {
                   key={cat.id}
                   onClick={() => handleCategoryClick(node)}
                   className={cn(
-                    "group flex h-64 flex-col overflow-hidden rounded-3xl bg-slate-900/5 text-left text-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl",
-                    isTopCategory && "shadow-lg",
+                    "group flex h-64 flex-col overflow-hidden rounded-3xl bg-white text-left text-slate-900 shadow-sm transition hover:-translate-y-1 hover:shadow-xl",
+                    isTopCategory && "ring-1 ring-amber-200/80 ring-offset-1 ring-offset-white",
                   )}
                 >
-                  <div className="relative flex-1">
+                  <div className="relative flex-1 bg-slate-100">
                     {imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -274,18 +274,12 @@ export default function CreatorCategoriesPage() {
                         {cat.name}
                       </div>
                     )}
-                    <div className="absolute inset-x-0 bottom-0 z-10 bg-black/60 px-4 pb-4 pt-6 text-white">
-                      <div className="flex items-end justify-between">
-                        <div className="space-y-1">
-                          <div className="text-base font-semibold">
-                            {cat.name}
-                          </div>
-                        </div>
-                        <span className="hidden h-8 w-8 items-center justify-center rounded-full bg-white/90 text-slate-900 shadow-sm group-hover:bg-white md:inline-flex">
-                          →
-                        </span>
-                      </div>
-                    </div>
+                  </div>
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <div className="text-base font-semibold">{cat.name}</div>
+                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-[11px] text-white shadow-sm group-hover:bg-slate-800">
+                      →
+                    </span>
                   </div>
                 </button>
               );
