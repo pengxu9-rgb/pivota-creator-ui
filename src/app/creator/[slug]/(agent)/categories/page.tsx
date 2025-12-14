@@ -21,6 +21,15 @@ const FORCED_LOCALE = "en-US";
 
 const TOP_CATEGORY_SLUGS = ["sportswear", "lingerie-set", "toys"] as const;
 
+const CATEGORY_TAGLINES: Record<string, string> = {
+  sportswear: "Train, move, and perform.",
+  "lingerie-set": "Elegant, curated essentials.",
+  toys: "Cute picks and gifts.",
+  "womens-loungewear": "Cozy sets for home days.",
+  "womens-dress": "From day to night elegance.",
+  "outdoor-clothing": "Ready for any weather.",
+};
+
 const CATEGORY_IMAGE_FALLBACK: Record<string, string> = {
   sportswear: "/mock-categories/sportswear.jpg",
   "lingerie-set": "/mock-categories/lingerie-set.jpg",
@@ -254,13 +263,15 @@ export default function CreatorCategoriesPage() {
               const imageUrl =
                 cat.imageUrl || CATEGORY_IMAGE_FALLBACK[cat.slug] || "";
               const isTopCategory = TOP_CATEGORY_SLUGS.includes(cat.slug as any);
+              const tagline =
+                CATEGORY_TAGLINES[cat.slug] ?? "Browse items in this category.";
               return (
                 <button
                   key={cat.id}
                   onClick={() => handleCategoryClick(node)}
                   className={cn(
-                    "group flex h-64 flex-col overflow-hidden rounded-3xl bg-slate-100 text-left text-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl",
-                    isTopCategory && "ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white",
+                    "group flex h-64 flex-col overflow-hidden rounded-3xl bg-slate-900/5 text-left text-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl",
+                    isTopCategory && "shadow-lg",
                   )}
                 >
                   <div className="relative flex-1">
@@ -276,7 +287,7 @@ export default function CreatorCategoriesPage() {
                         {cat.name}
                       </div>
                     )}
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent" />
                     {isTopCategory && (
                       <div className="pointer-events-none absolute left-4 top-4">
                         <span className="inline-flex items-center rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold text-slate-900 shadow-sm">
@@ -286,13 +297,14 @@ export default function CreatorCategoriesPage() {
                     )}
                     <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between p-4">
                       <div>
-                        <div className="text-sm font-semibold">
+                        <div className="text-base font-semibold">
                           {cat.name}
                         </div>
+                        <div className="mt-1 text-xs text-slate-50/90">
+                          {tagline}
+                        </div>
                         <div className="mt-1 text-[11px] text-slate-100/80">
-                          {count > 0
-                            ? `${count} items`
-                            : "Browse items in this category"}
+                          {count > 0 ? `${count} items` : "No items yet"}
                         </div>
                       </div>
                       <div className="flex flex-col items-end gap-1">
@@ -301,7 +313,7 @@ export default function CreatorCategoriesPage() {
                             Deals
                           </span>
                         )}
-                        <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-slate-900 shadow-sm group-hover:bg-white">
+                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-slate-900 shadow-sm group-hover:bg-white">
                           →
                         </span>
                       </div>
@@ -321,13 +333,15 @@ export default function CreatorCategoriesPage() {
               const imageUrl =
                 cat.imageUrl || CATEGORY_IMAGE_FALLBACK[cat.slug] || "";
               const isTopCategory = TOP_CATEGORY_SLUGS.includes(cat.slug as any);
+              const tagline =
+                CATEGORY_TAGLINES[cat.slug] ?? "Browse items in this category.";
               return (
                 <button
                   key={cat.id}
                   onClick={() => handleCategoryClick(node)}
                   className={cn(
-                    "group flex w-60 flex-col overflow-hidden rounded-3xl bg-slate-100 text-left text-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl",
-                    isTopCategory && "ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white",
+                    "group flex w-60 flex-col overflow-hidden rounded-3xl bg-slate-900/5 text-left text-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl",
+                    isTopCategory && "shadow-lg",
                   )}
                 >
                   <div className="relative h-56">
@@ -343,7 +357,7 @@ export default function CreatorCategoriesPage() {
                         {cat.name}
                       </div>
                     )}
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent" />
                     {isTopCategory && (
                       <div className="pointer-events-none absolute left-4 top-4">
                         <span className="inline-flex items-center rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold text-slate-900 shadow-sm">
@@ -353,13 +367,14 @@ export default function CreatorCategoriesPage() {
                     )}
                     <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between p-4">
                       <div>
-                        <div className="text-sm font-semibold">
+                        <div className="text-base font-semibold">
                           {cat.name}
                         </div>
+                        <div className="mt-1 text-xs text-slate-50/90">
+                          {tagline}
+                        </div>
                         <div className="mt-1 text-[11px] text-slate-100/80">
-                          {count > 0
-                            ? `${count} items`
-                            : "Browse items in this category"}
+                          {count > 0 ? `${count} items` : "No items yet"}
                         </div>
                       </div>
                       <div className="flex flex-col items-end gap-1">
@@ -368,7 +383,7 @@ export default function CreatorCategoriesPage() {
                             Deals
                           </span>
                         )}
-                        <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-slate-900 shadow-sm group-hover:bg-white">
+                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-slate-900 shadow-sm group-hover:bg-white">
                           →
                         </span>
                       </div>
