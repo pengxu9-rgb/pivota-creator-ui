@@ -274,8 +274,10 @@ export default function CreatorCategoriesPage() {
                         {cat.name}
                       </div>
                     )}
-                    <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/40 to-transparent px-4 pb-4 pt-6 text-white">
-                      <div className="text-base font-semibold">{cat.name}</div>
+                    <div className="absolute inset-0 flex flex-col justify-between px-4 py-4 text-white drop-shadow-md">
+                      <div className="max-w-[70%] text-base font-semibold">
+                        {cat.name}
+                      </div>
                       <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-slate-900 shadow-sm group-hover:bg-white">
                         →
                       </span>
