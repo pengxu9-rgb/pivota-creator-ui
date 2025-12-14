@@ -89,6 +89,11 @@ export function ProductCard({
         <div className="line-clamp-2 text-[13px] font-semibold text-[#3f3125]">
           {product.title}
         </div>
+        {product.description && (
+          <p className="mt-1 line-clamp-2 text-[11px] text-[#7b6550]">
+            {product.description}
+          </p>
+        )}
         {creatorMeta && (
           <p className="mt-1 text-[10px] text-[#a38b78]">
             {creatorMeta}
