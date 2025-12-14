@@ -281,7 +281,7 @@ export default function CreatorCategoriesPage() {
                             {cat.name}
                           </div>
                         </div>
-                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-slate-900 shadow-sm group-hover:bg-white">
+                        <span className="hidden h-8 w-8 items-center justify-center rounded-full bg-white/90 text-slate-900 shadow-sm group-hover:bg-white md:inline-flex">
                           →
                         </span>
                       </div>
@@ -328,7 +328,7 @@ export default function CreatorCategoriesPage() {
                             {cat.name}
                           </div>
                         </div>
-                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-slate-900 shadow-sm group-hover:bg-white">
+                        <span className="hidden h-8 w-8 items-center justify-center rounded-full bg-white/90 text-slate-900 shadow-sm group-hover:bg-white md:inline-flex">
                           →
                         </span>
                       </div>
