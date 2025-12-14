@@ -350,7 +350,7 @@ export default function CreatorCategoriesPage() {
                           "ring-1 ring-amber-200/80 ring-offset-1 ring-offset-white",
                       )}
                     >
-                      <div className="h-40 w-full overflow-hidden bg-slate-100">
+                      <div className="h-44 w-full overflow-hidden bg-slate-100 sm:h-48">
                         {imageUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
@@ -364,7 +364,7 @@ export default function CreatorCategoriesPage() {
                           </div>
                         )}
                       </div>
-                      <div className="flex flex-1 flex-col justify-between gap-1 px-3 py-2.5">
+                      <div className="flex flex-1 flex-col justify-between gap-1 px-3 py-2">
                         <div className="text-sm font-semibold">{cat.name}</div>
                         <div className="mt-0.5 flex justify-end">
                           <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-[11px] text-white shadow-sm group-hover:bg-slate-800">
