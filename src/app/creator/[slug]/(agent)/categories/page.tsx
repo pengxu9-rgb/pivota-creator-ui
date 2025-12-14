@@ -287,35 +287,36 @@ export default function CreatorCategoriesPage() {
                         {cat.name}
                       </div>
                     )}
-                    <div className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent" />
-                    {isTopCategory && (
-                      <div className="pointer-events-none absolute left-4 top-4">
-                        <span className="inline-flex items-center rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold text-slate-900 shadow-sm">
-                          Top
-                        </span>
-                      </div>
-                    )}
-                    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-end justify-between p-4">
-                      <div>
-                        <div className="text-base font-semibold">
-                          {cat.name}
-                        </div>
-                        <div className="mt-1 text-xs text-slate-50/90">
-                          {tagline}
-                        </div>
-                        <div className="mt-1 text-[11px] text-slate-100/80">
-                          {count > 0 ? `${count} items` : "No items yet"}
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end gap-1">
-                        {hasDeals && (
-                          <span className="inline-flex items-center rounded-full bg-emerald-500/80 px-2 py-0.5 text-[10px] text-white">
-                            Deals
+                    <div className="absolute inset-0 flex flex-col justify-between">
+                      <div className="p-4">
+                        {isTopCategory && (
+                          <span className="inline-flex items-center rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold text-slate-900 shadow-sm">
+                            Top
                           </span>
                         )}
-                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-slate-900 shadow-sm group-hover:bg-white">
-                          →
-                        </span>
+                      </div>
+                      <div className="flex items-end justify-between bg-gradient-to-t from-black/70 via-black/25 to-transparent p-4">
+                        <div>
+                          <div className="text-base font-semibold">
+                            {cat.name}
+                          </div>
+                          <div className="mt-1 text-xs text-slate-50/90">
+                            {tagline}
+                          </div>
+                          <div className="mt-1 text-[11px] text-slate-100/80">
+                            {count > 0 ? `${count} items` : "No items yet"}
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                          {hasDeals && (
+                            <span className="inline-flex items-center rounded-full bg-emerald-500/80 px-2 py-0.5 text-[10px] text-white">
+                              Deals
+                            </span>
+                          )}
+                          <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-slate-900 shadow-sm group-hover:bg-white">
+                            →
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -357,35 +358,36 @@ export default function CreatorCategoriesPage() {
                         {cat.name}
                       </div>
                     )}
-                    <div className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent" />
-                    {isTopCategory && (
-                      <div className="pointer-events-none absolute left-4 top-4">
-                        <span className="inline-flex items-center rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold text-slate-900 shadow-sm">
-                          Top
-                        </span>
-                      </div>
-                    )}
-                    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-end justify-between p-4">
-                      <div>
-                        <div className="text-base font-semibold">
-                          {cat.name}
-                        </div>
-                        <div className="mt-1 text-xs text-slate-50/90">
-                          {tagline}
-                        </div>
-                        <div className="mt-1 text-[11px] text-slate-100/80">
-                          {count > 0 ? `${count} items` : "No items yet"}
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end gap-1">
-                        {hasDeals && (
-                          <span className="inline-flex items-center rounded-full bg-emerald-500/80 px-2 py-0.5 text-[10px] text-white">
-                            Deals
+                    <div className="absolute inset-0 flex flex-col justify-between">
+                      <div className="p-4">
+                        {isTopCategory && (
+                          <span className="inline-flex items-center rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold text-slate-900 shadow-sm">
+                            Top
                           </span>
                         )}
-                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-slate-900 shadow-sm group-hover:bg-white">
-                          →
-                        </span>
+                      </div>
+                      <div className="flex items-end justify-between bg-gradient-to-t from-black/70 via-black/25 to-transparent p-4">
+                        <div>
+                          <div className="text-base font-semibold">
+                            {cat.name}
+                          </div>
+                          <div className="mt-1 text-xs text-slate-50/90">
+                            {tagline}
+                          </div>
+                          <div className="mt-1 text-[11px] text-slate-100/80">
+                            {count > 0 ? `${count} items` : "No items yet"}
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                          {hasDeals && (
+                            <span className="inline-flex items-center rounded-full bg-emerald-500/80 px-2 py-0.5 text-[10px] text-white">
+                              Deals
+                            </span>
+                          )}
+                          <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-slate-900 shadow-sm group-hover:bg-white">
+                            →
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
