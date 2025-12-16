@@ -7,6 +7,11 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { ProductCard } from "@/components/product/ProductCard";
 import { useCreatorAgent } from "@/components/creator/CreatorAgentContext";
 
+// How many products to show initially in the "Featured for you" grid.
+// With 4 columns on desktop this renders roughly 2–3 rows.
+const INITIAL_VISIBLE = 16;
+const BATCH_VISIBLE = 16;
+
 export default function CreatorAgentPage() {
   const {
     creator,
@@ -28,13 +33,13 @@ export default function CreatorAgentPage() {
     return tab === "deals" ? "deals" : "forYou";
   }, [searchParams]);
 
-  const [visibleCount, setVisibleCount] = useState(6);
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   // Reset visible items when products or tab changes.
   useEffect(() => {
     if (activeTab === "forYou") {
-      setVisibleCount(6);
+      setVisibleCount(INITIAL_VISIBLE);
     }
   }, [activeTab, products]);
 
@@ -44,13 +49,16 @@ export default function CreatorAgentPage() {
     if (typeof IntersectionObserver === "undefined") return;
 
     const el = loadMoreRef.current;
+    const maxVisible = products.length;
+
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
         if (!entry.isIntersecting) return;
         setVisibleCount((current) => {
-          const next = current + 6;
-          return Math.min(next, products.length || next);
+          const next = current + BATCH_VISIBLE;
+          const upper = maxVisible || next;
+          return Math.min(next, upper);
         });
       },
       { root: null, rootMargin: "200px", threshold: 0.1 },
@@ -66,7 +74,9 @@ export default function CreatorAgentPage() {
   // desktop detail modal can open with full Style/Size and images.
   useEffect(() => {
     if (!products.length) return;
-    const slice = products.slice(0, visibleCount);
+    const maxVisible = products.length;
+    const count = Math.min(visibleCount, maxVisible || visibleCount);
+    const slice = products.slice(0, count);
     slice.forEach((p) => prefetchProductDetail(p));
   }, [products, visibleCount, prefetchProductDetail]);
 
@@ -107,7 +117,7 @@ export default function CreatorAgentPage() {
               </button>
             </div>
             {isFeaturedLoading || (isLoading && products.length === 0) ? (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {Array.from({ length: 3 }).map((_, idx) => (
                   <div
                     key={idx}
@@ -121,26 +131,39 @@ export default function CreatorAgentPage() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {products.slice(0, visibleCount).map((p) => (
-                    <ProductCard
-                      key={p.id}
-                      product={p}
-                      creatorName={creator.name}
-                      creatorId={creator.id}
-                      creatorSlug={creator.slug}
-                      onSeeSimilar={handleSeeSimilar}
-                      onViewDetails={handleViewDetails}
-                    />
-                  ))}
-                </div>
-                {products.length > visibleCount && (
-                  <div
-                    ref={loadMoreRef}
-                    className="mt-4 h-8 w-full"
-                    aria-hidden="true"
-                  />
-                )}
+                {/*
+                  逐步展示最多 90 个商品；其余结果保留在内存中，不在首屏渲染。
+                */}
+                {(() => {
+                  const maxVisible = products.length;
+                  const count = Math.min(visibleCount, maxVisible || visibleCount);
+                  const hasMore = maxVisible > 0 && count < maxVisible;
+
+                  return (
+                    <>
+                      <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        {products.slice(0, count).map((p) => (
+                          <ProductCard
+                            key={p.id}
+                            product={p}
+                            creatorName={creator.name}
+                            creatorId={creator.id}
+                            creatorSlug={creator.slug}
+                            onSeeSimilar={handleSeeSimilar}
+                            onViewDetails={handleViewDetails}
+                          />
+                        ))}
+                      </div>
+                      {hasMore && (
+                        <div
+                          ref={loadMoreRef}
+                          className="mt-4 h-8 w-full"
+                          aria-hidden="true"
+                        />
+                      )}
+                    </>
+                  );
+                })()}
               </>
             )}
           </div>

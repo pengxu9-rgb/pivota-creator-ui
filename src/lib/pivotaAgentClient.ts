@@ -107,7 +107,7 @@ export async function callPivotaCreatorAgent(params: {
         // page + limit 分页，不强制只看有库存。
         page: 1,
         // 多给一些结果，方便前端做「继续往下刷」展示。
-        limit: 100,
+        limit: 90,
         in_stock_only: false,
       },
       user: {
