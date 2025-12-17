@@ -387,20 +387,22 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
         </div>
 
         {/* Mobile chat floating button */}
-        <button
-          type="button"
-          onClick={() => setIsMobileChatOpen(true)}
-          className="fixed inset-x-0 bottom-16 z-20 flex justify-center lg:hidden"
-        >
-          <span className="inline-flex items-center gap-2 rounded-full bg-[#f6b59b] px-5 py-2 text-xs font-medium text-white shadow-lg hover:bg-[#f29b7f]">
-            <Send className="h-3.5 w-3.5" />
-            <span>Chat with {creator.name}</span>
-          </span>
-        </button>
+        {!isMobileChatOpen && (
+          <button
+            type="button"
+            onClick={() => setIsMobileChatOpen(true)}
+            className="fixed inset-x-0 bottom-16 z-20 flex justify-center lg:hidden"
+          >
+            <span className="inline-flex items-center gap-2 rounded-full bg-[#f6b59b] px-5 py-2 text-xs font-medium text-white shadow-lg hover:bg-[#f29b7f]">
+              <Send className="h-3.5 w-3.5" />
+              <span>Chat with {creator.name}</span>
+            </span>
+          </button>
+        )}
 
         {/* Mobile chat sheet */}
         {isMobileChatOpen && (
-          <div className="fixed inset-x-0 top-0 bottom-[56px] z-40 flex min-h-0 flex-col bg-[#fffefc] lg:hidden">
+          <div className="fixed inset-0 z-[60] flex min-h-0 flex-col bg-[#fffefc] lg:hidden">
             <div className="flex items-center justify-between border-b border-[#f6ebe0] bg-[#fffefc] px-4 py-3">
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 overflow-hidden rounded-full bg-[#f6b59b]">
@@ -425,7 +427,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                 Close
               </button>
             </div>
-            <div className="flex flex-1 min-h-0 flex-col bg-[#fffefc] px-4 pt-4 pb-0">
+            <div className="flex flex-1 min-h-0 flex-col bg-[#fffefc] px-4 pt-4 pb-[env(safe-area-inset-bottom)]">
               {renderChatPanel(
                 "flex h-full w-full flex-col bg-transparent px-0 py-0 border-0",
               )}
@@ -515,7 +517,8 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
         )}
 
         {/* Mobile bottom navigation */}
-        <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-[#f0e2d6] bg-[#fffefc] py-1.5 shadow-[0_-6px_30px_rgba(63,49,37,0.16)] lg:hidden">
+        {!isMobileChatOpen && (
+          <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-[#f0e2d6] bg-[#fffefc] pt-1.5 pb-[calc(env(safe-area-inset-bottom)+0.375rem)] shadow-[0_-6px_30px_rgba(63,49,37,0.16)] lg:hidden">
           <div className="mx-auto flex max-w-6xl items-center justify-around px-4 text-[11px] text-[#b29a84]">
             <button
               type="button"
@@ -587,7 +590,8 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
               <span>Profile</span>
             </button>
           </div>
-        </nav>
+          </nav>
+        )}
 
         {/* Desktop product full-detail modal */}
         {detailProduct && !isMobile && (
