@@ -123,11 +123,11 @@ function ProfilePageInner() {
             onClick={() =>
               creatorConfig
                 ? router.push(
-                    `/creator/${encodeURIComponent(
+                    `/account/chats?creator=${encodeURIComponent(
                       creatorConfig.slug,
-                    )}?tab=forYou&view=history`,
+                    )}`,
                   )
-                : router.push("/creator/nina-studio?tab=forYou&view=history")
+                : router.push("/account/chats?creator=nina-studio")
             }
           >
             <div>
@@ -210,4 +210,3 @@ export default function ProfilePage() {
     </Suspense>
   );
 }
-

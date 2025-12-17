@@ -32,6 +32,7 @@ export default function CreatorAgentPage() {
     const tab = searchParams?.get("tab");
     return tab === "deals" ? "deals" : "forYou";
   }, [searchParams]);
+  const prefillQuery = searchParams?.get("prefill");
   const viewParam = searchParams?.get("view");
   const showRecentFromProfile = activeTab === "forYou" && viewParam === "history";
 
@@ -99,6 +100,13 @@ export default function CreatorAgentPage() {
     const slice = filteredProducts.slice(0, count);
     slice.forEach((p) => prefetchProductDetail(p));
   }, [filteredProducts, visibleCount, prefetchProductDetail]);
+
+  // When arriving with a ?prefill= query (from Recent chats page),
+  // populate the chat input so the user can continue that conversation.
+  useEffect(() => {
+    if (!prefillQuery) return;
+    setInput(prefillQuery);
+  }, [prefillQuery, setInput]);
 
   const recentQueryList = useMemo(
     () =>
