@@ -35,13 +35,31 @@ export default function CreatorAgentPage() {
 
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const [activeFilter, setActiveFilter] = useState<"all" | "creator" | "sale">(
+    "all",
+  );
 
   // Reset visible items when products or tab changes.
   useEffect(() => {
     if (activeTab === "forYou") {
       setVisibleCount(INITIAL_VISIBLE);
     }
-  }, [activeTab, products]);
+  }, [activeTab, products, activeFilter]);
+
+  const filteredProducts = useMemo(() => {
+    if (activeFilter === "creator") {
+      return products.filter(
+        (p) =>
+          p.isCreatorPick ||
+          p.fromCreatorDirectly ||
+          (p.creatorMentions ?? 0) > 0,
+      );
+    }
+    if (activeFilter === "sale") {
+      return products.filter((p) => Boolean(p.bestDeal));
+    }
+    return products;
+  }, [products, activeFilter]);
 
   // Infinite scroll: when sentinel进入视口，增加展示数量。
   useEffect(() => {
@@ -49,7 +67,7 @@ export default function CreatorAgentPage() {
     if (typeof IntersectionObserver === "undefined") return;
 
     const el = loadMoreRef.current;
-    const maxVisible = products.length;
+    const maxVisible = filteredProducts.length;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -68,17 +86,17 @@ export default function CreatorAgentPage() {
     return () => {
       observer.disconnect();
     };
-  }, [products.length]);
+  }, [filteredProducts.length]);
 
   // Prefetch product-detail for currently visible products so that
   // desktop detail modal can open with full Style/Size and images.
   useEffect(() => {
-    if (!products.length) return;
-    const maxVisible = products.length;
+    if (!filteredProducts.length) return;
+    const maxVisible = filteredProducts.length;
     const count = Math.min(visibleCount, maxVisible || visibleCount);
-    const slice = products.slice(0, count);
+    const slice = filteredProducts.slice(0, count);
     slice.forEach((p) => prefetchProductDetail(p));
-  }, [products, visibleCount, prefetchProductDetail]);
+  }, [filteredProducts, visibleCount, prefetchProductDetail]);
 
   const recentQueryList = useMemo(
     () =>
@@ -99,15 +117,39 @@ export default function CreatorAgentPage() {
             />
             <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
               <div className="flex flex-wrap gap-2">
-                <span className="inline-flex items-center rounded-full bg-slate-900 px-3 py-1.5 text-[11px] font-medium text-slate-50">
+                <button
+                  type="button"
+                  onClick={() => setActiveFilter("all")}
+                  className={
+                    activeFilter === "all"
+                      ? "inline-flex items-center rounded-full bg-slate-900 px-3 py-1.5 text-[11px] font-medium text-slate-50"
+                      : "inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] text-slate-600"
+                  }
+                >
                   All picks
-                </span>
-                <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] text-slate-600">
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveFilter("creator")}
+                  className={
+                    activeFilter === "creator"
+                      ? "inline-flex items-center rounded-full bg-slate-900 px-3 py-1.5 text-[11px] font-medium text-slate-50"
+                      : "inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] text-slate-600"
+                  }
+                >
                   Creator picks
-                </span>
-                <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] text-slate-600">
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveFilter("sale")}
+                  className={
+                    activeFilter === "sale"
+                      ? "inline-flex items-center rounded-full bg-slate-900 px-3 py-1.5 text-[11px] font-medium text-slate-50"
+                      : "inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] text-slate-600"
+                  }
+                >
                   On sale
-                </span>
+                </button>
               </div>
               <button
                 type="button"
@@ -133,16 +175,18 @@ export default function CreatorAgentPage() {
               <>
                 {/*
                   逐步展示最多 90 个商品；其余结果保留在内存中，不在首屏渲染。
+                  当用户切换 Creator picks / On sale 筛选时，只在前端
+                  基于已有结果做过滤，不额外打后端。
                 */}
                 {(() => {
-                  const maxVisible = products.length;
+                  const maxVisible = filteredProducts.length;
                   const count = Math.min(visibleCount, maxVisible || visibleCount);
                   const hasMore = maxVisible > 0 && count < maxVisible;
 
                   return (
                     <>
                       <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        {products.slice(0, count).map((p) => (
+                        {filteredProducts.slice(0, count).map((p) => (
                           <ProductCard
                             key={p.id}
                             product={p}

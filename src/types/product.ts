@@ -39,6 +39,10 @@ export interface RawProduct {
   // Optional merchant metadata (populated by real backend)
   merchant_id?: string;
   merchant_name?: string;
+  // Whether this item is an explicit creator pick (from creator_picks table
+  // or equivalent backend signal).
+  creator_pick?: boolean;
+  creator_pick_rank?: number;
   creator_mentions?: number;
   from_creator_directly?: boolean;
   detail_url?: string;
@@ -67,6 +71,8 @@ export interface Product {
   merchantId?: string;
   merchantName?: string;
   // UI 友好字段
+  isCreatorPick?: boolean;
+  creatorPickRank?: number;
   discountPercent?: number;
   creatorMentions?: number;
   fromCreatorDirectly?: boolean;

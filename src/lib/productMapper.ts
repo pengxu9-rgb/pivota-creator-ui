@@ -186,6 +186,11 @@ export function mapRawProduct(raw: RawProduct): Product {
     inventoryQuantity: raw.inventory_quantity,
     merchantId: raw.merchant_id,
     merchantName: raw.merchant_name,
+    isCreatorPick: Boolean((raw as any).creator_pick),
+    creatorPickRank:
+      typeof (raw as any).creator_pick_rank === "number"
+        ? (raw as any).creator_pick_rank
+        : undefined,
     creatorMentions: raw.creator_mentions,
     fromCreatorDirectly: raw.from_creator_directly,
     detailUrl: raw.detail_url,
