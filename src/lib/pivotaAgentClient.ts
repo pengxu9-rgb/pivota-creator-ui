@@ -18,6 +18,11 @@ export type CreatorAgentResponse = {
   agentUrlUsed?: string;
 };
 
+// 控制是否在主查询 0 结果时，用「空查询」兜底热门商品。
+// 默认关闭：宁可不推不相关商品，也不强行填满列表。
+const ENABLE_POPULAR_FALLBACK =
+  process.env.NEXT_PUBLIC_CREATOR_AGENT_ALLOW_POPULAR_FALLBACK === "1";
+
 function normalizeQuery(raw: string | undefined | null): string {
   if (!raw) return "";
   const trimmed = raw.trim();
@@ -36,6 +41,49 @@ function normalizeQuery(raw: string | undefined | null): string {
   if (genericIntents.has(lower)) return "";
 
   return trimmed;
+}
+
+function isLikelyChinese(text: string): boolean {
+  return /[\u4e00-\u9fff]/.test(text);
+}
+
+function buildNoResultReply(options: {
+  hasUserQuery: boolean;
+  userQuery: string;
+}): string {
+  const { hasUserQuery, userQuery } = options;
+  const useChinese = isLikelyChinese(userQuery);
+
+  if (useChinese) {
+    if (hasUserQuery) {
+      return [
+        "我暂时没有找到足够匹配你这次需求的商品，所以不会强行推荐不合适的选项。",
+        "你可以试着：",
+        "1）换一个更具体的关键词，比如品类（例如“羽绒服”“冲锋衣”“大衣”）；",
+        "2）告诉我你的预算、尺码，以及喜欢/不喜欢的品牌或风格；",
+        "3）把使用场景说得更具体一些，比如“城市通勤”“办公室空调房”“周末徒步/登山”等。",
+      ].join("\n");
+    }
+    return [
+      "目前还没有适合推荐的商品，我先不推不相关的东西。",
+      "你可以先告诉我你要找的场景、预算或具体品类，我会再帮你一起缩小范围。",
+    ].join("\n");
+  }
+
+  if (hasUserQuery) {
+    return [
+      "I couldn’t find products that match your request well enough, so I’m not going to recommend unrelated items just to fill the list.",
+      "You can try one of these:",
+      "- search with a more specific category (e.g. coat, down jacket, hiking shell),",
+      "- share your budget, size, or brands/styles you like or dislike,",
+      "- or describe the occasion in more detail (e.g. city commute, office AC, weekend hiking).",
+    ].join("\n");
+  }
+
+  return [
+    "I don’t have good items to recommend yet and prefer not to show unrelated products.",
+    "Tell me what category, budget, or occasion you care about, and I’ll try again.",
+  ].join("\n");
 }
 
 export async function callPivotaCreatorAgent(params: {
@@ -195,8 +243,10 @@ export async function callPivotaCreatorAgent(params: {
           ? "Here are some product picks based on your request."
           : "Here are some popular pieces to get you started.";
       } else {
-        reply =
-          "I couldn’t find good matches for that request. Try adjusting your budget, style, or category.";
+        reply = buildNoResultReply({
+          hasUserQuery,
+          userQuery: userQueryRaw || query,
+        });
       }
 
       return { data, rawProducts, reply };
@@ -207,13 +257,18 @@ export async function callPivotaCreatorAgent(params: {
     let { data, rawProducts, reply } = primary;
 
     // 若用户输入了非空 query 且结果为 0，则再用空 query 兜底一次默认货盘
-    if (hasUserQuery && (!rawProducts || rawProducts.length === 0)) {
+    if (
+      ENABLE_POPULAR_FALLBACK &&
+      hasUserQuery &&
+      (!rawProducts || rawProducts.length === 0)
+    ) {
       const fallback = await runOnce("");
       if (fallback.rawProducts && fallback.rawProducts.length > 0) {
         rawProducts = fallback.rawProducts;
         data = { primary: primary.data, fallback: fallback.data };
-        // 主查询 0 结果，但默认货盘有商品：不再强调“找不到”，直接给推荐。
-        reply = "Here are some popular or similar pieces I recommend based on your request.";
+        // 主查询 0 结果，但默认货盘有商品：明确说明是更宽泛的热门推荐。
+        reply =
+          "I couldn’t find strong matches for your original request, but here are some more general popular pieces you can browse.";
       }
     }
 
