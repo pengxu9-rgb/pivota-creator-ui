@@ -329,7 +329,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                     type="button"
                     onClick={() =>
                       router.push(
-                        `/account/orders?creator=${encodeURIComponent(
+                        `/account/profile?creator=${encodeURIComponent(
                           creator.slug,
                         )}`,
                       )
@@ -571,7 +571,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
               onClick={() => {
                 if (accountsUser) {
                   router.push(
-                    `/account/orders?creator=${encodeURIComponent(
+                    `/account/profile?creator=${encodeURIComponent(
                       creator.slug,
                     )}`,
                   );
