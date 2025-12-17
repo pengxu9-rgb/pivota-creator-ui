@@ -115,7 +115,7 @@ export default function CreatorAgentPage() {
               title="Featured for you"
               subtitle={`Based on ${creator.name}'s style and typical scenarios.`}
             />
-            <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
+            <div className="flex flex-wrap items-center gap-2 text-[11px]">
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
@@ -151,12 +151,6 @@ export default function CreatorAgentPage() {
                   On sale
                 </button>
               </div>
-              <button
-                type="button"
-                className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-700 shadow-sm hover:bg-slate-50"
-              >
-                Refine with {creator.name}
-              </button>
             </div>
             {isFeaturedLoading || (isLoading && products.length === 0) ? (
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
