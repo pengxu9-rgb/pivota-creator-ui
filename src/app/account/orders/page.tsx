@@ -111,11 +111,17 @@ export default function OrdersPage() {
           </div>
           <button
             type="button"
-            onClick={() =>
-              creatorConfig
-                ? router.push(`/creator/${encodeURIComponent(creatorConfig.slug)}`)
-                : router.push("/creator/nina-studio")
-            }
+            onClick={() => {
+              if (typeof window !== "undefined" && window.history.length > 1) {
+                router.back();
+                return;
+              }
+              if (creatorConfig) {
+                router.push(`/creator/${encodeURIComponent(creatorConfig.slug)}`);
+              } else {
+                router.push("/creator/nina-studio");
+              }
+            }}
             className="rounded-full border border-[#f0e2d6] bg-white px-3 py-1.5 text-xs text-[#8c715c] shadow-sm hover:bg-[#fff0e3]"
           >
             Back to shopping
@@ -263,7 +269,7 @@ export default function OrdersPage() {
                 return (
                   <div
                     key={order.order_id}
-                    className="flex items-center gap-4 rounded-3xl border border-[#f4e2d4] bg-white px-3 py-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:px-4 sm:py-4"
+                    className="flex flex-col gap-3 rounded-3xl border border-[#f4e2d4] bg-white px-3 py-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:flex-row sm:items-center sm:gap-4 sm:px-4 sm:py-4"
                   >
                     <div className="hidden h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-[#f5e3d4] sm:block">
                       {previewImageUrl ? (
@@ -320,14 +326,14 @@ export default function OrdersPage() {
                       )}
                     </div>
 
-                    <div className="flex flex-col items-end gap-1 text-right text-[11px]">
+                    <div className="mt-2 flex flex-col items-start gap-1 text-left text-[11px] sm:mt-0 sm:items-end sm:text-right">
                       <p className="text-sm font-semibold text-[#3f3125]">
                         {order.currency} {(order.total_amount_minor / 100).toFixed(2)}
                       </p>
                       <p className="max-w-[200px] text-[10px] text-[#a38b78]">
                         {statusLabel}
                       </p>
-                      <div className="mt-1 flex gap-2">
+                      <div className="mt-1 flex flex-wrap gap-2 justify-start sm:justify-end">
                         {canContinuePayment && (
                           <button
                             type="button"

@@ -3,9 +3,11 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { ShippingAddress } from "@/lib/accountsClient";
+import { getLatestPaidOrderShippingAddress } from "@/lib/accountsClient";
 import {
   loadSavedShippingAddress,
   saveShippingAddress,
+  hasNonEmptyAddress,
 } from "@/lib/addressStorage";
 import { getCreatorBySlug } from "@/config/creatorAgents";
 
@@ -32,19 +34,36 @@ function AddressPageInner() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    const addr = loadSavedShippingAddress();
-    if (addr) {
-      setForm({
-        name: addr.name ?? "",
-        address_line1: addr.address_line1 ?? "",
-        address_line2: addr.address_line2 ?? "",
-        city: addr.city ?? "",
-        country: addr.country ?? "",
-        postal_code: addr.postal_code ?? "",
-        phone: addr.phone ?? "",
-      });
-    }
-    setLoading(false);
+    let cancelled = false;
+
+    const load = async () => {
+      let addr = loadSavedShippingAddress();
+      if (!hasNonEmptyAddress(addr)) {
+        try {
+          addr = await getLatestPaidOrderShippingAddress();
+        } catch (err) {
+          console.error("Failed to load address from latest order", err);
+        }
+      }
+      if (cancelled) return;
+      if (addr) {
+        setForm({
+          name: addr.name ?? "",
+          address_line1: addr.address_line1 ?? "",
+          address_line2: addr.address_line2 ?? "",
+          city: addr.city ?? "",
+          country: addr.country ?? "",
+          postal_code: addr.postal_code ?? "",
+          phone: addr.phone ?? "",
+        });
+      }
+      setLoading(false);
+    };
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleChange =
