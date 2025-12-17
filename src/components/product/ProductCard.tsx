@@ -6,6 +6,7 @@ import { Search, ShoppingCart } from "lucide-react";
 
 type Props = {
   product: Product;
+  variant?: "default" | "compact";
   creatorName?: string;
   creatorId?: string;
   creatorSlug?: string;
@@ -15,6 +16,7 @@ type Props = {
 
 export function ProductCard({
   product,
+  variant = "default",
   creatorName,
   creatorId,
   creatorSlug,
@@ -22,6 +24,7 @@ export function ProductCard({
   onViewDetails,
 }: Props) {
   const { addItem } = useCart();
+  const isCompact = variant === "compact";
 
   let creatorMeta: string | null = null;
   if (creatorName && product.fromCreatorDirectly) {
@@ -47,7 +50,11 @@ export function ProductCard({
 
   return (
     <div
-      className="group flex cursor-pointer flex-col overflow-hidden rounded-3xl bg-white shadow-[0_18px_40px_rgba(63,49,37,0.12)] transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_70px_rgba(63,49,37,0.16)]"
+      className={
+        isCompact
+          ? "group flex cursor-pointer flex-col overflow-hidden rounded-2xl bg-white shadow-[0_14px_34px_rgba(63,49,37,0.12)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_54px_rgba(63,49,37,0.16)]"
+          : "group flex cursor-pointer flex-col overflow-hidden rounded-3xl bg-white shadow-[0_18px_40px_rgba(63,49,37,0.12)] transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_70px_rgba(63,49,37,0.16)]"
+      }
       role="button"
       tabIndex={0}
       onClick={handleCardClick}
@@ -67,7 +74,13 @@ export function ProductCard({
           />
         )}
         {product.bestDeal && (
-          <div className="absolute left-2 top-2 rounded-full bg-[#f6b59b] px-2 py-0.5 text-[10px] font-semibold text-white shadow">
+          <div
+            className={
+              isCompact
+                ? "absolute left-2 top-2 rounded-full bg-[#f6b59b] px-2 py-0.5 text-[9px] font-semibold text-white shadow"
+                : "absolute left-2 top-2 rounded-full bg-[#f6b59b] px-2 py-0.5 text-[10px] font-semibold text-white shadow"
+            }
+          >
             {product.bestDeal.type === "MULTI_BUY_DISCOUNT" ? "Bundle & save" : "Flash deal"}
           </div>
         )}
@@ -78,23 +91,39 @@ export function ProductCard({
               e.stopPropagation();
               onSeeSimilar(product);
             }}
-            className="absolute bottom-2.5 right-2.5 inline-flex items-center gap-1.5 rounded-full bg-[#3f3125]/80 px-3 py-1.5 text-[11px] font-medium text-white shadow-[0_0_0_1px_rgba(63,49,37,0.25),0_12px_30px_rgba(63,49,37,0.45)] backdrop-blur-md hover:bg-[#3f3125] md:translate-y-1 md:opacity-0 md:transition md:duration-200 md:group-hover:translate-y-0 md:group-hover:opacity-100"
+            className={
+              isCompact
+                ? "absolute bottom-2 right-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#3f3125]/80 text-white shadow-[0_0_0_1px_rgba(63,49,37,0.25),0_12px_30px_rgba(63,49,37,0.45)] backdrop-blur-md hover:bg-[#3f3125] md:translate-y-1 md:opacity-0 md:transition md:duration-200 md:group-hover:translate-y-0 md:group-hover:opacity-100"
+                : "absolute bottom-2.5 right-2.5 inline-flex items-center gap-1.5 rounded-full bg-[#3f3125]/80 px-3 py-1.5 text-[11px] font-medium text-white shadow-[0_0_0_1px_rgba(63,49,37,0.25),0_12px_30px_rgba(63,49,37,0.45)] backdrop-blur-md hover:bg-[#3f3125] md:translate-y-1 md:opacity-0 md:transition md:duration-200 md:group-hover:translate-y-0 md:group-hover:opacity-100"
+            }
           >
             <Search className="h-3.5 w-3.5" />
-            <span>Find More</span>
+            {!isCompact && <span>Find More</span>}
           </button>
         )}
       </div>
-      <div className="flex flex-1 flex-col px-3 pb-3 pt-3">
-        <div className="line-clamp-2 text-[13px] font-semibold text-[#3f3125]">
+      <div
+        className={
+          isCompact
+            ? "flex flex-1 flex-col px-3 pb-2.5 pt-2.5"
+            : "flex flex-1 flex-col px-3 pb-3 pt-3"
+        }
+      >
+        <div
+          className={
+            isCompact
+              ? "line-clamp-2 text-[12px] font-semibold text-[#3f3125]"
+              : "line-clamp-2 text-[13px] font-semibold text-[#3f3125]"
+          }
+        >
           {product.title}
         </div>
-        {product.description && (
+        {!isCompact && product.description && (
           <p className="mt-1 line-clamp-2 text-[11px] text-[#7b6550]">
             {product.description}
           </p>
         )}
-        {creatorMeta && (
+        {!isCompact && creatorMeta && (
           <p className="mt-1 text-[10px] text-[#a38b78]">
             {creatorMeta}
           </p>
@@ -107,18 +136,36 @@ export function ProductCard({
                   <span className="text-[11px] text-[#b29a84] line-through">
                     {product.currency} {product.price.toFixed(2)}
                   </span>
-                  <span className="text-sm font-semibold text-[#3f3125]">
+                  <span
+                    className={
+                      isCompact
+                        ? "text-[13px] font-semibold text-[#3f3125]"
+                        : "text-sm font-semibold text-[#3f3125]"
+                    }
+                  >
                     {product.currency} {product.bestDeal?.flashPrice?.toFixed(2)}
                   </span>
                 </>
               ) : (
-                <span className="text-sm font-semibold text-[#3f3125]">
+                <span
+                  className={
+                    isCompact
+                      ? "text-[13px] font-semibold text-[#3f3125]"
+                      : "text-sm font-semibold text-[#3f3125]"
+                  }
+                >
                   {product.currency} {product.price.toFixed(2)}
                 </span>
               )}
             </div>
             {product.bestDeal?.label && (
-              <span className="text-[11px] font-medium text-[#f28b7a]">
+              <span
+                className={
+                  isCompact
+                    ? "text-[10px] font-medium text-[#f28b7a]"
+                    : "text-[11px] font-medium text-[#f28b7a]"
+                }
+              >
                 {product.bestDeal.label}
               </span>
             )}
@@ -144,9 +191,13 @@ export function ProductCard({
                   allDeals: product.allDeals ?? null,
                 });
               }}
-              className="ml-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#f6b59b] text-[11px] text-[#3f3125] shadow-sm hover:bg-[#f29b7f]"
+              className={
+                isCompact
+                  ? "ml-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#f6b59b] text-[11px] text-[#3f3125] shadow-sm hover:bg-[#f29b7f]"
+                  : "ml-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#f6b59b] text-[11px] text-[#3f3125] shadow-sm hover:bg-[#f29b7f]"
+              }
             >
-              <ShoppingCart className="h-3.5 w-3.5" />
+              <ShoppingCart className={isCompact ? "h-3 w-3" : "h-3.5 w-3.5"} />
             </button>
           </div>
         </div>

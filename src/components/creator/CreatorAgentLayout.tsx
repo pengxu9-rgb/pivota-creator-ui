@@ -191,10 +191,11 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                 {chatRecommendations.slice(0, 10).map((p) => (
                   <div
                     key={`chat-rec-${p.id}`}
-                    className="w-[68%] flex-shrink-0"
+                    className="w-[220px] flex-shrink-0"
                   >
                     <ProductCard
                       product={p}
+                      variant="compact"
                       creatorName={creator.name}
                       creatorId={creator.id}
                       creatorSlug={creator.slug}
