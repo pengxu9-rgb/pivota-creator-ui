@@ -63,6 +63,11 @@ export interface Product {
   id: string;
   title: string;
   description: string;
+  /**
+   * 原始 HTML 描述（来自 Shopify 等），
+   * 仅在详情页使用，用于保留表格等排版。
+   */
+  descriptionHtml?: string;
   price: number;
   currency: string;
   imageUrl: string;

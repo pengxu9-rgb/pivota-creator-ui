@@ -180,6 +180,10 @@ export function mapRawProduct(raw: RawProduct): Product {
     id: raw.id,
     title: raw.title,
     description: stripHtml(raw.description),
+    descriptionHtml:
+      typeof raw.description === "string" && raw.description.trim().length > 0
+        ? raw.description
+        : undefined,
     price: raw.price,
     currency: raw.currency,
     imageUrl: raw.image_url,

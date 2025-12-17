@@ -301,9 +301,21 @@ export default function CreatorProductDetailPage() {
                   </div>
 
                   {product.description && (
-                    <p className="text-[12px] leading-relaxed text-[#8c715c]">
-                      {product.description}
-                    </p>
+                    <div className="mt-1">
+                      {product.descriptionHtml ? (
+                        <div
+                          className="product-description"
+                          // 描述来自自有后端 + Shopify，当前信任来源，只在详情页使用富文本。
+                          dangerouslySetInnerHTML={{
+                            __html: product.descriptionHtml,
+                          }}
+                        />
+                      ) : (
+                        <p className="text-[12px] leading-relaxed text-[#8c715c]">
+                          {product.description}
+                        </p>
+                      )}
+                    </div>
                   )}
 
                   <div className="space-y-2 text-[13px]">
