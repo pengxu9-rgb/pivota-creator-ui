@@ -18,6 +18,11 @@ import {
   getLatestPaidOrderShippingAddress,
   type AccountsUser,
 } from "@/lib/accountsClient";
+import {
+  loadSavedShippingAddress,
+  saveShippingAddress,
+  hasNonEmptyAddress,
+} from "@/lib/addressStorage";
 import "@adyen/adyen-web/dist/adyen.css";
 
 import type { CartItem } from "@/components/cart/CartProvider";
@@ -217,12 +222,17 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
           setAuthStep("email");
         }
 
-        // Prefill shipping address from the latest paid order on this account,
-        // but only when we are not continuing payment for an existing order
+        // Prefill shipping address:
+        // 1) Prefer locally saved default address (from Profile / previous checkouts)
+        // 2) Fallback to the latest paid order on this account.
+        // Only when we are not continuing payment for an existing order
         // and the user hasn't started typing their own address.
         if (me && !existingOrderId && !cancelled) {
           try {
-            const addr = await getLatestPaidOrderShippingAddress();
+            let addr = loadSavedShippingAddress();
+            if (!hasNonEmptyAddress(addr)) {
+              addr = await getLatestPaidOrderShippingAddress();
+            }
             if (
               addr &&
               !hasPrefilledAddress &&
@@ -369,6 +379,17 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
 
     try {
       setError(null);
+
+      // Update the saved default shipping address for future checkouts.
+      saveShippingAddress({
+        name,
+        address_line1: addressLine1,
+        address_line2: addressLine2 || "",
+        city,
+        country,
+        postal_code: postalCode,
+        phone: phone || "",
+      });
 
       // Step 1: ensure we have an order id. For new orders, the first click
       // only creates the order and prepares the payment step so that Stripe
