@@ -3,13 +3,13 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
   min-height: 100vh;
-  background: #0b1021;
-  color: #e2e8f0;
+  background: #fffefc;
+  color: #3f3125;
   font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   letter-spacing: 0.01em;
 }
