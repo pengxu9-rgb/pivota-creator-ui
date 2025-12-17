@@ -706,9 +706,21 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                 </div>
 
                 {detailProduct.description && (
-                  <p className="text-[12px] leading-relaxed text-[#8c715c]">
-                    {detailProduct.description}
-                  </p>
+                  <div className="mt-1">
+                    {detailProduct.descriptionHtml ? (
+                      <div
+                        className="product-description"
+                        // 描述来自自有后端 + Shopify，仅在详情弹窗中使用富文本。
+                        dangerouslySetInnerHTML={{
+                          __html: detailProduct.descriptionHtml,
+                        }}
+                      />
+                    ) : (
+                      <p className="text-[12px] leading-relaxed text-[#8c715c]">
+                        {detailProduct.description}
+                      </p>
+                    )}
+                  </div>
                 )}
 
                 <div className="space-y-1.5 text-[13px]">
