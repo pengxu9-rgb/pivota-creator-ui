@@ -19,6 +19,9 @@ export default function CreatorAgentPage() {
     isLoading,
     isFeaturedLoading,
     creatorDeals,
+    userQueries,
+    recentQueries,
+    setInput,
     handleSeeSimilar,
     handleViewDetails,
     prefetchProductDetail,
@@ -29,6 +32,8 @@ export default function CreatorAgentPage() {
     const tab = searchParams?.get("tab");
     return tab === "deals" ? "deals" : "forYou";
   }, [searchParams]);
+  const viewParam = searchParams?.get("view");
+  const showRecentFromProfile = activeTab === "forYou" && viewParam === "history";
 
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
@@ -94,6 +99,14 @@ export default function CreatorAgentPage() {
     const slice = filteredProducts.slice(0, count);
     slice.forEach((p) => prefetchProductDetail(p));
   }, [filteredProducts, visibleCount, prefetchProductDetail]);
+
+  const recentQueryList = useMemo(
+    () =>
+      (recentQueries.length > 0
+        ? [...recentQueries].slice(-5).reverse()
+        : userQueries.map((m) => m.content).slice(-5).reverse()) ?? [],
+    [recentQueries, userQueries],
+  );
 
   return (
     <>
@@ -194,6 +207,32 @@ export default function CreatorAgentPage() {
               </>
             )}
           </div>
+
+          {showRecentFromProfile && (
+            <div className="mt-6 space-y-3">
+              <SectionHeader
+                title="Recent chats"
+                subtitle="Tap a previous query to continue where you left off."
+              />
+              <div className="flex flex-wrap gap-2">
+                {recentQueryList.map((query, idx) => (
+                  <button
+                    key={`${query}-${idx}`}
+                    type="button"
+                    className="max-w-xs rounded-full bg-slate-100 px-3 py-1.5 text-[11px] text-slate-700 hover:bg-slate-200"
+                    onClick={() => setInput(query)}
+                  >
+                    {query}
+                  </button>
+                ))}
+                {recentQueryList.length === 0 && (
+                  <p className="text-[11px] text-slate-400">
+                    Start a chat with the agent to see recent queries here.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
         </>
       )}
 
