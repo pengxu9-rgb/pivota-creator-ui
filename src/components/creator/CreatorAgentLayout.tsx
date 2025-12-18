@@ -4,7 +4,15 @@
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Home, Percent, Send, ShoppingCart, User, X } from "lucide-react";
+import {
+  Home,
+  MessageCircle,
+  Percent,
+  Send,
+  ShoppingCart,
+  User,
+  X,
+} from "lucide-react";
 import { useCreatorAgent } from "@/components/creator/CreatorAgentContext";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { ProductCard } from "@/components/product/ProductCard";
@@ -154,6 +162,11 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
     sessionDecision?.action === "OFFER_CHOICE" &&
     sessionDecision.ui.showResumeCard;
 
+  const handleNewChatClick = () => {
+    startNewSession();
+    setResumeDismissed(true);
+  };
+
   const handleResumeContinue = () => {
     setResumeDismissed(true);
   };
@@ -288,6 +301,14 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
 
         <div className="mt-3 space-y-2">
           <div className="flex items-center gap-2 rounded-full bg-white px-3 py-2 ring-1 ring-inset ring-[#f0e2d6] focus-within:ring-2 focus-within:ring-[#f6b59b]/80">
+            <button
+              type="button"
+              onClick={handleNewChatClick}
+              className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-[#f0e2d6] bg-white text-[11px] text-[#8c715c] shadow-sm hover:bg-[#fff0e3]"
+              aria-label="Start new chat"
+            >
+              <MessageCircle className="h-3.5 w-3.5" />
+            </button>
             <input
               className="flex-1 bg-transparent px-1 text-[13px] text-[#4a3727] placeholder:text-[#b29a84] focus:outline-none"
               placeholder="e.g., commuter jacket under $120, clean and minimal…"
@@ -298,7 +319,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
             <button
               onClick={handleSend}
               disabled={isLoading}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#f6b59b] via-[#f4a58c] to-[#f8c3a2] text-[11px] text-white shadow-lg transition hover:brightness-110 disabled:opacity-60"
+              className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#f6b59b] via-[#f4a58c] to-[#f8c3a2] text-[11px] text-white shadow-lg transition hover:brightness-110 disabled:opacity-60"
             >
               <Send className="h-3.5 w-3.5" />
             </button>
