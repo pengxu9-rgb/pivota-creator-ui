@@ -269,6 +269,11 @@ export function CreatorAgentProvider({
     [creator.slug],
   );
 
+  const sessionMessagesStorageKey = useMemo(
+    () => `pivota_creator_session_messages_${creator.slug}`,
+    [creator.slug],
+  );
+
   const deviceId = useMemo(() => getOrCreateDeviceId(), []);
 
   const safeStringify = (value: any) => {
@@ -552,11 +557,37 @@ export function CreatorAgentProvider({
 
     setSessions(nextSessions);
     setCurrentSession(active);
+
+     // 为当前会话加载历史消息，如果没有则回退到欢迎消息。
+    try {
+      const raw = window.localStorage.getItem(sessionMessagesStorageKey);
+      if (raw && active?.id) {
+        const parsed = JSON.parse(raw) as Record<string, ChatMessage[]>;
+        const existing = parsed?.[active.id];
+        if (Array.isArray(existing) && existing.length > 0) {
+          setMessages(existing);
+        } else {
+          setMessages(buildInitialMessages(creator));
+        }
+      } else {
+        setMessages(buildInitialMessages(creator));
+      }
+    } catch {
+      setMessages(buildInitialMessages(creator));
+    }
+
     saveSessionIndex(sessionStorageKey, {
       sessions: nextSessions,
       currentSessionId: active?.id ?? null,
     });
-  }, [creator.id, deviceId, sessionStorageKey, entrySource, requestedSessionId]);
+  }, [
+    creator,
+    deviceId,
+    sessionStorageKey,
+    entrySource,
+    requestedSessionId,
+    sessionMessagesStorageKey,
+  ]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -600,6 +631,25 @@ export function CreatorAgentProvider({
       return next;
     });
   }, [messages, currentSession, sessionStorageKey]);
+
+  // 按会话持久化消息，便于从 Profile/历史记录恢复时还原上下文。
+  useEffect(() => {
+    if (!currentSession) return;
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem(sessionMessagesStorageKey);
+      const parsed = raw ? JSON.parse(raw) : {};
+      const store: Record<string, ChatMessage[]> =
+        parsed && typeof parsed === "object" ? parsed : {};
+      store[currentSession.id] = messages;
+      window.localStorage.setItem(
+        sessionMessagesStorageKey,
+        JSON.stringify(store),
+      );
+    } catch (err) {
+      console.error("Failed to persist session messages", err);
+    }
+  }, [messages, currentSession, sessionMessagesStorageKey]);
 
   useEffect(() => {
     let cancelled = false;
