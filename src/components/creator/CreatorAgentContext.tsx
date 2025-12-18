@@ -846,6 +846,12 @@ export function CreatorAgentProvider({
     const nextSessions = [...archivedSessions, newSession];
     setSessions(nextSessions);
     setCurrentSession(newSession);
+    setSessionDecision({
+      action: "CREATE_NEW",
+      sessionId: newSession.id,
+      ui: {},
+    });
+    setChatRecommendations([]);
     setMessages(buildInitialMessages(creator));
     saveSessionIndex(sessionStorageKey, {
       sessions: nextSessions,
