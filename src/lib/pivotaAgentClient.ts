@@ -47,6 +47,71 @@ function isLikelyChinese(text: string): boolean {
   return /[\u4e00-\u9fff]/.test(text);
 }
 
+function isColdOuterwearIntent(text: string): boolean {
+  if (!text) return false;
+  const lower = text.toLowerCase();
+
+  const zhKeywords = [
+    "外套",
+    "大衣",
+    "羽绒服",
+    "冲锋衣",
+    "风衣",
+    "棉服",
+    "滑雪服",
+    "御寒",
+    "保暖",
+    "很冷",
+    "天气很冷",
+    "山上",
+    "爬山",
+    "登山",
+    "徒步",
+    "露营",
+  ];
+
+  const enKeywords = [
+    "cold",
+    "mountain",
+    "hiking",
+    "snow",
+    "snowy",
+    "jacket",
+    "coat",
+    "parka",
+    "puffer",
+    "down jacket",
+    "outerwear",
+    "shell",
+    "windbreaker",
+  ];
+
+  if (zhKeywords.some((kw) => text.includes(kw))) return true;
+  if (enKeywords.some((kw) => lower.includes(kw))) return true;
+  return false;
+}
+
+function isToyLikeProduct(product: RawProduct): boolean {
+  const text = `${product.title || ""} ${product.description || ""}`.toLowerCase();
+  const toyKeywords = [
+    "labubu",
+    "doll",
+    "toy",
+    "figure",
+    "vinyl",
+    "plush",
+    "plushie",
+    "stuffed",
+    "公仔",
+    "玩具",
+    "娃娃",
+    "手办",
+    "盲盒",
+    "毛绒",
+  ];
+  return toyKeywords.some((kw) => text.includes(kw));
+}
+
 function buildNoResultReply(options: {
   hasUserQuery: boolean;
   userQuery: string;
@@ -255,6 +320,22 @@ export async function callPivotaCreatorAgent(params: {
     // 第一次：按用户 query 或默认 query 调用
     const primary = await runOnce(query);
     let { data, rawProducts, reply } = primary;
+
+    // 保护逻辑：当用户明确在问「山上/很冷/外套/大衣」这类冷天气穿着时，
+    // 如果返回的主要是玩具 / 公仔 / Labubu 等明显不相关商品，则视为「无合适结果」。
+    if (hasUserQuery && isColdOuterwearIntent(userQueryRaw || query)) {
+      const original = rawProducts ?? [];
+      const filtered = original.filter((p) => !isToyLikeProduct(p));
+      if (filtered.length === 0 && original.length > 0) {
+        rawProducts = [];
+        reply = buildNoResultReply({
+          hasUserQuery,
+          userQuery: userQueryRaw || query,
+        });
+      } else {
+        rawProducts = filtered;
+      }
+    }
 
     // 若用户输入了非空 query 且结果为 0，则再用空 query 兜底一次默认货盘
     if (
