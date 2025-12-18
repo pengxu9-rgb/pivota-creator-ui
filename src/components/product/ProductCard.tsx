@@ -50,16 +50,14 @@ export function ProductCard({
     }
   };
 
-  const handleCardPointerUp: React.PointerEventHandler<HTMLDivElement> = (e) => {
-    if (e.pointerType === "touch") {
-      lastTouchTsRef.current = Date.now();
-      handleCardClick();
-    }
+  const handleCardTouchEnd: React.TouchEventHandler<HTMLDivElement> = () => {
+    lastTouchTsRef.current = Date.now();
+    handleCardClick();
   };
 
-  const handleCardClickSafe = () => {
-    // iOS Safari can fire both pointer/touch and click events for a single tap.
-    if (Date.now() - lastTouchTsRef.current < 750) return;
+  const handleCardClickSafe: React.MouseEventHandler<HTMLDivElement> = () => {
+    // iOS Safari may fire a synthetic click right after touchend.
+    if (Date.now() - lastTouchTsRef.current < 900) return;
     handleCardClick();
   };
 
@@ -73,7 +71,7 @@ export function ProductCard({
       role="button"
       tabIndex={0}
       onClick={handleCardClickSafe}
-      onPointerUp={handleCardPointerUp}
+      onTouchEnd={handleCardTouchEnd}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
@@ -107,7 +105,7 @@ export function ProductCard({
               e.stopPropagation();
               onSeeSimilar(product);
             }}
-            onPointerUp={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
             className={
               isCompact
                 ? "absolute bottom-2 right-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#3f3125]/80 text-white shadow-[0_0_0_1px_rgba(63,49,37,0.25),0_12px_30px_rgba(63,49,37,0.45)] backdrop-blur-md hover:bg-[#3f3125] md:translate-y-1 md:opacity-0 md:transition md:duration-200 md:group-hover:translate-y-0 md:group-hover:opacity-100"
@@ -208,7 +206,7 @@ export function ProductCard({
                   allDeals: product.allDeals ?? null,
                 });
               }}
-              onPointerUp={(e) => e.stopPropagation()}
+              onTouchEnd={(e) => e.stopPropagation()}
               className={
                 isCompact
                   ? "ml-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#f6b59b] text-[11px] text-[#3f3125] shadow-sm hover:bg-[#f29b7f]"

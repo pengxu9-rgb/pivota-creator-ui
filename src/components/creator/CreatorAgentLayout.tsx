@@ -390,15 +390,8 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                 >
                   Deals
                 </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    router.push(
-                      `/creator/${encodeURIComponent(
-                        creator.slug,
-                      )}/categories`,
-                    )
-                  }
+                <a
+                  href={`/creator/${encodeURIComponent(creator.slug)}/categories`}
                   className={
                     activeTab === "categories"
                       ? "hidden rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-50 sm:inline-flex sm:px-4"
@@ -406,7 +399,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                   }
                 >
                   Categories
-                </button>
+                </a>
               </nav>
 
               {!authChecking &&
@@ -601,11 +594,8 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
         {/* Mobile bottom navigation (always visible) */}
         <nav className="fixed inset-x-0 bottom-0 z-[70] border-t border-[#f0e2d6] bg-[#fffefc] pt-1.5 pb-[calc(env(safe-area-inset-bottom)+0.375rem)] shadow-[0_-6px_30px_rgba(63,49,37,0.16)] lg:hidden">
           <div className="mx-auto flex max-w-6xl items-center justify-around px-4 text-[11px] text-[#b29a84]">
-            <button
-              type="button"
-              onClick={() =>
-                router.push(`/creator/${encodeURIComponent(creator.slug)}`)
-              }
+            <a
+              href={`/creator/${encodeURIComponent(creator.slug)}`}
               className={
                 activeTab === "forYou"
                   ? "flex flex-col items-center gap-0.5 text-[#f28b7a]"
@@ -614,14 +604,9 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
             >
               <Home className="h-4 w-4" />
               <span>For You</span>
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                router.push(
-                  `/creator/${encodeURIComponent(creator.slug)}/categories`,
-                )
-              }
+            </a>
+            <a
+              href={`/creator/${encodeURIComponent(creator.slug)}/categories`}
               className={
                 activeTab === "categories"
                   ? "flex flex-col items-center gap-0.5 text-[#f28b7a]"
@@ -630,7 +615,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
             >
               <Percent className="h-4 w-4" />
               <span>Categories</span>
-            </button>
+            </a>
             <button
               type="button"
               onClick={openCart}
@@ -646,20 +631,15 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
               </div>
               <span>Cart</span>
             </button>
-            <button
-              type="button"
+            <a
+              href={`/account/profile?creator=${encodeURIComponent(
+                creator.slug,
+              )}`}
               className="flex flex-col items-center gap-0.5 text-[#b29a84]"
             >
-              <a
-                href={`/account/profile?creator=${encodeURIComponent(
-                  creator.slug,
-                )}`}
-                className="flex flex-col items-center gap-0.5 text-[#b29a84]"
-              >
               <User className="h-4 w-4" />
               <span>Profile</span>
             </a>
-            </button>
           </div>
         </nav>
 

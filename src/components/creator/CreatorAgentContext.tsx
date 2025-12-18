@@ -479,11 +479,16 @@ export function CreatorAgentProvider({
         params.set("merchant_id", effectiveMerchantId);
       }
       const query = params.toString();
-      router.push(
-        `/creator/${creator.slug}/product/${encodeURIComponent(base.id)}${
-          query ? `?${query}` : ""
-        }`,
-      );
+      const targetUrl = `/creator/${creator.slug}/product/${encodeURIComponent(
+        base.id,
+      )}${query ? `?${query}` : ""}`;
+      // In some mobile WebViews / Safari edge cases, `router.push` can be flaky
+      // when triggered from a scrollable card grid; a hard navigation is more reliable.
+      if (typeof window !== "undefined") {
+        window.location.assign(targetUrl);
+      } else {
+        router.push(targetUrl);
+      }
     } else {
       openDetail(base);
     }
