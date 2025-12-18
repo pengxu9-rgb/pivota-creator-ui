@@ -168,7 +168,8 @@ export function CreatorAgentProvider({
   const [detailProduct, setDetailProduct] = useState<Product | null>(null);
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window === "undefined") return false;
-    return window.innerWidth < 768;
+    // Align with Tailwind `lg` breakpoint (desktop layout starts at 1024px).
+    return window.innerWidth < 1024;
   });
   const [sessions, setSessions] = useState<SessionMeta[]>([]);
   const [currentSession, setCurrentSession] = useState<SessionMeta | null>(
@@ -468,7 +469,7 @@ export function CreatorAgentProvider({
       isMobile ||
       (typeof window !== "undefined" &&
         typeof window.matchMedia === "function" &&
-        window.matchMedia("(max-width: 767px)").matches);
+        window.matchMedia("(max-width: 1023px)").matches);
 
     if (isMobileViewport) {
       const effectiveMerchantId =
@@ -611,7 +612,7 @@ export function CreatorAgentProvider({
   useEffect(() => {
     if (typeof window === "undefined") return;
     const check = () => {
-      setIsMobile(window.innerWidth < 768);
+      setIsMobile(window.innerWidth < 1024);
     };
     check();
     window.addEventListener("resize", check);
