@@ -166,7 +166,10 @@ export function CreatorAgentProvider({
   const [isSimilarLoading, setIsSimilarLoading] = useState(false);
   const [similarError, setSimilarError] = useState<string | null>(null);
   const [detailProduct, setDetailProduct] = useState<Product | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.innerWidth < 768;
+  });
   const [sessions, setSessions] = useState<SessionMeta[]>([]);
   const [currentSession, setCurrentSession] = useState<SessionMeta | null>(
     null,
@@ -461,7 +464,13 @@ export function CreatorAgentProvider({
   const handleViewDetails = (base: Product) => {
     // On mobile, navigate to full product detail page.
     // On desktop, open the inline detail modal and let the layout render it.
-    if (isMobile) {
+    const isMobileViewport =
+      isMobile ||
+      (typeof window !== "undefined" &&
+        typeof window.matchMedia === "function" &&
+        window.matchMedia("(max-width: 767px)").matches);
+
+    if (isMobileViewport) {
       const effectiveMerchantId =
         base.merchantId || (base as any)?.merchant_id || null;
       const params = new URLSearchParams();
