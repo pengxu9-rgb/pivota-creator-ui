@@ -462,9 +462,11 @@ export function CreatorAgentProvider({
     // On mobile, navigate to full product detail page.
     // On desktop, open the inline detail modal and let the layout render it.
     if (isMobile) {
+      const effectiveMerchantId =
+        base.merchantId || (base as any)?.merchant_id || null;
       const params = new URLSearchParams();
-      if (base.merchantId) {
-        params.set("merchant_id", base.merchantId);
+      if (effectiveMerchantId) {
+        params.set("merchant_id", effectiveMerchantId);
       }
       const query = params.toString();
       router.push(
