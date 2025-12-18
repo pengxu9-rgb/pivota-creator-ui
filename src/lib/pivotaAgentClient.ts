@@ -252,6 +252,65 @@ export async function callPivotaCreatorAgent(params: {
     "";
 
   try {
+    function deriveTaskBaseFromUrl(invokeUrl: string): string {
+      // Expect URLs like: http://host/agent/shop/v1/invoke
+      return invokeUrl.replace(/\/invoke\/?$/, "");
+    }
+
+    async function resolvePendingIfNeeded(
+      data: any,
+      invokeUrl: string,
+    ): Promise<any> {
+      if (!data || data.status !== "pending" || !data.task_id) {
+        return data;
+      }
+
+      const base = deriveTaskBaseFromUrl(invokeUrl);
+      const statusUrl = `${base}/creator/tasks/${data.task_id}`;
+
+      const maxAttempts = 10;
+      const delayMs = 500;
+
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+
+        const res = await fetch(statusUrl, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            ...(BEARER_API_KEY ? { Authorization: `Bearer ${BEARER_API_KEY}` } : {}),
+            ...(X_AGENT_API_KEY ? { "X-Agent-API-Key": X_AGENT_API_KEY } : {}),
+          },
+        });
+
+        if (!res.ok) {
+          let bodyText: string | undefined;
+          try {
+            bodyText = await res.text();
+          } catch {
+            bodyText = undefined;
+          }
+          throw new Error(
+            `Creator task status failed with status ${res.status}${
+              bodyText ? ` body: ${bodyText}` : ""
+            }`,
+          );
+        }
+
+        const body = await res.json();
+        const status = body.status as string | undefined;
+        if (status === "succeeded" && body.result) {
+          return body.result;
+        }
+        if (status && ["failed", "cancelled", "timeout", "expired"].includes(status)) {
+          const msg = body.error || `Creator task ended with status=${status}`;
+          throw new Error(msg);
+        }
+      }
+
+      throw new Error("Creator task did not complete in time");
+    }
+
     async function runOnce(searchQuery: string) {
       const payload = {
         ...basePayload,
@@ -288,7 +347,8 @@ export async function callPivotaCreatorAgent(params: {
         );
       }
 
-      const data = await res.json();
+      const initialData = await res.json();
+      const data = await resolvePendingIfNeeded(initialData, url);
 
       const rawProducts: RawProduct[] =
         data.products ??
