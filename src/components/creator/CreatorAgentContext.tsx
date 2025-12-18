@@ -123,6 +123,27 @@ export function CreatorAgentProvider({
     () => searchParams?.get("debug") === "1",
     [searchParams],
   );
+  const entrySource = useMemo<SessionEntryContext["entrySource"]>(() => {
+    const raw = searchParams?.get("entry")?.toLowerCase();
+    switch (raw) {
+      case "profile":
+        return "PROFILE";
+      case "history":
+        return "HISTORY";
+      case "deeplink":
+        return "DEEPLINK";
+      case "checkout":
+        return "CHECKOUT";
+      case "support":
+        return "SUPPORT";
+      default:
+        return "HOME";
+    }
+  }, [searchParams]);
+  const requestedSessionId = useMemo(
+    () => searchParams?.get("sessionId") ?? undefined,
+    [searchParams],
+  );
   const router = useRouter();
   const { items: cartItems, open: openCart, addItem, clear, close } = useCart();
 
@@ -500,11 +521,12 @@ export function CreatorAgentProvider({
 
     const now = new Date();
     const ctx: SessionEntryContext = {
-      entrySource: "HOME",
+      entrySource,
       userId: null,
       deviceId,
       creatorId: creator.id,
       currentSessionId: currentSessionId ?? undefined,
+      requestedSessionId,
     };
 
     const decision = decideEntryBehavior(ctx, filtered, now, DEFAULT_CONFIG);
@@ -534,7 +556,7 @@ export function CreatorAgentProvider({
       sessions: nextSessions,
       currentSessionId: active?.id ?? null,
     });
-  }, [creator.id, deviceId, sessionStorageKey]);
+  }, [creator.id, deviceId, sessionStorageKey, entrySource, requestedSessionId]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
