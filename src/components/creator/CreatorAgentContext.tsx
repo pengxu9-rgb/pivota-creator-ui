@@ -335,6 +335,14 @@ export function CreatorAgentProvider({
       return updated;
     });
 
+    const historyForBackend = (() => {
+      const base = [...recentQueries, trimmed];
+      const unique = base.filter((q, idx) => base.indexOf(q) === idx);
+      return unique
+        .slice(-5)
+        .map((q) => (q.length > 80 ? q.slice(0, 80) : q));
+    })();
+
     try {
       const res = await fetch("/api/creator-agent", {
         method: "POST",
@@ -346,7 +354,7 @@ export function CreatorAgentProvider({
             content: m.content,
           })),
           userId: accountsUser?.id || accountsUser?.email || null,
-          recentQueries,
+          recentQueries: historyForBackend,
         }),
       });
 
@@ -657,6 +665,10 @@ export function CreatorAgentProvider({
     const loadFeatured = async () => {
       try {
         setIsFeaturedLoading(true);
+        const historyForBackend = recentQueries
+          .slice(-5)
+          .map((q) => (q.length > 80 ? q.slice(0, 80) : q));
+
         const res = await fetch("/api/creator-agent", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -667,7 +679,7 @@ export function CreatorAgentProvider({
               content: string;
             }[],
             userId: accountsUser?.id || accountsUser?.email || null,
-            recentQueries,
+            recentQueries: historyForBackend,
           }),
         });
         if (!res.ok) return;
