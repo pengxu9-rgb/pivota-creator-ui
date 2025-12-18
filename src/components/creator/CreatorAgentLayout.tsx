@@ -484,7 +484,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
 
         {/* Mobile chat sheet */}
         {isMobileChatOpen && (
-          <div className="fixed inset-0 z-[60] flex min-h-0 flex-col bg-[#fffefc] lg:hidden">
+          <div className="fixed inset-0 z-[60] flex min-h-0 flex-col bg-[#fffefc] pb-[calc(env(safe-area-inset-bottom)+5rem)] lg:hidden">
             <div className="flex items-center justify-between border-b border-[#f6ebe0] bg-[#fffefc] px-4 py-3">
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 overflow-hidden rounded-full bg-[#f6b59b]">
@@ -509,7 +509,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                 Close
               </button>
             </div>
-            <div className="flex flex-1 min-h-0 flex-col bg-[#fffefc] px-4 pt-4 pb-[env(safe-area-inset-bottom)]">
+            <div className="flex flex-1 min-h-0 flex-col bg-[#fffefc] px-4 pt-4 pb-0">
               {renderChatPanel(
                 "flex h-full w-full flex-col bg-transparent px-0 py-0 border-0",
               )}
@@ -598,9 +598,8 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
           </div>
         )}
 
-        {/* Mobile bottom navigation */}
-        {!isMobileChatOpen && (
-          <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-[#f0e2d6] bg-[#fffefc] pt-1.5 pb-[calc(env(safe-area-inset-bottom)+0.375rem)] shadow-[0_-6px_30px_rgba(63,49,37,0.16)] lg:hidden">
+        {/* Mobile bottom navigation (always visible) */}
+        <nav className="fixed inset-x-0 bottom-0 z-[70] border-t border-[#f0e2d6] bg-[#fffefc] pt-1.5 pb-[calc(env(safe-area-inset-bottom)+0.375rem)] shadow-[0_-6px_30px_rgba(63,49,37,0.16)] lg:hidden">
           <div className="mx-auto flex max-w-6xl items-center justify-around px-4 text-[11px] text-[#b29a84]">
             <button
               type="button"
@@ -657,13 +656,12 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                 )}`}
                 className="flex flex-col items-center gap-0.5 text-[#b29a84]"
               >
-                <User className="h-4 w-4" />
-                <span>Profile</span>
-              </a>
+              <User className="h-4 w-4" />
+              <span>Profile</span>
+            </a>
             </button>
           </div>
-          </nav>
-        )}
+        </nav>
 
         {/* Desktop product full-detail modal */}
         {detailProduct && !isMobile && (
