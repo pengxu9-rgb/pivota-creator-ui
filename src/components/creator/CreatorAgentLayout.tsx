@@ -40,6 +40,9 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
     cartItemsCount,
     addToCart,
     prefetchProductDetail,
+    currentSession,
+    sessionDecision,
+    startNewSession,
   } = useCreatorAgent();
 
   const { addItem } = useCart();
@@ -57,6 +60,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
   })();
 
   const [isMobileChatOpen, setIsMobileChatOpen] = useState(false);
+  const [resumeDismissed, setResumeDismissed] = useState(false);
 
   // Local state for desktop detail modal (style / size selection and gallery)
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(
@@ -143,6 +147,22 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
     detailProduct?.inventoryQuantity ??
     undefined;
 
+  const bannerText = sessionDecision?.ui.banner;
+  const showResumeCard =
+    !resumeDismissed &&
+    !!currentSession &&
+    sessionDecision?.action === "OFFER_CHOICE" &&
+    sessionDecision.ui.showResumeCard;
+
+  const handleResumeContinue = () => {
+    setResumeDismissed(true);
+  };
+
+  const handleResumeNew = () => {
+    startNewSession();
+    setResumeDismissed(true);
+  };
+
   // Prevent background scroll when mobile chat sheet is open
   useEffect(() => {
     if (typeof document === "undefined") return;
@@ -163,6 +183,51 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
         Describe your needs (scenario, budget, style). I’ll start with pieces
         the creator featured, then similar matches.
       </div>
+
+      {bannerText && (
+        <div className="mb-2 rounded-2xl bg-[#fff2e3] px-3 py-2 text-[11px] text-[#8c715c] shadow-sm">
+          {bannerText}
+        </div>
+      )}
+
+      {showResumeCard && (
+        <div className="mb-3 rounded-2xl border border-[#f4e2d4] bg-white px-3 py-2.5 text-[12px] shadow-sm">
+          <div className="mb-2">
+            <div className="text-[12px] font-semibold text-[#3f3125]">
+              继续上次对话？
+            </div>
+            {currentSession.lastUserQuery && (
+              <div className="mt-0.5 line-clamp-2 text-[11px] text-[#a38b78]">
+                上次聊到：{currentSession.lastUserQuery}
+              </div>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleResumeContinue}
+              className={
+                sessionDecision?.ui.defaultChoice === "CONTINUE"
+                  ? "flex-1 rounded-full bg-[#3f3125] px-3 py-1.5 text-[11px] font-medium text-white shadow-sm"
+                  : "flex-1 rounded-full border border-[#f0e2d6] bg-white px-3 py-1.5 text-[11px] font-medium text-[#3f3125]"
+              }
+            >
+              继续上次对话
+            </button>
+            <button
+              type="button"
+              onClick={handleResumeNew}
+              className={
+                sessionDecision?.ui.defaultChoice === "NEW"
+                  ? "flex-1 rounded-full bg-[#3f3125] px-3 py-1.5 text-[11px] font-medium text-white shadow-sm"
+                  : "flex-1 rounded-full border border-[#f0e2d6] bg-white px-3 py-1.5 text-[11px] font-medium text-[#3f3125]"
+              }
+            >
+              开始新对话
+            </button>
+          </div>
+        </div>
+      )}
 
         <div className="flex min-h-0 flex-1 flex-col">
         <div className="flex-1 space-y-3 overflow-y-auto pr-1 text-[13px] leading-relaxed text-[#4a3727]">
@@ -325,19 +390,14 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
 
               {!authChecking &&
                 (accountsUser ? (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      router.push(
-                        `/account/profile?creator=${encodeURIComponent(
-                          creator.slug,
-                        )}`,
-                      )
-                    }
+                  <a
+                    href={`/account/profile?creator=${encodeURIComponent(
+                      creator.slug,
+                    )}`}
                     className="hidden h-8 w-8 items-center justify-center rounded-full border border-[#f0e2d6] bg-white text-[11px] text-[#8c715c] hover:bg-[#fff0e3] sm:inline-flex"
                   >
                     <User className="h-3.5 w-3.5 text-[#b29a84]" />
-                  </button>
+                  </a>
                 ) : (
                   <button
                     type="button"
@@ -568,27 +628,17 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
             </button>
             <button
               type="button"
-              onClick={() => {
-                if (accountsUser) {
-                  router.push(
-                    `/account/profile?creator=${encodeURIComponent(
-                      creator.slug,
-                    )}`,
-                  );
-                } else {
-                  const returnTo =
-                    typeof window !== "undefined"
-                      ? window.location.pathname + window.location.search
-                      : `/creator/${creator.slug}`;
-                  router.push(
-                    `/account/login?return_to=${encodeURIComponent(returnTo)}`,
-                  );
-                }
-              }}
               className="flex flex-col items-center gap-0.5 text-[#b29a84]"
             >
-              <User className="h-4 w-4" />
-              <span>Profile</span>
+              <a
+                href={`/account/profile?creator=${encodeURIComponent(
+                  creator.slug,
+                )}`}
+                className="flex flex-col items-center gap-0.5 text-[#b29a84]"
+              >
+                <User className="h-4 w-4" />
+                <span>Profile</span>
+              </a>
             </button>
           </div>
           </nav>
