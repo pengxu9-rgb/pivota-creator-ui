@@ -20,12 +20,47 @@ import type {
   ProductBestDeal,
 } from "@/types/product";
 import type { CreatorAgentConfig } from "@/config/creatorAgents";
+import {
+  createInitialSession,
+  decideEntryBehavior,
+  DEFAULT_CONFIG,
+  loadSessionIndex,
+  saveSessionIndex,
+  updateSessionOnMessages,
+} from "@/lib/chatSessions";
+import type {
+  SessionMeta,
+  EntryContext as SessionEntryContext,
+  DecisionResult,
+  TaskState,
+} from "@/lib/chatSessions";
+import type { ChatMessage } from "@/types/chat";
 
-export type ChatMessage = {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-};
+function getOrCreateDeviceId(): string {
+  if (typeof window === "undefined") return "unknown";
+  const KEY = "pivota_device_id";
+  let existing = window.localStorage.getItem(KEY);
+  if (!existing) {
+    existing = `dev_${Math.random().toString(36).slice(2)}`;
+    window.localStorage.setItem(KEY, existing);
+  }
+  return existing;
+}
+
+function buildInitialMessages(creator: CreatorAgentConfig): ChatMessage[] {
+  return [
+    {
+      id: "welcome-1",
+      role: "assistant",
+      content:
+        `Hi! I'm the shopping agent tuned for ${creator.name}.\n\n` +
+        `Try asking:\n` +
+        `• A commuter outfit similar to your spring/summer looks\n` +
+        `• Shoes that are great for long walks to work\n` +
+        `• A clean, minimalist windbreaker under $120`,
+    },
+  ];
+}
 
 interface CreatorAgentContextValue {
   creator: CreatorAgentConfig;
@@ -45,6 +80,9 @@ interface CreatorAgentContextValue {
   creatorDeals: ProductBestDeal[];
   accountsUser: AccountsUser | null;
   authChecking: boolean;
+  currentSession: SessionMeta | null;
+  sessionDecision: DecisionResult | null;
+  startNewSession: () => void;
   similarBaseProduct: Product | null;
   similarItems: SimilarProductItem[];
   isSimilarLoading: boolean;
@@ -89,16 +127,7 @@ export function CreatorAgentProvider({
   const { items: cartItems, open: openCart, addItem, clear, close } = useCart();
 
   const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: "m1",
-      role: "assistant",
-      content:
-        `Hi! I'm the shopping agent tuned for ${creator.name}.\n\n` +
-        `Try asking:\n` +
-        `• A commuter outfit similar to your spring/summer looks\n` +
-        `• Shoes that are great for long walks to work\n` +
-        `• A clean, minimalist windbreaker under $120`,
-    },
+    ...buildInitialMessages(creator),
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -117,6 +146,12 @@ export function CreatorAgentProvider({
   const [similarError, setSimilarError] = useState<string | null>(null);
   const [detailProduct, setDetailProduct] = useState<Product | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [sessions, setSessions] = useState<SessionMeta[]>([]);
+  const [currentSession, setCurrentSession] = useState<SessionMeta | null>(
+    null,
+  );
+  const [sessionDecision, setSessionDecision] =
+    useState<DecisionResult | null>(null);
 
   // Cache for enriched product-detail responses so that desktop modals
   // can open with full Style/Size and images immediately when possible.
@@ -207,6 +242,13 @@ export function CreatorAgentProvider({
     () => `pivota_creator_recent_queries_${creator.slug}`,
     [creator.slug],
   );
+
+  const sessionStorageKey = useMemo(
+    () => `pivota_creator_sessions_${creator.slug}`,
+    [creator.slug],
+  );
+
+  const deviceId = useMemo(() => getOrCreateDeviceId(), []);
 
   const safeStringify = (value: any) => {
     try {
@@ -445,6 +487,55 @@ export function CreatorAgentProvider({
     };
   }, []);
 
+  // 初始化会话（仅本地），基于简单入口策略。
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const { sessions: storedSessions, currentSessionId } = loadSessionIndex(
+      sessionStorageKey,
+    );
+    const filtered = storedSessions.filter(
+      (s) => s.creatorId === creator.id,
+    );
+
+    const now = new Date();
+    const ctx: SessionEntryContext = {
+      entrySource: "HOME",
+      userId: null,
+      deviceId,
+      creatorId: creator.id,
+      currentSessionId: currentSessionId ?? undefined,
+    };
+
+    const decision = decideEntryBehavior(ctx, filtered, now, DEFAULT_CONFIG);
+    setSessionDecision(decision);
+
+    let nextSessions = filtered;
+    let active: SessionMeta | null = null;
+
+    if (decision.action === "CREATE_NEW" || filtered.length === 0) {
+      active = createInitialSession(ctx, now);
+      nextSessions = [...filtered, active];
+    } else {
+      const targetId = decision.sessionId ?? currentSessionId;
+      active =
+        (targetId && nextSessions.find((s) => s.id === targetId)) ||
+        nextSessions[0] ||
+        null;
+      if (!active) {
+        active = createInitialSession(ctx, now);
+        nextSessions = [...nextSessions, active];
+      }
+    }
+
+    setSessions(nextSessions);
+    setCurrentSession(active);
+    saveSessionIndex(sessionStorageKey, {
+      sessions: nextSessions,
+      currentSessionId: active?.id ?? null,
+    });
+  }, [creator.id, deviceId, sessionStorageKey]);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const check = () => {
@@ -471,6 +562,22 @@ export function CreatorAgentProvider({
       console.error("Failed to load recent queries", err);
     }
   }, [recentQueriesStorageKey]);
+
+  // 根据消息更新当前会话摘要/时间戳。
+  useEffect(() => {
+    if (!currentSession) return;
+    const now = new Date();
+    const updated = updateSessionOnMessages(currentSession, messages, now);
+    setCurrentSession(updated);
+    setSessions((prev) => {
+      const next = prev.map((s) => (s.id === updated.id ? updated : s));
+      saveSessionIndex(sessionStorageKey, {
+        sessions: next,
+        currentSessionId: updated.id,
+      });
+      return next;
+    });
+  }, [messages, currentSession, sessionStorageKey]);
 
   useEffect(() => {
     let cancelled = false;
@@ -627,6 +734,41 @@ export function CreatorAgentProvider({
     router.push("/checkout");
   };
 
+  const startNewSession = () => {
+    const now = new Date();
+    const ctx: SessionEntryContext = {
+      entrySource: "HOME",
+      userId: accountsUser?.id || accountsUser?.email || null,
+      deviceId,
+      creatorId: creator.id,
+    };
+
+    const archivedSessions: SessionMeta[] = sessions.map((s) =>
+      s.id === currentSession?.id && s.status !== "ARCHIVED"
+        ? {
+            ...s,
+            status: "ARCHIVED",
+            taskState:
+              s.taskState === "TASK_COMPLETED"
+                ? s.taskState
+                : ("TASK_COMPLETED" as TaskState),
+            archivedAt: now.toISOString(),
+            completedAt: s.completedAt ?? now.toISOString(),
+          }
+        : s,
+    );
+
+    const newSession = createInitialSession(ctx, now);
+    const nextSessions = [...archivedSessions, newSession];
+    setSessions(nextSessions);
+    setCurrentSession(newSession);
+    setMessages(buildInitialMessages(creator));
+    saveSessionIndex(sessionStorageKey, {
+      sessions: nextSessions,
+      currentSessionId: newSession.id,
+    });
+  };
+
   const value: CreatorAgentContextValue = {
     creator,
     messages,
@@ -645,6 +787,9 @@ export function CreatorAgentProvider({
     creatorDeals,
     accountsUser,
     authChecking,
+    currentSession,
+    sessionDecision,
+    startNewSession,
     similarBaseProduct,
     similarItems,
     isSimilarLoading,
