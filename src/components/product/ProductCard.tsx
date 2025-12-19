@@ -27,6 +27,8 @@ export function ProductCard({
   const { addItem } = useCart();
   const isCompact = variant === "compact";
   const lastTouchTsRef = useRef(0);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const touchMovedRef = useRef(false);
 
   let creatorMeta: string | null = null;
   if (creatorName && product.fromCreatorDirectly) {
@@ -50,7 +52,27 @@ export function ProductCard({
     }
   };
 
+  const handleCardTouchStart: React.TouchEventHandler<HTMLDivElement> = (e) => {
+    const t = e.touches?.[0];
+    if (!t) return;
+    touchStartRef.current = { x: t.clientX, y: t.clientY };
+    touchMovedRef.current = false;
+  };
+
+  const handleCardTouchMove: React.TouchEventHandler<HTMLDivElement> = (e) => {
+    const start = touchStartRef.current;
+    const t = e.touches?.[0];
+    if (!start || !t) return;
+    const dx = Math.abs(t.clientX - start.x);
+    const dy = Math.abs(t.clientY - start.y);
+    // If the user is scrolling, do not treat as a tap.
+    if (dx > 10 || dy > 10) {
+      touchMovedRef.current = true;
+    }
+  };
+
   const handleCardTouchEnd: React.TouchEventHandler<HTMLDivElement> = () => {
+    if (touchMovedRef.current) return;
     lastTouchTsRef.current = Date.now();
     handleCardClick();
   };
@@ -71,6 +93,8 @@ export function ProductCard({
       role="button"
       tabIndex={0}
       onClick={handleCardClickSafe}
+      onTouchStart={handleCardTouchStart}
+      onTouchMove={handleCardTouchMove}
       onTouchEnd={handleCardTouchEnd}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
