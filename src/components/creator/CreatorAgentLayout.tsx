@@ -461,19 +461,19 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
           </section>
         </div>
 
-        {/* Mobile chat floating button */}
-        {!isMobileChatOpen && (
-          <button
-            type="button"
-            onClick={() => setIsMobileChatOpen(true)}
-            className="fixed inset-x-0 bottom-16 z-20 flex justify-center lg:hidden"
-          >
-            <span className="inline-flex items-center gap-2 rounded-full bg-[#f6b59b] px-5 py-2 text-xs font-medium text-white shadow-lg hover:bg-[#f29b7f]">
-              <Send className="h-3.5 w-3.5" />
-              <span>Chat with {creator.name}</span>
-            </span>
-          </button>
-        )}
+	        {/* Mobile chat floating button */}
+	        {!isMobileChatOpen && (
+	          <button
+	            type="button"
+	            onClick={() => setIsMobileChatOpen(true)}
+	            className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+5rem)] z-20 flex justify-center lg:hidden"
+	          >
+	            <span className="inline-flex items-center gap-2 rounded-full bg-[#f6b59b] px-5 py-2 text-xs font-medium text-white shadow-lg hover:bg-[#f29b7f]">
+	              <Send className="h-3.5 w-3.5" />
+	              <span>Chat with {creator.name}</span>
+	            </span>
+	          </button>
+	        )}
 
         {/* Mobile chat sheet */}
         {isMobileChatOpen && (
