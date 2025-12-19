@@ -203,44 +203,44 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
         </div>
       )}
 
-      {showResumeCard && (
-        <div className="mb-3 rounded-2xl border border-[#f4e2d4] bg-white px-3 py-2.5 text-[12px] shadow-sm">
-          <div className="mb-2">
-            <div className="text-[12px] font-semibold text-[#3f3125]">
-              继续上次对话？
-            </div>
-            {currentSession.lastUserQuery && (
-              <div className="mt-0.5 line-clamp-2 text-[11px] text-[#a38b78]">
-                上次聊到：{currentSession.lastUserQuery}
-              </div>
-            )}
-          </div>
-          <div className="flex gap-2">
+	      {showResumeCard && (
+	        <div className="mb-3 rounded-2xl border border-[#f4e2d4] bg-white px-3 py-2.5 text-[12px] shadow-sm">
+	          <div className="mb-2">
+	            <div className="text-[12px] font-semibold text-[#3f3125]">
+	              Continue your last chat?
+	            </div>
+	            {currentSession.lastUserQuery && (
+	              <div className="mt-0.5 line-clamp-2 text-[11px] text-[#a38b78]">
+	                Last time you asked: {currentSession.lastUserQuery}
+	              </div>
+	            )}
+	          </div>
+	          <div className="flex gap-2">
             <button
               type="button"
               onClick={handleResumeContinue}
-              className={
-                sessionDecision?.ui.defaultChoice === "CONTINUE"
-                  ? "flex-1 rounded-full bg-[#3f3125] px-3 py-1.5 text-[11px] font-medium text-white shadow-sm"
-                  : "flex-1 rounded-full border border-[#f0e2d6] bg-white px-3 py-1.5 text-[11px] font-medium text-[#3f3125]"
-              }
-            >
-              继续上次对话
-            </button>
-            <button
-              type="button"
-              onClick={handleResumeNew}
+	              className={
+	                sessionDecision?.ui.defaultChoice === "CONTINUE"
+	                  ? "flex-1 rounded-full bg-[#3f3125] px-3 py-1.5 text-[11px] font-medium text-white shadow-sm"
+	                  : "flex-1 rounded-full border border-[#f0e2d6] bg-white px-3 py-1.5 text-[11px] font-medium text-[#3f3125]"
+	              }
+	            >
+	              Continue chat
+	            </button>
+	            <button
+	              type="button"
+	              onClick={handleResumeNew}
               className={
                 sessionDecision?.ui.defaultChoice === "NEW"
-                  ? "flex-1 rounded-full bg-[#3f3125] px-3 py-1.5 text-[11px] font-medium text-white shadow-sm"
-                  : "flex-1 rounded-full border border-[#f0e2d6] bg-white px-3 py-1.5 text-[11px] font-medium text-[#3f3125]"
-              }
-            >
-              开始新对话
-            </button>
-          </div>
-        </div>
-      )}
+	                  ? "flex-1 rounded-full bg-[#3f3125] px-3 py-1.5 text-[11px] font-medium text-white shadow-sm"
+	                  : "flex-1 rounded-full border border-[#f0e2d6] bg-white px-3 py-1.5 text-[11px] font-medium text-[#3f3125]"
+	              }
+	            >
+	              Start new chat
+	            </button>
+	          </div>
+	        </div>
+	      )}
 
         <div className="flex min-h-0 flex-1 flex-col">
         <div className="flex-1 space-y-3 overflow-y-auto pr-1 text-[13px] leading-relaxed text-[#4a3727]">

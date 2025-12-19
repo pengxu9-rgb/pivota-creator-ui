@@ -154,7 +154,7 @@ export function decideEntryBehavior(
         showResumeCard: true,
         defaultChoice: "NEW",
         banner:
-          "上次的购物任务已完成，你可以开始新的需求，或继续查看之前的对话。",
+          "Your last shopping task is complete. You can start a new request or continue reviewing the previous chat.",
       },
     };
   }
@@ -164,7 +164,8 @@ export function decideEntryBehavior(
       action: "AUTO_RESUME",
       sessionId: lastSession.id,
       ui: {
-        banner: "已为你继续上次的对话，你也可以随时新建一个会话。",
+        banner:
+          "We’ve continued from your last chat. You can start a new conversation at any time.",
       },
     };
   }
@@ -176,7 +177,8 @@ export function decideEntryBehavior(
       ui: {
         showResumeCard: true,
         defaultChoice: "NEW",
-        banner: "你上次的任务已经有一段时间了，可以选择继续或新开始。",
+        banner:
+          "It’s been a while since your last task. You can continue that chat or start a new one.",
       },
     };
   }
@@ -188,7 +190,8 @@ export function decideEntryBehavior(
       ui: {
         showResumeCard: true,
         defaultChoice: "CONTINUE",
-        banner: "你上次还有未完成的任务，是否继续？",
+        banner:
+          "You still have an unfinished task from last time. Do you want to continue?",
       },
     };
   }
@@ -199,7 +202,8 @@ export function decideEntryBehavior(
     ui: {
       showResumeCard: true,
       defaultChoice: "CONTINUE",
-      banner: "上次的推荐已经完成，你可以继续追问或开始新的对话。",
+      banner:
+        "Your previous recommendations are ready. You can ask follow-up questions or start a new conversation.",
     },
   };
 }
