@@ -60,7 +60,12 @@ export default function CreatorCategoriesPage() {
 
   const { roots, hotDeals, isLoading, error, source } = useCreatorCategories(
     creatorSlug,
-    { dealsOnly: showDealsOnly, view: activeView, locale: FORCED_LOCALE, includeEmpty: true },
+    {
+      dealsOnly: showDealsOnly,
+      view: activeView,
+      locale: FORCED_LOCALE,
+      includeEmpty: true,
+    },
   );
   const router = useRouter();
 
