@@ -1,4 +1,4 @@
-export type DealType = "MULTI_BUY_DISCOUNT" | "FLASH_SALE";
+export type DealType = "MULTI_BUY_DISCOUNT" | "FLASH_SALE" | "FREE_SHIPPING";
 
 export interface ProductBestDeal {
   dealId: string;
@@ -9,6 +9,10 @@ export interface ProductBestDeal {
    // must be bought together to trigger the discount.
    thresholdQuantity?: number;
   flashPrice?: number;
+  // For FREE_SHIPPING deals, indicate that shipping is free and optionally
+  // the minimum order subtotal (in the same currency as the product price).
+  freeShipping?: boolean;
+  minSubtotal?: number;
   endAt?: string;
   urgencyLevel?: "LOW" | "MEDIUM" | "HIGH";
 }

@@ -318,19 +318,25 @@ export default function CreatorProductDetailPage() {
                     </div>
                   )}
 
-                  <div className="space-y-2 text-[13px]">
-                    <div className="text-[11px] font-medium uppercase tracking-wide text-[#a38b78]">
-                      Price
-                    </div>
-                    <div className="text-lg font-semibold text-[#3f3125]">
-                      {product.currency} {displayPrice.toFixed(2)}
-                    </div>
-                    {product.bestDeal?.label && (
-                      <div className="text-[12px] font-medium text-[#f28b7a]">
-                        {product.bestDeal.label}
-                      </div>
-                    )}
-                  </div>
+	                  <div className="space-y-2 text-[13px]">
+	                    <div className="text-[11px] font-medium uppercase tracking-wide text-[#a38b78]">
+	                      Price
+	                    </div>
+	                    <div className="text-lg font-semibold text-[#3f3125]">
+	                      {product.currency} {displayPrice.toFixed(2)}
+	                    </div>
+	                    {product.bestDeal?.label && (
+	                      <div className="text-[12px] font-medium text-[#f28b7a]">
+	                        {product.bestDeal.label}
+	                      </div>
+	                    )}
+	                    {!product.bestDeal?.freeShipping &&
+	                      product.allDeals?.some((d) => d.freeShipping) && (
+	                        <div className="text-[11px] font-medium text-[#8c715c]">
+	                          Free shipping available
+	                        </div>
+	                      )}
+	                  </div>
 
                   {Array.isArray(product.options) &&
                     product.options.length > 0 && (

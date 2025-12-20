@@ -42,6 +42,15 @@ function normalizeDeal(raw: any, productId: string): ProductBestDeal {
       ? raw.threshold_quantity
       : undefined;
 
+  const freeShipping =
+    raw.freeShipping === true || raw.free_shipping === true ? true : undefined;
+  const minSubtotal =
+    typeof raw.minSubtotal === "number"
+      ? raw.minSubtotal
+      : typeof raw.min_subtotal === "number"
+      ? raw.min_subtotal
+      : undefined;
+
   return {
     dealId,
     type: raw.type,
@@ -51,6 +60,8 @@ function normalizeDeal(raw: any, productId: string): ProductBestDeal {
     flashPrice,
     endAt,
     urgencyLevel,
+    freeShipping,
+    minSubtotal,
   };
 }
 
