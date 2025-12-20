@@ -6,7 +6,6 @@ import { useCreatorCategories } from "@/lib/useCreatorCategories";
 import type { CategoryNode } from "@/types/category";
 import { cn } from "@/lib/utils";
 import { SectionHeader } from "@/components/ui/SectionHeader";
-import { useCreatorAgent } from "@/components/creator/CreatorAgentContext";
 
 const CATEGORY_VIEWS = [
   { id: "GLOBAL_FASHION", label: "Fashion" },
@@ -64,7 +63,6 @@ export default function CreatorCategoriesPage() {
     { dealsOnly: showDealsOnly, view: activeView, locale: FORCED_LOCALE, includeEmpty: true },
   );
   const router = useRouter();
-  const { setPromptFromContext } = useCreatorAgent();
 
   const displayNodes = useMemo(() => {
     if (activeView !== "GLOBAL_BEAUTY") return roots;
@@ -111,9 +109,6 @@ export default function CreatorCategoriesPage() {
       `/creator/${creatorSlugSafe}/category/${cat.slug}?view=${encodeURIComponent(
         activeView,
       )}&locale=${encodeURIComponent(FORCED_LOCALE)}`,
-    );
-    setPromptFromContext(
-      `Browsing category: ${cat.name}. Show me deals and highly relevant products in this category.`,
     );
   }
 
