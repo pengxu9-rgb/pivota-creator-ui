@@ -107,15 +107,17 @@ export default function CreatorCategoriesPage() {
     return sortedRoots.filter((n) => !heroIds.has(n.category.id));
   }, [heroCategories, sortedRoots]);
 
-  function handleCategoryClick(node: CategoryNode) {
+  const buildCategoryHref = (node: CategoryNode) => {
     const cat = node.category;
     const creatorSlugSafe = creatorSlug || "creator";
-    router.push(
-      `/creator/${creatorSlugSafe}/category/${cat.slug}?view=${encodeURIComponent(
-        activeView,
-      )}&locale=${encodeURIComponent(FORCED_LOCALE)}`,
-    );
-  }
+    const search = new URLSearchParams({
+      view: activeView,
+      locale: FORCED_LOCALE,
+    }).toString();
+    return `/creator/${encodeURIComponent(
+      creatorSlugSafe,
+    )}/category/${encodeURIComponent(cat.slug)}?${search}`;
+  };
 
   const handleToggleAll = () => {
     setShowDealsOnly(false);
@@ -253,9 +255,9 @@ export default function CreatorCategoriesPage() {
                 cat.imageUrl || CATEGORY_IMAGE_FALLBACK[cat.slug] || "";
               const isTopCategory = TOP_CATEGORY_SLUGS.includes(cat.slug as any);
               return (
-                <button
+                <a
                   key={cat.id}
-                  onClick={() => handleCategoryClick(node)}
+                  href={buildCategoryHref(node)}
                   className={cn(
                     "group flex h-64 flex-col overflow-hidden rounded-3xl bg-slate-900/5 text-left text-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl",
                     isTopCategory && "shadow-lg",
@@ -283,7 +285,7 @@ export default function CreatorCategoriesPage() {
                       </span>
                     </div>
                   </div>
-                </button>
+                </a>
               );
             })}
           </section>
@@ -296,9 +298,9 @@ export default function CreatorCategoriesPage() {
                 cat.imageUrl || CATEGORY_IMAGE_FALLBACK[cat.slug] || "";
               const isTopCategory = TOP_CATEGORY_SLUGS.includes(cat.slug as any);
               return (
-                <button
+                <a
                   key={cat.id}
-                  onClick={() => handleCategoryClick(node)}
+                  href={buildCategoryHref(node)}
                   className={cn(
                     "group flex w-60 flex-col overflow-hidden rounded-3xl bg-slate-900/5 text-left text-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl",
                     isTopCategory && "shadow-lg",
@@ -324,7 +326,7 @@ export default function CreatorCategoriesPage() {
                       </span>
                     </div>
                   </div>
-                </button>
+                </a>
               );
             })}
           </section>
@@ -341,9 +343,9 @@ export default function CreatorCategoriesPage() {
                   const imageUrl =
                     cat.imageUrl || CATEGORY_IMAGE_FALLBACK[cat.slug] || "";
                   return (
-                    <button
+                    <a
                       key={cat.id}
-                      onClick={() => handleCategoryClick(node)}
+                      href={buildCategoryHref(node)}
                       className={cn(
                         "group flex flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white text-left text-slate-900 shadow-sm transition hover:-translate-y-1 hover:shadow-md",
                         TOP_CATEGORY_SLUGS.includes(cat.slug as any) &&
@@ -372,7 +374,7 @@ export default function CreatorCategoriesPage() {
                           </span>
                         </div>
                       </div>
-                    </button>
+                    </a>
                   );
                 },
               )}
