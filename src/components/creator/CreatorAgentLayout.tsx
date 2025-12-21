@@ -360,11 +360,8 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
             </div>
             <div className="ml-auto flex items-center gap-2">
               <nav className="hidden items-center gap-1 rounded-full bg-[#f4e2d4] p-1 text-xs sm:flex">
-                <button
-                  type="button"
-                  onClick={() =>
-                    router.push(`/creator/${encodeURIComponent(creator.slug)}`)
-                  }
+                <a
+                  href={`/creator/${encodeURIComponent(creator.slug)}`}
                   className={
                     activeTab === "forYou"
                       ? "rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-50 sm:px-4"
@@ -372,16 +369,11 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                   }
                 >
                   For You
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    router.push(
-                      `/creator/${encodeURIComponent(
-                        creator.slug,
-                      )}?tab=deals#creator-deals`,
-                    )
-                  }
+                </a>
+                <a
+                  href={`/creator/${encodeURIComponent(
+                    creator.slug,
+                  )}?tab=deals#creator-deals`}
                   className={
                     activeTab === "deals"
                       ? "rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-50 sm:px-4"
@@ -389,7 +381,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                   }
                 >
                   Deals
-                </button>
+                </a>
                 <a
                   href={`/creator/${encodeURIComponent(creator.slug)}/categories`}
                   className={
