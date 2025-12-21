@@ -769,7 +769,13 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                     Price
                   </div>
                   <div className="text-lg font-semibold text-[#3f3125]">
-                    {detailProduct.currency} {displayPrice.toFixed(2)}
+                    {detailProduct.currency}{" "}
+                    {(
+                      typeof displayPrice === "number" &&
+                      !Number.isNaN(displayPrice)
+                        ? displayPrice
+                        : 0
+                    ).toFixed(2)}
                   </div>
                   {detailProduct.bestDeal?.label && (
                     <div className="text-[12px] font-medium text-[#f28b7a]">

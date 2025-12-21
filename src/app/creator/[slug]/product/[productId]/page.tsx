@@ -323,7 +323,13 @@ export default function CreatorProductDetailPage() {
 	                      Price
 	                    </div>
 	                    <div className="text-lg font-semibold text-[#3f3125]">
-	                      {product.currency} {displayPrice.toFixed(2)}
+	                      {product.currency}{" "}
+	                      {(
+	                        typeof displayPrice === "number" &&
+	                        !Number.isNaN(displayPrice)
+	                          ? displayPrice
+	                          : 0
+	                      ).toFixed(2)}
 	                    </div>
 	                    {product.bestDeal?.label && (
 	                      <div className="text-[12px] font-medium text-[#f28b7a]">

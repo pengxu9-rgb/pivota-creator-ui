@@ -83,6 +83,17 @@ export function ProductCard({
     handleCardClick();
   };
 
+  const safePrice =
+    typeof product.price === "number" && !Number.isNaN(product.price)
+      ? product.price
+      : 0;
+
+  const safeFlashPrice =
+    typeof product.bestDeal?.flashPrice === "number" &&
+    !Number.isNaN(product.bestDeal.flashPrice)
+      ? product.bestDeal.flashPrice
+      : null;
+
   return (
     <div
       className={
@@ -170,10 +181,10 @@ export function ProductCard({
         <div className="mt-2 flex items-center justify-between">
           <div className="flex flex-col">
             <div className="flex items-baseline gap-2">
-              {hasFlashPrice ? (
+              {hasFlashPrice && safeFlashPrice != null ? (
                 <>
                   <span className="text-[11px] text-[#b29a84] line-through">
-                    {product.currency} {product.price.toFixed(2)}
+                    {product.currency} {safePrice.toFixed(2)}
                   </span>
                   <span
                     className={
@@ -182,7 +193,7 @@ export function ProductCard({
                         : "text-sm font-semibold text-[#3f3125]"
                     }
                   >
-                    {product.currency} {product.bestDeal?.flashPrice?.toFixed(2)}
+                    {product.currency} {safeFlashPrice.toFixed(2)}
                   </span>
                 </>
               ) : (
@@ -193,7 +204,7 @@ export function ProductCard({
                       : "text-sm font-semibold text-[#3f3125]"
                   }
                 >
-                  {product.currency} {product.price.toFixed(2)}
+                  {product.currency} {safePrice.toFixed(2)}
                 </span>
               )}
             </div>
