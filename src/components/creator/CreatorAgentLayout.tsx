@@ -469,7 +469,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
 
         {/* Mobile chat sheet */}
         {isMobileChatOpen && (
-          <div className="fixed inset-0 z-[60] flex min-h-0 flex-col bg-[#fffefc] pb-[calc(env(safe-area-inset-bottom)+5rem)] lg:hidden">
+          <div className="fixed inset-0 z-[60] flex min-h-0 flex-col bg-[#fffefc] pb-[calc(env(safe-area-inset-bottom)+5rem)] overscroll-contain lg:hidden">
             <div className="flex items-center justify-between border-b border-[#f6ebe0] bg-[#fffefc] px-4 py-3">
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 overflow-hidden rounded-full bg-[#f6b59b]">
