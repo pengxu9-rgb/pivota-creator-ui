@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import type { Product } from "@/types/product";
 import { ProductCard } from "@/components/product/ProductCard";
 import { useCreatorAgent } from "@/components/creator/CreatorAgentContext";
@@ -14,6 +14,8 @@ const CATEGORY_NAME_OVERRIDES: Record<string, string> = {
   "womens-loungewear": "Women’s Loungewear",
   "womens-dress": "Women’s Dress",
   "outdoor-clothing": "Outdoor Clothing",
+  "pet-apparel": "Pet Apparel",
+  "pet-toys": "Pet Toys",
 };
 
 const FORCED_LOCALE = "en-US";
@@ -38,7 +40,6 @@ export default function CreatorCategoryProductsPage() {
   const searchParams = useSearchParams();
   const view = searchParams?.get("view");
 
-  const router = useRouter();
   const {
     creator,
     handleSeeSimilar,
@@ -61,6 +62,15 @@ export default function CreatorCategoryProductsPage() {
       )
       .join(" ");
   }, [categorySlug]);
+
+  const categoriesHref = useMemo(() => {
+    const slug = creatorSlug || creator.slug;
+    const search = new URLSearchParams({
+      view: view || "GLOBAL_FASHION",
+      locale: FORCED_LOCALE,
+    }).toString();
+    return `/creator/${encodeURIComponent(slug)}/categories?${search}`;
+  }, [creatorSlug, creator.slug, view]);
 
   useEffect(() => {
     if (!creatorSlug || !categorySlug) return;
@@ -110,21 +120,9 @@ export default function CreatorCategoryProductsPage() {
     <div className="flex h-full flex-col gap-4">
       <header className="space-y-3">
         <nav className="text-[11px] text-[#b29a84]">
-          <button
-            type="button"
-            onClick={() =>
-              router.push(
-                `/creator/${encodeURIComponent(
-                  creatorSlug || creator.slug,
-                )}/categories?view=${encodeURIComponent(
-                  view || "GLOBAL_FASHION",
-                )}&locale=${encodeURIComponent(FORCED_LOCALE)}`,
-              )
-            }
-            className="underline-offset-2 hover:underline"
-          >
+          <a href={categoriesHref} className="underline-offset-2 hover:underline">
             Categories
-          </button>
+          </a>
           <span className="mx-1">/</span>
           <span className="text-[#8c715c]">{categoryTitle}</span>
         </nav>

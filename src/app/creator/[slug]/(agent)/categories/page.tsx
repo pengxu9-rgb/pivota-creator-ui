@@ -41,6 +41,7 @@ const CATEGORY_IMAGE_FALLBACK: Record<string, string> = {
   "camping-gear": "/mock-categories/camping-gear.jpg",
   "hunting-accessories": "/mock-categories/hunting-accessories.jpg",
   "pet-toys": "/mock-categories/pet-toys.jpg",
+  "pet-apparel": "/mock-categories/pet-toys.jpg",
 };
 
 export default function CreatorCategoriesPage() {
