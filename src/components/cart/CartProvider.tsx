@@ -76,7 +76,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const clear = () => setItems([]);
 
   const subtotal = useMemo(
-    () => items.reduce((sum, item) => sum + item.price * item.quantity, 0),
+    () =>
+      items.reduce((sum, item) => {
+        const price =
+          typeof item.price === "number" && !Number.isNaN(item.price)
+            ? item.price
+            : 0;
+        return sum + price * item.quantity;
+      }, 0),
     [items],
   );
 
@@ -99,9 +106,25 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       const stored = window.localStorage.getItem("pivota_creator_cart");
       if (stored) {
-        const parsed = JSON.parse(stored) as CartItem[];
+        const parsed = JSON.parse(stored) as CartItem[] | unknown;
         if (Array.isArray(parsed)) {
-          setItems(parsed);
+          const normalized = parsed
+            .map((raw) => {
+              if (!raw || typeof raw !== "object") return null;
+              const item = raw as CartItem;
+              const price =
+                typeof item.price === "number" && !Number.isNaN(item.price)
+                  ? item.price
+                  : 0;
+              const quantity =
+                typeof item.quantity === "number" && item.quantity > 0
+                  ? item.quantity
+                  : 1;
+              return { ...item, price, quantity };
+            })
+            .filter((i): i is CartItem => i !== null);
+
+          setItems(normalized);
         }
       }
     } catch (err) {

@@ -15,6 +15,9 @@ const X_AGENT_API_KEY =
 
 type CreateOrderPayload = {
   merchant_id: string;
+  quote_id?: string;
+  discount_codes?: string[];
+  selected_delivery_option?: Record<string, any>;
   customer_email: string;
   items: Array<{
     merchant_id: string;
@@ -43,12 +46,55 @@ type CreateOrderPayload = {
   };
 };
 
+export class AgentGatewayError extends Error {
+  status: number;
+  body: any;
+
+  constructor(message: string, status: number, body: any) {
+    super(message);
+    this.name = "AgentGatewayError";
+    this.status = status;
+    this.body = body;
+  }
+}
+
 export type CheckoutOrderResponse = {
   order_id?: string;
   currency?: string;
   total_amount_minor?: number;
+  total_amount?: number;
   payment_status?: string;
+  pricing?: {
+    subtotal?: number;
+    discount_total?: number;
+    shipping_fee?: number;
+    tax?: number;
+    total?: number;
+    [key: string]: unknown;
+  } | null;
+  promotion_lines?: any[];
+  line_items?: any[];
+  quote?: any;
   [key: string]: unknown;
+};
+
+export type QuotePreviewResponse = {
+  quote_id: string;
+  expires_at: string;
+  engine: string;
+  engine_ref?: string | null;
+  currency: string;
+  pricing: {
+    subtotal: number;
+    discount_total: number;
+    shipping_fee: number;
+    tax: number;
+    total: number;
+  };
+  promotion_lines: any[];
+  line_items: any[];
+  delivery_options?: any[];
+  metadata?: any;
 };
 
 export type SubmitPaymentResponse = {
@@ -87,24 +133,154 @@ async function callAgentGateway(body: { operation: string; payload: any }) {
   });
 
   if (!res.ok) {
-    let errorBody: string | undefined;
+    let errorBody: any = undefined;
     try {
-      errorBody = await res.text();
+      errorBody = await res.json();
     } catch {
-      errorBody = undefined;
+      try {
+        errorBody = await res.text();
+      } catch {
+        errorBody = undefined;
+      }
     }
-    throw new Error(
-      `Agent gateway request failed with status ${res.status}${
-        errorBody ? ` body: ${errorBody}` : ""
-      }`,
+
+    const msg =
+      typeof errorBody === "string"
+        ? errorBody
+        : errorBody && typeof errorBody === "object"
+          ? JSON.stringify(errorBody)
+          : "";
+
+    throw new AgentGatewayError(
+      `Agent gateway request failed with status ${res.status}${msg ? ` body: ${msg}` : ""}`,
+      res.status,
+      errorBody,
     );
   }
 
   return res.json();
 }
 
+export async function previewQuoteFromCart(params: {
+  items: CartItem[];
+  discountCodes?: string[];
+  email: string;
+  name: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  country: string;
+  postalCode: string;
+  phone?: string;
+}): Promise<QuotePreviewResponse> {
+  if (!params.items.length) {
+    throw new Error("Cannot preview quote with empty cart");
+  }
+
+  const merchantId = params.items[0].merchantId || "demo_merchant";
+  const items = params.items.map((item) => ({
+    product_id: item.productId || item.id,
+    variant_id: item.variantId || undefined,
+    quantity: item.quantity,
+  }));
+
+  const data = await callAgentGateway({
+    operation: "preview_quote",
+    payload: {
+      quote: {
+        merchant_id: merchantId,
+        items,
+        discount_codes: params.discountCodes || [],
+        customer_email: params.email || undefined,
+        shipping_address: {
+          name: params.name,
+          address_line1: params.addressLine1,
+          address_line2: params.addressLine2,
+          city: params.city,
+          country: params.country,
+          postal_code: params.postalCode,
+          phone: params.phone,
+        },
+      },
+    },
+  });
+
+  return data as QuotePreviewResponse;
+}
+
+export async function createOrderWithQuote(params: {
+  quoteId: string;
+  items: CartItem[];
+  discountCodes?: string[];
+  email: string;
+  name: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  country: string;
+  postalCode: string;
+  phone?: string;
+  notes?: string;
+}): Promise<CheckoutOrderResponse> {
+  if (!params.items.length) {
+    throw new Error("Cannot create order with empty cart");
+  }
+
+  const merchantId = params.items[0].merchantId || "demo_merchant";
+
+  const creatorId = params.items[0].creatorId;
+  const creatorSlug = params.items[0].creatorSlug;
+  const creatorName = params.items[0].creatorName;
+
+  const items = params.items.map((item) => ({
+    merchant_id: item.merchantId || merchantId,
+    product_id: item.productId || item.id,
+    product_title: item.title,
+    quantity: item.quantity,
+    unit_price: item.price,
+    subtotal: item.price * item.quantity,
+    ...(item.variantId ? { variant_id: item.variantId } : {}),
+    ...(item.variantSku ? { sku: item.variantSku } : {}),
+    ...(item.selectedOptions ? { selected_options: item.selectedOptions } : {}),
+  }));
+
+  const orderPayload: CreateOrderPayload = {
+    merchant_id: merchantId,
+    quote_id: params.quoteId,
+    discount_codes: params.discountCodes || [],
+    customer_email: params.email,
+    items,
+    shipping_address: {
+      name: params.name,
+      address_line1: params.addressLine1,
+      address_line2: params.addressLine2,
+      city: params.city,
+      country: params.country,
+      postal_code: params.postalCode,
+      phone: params.phone,
+    },
+    customer_notes: params.notes,
+    metadata: {
+      source: "creator-agent-ui",
+      ...(creatorId ? { creator_id: creatorId } : {}),
+      ...(creatorSlug ? { creator_slug: creatorSlug } : {}),
+      ...(creatorName ? { creator_name: creatorName } : {}),
+    },
+  };
+
+  const data = await callAgentGateway({
+    operation: "create_order",
+    payload: {
+      order: orderPayload,
+    },
+  });
+
+  return data as CheckoutOrderResponse;
+}
+
 export async function createOrderFromCart(params: {
   items: CartItem[];
+  discountCodes?: string[];
   email: string;
   name: string;
   addressLine1: string;
@@ -138,36 +314,35 @@ export async function createOrderFromCart(params: {
     ...(item.selectedOptions ? { selected_options: item.selectedOptions } : {}),
   }));
 
-  const orderPayload: CreateOrderPayload = {
-    merchant_id: merchantId,
-    customer_email: params.email,
-    items,
-    shipping_address: {
-      name: params.name,
-      address_line1: params.addressLine1,
-      address_line2: params.addressLine2,
-      city: params.city,
-      country: params.country,
-      postal_code: params.postalCode,
-      phone: params.phone,
-    },
-    customer_notes: params.notes,
-    metadata: {
-      source: "creator-agent-ui",
-      ...(creatorId ? { creator_id: creatorId } : {}),
-      ...(creatorSlug ? { creator_slug: creatorSlug } : {}),
-      ...(creatorName ? { creator_name: creatorName } : {}),
-    },
-  };
-
-  const data = await callAgentGateway({
-    operation: "create_order",
-    payload: {
-      order: orderPayload,
-    },
+  const quote = await previewQuoteFromCart({
+    items: params.items,
+    discountCodes: params.discountCodes,
+    email: params.email,
+    name: params.name,
+    addressLine1: params.addressLine1,
+    addressLine2: params.addressLine2,
+    city: params.city,
+    country: params.country,
+    postalCode: params.postalCode,
+    phone: params.phone,
   });
 
-  return data as CheckoutOrderResponse;
+  const data = await createOrderWithQuote({
+    quoteId: quote.quote_id,
+    items: params.items,
+    discountCodes: params.discountCodes,
+    email: params.email,
+    name: params.name,
+    addressLine1: params.addressLine1,
+    addressLine2: params.addressLine2,
+    city: params.city,
+    country: params.country,
+    postalCode: params.postalCode,
+    phone: params.phone,
+    notes: params.notes,
+  });
+
+  return { ...(data as CheckoutOrderResponse), quote } as CheckoutOrderResponse;
 }
 
 export async function submitPaymentForOrder(params: {

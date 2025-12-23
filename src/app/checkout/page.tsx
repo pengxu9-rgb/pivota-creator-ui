@@ -1,15 +1,18 @@
 'use client';
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { useCart } from "@/components/cart/CartProvider";
 import {
-  createOrderFromCart,
+  AgentGatewayError,
+  createOrderWithQuote,
+  previewQuoteFromCart,
   submitPaymentForOrder,
   type SubmitPaymentResponse,
   type CheckoutOrderResponse,
+  type QuotePreviewResponse,
 } from "@/lib/checkoutClient";
 import {
   accountsLogin,
@@ -24,90 +27,6 @@ import {
   hasNonEmptyAddress,
 } from "@/lib/addressStorage";
 import "@adyen/adyen-web/dist/adyen.css";
-
-import type { CartItem } from "@/components/cart/CartProvider";
-
-function parseMultiBuyThreshold(label?: string | null): number | null {
-  if (!label) return null;
-  const match = label.match(/Buy\s+(\d+)/i);
-  if (!match) return null;
-  const value = Number(match[1]);
-  return Number.isFinite(value) && value > 0 ? value : null;
-}
-
-function computeCartPromotionPreview(cartItems: CartItem[]) {
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0,
-  );
-
-  if (!cartItems.length) {
-    return { subtotal, discount: 0, total: subtotal };
-  }
-
-  type GroupKey = string;
-  type Group = {
-    threshold: number;
-    discountPercent: number;
-    unitPrices: number[];
-  };
-
-  const groups = new Map<GroupKey, Group>();
-
-  for (const item of cartItems) {
-    const deal = item.bestDeal;
-    if (!deal || deal.type !== "MULTI_BUY_DISCOUNT" || !deal.discountPercent) {
-      continue;
-    }
-    const threshold =
-      typeof deal.thresholdQuantity === "number" && deal.thresholdQuantity > 0
-        ? deal.thresholdQuantity
-        : parseMultiBuyThreshold(deal.label);
-    if (!threshold) continue;
-
-    const merchantId = item.merchantId || "default";
-    const key = `${merchantId}:${deal.dealId}`;
-    let group = groups.get(key);
-    if (!group) {
-      group = {
-        threshold,
-        discountPercent: deal.discountPercent,
-        unitPrices: [],
-      };
-      groups.set(key, group);
-    }
-    if (group.threshold !== threshold) {
-      continue;
-    }
-    if (group.discountPercent !== deal.discountPercent) {
-      continue;
-    }
-
-    for (let i = 0; i < item.quantity; i += 1) {
-      group.unitPrices.push(item.price);
-    }
-  }
-
-  let discount = 0;
-  groups.forEach((group) => {
-    const { threshold, discountPercent } = group;
-    const unitPrices = [...group.unitPrices].sort((a, b) => b - a);
-    if (!unitPrices.length || threshold <= 0) return;
-
-    const totalQty = unitPrices.length;
-    const discountableQty = Math.floor(totalQty / threshold) * threshold;
-    if (discountableQty <= 0) return;
-
-    const discountBase = unitPrices
-      .slice(0, discountableQty)
-      .reduce((sum, price) => sum + price, 0);
-    discount += (discountBase * discountPercent) / 100;
-  });
-
-  const roundedDiscount = Math.round(discount * 100) / 100;
-  const total = Math.max(0, subtotal - roundedDiscount);
-  return { subtotal, discount: roundedDiscount, total };
-}
 
 type CheckoutStep = "form" | "submitting" | "success" | "error";
 type AuthStep = "checking" | "email" | "otp" | "authed";
@@ -193,12 +112,76 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
   const [pspUsed, setPspUsed] = useState<string | null>(null);
   const [isPaymentStep, setIsPaymentStep] = useState(false);
 
-  const currency = existingCurrency || items[0]?.currency || "USD";
-  const effectiveSubtotal =
-    placedSubtotal != null ? placedSubtotal : subtotal;
-  const hasPromotionTotal = placedTotal != null;
-  const hasPromotionDiscount =
-    placedDiscount != null && placedDiscount > 0 && hasPromotionTotal;
+  const [discountCode, setDiscountCode] = useState("");
+  const discountCodes = useMemo(
+    () => (discountCode.trim() ? [discountCode.trim()] : []),
+    [discountCode],
+  );
+
+  const [quote, setQuote] = useState<QuotePreviewResponse | null>(null);
+  const [quoteLoading, setQuoteLoading] = useState(false);
+  const [quoteError, setQuoteError] = useState<string | null>(null);
+
+  // Locked pricing/promotion lines captured from order.create response (source of truth for payment step).
+  const [lockedPricing, setLockedPricing] = useState<CheckoutOrderResponse["pricing"] | null>(null);
+  const [lockedPromotionLines, setLockedPromotionLines] = useState<any[]>([]);
+  const [lockedQuoteMeta, setLockedQuoteMeta] = useState<any>(null);
+
+  const existingPricing =
+    existingOrderId && existingTotalMinor != null
+      ? {
+          subtotal: existingTotalMinor / 100,
+          discount_total: 0,
+          shipping_fee: 0,
+          tax: 0,
+          total: existingTotalMinor / 100,
+        }
+      : null;
+
+  const activePricing =
+    step === "success"
+      ? lockedPricing
+      : isPaymentStep
+        ? lockedPricing || existingPricing || quote?.pricing
+        : quote?.pricing;
+  const activePromotionLines =
+    step === "success"
+      ? lockedPromotionLines
+      : isPaymentStep
+        ? lockedPromotionLines
+        : quote?.promotion_lines || [];
+  const activeExpiresAt =
+    step === "success"
+      ? lockedQuoteMeta?.expires_at
+      : isPaymentStep
+        ? lockedQuoteMeta?.expires_at
+        : quote?.expires_at;
+
+  const currency =
+    existingCurrency ||
+    lockedQuoteMeta?.currency ||
+    quote?.currency ||
+    items[0]?.currency ||
+    "USD";
+
+  const toNumber = (v: any) => {
+    const n = typeof v === "number" ? v : Number(v);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  const promotionDiscountFromLines = (lines: any[]) =>
+    lines.reduce((sum, pl) => sum + Math.abs(toNumber(pl?.amount)), 0);
+
+  const effectiveSubtotal = activePricing ? toNumber((activePricing as any).subtotal) : subtotal;
+  const effectiveShippingFee = activePricing ? toNumber((activePricing as any).shipping_fee) : 0;
+  const effectiveTax = activePricing ? toNumber((activePricing as any).tax) : 0;
+  const effectiveTotal = activePricing ? toNumber((activePricing as any).total) : subtotal;
+  const effectivePromotionDiscount = promotionDiscountFromLines(activePromotionLines);
+  const displayPromotionLines = (activePromotionLines || []).filter((pl: any) => {
+    const label = String(pl?.label || "");
+    const reason = pl?.metadata?.reason;
+    return label !== "Rounding adjustment" && reason !== "rounding_adjustment";
+  });
 
   // Prefer the email coming from the accounts service, then fall back to any
   // local email the user has typed during this checkout session.
@@ -297,25 +280,92 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
     }
   }, []);
 
+  // Quote-first: generate a locked quote for checkout display.
   useEffect(() => {
-    if (!items.length || existingOrderId) {
-      setPlacedItems(null);
-      setPlacedSubtotal(null);
-      setPlacedTotal(null);
-      setPlacedDiscount(null);
+    let cancelled = false;
+    if (existingOrderId || isPaymentStep || step === "success") {
+      setQuote(null);
+      setQuoteError(null);
+      setQuoteLoading(false);
       return;
     }
 
-    const preview = computeCartPromotionPreview(items as CartItem[]);
-    setPlacedSubtotal(preview.subtotal);
-    if (preview.discount > 0) {
-      setPlacedTotal(preview.total);
-      setPlacedDiscount(preview.discount);
-    } else {
-      setPlacedTotal(preview.subtotal);
-      setPlacedDiscount(null);
+    if (!items.length) {
+      setQuote(null);
+      setQuoteError(null);
+      setQuoteLoading(false);
+      return;
     }
-  }, [items, existingOrderId]);
+
+    // Quote preview needs checkout-critical fields; if missing, don't call pricing.
+    const hasRequired =
+      displayEmail.trim() && name && addressLine1 && city && country && postalCode;
+    if (!hasRequired) {
+      setQuote(null);
+      setQuoteError(null);
+      setQuoteLoading(false);
+      return;
+    }
+
+    const t = setTimeout(() => {
+      (async () => {
+        setQuoteLoading(true);
+        setQuoteError(null);
+        try {
+          const nextQuote = await previewQuoteFromCart({
+            items,
+            discountCodes,
+            email: displayEmail.trim(),
+            name,
+            addressLine1,
+            addressLine2: addressLine2 || undefined,
+            city,
+            country,
+            postalCode,
+            phone: phone || undefined,
+          });
+          if (cancelled) return;
+          setQuote(nextQuote);
+        } catch (err: any) {
+          if (cancelled) return;
+          setQuote(null);
+          if (err instanceof AgentGatewayError) {
+            const body = err.body;
+            const detail = body?.detail ?? body;
+            const code = typeof detail?.code === "string" ? detail.code : null;
+            const msg =
+              (typeof detail?.message === "string" && detail.message) ||
+              (typeof detail === "string" && detail) ||
+              err.message;
+            setQuoteError(code ? `${code}: ${msg}` : msg);
+          } else {
+            setQuoteError(err?.message || "Failed to preview quote");
+          }
+        } finally {
+          if (!cancelled) setQuoteLoading(false);
+        }
+      })();
+    }, 350);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [
+    items,
+    existingOrderId,
+    isPaymentStep,
+    step,
+    displayEmail,
+    name,
+    addressLine1,
+    addressLine2,
+    city,
+    country,
+    postalCode,
+    phone,
+    discountCodes,
+  ]);
 
   const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -403,12 +453,32 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
         if (!currentOrderId) {
           // New order path: create the order first.
           setPlacedItems(items);
-          setPlacedSubtotal(subtotal);
+          setPlacedSubtotal(null);
           setPlacedTotal(null);
           setPlacedDiscount(null);
 
-          const orderRes = await createOrderFromCart({
+          // Ensure we have a locked quote for strong price consistency.
+          let quoteToUse = quote;
+          if (!quoteToUse) {
+            quoteToUse = await previewQuoteFromCart({
+              items,
+              discountCodes,
+              email: effectiveEmail,
+              name,
+              addressLine1,
+              addressLine2: addressLine2 || undefined,
+              city,
+              country,
+              postalCode,
+              phone: phone || undefined,
+            });
+            setQuote(quoteToUse);
+          }
+
+          const orderRes = await createOrderWithQuote({
+            quoteId: quoteToUse.quote_id,
             items,
+            discountCodes,
             email: effectiveEmail,
             name,
             addressLine1,
@@ -454,23 +524,26 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
             setPspUsed(orderPsp);
           }
 
-          // Server-side total (after promotions / discounts), if provided.
-          const serverTotal =
-            typeof anyOrder.total_amount === "number"
-              ? anyOrder.total_amount
-              : typeof anyOrder.total_amount_minor === "number"
-                ? anyOrder.total_amount_minor / 100
-                : null;
+          const respPricing = anyOrder.pricing || null;
+          const respPromotionLines = Array.isArray(anyOrder.promotion_lines)
+            ? anyOrder.promotion_lines
+            : [];
+          const respQuoteMeta = anyOrder.quote || null;
 
-          setPlacedSubtotal(subtotal);
-          if (serverTotal != null) {
-            setPlacedTotal(serverTotal);
-            const discount = Math.max(0, subtotal - serverTotal);
-            setPlacedDiscount(discount > 0 ? discount : null);
-          } else {
-            setPlacedTotal(subtotal);
-            setPlacedDiscount(null);
-          }
+          setLockedPricing(respPricing);
+          setLockedPromotionLines(respPromotionLines);
+          setLockedQuoteMeta(respQuoteMeta);
+
+          // Use pricing/promotion_lines (not subtotal-total guessing).
+          const totalFromPricing =
+            respPricing && respPricing.total != null ? toNumber(respPricing.total) : null;
+          const subtotalFromPricing =
+            respPricing && respPricing.subtotal != null ? toNumber(respPricing.subtotal) : null;
+          const discountFromLines = promotionDiscountFromLines(respPromotionLines);
+
+          setPlacedSubtotal(subtotalFromPricing != null ? subtotalFromPricing : subtotal);
+          setPlacedTotal(totalFromPricing != null ? totalFromPricing : subtotal);
+          setPlacedDiscount(discountFromLines > 0 ? discountFromLines : null);
         } else {
           // Existing order (continue payment from Orders page): we only
           // prepare the payment step so that card elements can mount.
@@ -530,9 +603,11 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
         const amountToCharge =
           existingTotalMinor != null
             ? existingTotalMinor / 100
-            : placedTotal != null
-              ? placedTotal
-              : subtotal;
+            : lockedPricing && (lockedPricing as any).total != null
+              ? toNumber((lockedPricing as any).total)
+              : placedTotal != null
+                ? placedTotal
+                : effectiveTotal || subtotal;
 
         paymentRes = await submitPaymentForOrder({
           orderId: currentOrderId as string,
@@ -763,9 +838,32 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
       setStep("error");
     } catch (err) {
       console.error(err);
-      setError(
-        "We couldn’t place the order right now. Please try again in a moment.",
-      );
+      if (err instanceof AgentGatewayError) {
+        const body = err.body;
+        const detail = body?.detail ?? body;
+        const code = typeof detail?.code === "string" ? detail.code : null;
+        const msg =
+          (typeof detail?.message === "string" && detail.message) ||
+          (typeof detail === "string" && detail) ||
+          err.message;
+
+        if (code === "QUOTE_EXPIRED" || code === "QUOTE_MISMATCH") {
+          // Refresh quote-first state so the user can retry with a new quote.
+          setQuote(null);
+          setLockedPricing(null);
+          setLockedPromotionLines([]);
+          setLockedQuoteMeta(null);
+          setIsPaymentStep(false);
+          setOrderId(undefined);
+          setError(`${code}: ${msg}. Please refresh your quote and try again.`);
+        } else {
+          setError(code ? `${code}: ${msg}` : msg);
+        }
+      } else {
+        setError(
+          "We couldn’t place the order right now. Please try again in a moment.",
+        );
+      }
       setStep("error");
     }
   };
@@ -857,30 +955,80 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
                   )}
                 </div>
                 <div className="mt-3 border-t border-slate-200 pt-3 text-sm">
+                  {!existingOrderId && !isPaymentStep && (
+                    <div className="mb-2 text-[11px] text-slate-600">
+                      {quoteLoading ? (
+                        <span>Locking your price…</span>
+                      ) : quoteError ? (
+                        <span className="text-rose-600">{quoteError}</span>
+                      ) : activeExpiresAt ? (
+                        <span>
+                          Locked pricing valid until{" "}
+                          {new Date(activeExpiresAt).toLocaleString()}
+                        </span>
+                      ) : (
+                        <span>Enter your shipping details to lock pricing.</span>
+                      )}
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-between">
                     <span className="text-slate-600">Subtotal</span>
                     <span className="font-semibold text-slate-900">
                       {currency} {effectiveSubtotal.toFixed(2)}
                     </span>
                   </div>
-                  {hasPromotionTotal && (
+
+                  {effectivePromotionDiscount > 0 && (
                     <>
-                      {hasPromotionDiscount && (
-                        <div className="mt-1 flex items-center justify-between text-[11px] text-slate-600">
-                          <span>Promotion discount</span>
-                          <span className="font-semibold text-emerald-600">
-                            -{currency} {placedDiscount!.toFixed(2)}
-                          </span>
-                        </div>
-                      )}
-                      <div className="mt-1 flex items-center justify-between">
-                        <span className="text-slate-900 font-semibold">Total</span>
-                        <span className="font-semibold text-slate-900">
-                          {currency} {placedTotal!.toFixed(2)}
+                      <div className="mt-1 flex items-center justify-between text-[11px] text-slate-600">
+                        <span>Promotion discount</span>
+                        <span className="font-semibold text-emerald-600">
+                          -{currency} {effectivePromotionDiscount.toFixed(2)}
                         </span>
                       </div>
+                      {displayPromotionLines.length > 0 && (
+                        <div className="mt-1 space-y-1 text-[11px] text-slate-600">
+                          {displayPromotionLines.map((pl: any) => (
+                            <div key={pl.id || pl.label} className="flex items-center justify-between">
+                              <span className="line-clamp-1">
+                                {pl.label}
+                                {pl.code ? ` (${pl.code})` : ""}
+                              </span>
+                              <span className="font-medium text-emerald-700">
+                                {toNumber(pl.amount).toFixed(2)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </>
                   )}
+
+                  {effectiveShippingFee > 0 && (
+                    <div className="mt-1 flex items-center justify-between text-[11px] text-slate-600">
+                      <span>Shipping</span>
+                      <span className="font-semibold text-slate-900">
+                        {currency} {effectiveShippingFee.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+
+                  {effectiveTax > 0 && (
+                    <div className="mt-1 flex items-center justify-between text-[11px] text-slate-600">
+                      <span>Tax</span>
+                      <span className="font-semibold text-slate-900">
+                        {currency} {effectiveTax.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="mt-1 flex items-center justify-between">
+                    <span className="text-slate-900 font-semibold">Total</span>
+                    <span className="font-semibold text-slate-900">
+                      {currency} {effectiveTotal.toFixed(2)}
+                    </span>
+                  </div>
                 </div>
               </>
             )}
@@ -1102,6 +1250,18 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
                       className="mt-1 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 shadow-sm outline-none focus:border-slate-900"
                     />
                   </label>
+                  <label className="text-[11px] font-medium text-slate-700">
+                    Discount code (optional)
+                    <input
+                      value={discountCode}
+                      onChange={(e) => setDiscountCode(e.target.value)}
+                      placeholder="Enter code"
+                      className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 shadow-sm outline-none focus:border-slate-900"
+                    />
+                    <p className="mt-1 text-[11px] font-normal text-slate-500">
+                      Checkout pricing is locked once we generate a quote.
+                    </p>
+                  </label>
                 </div>
 
                 {hasStripe && isPaymentStep && (!pspUsed || pspUsed === "stripe") && (
@@ -1157,7 +1317,12 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
                   return (
                     <button
                       type="submit"
-                      disabled={step === "submitting"}
+                      disabled={
+                        step === "submitting" ||
+                        (!existingOrderId &&
+                          !isPaymentStep &&
+                          (!quote || quoteLoading || !!quoteError))
+                      }
                       className="mt-2 rounded-full bg-slate-900 px-4 py-2 text-xs font-medium text-white shadow-sm hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {ctaLabel}

@@ -74,7 +74,13 @@ export function CartDrawer() {
                           </p>
                         )}
                         <p className="mt-1 text-xs text-slate-600">
-                          {currency} {item.price.toFixed(2)}
+                          {currency}{" "}
+                          {(
+                            typeof item.price === "number" &&
+                            !Number.isNaN(item.price)
+                              ? item.price
+                              : 0
+                          ).toFixed(2)}
                         </p>
                       </div>
                       <button
