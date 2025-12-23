@@ -57,6 +57,13 @@ export default function CreatorCategoriesPage() {
     const view = searchParams?.get("view");
     const allowed = CATEGORY_VIEWS.some((v) => v.id === view);
     setActiveView(allowed && view ? view : DEFAULT_VIEW);
+
+    const dealsOnlyParam = searchParams?.get("dealsOnly");
+    if (dealsOnlyParam != null) {
+      setShowDealsOnly(dealsOnlyParam === "true" || dealsOnlyParam === "1");
+    } else {
+      setShowDealsOnly(false);
+    }
   }, [searchParams]);
 
   const { roots, hotDeals, isLoading, error, source } = useCreatorCategories(

@@ -39,6 +39,8 @@ export default function CreatorCategoryProductsPage() {
     : categorySlugParam;
   const searchParams = useSearchParams();
   const view = searchParams?.get("view");
+  const dealsOnlyParam = searchParams?.get("dealsOnly");
+  const dealsOnly = dealsOnlyParam === "true" || dealsOnlyParam === "1";
 
   const {
     creator,
@@ -116,6 +118,11 @@ export default function CreatorCategoryProductsPage() {
     );
   };
 
+  const displayProducts = useMemo(
+    () => (dealsOnly ? products.filter((p) => Boolean(p.bestDeal)) : products),
+    [products, dealsOnly],
+  );
+
   return (
     <div className="flex h-full flex-col gap-4">
       <header className="space-y-3">
@@ -181,14 +188,15 @@ export default function CreatorCategoryProductsPage() {
       {!isLoading && products.length > 0 && (
         <section className="mt-2">
           <div className="mb-3 text-[11px] text-[#b29a84]">
-            Showing {products.length} item
-            {products.length > 1 ? "s" : ""} in this category.
+            Showing {displayProducts.length} item
+            {displayProducts.length > 1 ? "s" : ""} in this category.
           </div>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-            {products.map((product) => (
+            {displayProducts.map((product) => (
               <ProductCard
                 key={product.id}
                 product={product}
+                displayMode={dealsOnly ? "deals" : "default"}
                 creatorName={creator.name}
                 creatorId={creator.id}
                 creatorSlug={creator.slug}

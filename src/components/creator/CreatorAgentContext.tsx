@@ -500,20 +500,18 @@ export function CreatorAgentProvider({
   );
 
   const creatorDeals = useMemo(() => {
-    if (!isMockMode) {
-      const unique = new Map<string, any>();
-      products.forEach((p) => {
-        if (p.bestDeal) {
-          const id = p.bestDeal.dealId || `${p.id}-deal`;
-          if (!unique.has(id)) {
-            unique.set(id, p.bestDeal);
-          }
+    const unique = new Map<string, any>();
+    products.forEach((p) => {
+      if (p.bestDeal) {
+        const id = p.bestDeal.dealId || `${p.id}-deal`;
+        if (!unique.has(id)) {
+          unique.set(id, p.bestDeal);
         }
-      });
-      const deals = Array.from(unique.values());
-      if (deals.length > 0) return deals.slice(0, 3);
-    }
-    return MOCK_DEALS.slice(0, 3);
+      }
+    });
+    const deals = Array.from(unique.values());
+    if (deals.length > 0) return deals.slice(0, 3);
+    return isMockMode ? MOCK_DEALS.slice(0, 3) : [];
   }, [isMockMode, products]);
 
   useEffect(() => {

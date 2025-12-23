@@ -8,6 +8,7 @@ import { useRef } from "react";
 type Props = {
   product: Product;
   variant?: "default" | "compact";
+  displayMode?: "default" | "deals";
   creatorName?: string;
   creatorId?: string;
   creatorSlug?: string;
@@ -15,9 +16,27 @@ type Props = {
   onViewDetails?: (product: Product) => void;
 };
 
+function formatDealEndsAt(endAt: string | undefined): string | null {
+  if (!endAt) return null;
+  const ts = Date.parse(endAt);
+  if (Number.isNaN(ts)) return null;
+  const diffMs = ts - Date.now();
+  if (diffMs <= 0) return "Ended";
+
+  const diffMinutes = Math.ceil(diffMs / (60 * 1000));
+  if (diffMinutes < 60) return `Ends in ${diffMinutes}m`;
+
+  const diffHours = Math.ceil(diffMs / (60 * 60 * 1000));
+  if (diffHours < 48) return `Ends in ${diffHours}h`;
+
+  const diffDays = Math.ceil(diffMs / (24 * 60 * 60 * 1000));
+  return `Ends in ${diffDays}d`;
+}
+
 export function ProductCard({
   product,
   variant = "default",
+  displayMode = "default",
   creatorName,
   creatorId,
   creatorSlug,
@@ -41,8 +60,11 @@ export function ProductCard({
     creatorMeta = `Appeared in ${creatorName}'s content ${product.creatorMentions} times`;
   }
 
+  const isDealsMode = displayMode === "deals";
   const hasFlashPrice =
-    typeof product.bestDeal?.flashPrice === "number" && product.bestDeal.flashPrice > 0;
+    !isDealsMode &&
+    typeof product.bestDeal?.flashPrice === "number" &&
+    product.bestDeal.flashPrice > 0;
 
   const handleCardClick = () => {
     if (onViewDetails) {
@@ -94,6 +116,29 @@ export function ProductCard({
       ? product.bestDeal.flashPrice
       : null;
 
+  const dealsLabel = (() => {
+    if (!product.bestDeal) return null;
+    if (product.bestDeal.label) return product.bestDeal.label;
+    if (product.bestDeal.type === "FREE_SHIPPING" || product.bestDeal.freeShipping) {
+      return "Free shipping";
+    }
+    if (typeof product.bestDeal.discountPercent === "number") {
+      return `${product.bestDeal.discountPercent}% off`;
+    }
+    if (
+      product.bestDeal.type === "MULTI_BUY_DISCOUNT" &&
+      typeof product.bestDeal.thresholdQuantity === "number" &&
+      product.bestDeal.thresholdQuantity > 0
+    ) {
+      return `Bundle deal (buy ${product.bestDeal.thresholdQuantity}+)`;
+    }
+    return null;
+  })();
+
+  const dealsEndsText = isDealsMode
+    ? formatDealEndsAt(product.bestDeal?.endAt)
+    : null;
+
   return (
     <div
       className={
@@ -130,7 +175,11 @@ export function ProductCard({
                 : "absolute left-2 top-2 rounded-full bg-[#f6b59b] px-2 py-0.5 text-[10px] font-semibold text-white shadow"
             }
           >
-            {product.bestDeal.type === "MULTI_BUY_DISCOUNT" ? "Bundle & save" : "Flash deal"}
+            {product.bestDeal.type === "MULTI_BUY_DISCOUNT"
+              ? "Bundle & save"
+              : product.bestDeal.type === "FREE_SHIPPING"
+                ? "Free shipping"
+                : "Flash deal"}
           </div>
         )}
         {onSeeSimilar && (
@@ -208,7 +257,7 @@ export function ProductCard({
                 </span>
               )}
             </div>
-            {product.bestDeal?.label && (
+            {((isDealsMode && dealsLabel) || (!isDealsMode && product.bestDeal?.label)) && (
               <span
                 className={
                   isCompact
@@ -216,7 +265,15 @@ export function ProductCard({
                     : "text-[11px] font-medium text-[#f28b7a]"
                 }
               >
-                {product.bestDeal.label}
+                {isDealsMode ? `Est. ${dealsLabel}` : product.bestDeal?.label}
+              </span>
+            )}
+            {isDealsMode && dealsEndsText && dealsEndsText !== "Ended" && (
+              <span className="text-[10px] text-[#a38b78]">{dealsEndsText}</span>
+            )}
+            {isDealsMode && (
+              <span className="text-[10px] text-[#a38b78]">
+                Final price locked at checkout
               </span>
             )}
           </div>
