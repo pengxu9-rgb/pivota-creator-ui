@@ -8,6 +8,8 @@ import { useCart } from "@/components/cart/CartProvider";
 import {
   AgentGatewayError,
   createOrderWithQuote,
+  isRetryableQuoteError,
+  parseAgentGatewayError,
   previewQuoteFromCart,
   submitPaymentForOrder,
   type SubmitPaymentResponse,
@@ -330,13 +332,7 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
           if (cancelled) return;
           setQuote(null);
           if (err instanceof AgentGatewayError) {
-            const body = err.body;
-            const detail = body?.detail ?? body;
-            const code = typeof detail?.code === "string" ? detail.code : null;
-            const msg =
-              (typeof detail?.message === "string" && detail.message) ||
-              (typeof detail === "string" && detail) ||
-              err.message;
+            const { code, message: msg } = parseAgentGatewayError(err);
             setQuoteError(code ? `${code}: ${msg}` : msg);
           } else {
             setQuoteError(err?.message || "Failed to preview quote");
@@ -475,20 +471,58 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
             setQuote(quoteToUse);
           }
 
-          const orderRes = await createOrderWithQuote({
-            quoteId: quoteToUse.quote_id,
-            items,
-            discountCodes,
-            email: effectiveEmail,
-            name,
-            addressLine1,
-            addressLine2: addressLine2 || undefined,
-            city,
-            country,
-            postalCode,
-            phone: phone || undefined,
-            notes: notes || undefined,
-          });
+          let orderRes: CheckoutOrderResponse;
+          try {
+            orderRes = await createOrderWithQuote({
+              quoteId: quoteToUse.quote_id,
+              items,
+              discountCodes,
+              email: effectiveEmail,
+              name,
+              addressLine1,
+              addressLine2: addressLine2 || undefined,
+              city,
+              country,
+              postalCode,
+              phone: phone || undefined,
+              notes: notes || undefined,
+            });
+          } catch (err) {
+            const { code } = parseAgentGatewayError(err);
+            if (isRetryableQuoteError(code)) {
+              // Auto refresh quote (expired/mismatch) and retry order create once.
+              const refreshedQuote = await previewQuoteFromCart({
+                items,
+                discountCodes,
+                email: effectiveEmail,
+                name,
+                addressLine1,
+                addressLine2: addressLine2 || undefined,
+                city,
+                country,
+                postalCode,
+                phone: phone || undefined,
+              });
+              setQuote(refreshedQuote);
+
+              orderRes = await createOrderWithQuote({
+                quoteId: refreshedQuote.quote_id,
+                items,
+                discountCodes,
+                email: effectiveEmail,
+                name,
+                addressLine1,
+                addressLine2: addressLine2 || undefined,
+                city,
+                country,
+                postalCode,
+                phone: phone || undefined,
+                notes: notes || undefined,
+              });
+            } else {
+              throw err;
+            }
+          }
 
           const createdOrderId =
             (orderRes as CheckoutOrderResponse).order_id ||
@@ -839,15 +873,8 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
     } catch (err) {
       console.error(err);
       if (err instanceof AgentGatewayError) {
-        const body = err.body;
-        const detail = body?.detail ?? body;
-        const code = typeof detail?.code === "string" ? detail.code : null;
-        const msg =
-          (typeof detail?.message === "string" && detail.message) ||
-          (typeof detail === "string" && detail) ||
-          err.message;
-
-        if (code === "QUOTE_EXPIRED" || code === "QUOTE_MISMATCH") {
+        const { code, message: msg } = parseAgentGatewayError(err);
+        if (isRetryableQuoteError(code)) {
           // Refresh quote-first state so the user can retry with a new quote.
           setQuote(null);
           setLockedPricing(null);
@@ -855,7 +882,9 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
           setLockedQuoteMeta(null);
           setIsPaymentStep(false);
           setOrderId(undefined);
-          setError(`${code}: ${msg}. Please refresh your quote and try again.`);
+          setError(
+            `${code}: ${msg}. We refreshed your quote state; please review and try again.`,
+          );
         } else {
           setError(code ? `${code}: ${msg}` : msg);
         }

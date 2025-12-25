@@ -58,6 +58,44 @@ export class AgentGatewayError extends Error {
   }
 }
 
+export function parseAgentGatewayError(err: unknown): {
+  code: string | null;
+  message: string;
+  detail: any;
+} {
+  if (!(err instanceof AgentGatewayError)) {
+    const msg =
+      err && typeof err === "object" && "message" in err && typeof (err as any).message === "string"
+        ? (err as any).message
+        : "Unknown error";
+    return { code: null, message: msg, detail: null };
+  }
+
+  const body = err.body;
+  const detail = body?.detail ?? body;
+  const code =
+    typeof detail?.code === "string"
+      ? detail.code
+      : typeof detail?.error === "string"
+        ? detail.error
+        : typeof body?.code === "string"
+          ? body.code
+          : typeof body?.error === "string"
+            ? body.error
+            : null;
+
+  const message =
+    (typeof detail?.message === "string" && detail.message) ||
+    (typeof detail === "string" && detail) ||
+    err.message;
+
+  return { code, message, detail };
+}
+
+export function isRetryableQuoteError(code: string | null): boolean {
+  return code === "QUOTE_EXPIRED" || code === "QUOTE_MISMATCH";
+}
+
 export type CheckoutOrderResponse = {
   order_id?: string;
   currency?: string;
