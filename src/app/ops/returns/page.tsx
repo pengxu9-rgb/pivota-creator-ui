@@ -18,10 +18,12 @@ type ReturnRecord = {
 type ListResponse = { items: ReturnRecord[]; total: number };
 
 const STATUSES = ['', 'open', 'closed', 'cancelled'] as const;
+const API_VERSIONS = ['2025-01', '2024-10', '2024-07'] as const;
 
 export default function OpsReturnsPage() {
   const [merchantId, setMerchantId] = useState('');
   const [status, setStatus] = useState<(typeof STATUSES)[number]>('');
+  const [apiVersion, setApiVersion] = useState<(typeof API_VERSIONS)[number]>('2025-01');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
@@ -66,6 +68,7 @@ export default function OpsReturnsPage() {
   const clearAll = () => {
     setMerchantId('');
     setStatus('');
+    setApiVersion('2025-01');
     setSyncResult(null);
   };
 
@@ -82,7 +85,7 @@ export default function OpsReturnsPage() {
       const res = await fetch('/api/ops/returns/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ merchantId: m, limit: 20 }),
+        body: JSON.stringify({ merchantId: m, limit: 20, apiVersion }),
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -119,6 +122,20 @@ export default function OpsReturnsPage() {
           />
         </div>
         <div className="flex flex-col gap-1">
+          <label className="text-xs text-white/70">Admin API version</label>
+          <select
+            className="rounded-md border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none"
+            value={apiVersion}
+            onChange={(e) => setApiVersion(e.target.value as any)}
+          >
+            {API_VERSIONS.map((v) => (
+              <option key={v} value={v}>
+                {v}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col gap-1">
           <label className="text-xs text-white/70">Status</label>
           <select
             className="rounded-md border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none"
@@ -153,6 +170,11 @@ export default function OpsReturnsPage() {
       {syncResult && (
         <div className="mb-4 rounded-md border border-white/10 bg-white/5 p-3 text-xs text-white/80">
           <div className="font-semibold mb-1">Sync result</div>
+          {syncResult?.ok && syncResult?.result?.ok === false && syncResult?.result?.hint ? (
+            <div className="mb-2 rounded-md border border-amber-400/30 bg-amber-500/10 p-2 text-amber-100">
+              {syncResult.result.hint}
+            </div>
+          ) : null}
           <pre className="overflow-x-auto">{JSON.stringify(syncResult, null, 2)}</pre>
         </div>
       )}
