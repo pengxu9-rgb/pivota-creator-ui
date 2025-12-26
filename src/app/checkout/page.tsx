@@ -955,6 +955,13 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
                     </p>
                   ) : (
                     (step === "success" ? placedItems! : items).map((item) => (
+                      (() => {
+                        const unitPrice =
+                          typeof item.price === "number" && !Number.isNaN(item.price)
+                            ? item.price
+                            : 0;
+
+                        return (
                       <div
                         key={item.id}
                         className="flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3"
@@ -972,14 +979,16 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
                           </p>
                           <div className="mt-1 flex items-center justify-between text-[11px] text-slate-600">
                             <span>
-                              {currency} {item.price.toFixed(2)} × {item.quantity}
+                              {currency} {unitPrice.toFixed(2)} × {item.quantity}
                             </span>
                             <span className="font-semibold text-slate-900">
-                              {currency} {(item.price * item.quantity).toFixed(2)}
+                              {currency} {(unitPrice * item.quantity).toFixed(2)}
                             </span>
                           </div>
                         </div>
                       </div>
+                        );
+                      })()
                     ))
                   )}
                 </div>

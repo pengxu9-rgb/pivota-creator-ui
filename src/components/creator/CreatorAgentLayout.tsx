@@ -2,7 +2,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Home,
@@ -76,6 +76,13 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
   );
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const bodyScrollLockRef = useRef<{
+    scrollY: number;
+    overflow: string;
+    position: string;
+    top: string;
+    width: string;
+  } | null>(null);
 
   // Initialise selection whenever a new detail product is opened.
   useEffect(() => {
@@ -178,15 +185,46 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
 
   // Prevent background scroll when mobile chat sheet is open
   useEffect(() => {
-    if (typeof document === "undefined") return;
-    const original = document.body.style.overflow;
+    if (typeof window === "undefined" || typeof document === "undefined") return;
+    const body = document.body;
+
     if (isMobileChatOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = original;
+      if (!bodyScrollLockRef.current) {
+        const scrollY = window.scrollY || 0;
+        bodyScrollLockRef.current = {
+          scrollY,
+          overflow: body.style.overflow,
+          position: body.style.position,
+          top: body.style.top,
+          width: body.style.width,
+        };
+        body.style.overflow = "hidden";
+        body.style.position = "fixed";
+        body.style.top = `-${scrollY}px`;
+        body.style.width = "100%";
+      }
+      return;
     }
+
+    const lock = bodyScrollLockRef.current;
+    if (lock) {
+      bodyScrollLockRef.current = null;
+      body.style.overflow = lock.overflow;
+      body.style.position = lock.position;
+      body.style.top = lock.top;
+      body.style.width = lock.width;
+      window.scrollTo(0, lock.scrollY);
+    }
+
     return () => {
-      document.body.style.overflow = original;
+      const cleanupLock = bodyScrollLockRef.current;
+      if (!cleanupLock) return;
+      bodyScrollLockRef.current = null;
+      body.style.overflow = cleanupLock.overflow;
+      body.style.position = cleanupLock.position;
+      body.style.top = cleanupLock.top;
+      body.style.width = cleanupLock.width;
+      window.scrollTo(0, cleanupLock.scrollY);
     };
   }, [isMobileChatOpen]);
 
