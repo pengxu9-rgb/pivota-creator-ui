@@ -28,20 +28,23 @@ const SOURCES = ['', 'stripe', 'shopify'] as const;
 
 export default function OpsDisputesPage() {
   const [merchantId, setMerchantId] = useState('');
+  const [orderId, setOrderId] = useState('');
   const [status, setStatus] = useState<(typeof STATUSES)[number]>('');
   const [source, setSource] = useState<(typeof SOURCES)[number]>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<ListResponse>({ items: [], total: 0 });
+  const [syncing, setSyncing] = useState(false);
 
   const queryString = useMemo(() => {
     const params = new URLSearchParams();
     if (merchantId.trim()) params.set('merchantId', merchantId.trim());
+    if (orderId.trim()) params.set('orderId', orderId.trim());
     if (status) params.set('status', status);
     if (source) params.set('source', source);
     params.set('limit', '100');
     return `?${params.toString()}`;
-  }, [merchantId, source, status]);
+  }, [merchantId, orderId, source, status]);
 
   const fetchDisputes = async () => {
     setLoading(true);
@@ -72,8 +75,33 @@ export default function OpsDisputesPage() {
 
   const clearAll = () => {
     setMerchantId('');
+    setOrderId('');
     setStatus('');
     setSource('');
+  };
+
+  const syncFromStripe = async () => {
+    const id = orderId.trim();
+    if (!id) return;
+    setSyncing(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/ops/disputes/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: id, limit: 20 }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(body?.message || body?.error || `Sync failed with status ${res.status}`);
+      }
+      await fetchDisputes();
+    } catch (err) {
+      console.error('[ops/disputes] sync error', err);
+      setError(err instanceof Error ? err.message : 'Failed to sync disputes.');
+    } finally {
+      setSyncing(false);
+    }
   };
 
   return (
@@ -93,6 +121,15 @@ export default function OpsDisputesPage() {
             placeholder="merch_xxx (optional)"
             value={merchantId}
             onChange={(e) => setMerchantId(e.target.value)}
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-white/70">Order ID</label>
+          <input
+            className="w-[320px] rounded-md border border-white/10 bg-black/30 px-3 py-2 text-sm font-mono outline-none"
+            placeholder="ORD_xxx (optional)"
+            value={orderId}
+            onChange={(e) => setOrderId(e.target.value)}
           />
         </div>
         <div className="flex flex-col gap-1">
@@ -130,6 +167,14 @@ export default function OpsDisputesPage() {
             onClick={fetchDisputes}
           >
             Refresh
+          </button>
+          <button
+            className="rounded-md bg-white/10 px-3 py-2 text-sm hover:bg-white/15 disabled:opacity-40"
+            onClick={syncFromStripe}
+            disabled={!orderId.trim() || syncing}
+            title="Backfill disputes for this order from Stripe (best-effort)"
+          >
+            {syncing ? 'Syncing…' : 'Sync from Stripe'}
           </button>
           <button
             className="rounded-md bg-white/5 px-3 py-2 text-sm hover:bg-white/10"
@@ -193,4 +238,3 @@ export default function OpsDisputesPage() {
     </div>
   );
 }
-
