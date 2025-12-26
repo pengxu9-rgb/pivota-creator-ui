@@ -125,17 +125,20 @@ export function CartDrawer() {
             </span>
           </div>
           <div className="mt-3 flex gap-2">
-            <button
-              type="button"
-              disabled={items.length === 0}
-              onClick={() => {
+            <a
+              aria-disabled={items.length === 0}
+              href={items.length === 0 ? undefined : "/checkout"}
+              onClick={(e) => {
+                if (items.length === 0) {
+                  e.preventDefault();
+                  return;
+                }
                 close();
-                router.push("/checkout");
               }}
-              className="flex-1 rounded-full bg-slate-900 px-4 py-2 text-xs font-medium text-white shadow-sm hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex-1 rounded-full bg-slate-900 px-4 py-2 text-center text-xs font-medium text-white shadow-sm hover:bg-slate-800 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
             >
               Checkout
-            </button>
+            </a>
             {items.length > 0 && (
               <button
                 type="button"

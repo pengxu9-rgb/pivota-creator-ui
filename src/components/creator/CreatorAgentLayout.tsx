@@ -443,23 +443,18 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                     <User className="h-3.5 w-3.5 text-[#b29a84]" />
                   </a>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const returnTo =
-                        typeof window !== "undefined"
-                          ? window.location.pathname + window.location.search
-                          : `/creator/${creator.slug}`;
-                      router.push(
-                        `/account/login?return_to=${encodeURIComponent(
-                          returnTo,
-                        )}`,
-                      );
-                    }}
+                  <a
+                    href={`/account/login?return_to=${encodeURIComponent(
+                      `${pathname || `/creator/${creator.slug}`}${
+                        searchParams?.toString()
+                          ? `?${searchParams.toString()}`
+                          : ""
+                      }`,
+                    )}`}
                     className="hidden items-center rounded-full border border-[#f0e2d6] bg-white px-3 py-1.5 text-xs text-[#8c715c] hover:bg-[#fff0e3] sm:inline-flex"
                   >
                     Sign in
-                  </button>
+                  </a>
                 ))}
 
               <button
