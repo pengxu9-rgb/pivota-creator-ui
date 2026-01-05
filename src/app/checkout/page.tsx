@@ -167,6 +167,8 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
     items[0]?.currency ||
     "USD";
 
+  const estimateCurrency = items[0]?.currency || "USD";
+
   const toNumber = (v: any) => {
     const n = typeof v === "number" ? v : Number(v);
     return Number.isFinite(n) ? n : 0;
@@ -206,9 +208,12 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
 
   const cartSubtotalEstimate = subtotal;
   const hasLockedQuote = Boolean(quote && quote?.pricing && !quoteLoading && !quoteError);
-  const subtotalDelta = hasLockedQuote ? effectiveSubtotal - cartSubtotalEstimate : 0;
-  const showSubtotalDeltaExplainer =
-    !existingOrderId && !isPaymentStep && hasLockedQuote && Math.abs(subtotalDelta) >= 0.01;
+  const currenciesMatch = estimateCurrency === currency;
+  const subtotalDelta = hasLockedQuote && currenciesMatch ? effectiveSubtotal - cartSubtotalEstimate : 0;
+  const showCurrencySwitchNote =
+    !existingOrderId && !isPaymentStep && hasLockedQuote && !currenciesMatch;
+  const showSubtotalDeltaNote =
+    !existingOrderId && !isPaymentStep && hasLockedQuote && currenciesMatch && Math.abs(subtotalDelta) >= 0.01;
 
   useEffect(() => {
     let cancelled = false;
@@ -1023,7 +1028,9 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
 
                         const unitPrice = usingLockedUnit ? lockedUnitPrice : estimatedUnitPrice;
                         const showUnitPriceDelta =
-                          usingLockedUnit && Math.abs(unitPrice - estimatedUnitPrice) >= 0.01;
+                          usingLockedUnit &&
+                          currenciesMatch &&
+                          Math.abs(unitPrice - estimatedUnitPrice) >= 0.01;
 
                         return (
                       <div
@@ -1097,32 +1104,33 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
                     </div>
                   )}
 
-                  {showSubtotalDeltaExplainer && (
-                    <div className="mb-2 rounded-2xl border border-slate-200 bg-slate-50 p-2 text-[11px] text-slate-700">
-                      <p className="font-medium text-slate-900">
-                        Why does the subtotal look different?
-                      </p>
-                      <p className="mt-0.5 text-slate-600">
-                        Product page/cart prices are estimates. Once we lock pricing, we use the merchant’s live checkout price for your address.
-                      </p>
-                      <details className="mt-1 text-slate-600">
-                        <summary className="cursor-pointer select-none text-slate-700">
-                          Common reasons
-                        </summary>
-                        <div className="mt-1 space-y-0.5">
-                          <p>• Discounts/promotions applied at checkout</p>
-                          <p>• Variant/option price differs from the default listing</p>
-                          <p>• Currency rounding and merchant price updates</p>
-                          <p>• Shipping/tax can affect totals (shown below)</p>
-                        </div>
-                      </details>
-                      <p className="mt-1 text-slate-600">
-                        Difference vs cart estimate:{" "}
-                        <span className={subtotalDelta >= 0 ? "font-semibold text-slate-900" : "font-semibold text-emerald-700"}>
-                          {subtotalDelta >= 0 ? "+" : "-"}
-                          {currency} {Math.abs(subtotalDelta).toFixed(2)}
-                        </span>
-                      </p>
+                  {showCurrencySwitchNote && (
+                    <p className="mb-2 text-[11px] text-slate-600">
+                      Currency updates from{" "}
+                      <span className="font-semibold text-slate-900">{estimateCurrency}</span>{" "}
+                      to{" "}
+                      <span className="font-semibold text-slate-900">{currency}</span>{" "}
+                      after you select a shipping country.
+                    </p>
+                  )}
+
+                  {showSubtotalDeltaNote && (
+                    <p className="mb-2 text-[11px] text-slate-600">
+                      Subtotal updated at checkout{" "}
+                      <span className={subtotalDelta >= 0 ? "font-semibold text-slate-900" : "font-semibold text-emerald-700"}>
+                        ({subtotalDelta >= 0 ? "+" : "-"}
+                        {currency} {Math.abs(subtotalDelta).toFixed(2)})
+                      </span>
+                      .
+                    </p>
+                  )}
+
+                  {showCurrencySwitchNote && (
+                    <div className="flex items-center justify-between text-[11px] text-slate-600">
+                      <span>Estimated subtotal ({estimateCurrency})</span>
+                      <span className="font-semibold text-slate-900">
+                        {estimateCurrency} {cartSubtotalEstimate.toFixed(2)}
+                      </span>
                     </div>
                   )}
 
