@@ -132,6 +132,14 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
   const [lockedQuoteMeta, setLockedQuoteMeta] = useState<any>(null);
   const [lockedCurrency, setLockedCurrency] = useState<string | null>(null);
 
+  // Prefetch submit_payment once we enter the payment step so the "Place order"
+  // click can focus on Stripe confirmCardPayment (faster perceived checkout).
+  const paymentInitPromiseRef = useRef<Promise<SubmitPaymentResponse> | null>(null);
+  const paymentInitKeyRef = useRef<string | null>(null);
+  const [paymentInitLoading, setPaymentInitLoading] = useState(false);
+  const [paymentInitError, setPaymentInitError] = useState<string | null>(null);
+  const [prefetchedPaymentRes, setPrefetchedPaymentRes] = useState<SubmitPaymentResponse | null>(null);
+
   const existingPricing =
     existingOrderId && existingTotalMinor != null
       ? {
@@ -183,6 +191,98 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
     const cur = s.trim().toUpperCase();
     return cur || null;
   };
+
+  const amountToCharge = useMemo(() => {
+    if (existingTotalMinor != null) return existingTotalMinor / 100;
+    if (lockedPricing && (lockedPricing as any).total != null) {
+      return toNumber((lockedPricing as any).total);
+    }
+    if (placedTotal != null) return placedTotal;
+    return subtotal;
+  }, [existingTotalMinor, lockedPricing, placedTotal, subtotal]);
+
+  const orderIdForPayment = existingOrderId || orderId || null;
+  const paymentInitKey = useMemo(() => {
+    if (!orderIdForPayment) return null;
+    const cur = normalizeCurrencyCode(currency);
+    const amountMinor = Number.isFinite(amountToCharge) ? Math.round(amountToCharge * 100) : null;
+    if (!cur || amountMinor == null) return null;
+    return `${orderIdForPayment}:${cur}:${amountMinor}`;
+  }, [orderIdForPayment, currency, amountToCharge]);
+
+  useEffect(() => {
+    if (!stripeConfigured) return;
+    if (!isPaymentStep) return;
+    if (!paymentInitKey) return;
+    if (!orderIdForPayment) return;
+
+    // Only prefetch for Stripe card flow.
+    const isStripePsp = !pspUsed || pspUsed === "stripe";
+    if (!isStripePsp) return;
+
+    // For new orders, wait until we have server-side locked totals so we don't
+    // accidentally create a payment intent with a stale amount.
+    if (!existingOrderId) {
+      if (!lockedPricing || (lockedPricing as any).total == null) return;
+    }
+
+    // Avoid duplicating submit_payment calls for the same order/amount/currency.
+    if (paymentInitKeyRef.current === paymentInitKey && paymentInitPromiseRef.current) return;
+    if (prefetchedPaymentRes && paymentInitKeyRef.current === paymentInitKey) return;
+
+    setPaymentInitLoading(true);
+    setPaymentInitError(null);
+    setPrefetchedPaymentRes(null);
+
+    const returnUrl =
+      typeof window !== "undefined"
+        ? `${window.location.origin}/account/orders`
+        : undefined;
+
+    const promise = submitPaymentForOrder({
+      orderId: orderIdForPayment,
+      amount: amountToCharge,
+      currency,
+      paymentMethodHint: "card",
+      returnUrl,
+    });
+
+    paymentInitKeyRef.current = paymentInitKey;
+    paymentInitPromiseRef.current = promise;
+
+    promise
+      .then((res) => {
+        setPrefetchedPaymentRes(res);
+      })
+      .catch((err) => {
+        console.error("prefetch submit_payment error", err);
+        const msg = err instanceof Error ? err.message : String(err);
+        setPaymentInitError(msg || "Failed to prepare payment");
+      })
+      .finally(() => {
+        setPaymentInitLoading(false);
+      });
+  }, [
+    stripeConfigured,
+    isPaymentStep,
+    paymentInitKey,
+    orderIdForPayment,
+    existingOrderId,
+    pspUsed,
+    amountToCharge,
+    currency,
+    prefetchedPaymentRes,
+    lockedPricing,
+  ]);
+
+  useEffect(() => {
+    if (isPaymentStep) return;
+    paymentInitPromiseRef.current = null;
+    paymentInitKeyRef.current = null;
+    setPaymentInitLoading(false);
+    setPaymentInitError(null);
+    setPrefetchedPaymentRes(null);
+  }, [isPaymentStep]);
 
   const promotionDiscountFromLines = (lines: any[]) =>
     lines.reduce((sum, pl) => sum + Math.abs(toNumber(pl?.amount)), 0);
@@ -602,6 +702,9 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
             ? anyOrder.line_items
             : [];
           const respQuoteMeta = anyOrder.quote || null;
+          const fallbackQuoteLineItems = Array.isArray(quoteToUse?.line_items)
+            ? (quoteToUse as any).line_items
+            : [];
           const respCurrency =
             normalizeCurrencyCode(anyOrder.currency) ||
             normalizeCurrencyCode(respQuoteMeta?.currency) ||
@@ -610,8 +713,8 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
 
           setLockedPricing(respPricing);
           setLockedPromotionLines(respPromotionLines);
-          setLockedLineItems(respLineItems);
-          setLockedQuoteMeta(respQuoteMeta);
+          setLockedLineItems(respLineItems.length ? respLineItems : fallbackQuoteLineItems);
+          setLockedQuoteMeta(respQuoteMeta || quoteToUse || null);
           setLockedCurrency(respCurrency);
 
           // Use pricing/promotion_lines (not subtotal-total guessing).
@@ -669,36 +772,32 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
         }
       }
 
-      // Ask gateway to initiate payment. We will only show a "success" state
+      // Ask gateway to initiate payment (prefer prefetch). We will only show a "success" state
       // if payment has either been redirected to PSP or clearly marked as
       // succeeded/processing.
       let paymentRes: SubmitPaymentResponse | null = null;
       try {
-        const returnUrl =
-          typeof window !== "undefined"
-            ? `${window.location.origin}/account/orders`
-            : undefined;
+        if (paymentInitKey && paymentInitKeyRef.current === paymentInitKey) {
+          if (prefetchedPaymentRes) {
+            paymentRes = prefetchedPaymentRes;
+          } else if (paymentInitPromiseRef.current) {
+            paymentRes = await paymentInitPromiseRef.current;
+          }
+        }
 
-        // Use the server-side total when available so that expected_amount
-        // matches the discounted order amount (especially when promotions
-        // like multi-buy are applied). For existing orders we keep using the
-        // amount_minor passed from the Orders page.
-        const amountToCharge =
-          existingTotalMinor != null
-            ? existingTotalMinor / 100
-            : lockedPricing && (lockedPricing as any).total != null
-              ? toNumber((lockedPricing as any).total)
-              : placedTotal != null
-                ? placedTotal
-                : effectiveTotal || subtotal;
-
-        paymentRes = await submitPaymentForOrder({
-          orderId: currentOrderId as string,
-          amount: amountToCharge,
-          currency,
-          paymentMethodHint: "card",
-          returnUrl,
-        });
+        if (!paymentRes) {
+          const returnUrl =
+            typeof window !== "undefined"
+              ? `${window.location.origin}/account/orders`
+              : undefined;
+          paymentRes = await submitPaymentForOrder({
+            orderId: currentOrderId as string,
+            amount: amountToCharge,
+            currency,
+            paymentMethodHint: "card",
+            returnUrl,
+          });
+        }
       } catch (paymentErr) {
         console.error("submit_payment error", paymentErr);
         setPaymentStatus("payment_pending");
@@ -1046,7 +1145,12 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
                           lockedUnitPrice > 0 &&
                           (hasLockedQuote || isPaymentStep || step === "success");
 
-                        const rowCurrency = usingLockedUnit ? currency : estimateCurrency;
+                        const rowCurrency =
+                          isPaymentStep || step === "success"
+                            ? currency
+                            : usingLockedUnit
+                              ? currency
+                              : estimateCurrency;
                         const unitPrice = usingLockedUnit ? lockedUnitPrice : estimatedUnitPrice;
                         const showUnitPriceDelta =
                           usingLockedUnit &&
@@ -1470,6 +1574,16 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
                         />
                       </div>
                     </label>
+                    {paymentInitLoading && (
+                      <p className="text-[11px] text-slate-500">
+                        Preparing payment…
+                      </p>
+                    )}
+                    {paymentInitError && (
+                      <p className="text-[11px] text-rose-500">
+                        {paymentInitError}
+                      </p>
+                    )}
                     {cardError && (
                       <p className="text-[11px] text-rose-500">
                         {cardError}
