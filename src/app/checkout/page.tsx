@@ -1026,6 +1026,7 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
                           lockedUnitPrice > 0 &&
                           (hasLockedQuote || isPaymentStep || step === "success");
 
+                        const rowCurrency = usingLockedUnit ? currency : estimateCurrency;
                         const unitPrice = usingLockedUnit ? lockedUnitPrice : estimatedUnitPrice;
                         const showUnitPriceDelta =
                           usingLockedUnit &&
@@ -1050,7 +1051,7 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
                           </p>
                           <div className="mt-1 flex items-center justify-between text-[11px] text-slate-600">
                             <span>
-                              {currency}{" "}
+                              {rowCurrency}{" "}
                               {showUnitPriceDelta ? (
                                 <>
                                   <span className="mr-1 line-through text-slate-400">
@@ -1066,7 +1067,7 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
                               × {item.quantity}
                             </span>
                             <span className="font-semibold text-slate-900">
-                              {currency} {(unitPrice * item.quantity).toFixed(2)}
+                              {rowCurrency} {(unitPrice * item.quantity).toFixed(2)}
                             </span>
                           </div>
                           {showUnitPriceDelta && (

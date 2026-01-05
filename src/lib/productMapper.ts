@@ -127,7 +127,40 @@ function normalizeVariants(raw: any): ProductVariant[] | undefined {
       ? raw.variants
       : null;
 
-  if (!src) return undefined;
+  if (!src) {
+    // Some upstreams omit `variants` for single-SKU products but still provide
+    // a Shopify variant_id via product_ref / sku_id. Checkout requires variant_id.
+    const ref = raw?.product_ref || raw?.productRef || null;
+    const refVariantId =
+      (ref && (ref.variant_id || ref.variantId || ref.sku_id || ref.skuId)) ||
+      raw?.variant_id ||
+      raw?.variantId ||
+      raw?.sku_id ||
+      raw?.skuId ||
+      null;
+    const id = refVariantId != null ? String(refVariantId).trim() : "";
+    if (!id) return undefined;
+
+    const priceValue = typeof raw?.price === "number" ? raw.price : 0;
+    const inventoryQuantity =
+      typeof raw?.inventory_quantity === "number" ? raw.inventory_quantity : undefined;
+    const title = "Default";
+    const skuRaw =
+      (ref && (ref.sku_id || ref.skuId)) || raw?.sku_id || raw?.skuId || undefined;
+    const sku = skuRaw != null ? String(skuRaw) : undefined;
+
+    return [
+      {
+        id,
+        title,
+        price: priceValue,
+        sku,
+        inventoryQuantity,
+        options: undefined,
+        imageUrl: typeof raw?.image_url === "string" ? raw.image_url : undefined,
+      },
+    ];
+  }
 
   const variants: ProductVariant[] = [];
   for (const v of src) {
@@ -196,7 +229,7 @@ export function mapRawProduct(raw: RawProduct): Product {
         ? raw.description
         : undefined,
     price: raw.price,
-    currency: raw.currency,
+    currency: raw.currency || (raw as any).currency_code,
     imageUrl: raw.image_url,
     inventoryQuantity: raw.inventory_quantity,
     merchantId: raw.merchant_id,

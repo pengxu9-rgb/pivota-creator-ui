@@ -38,8 +38,21 @@ export interface RawProduct {
   description: string;
   price: number;
   currency: string;
+  // Some backends send currency as currency_code.
+  currency_code?: string;
   image_url: string;
   inventory_quantity: number;
+  // Some unified catalog backends include a product_ref carrying variant_id / sku_id.
+  product_ref?: {
+    platform?: string;
+    platform_product_id?: string;
+    variant_id?: string;
+    sku_id?: string;
+  };
+  // Optional flattened ids used by some adapters.
+  platform_product_id?: string;
+  variant_id?: string;
+  sku_id?: string;
   // Optional merchant metadata (populated by real backend)
   merchant_id?: string;
   merchant_name?: string;
