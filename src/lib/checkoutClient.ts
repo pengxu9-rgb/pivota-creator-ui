@@ -62,13 +62,14 @@ export function parseAgentGatewayError(err: unknown): {
   code: string | null;
   message: string;
   detail: any;
+  debugId: string | null;
 } {
   if (!(err instanceof AgentGatewayError)) {
     const msg =
       err && typeof err === "object" && "message" in err && typeof (err as any).message === "string"
         ? (err as any).message
         : "Unknown error";
-    return { code: null, message: msg, detail: null };
+    return { code: null, message: msg, detail: null, debugId: null };
   }
 
   const body = err.body;
@@ -84,12 +85,19 @@ export function parseAgentGatewayError(err: unknown): {
             ? body.error
             : null;
 
+  const debugId =
+    typeof detail?.debug_id === "string"
+      ? detail.debug_id
+      : typeof body?.debug_id === "string"
+        ? body.debug_id
+        : null;
+
   const message =
     (typeof detail?.message === "string" && detail.message) ||
     (typeof detail === "string" && detail) ||
     err.message;
 
-  return { code, message, detail };
+  return { code, message, detail, debugId };
 }
 
 export function isRetryableQuoteError(code: string | null): boolean {

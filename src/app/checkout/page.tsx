@@ -127,6 +127,7 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
   // Locked pricing/promotion lines captured from order.create response (source of truth for payment step).
   const [lockedPricing, setLockedPricing] = useState<CheckoutOrderResponse["pricing"] | null>(null);
   const [lockedPromotionLines, setLockedPromotionLines] = useState<any[]>([]);
+  const [lockedLineItems, setLockedLineItems] = useState<any[]>([]);
   const [lockedQuoteMeta, setLockedQuoteMeta] = useState<any>(null);
 
   const existingPricing =
@@ -174,6 +175,19 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
   const promotionDiscountFromLines = (lines: any[]) =>
     lines.reduce((sum, pl) => sum + Math.abs(toNumber(pl?.amount)), 0);
 
+  const activeLineItemByVariantId = useMemo(() => {
+    const activeLineItems =
+      step === "success" || isPaymentStep
+        ? (lockedLineItems.length ? lockedLineItems : quote?.line_items || [])
+        : quote?.line_items || [];
+    const m = new Map<string, any>();
+    for (const li of (activeLineItems || []) as any[]) {
+      const vid = li?.variant_id;
+      if (vid != null) m.set(String(vid), li);
+    }
+    return m;
+  }, [isPaymentStep, lockedLineItems, quote, step]);
+
   const effectiveSubtotal = activePricing ? toNumber((activePricing as any).subtotal) : subtotal;
   const effectiveShippingFee = activePricing ? toNumber((activePricing as any).shipping_fee) : 0;
   const effectiveTax = activePricing ? toNumber((activePricing as any).tax) : 0;
@@ -189,6 +203,12 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
   // local email the user has typed during this checkout session.
   const displayEmail =
     (accountsUser && accountsUser.email) || email || loginEmail || "";
+
+  const cartSubtotalEstimate = subtotal;
+  const hasLockedQuote = Boolean(quote && quote?.pricing && !quoteLoading && !quoteError);
+  const subtotalDelta = hasLockedQuote ? effectiveSubtotal - cartSubtotalEstimate : 0;
+  const showSubtotalDeltaExplainer =
+    !existingOrderId && !isPaymentStep && hasLockedQuote && Math.abs(subtotalDelta) >= 0.01;
 
   useEffect(() => {
     let cancelled = false;
@@ -332,8 +352,9 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
           if (cancelled) return;
           setQuote(null);
           if (err instanceof AgentGatewayError) {
-            const { code, message: msg } = parseAgentGatewayError(err);
-            setQuoteError(code ? `${code}: ${msg}` : msg);
+            const { code, message: msg, debugId } = parseAgentGatewayError(err);
+            const suffix = debugId ? ` (debug_id: ${debugId})` : "";
+            setQuoteError(code ? `${code}: ${msg}${suffix}` : `${msg}${suffix}`);
           } else {
             setQuoteError(err?.message || "Failed to preview quote");
           }
@@ -562,10 +583,14 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
           const respPromotionLines = Array.isArray(anyOrder.promotion_lines)
             ? anyOrder.promotion_lines
             : [];
+          const respLineItems = Array.isArray(anyOrder.line_items)
+            ? anyOrder.line_items
+            : [];
           const respQuoteMeta = anyOrder.quote || null;
 
           setLockedPricing(respPricing);
           setLockedPromotionLines(respPromotionLines);
+          setLockedLineItems(respLineItems);
           setLockedQuoteMeta(respQuoteMeta);
 
           // Use pricing/promotion_lines (not subtotal-total guessing).
@@ -794,6 +819,14 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
 
       const isStripePsp = !pspUsed || pspUsed === "stripe";
 
+      if (clientSecret && isStripePsp && !hasStripe) {
+        setError(
+          "Card payments aren’t available right now because Stripe isn’t configured on this site. Please contact support or try again later.",
+        );
+        setStep("error");
+        return;
+      }
+
       if (clientSecret && hasStripe && isStripePsp) {
         if (!stripe || !elements) {
           setError(
@@ -873,20 +906,22 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
     } catch (err) {
       console.error(err);
       if (err instanceof AgentGatewayError) {
-        const { code, message: msg } = parseAgentGatewayError(err);
+        const { code, message: msg, debugId } = parseAgentGatewayError(err);
+        const suffix = debugId ? ` (debug_id: ${debugId})` : "";
         if (isRetryableQuoteError(code)) {
           // Refresh quote-first state so the user can retry with a new quote.
           setQuote(null);
           setLockedPricing(null);
           setLockedPromotionLines([]);
+          setLockedLineItems([]);
           setLockedQuoteMeta(null);
           setIsPaymentStep(false);
           setOrderId(undefined);
           setError(
-            `${code}: ${msg}. We refreshed your quote state; please review and try again.`,
+            `${code}: ${msg}${suffix}. We refreshed your quote state; please review and try again.`,
           );
         } else {
-          setError(code ? `${code}: ${msg}` : msg);
+          setError(code ? `${code}: ${msg}${suffix}` : `${msg}${suffix}`);
         }
       } else {
         setError(
@@ -956,10 +991,39 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
                   ) : (
                     (step === "success" ? placedItems! : items).map((item) => (
                       (() => {
-                        const unitPrice =
-                          typeof item.price === "number" && !Number.isNaN(item.price)
-                            ? item.price
-                            : 0;
+                        const estimatedUnitPrice =
+                          typeof item.price === "number" && !Number.isNaN(item.price) ? item.price : 0;
+
+                        const variantKey =
+                          item.variantId != null
+                            ? String(item.variantId)
+                            : (item as any).variant_id != null
+                              ? String((item as any).variant_id)
+                              : null;
+
+                        const pricingLine = variantKey
+                          ? activeLineItemByVariantId.get(variantKey)
+                          : null;
+
+                        const lockedUnitPriceRaw =
+                          pricingLine?.unit_price_effective ??
+                          pricingLine?.unit_price_original ??
+                          pricingLine?.unit_price ??
+                          pricingLine?.price ??
+                          null;
+
+                        const lockedUnitPrice =
+                          lockedUnitPriceRaw != null ? toNumber(lockedUnitPriceRaw) : null;
+
+                        const usingLockedUnit =
+                          !existingOrderId &&
+                          lockedUnitPrice != null &&
+                          lockedUnitPrice > 0 &&
+                          (hasLockedQuote || isPaymentStep || step === "success");
+
+                        const unitPrice = usingLockedUnit ? lockedUnitPrice : estimatedUnitPrice;
+                        const showUnitPriceDelta =
+                          usingLockedUnit && Math.abs(unitPrice - estimatedUnitPrice) >= 0.01;
 
                         return (
                       <div
@@ -979,12 +1043,30 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
                           </p>
                           <div className="mt-1 flex items-center justify-between text-[11px] text-slate-600">
                             <span>
-                              {currency} {unitPrice.toFixed(2)} × {item.quantity}
+                              {currency}{" "}
+                              {showUnitPriceDelta ? (
+                                <>
+                                  <span className="mr-1 line-through text-slate-400">
+                                    {estimatedUnitPrice.toFixed(2)}
+                                  </span>
+                                  <span className="font-semibold text-slate-900">
+                                    {unitPrice.toFixed(2)}
+                                  </span>
+                                </>
+                              ) : (
+                                <span>{unitPrice.toFixed(2)}</span>
+                              )}{" "}
+                              × {item.quantity}
                             </span>
                             <span className="font-semibold text-slate-900">
                               {currency} {(unitPrice * item.quantity).toFixed(2)}
                             </span>
                           </div>
+                          {showUnitPriceDelta && (
+                            <p className="mt-1 text-[11px] text-slate-500">
+                              Updated at checkout based on live merchant pricing for your shipping address.
+                            </p>
+                          )}
                         </div>
                       </div>
                         );
@@ -996,7 +1078,12 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
                   {!existingOrderId && !isPaymentStep && (
                     <div className="mb-2 text-[11px] text-slate-600">
                       {quoteLoading ? (
-                        <span>Locking your price…</span>
+                        <span>
+                          Locking your price…{" "}
+                          <span className="text-slate-500">
+                            (We’re fetching live pricing/shipping; this can take up to ~60s.)
+                          </span>
+                        </span>
                       ) : quoteError ? (
                         <span className="text-rose-600">{quoteError}</span>
                       ) : activeExpiresAt ? (
@@ -1007,6 +1094,35 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
                       ) : (
                         <span>Enter your shipping details to lock pricing.</span>
                       )}
+                    </div>
+                  )}
+
+                  {showSubtotalDeltaExplainer && (
+                    <div className="mb-2 rounded-2xl border border-slate-200 bg-slate-50 p-2 text-[11px] text-slate-700">
+                      <p className="font-medium text-slate-900">
+                        Why does the subtotal look different?
+                      </p>
+                      <p className="mt-0.5 text-slate-600">
+                        Product page/cart prices are estimates. Once we lock pricing, we use the merchant’s live checkout price for your address.
+                      </p>
+                      <details className="mt-1 text-slate-600">
+                        <summary className="cursor-pointer select-none text-slate-700">
+                          Common reasons
+                        </summary>
+                        <div className="mt-1 space-y-0.5">
+                          <p>• Discounts/promotions applied at checkout</p>
+                          <p>• Variant/option price differs from the default listing</p>
+                          <p>• Currency rounding and merchant price updates</p>
+                          <p>• Shipping/tax can affect totals (shown below)</p>
+                        </div>
+                      </details>
+                      <p className="mt-1 text-slate-600">
+                        Difference vs cart estimate:{" "}
+                        <span className={subtotalDelta >= 0 ? "font-semibold text-slate-900" : "font-semibold text-emerald-700"}>
+                          {subtotalDelta >= 0 ? "+" : "-"}
+                          {currency} {Math.abs(subtotalDelta).toFixed(2)}
+                        </span>
+                      </p>
                     </div>
                   )}
 
@@ -1326,6 +1442,12 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
                       </p>
                     )}
                   </div>
+                )}
+
+                {!hasStripe && isPaymentStep && (!pspUsed || pspUsed === "stripe") && (
+                  <p className="text-[11px] text-rose-500">
+                    Card payments aren’t configured on this site (missing Stripe publishable key). Please contact support or try again later.
+                  </p>
                 )}
 
                 {error && (
