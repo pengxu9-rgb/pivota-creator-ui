@@ -34,14 +34,13 @@ type CheckoutStep = "form" | "submitting" | "success" | "error";
 type AuthStep = "checking" | "email" | "otp" | "authed";
 
 const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "";
-const hasStripe = !!publishableKey;
+const stripeConfigured = Boolean(publishableKey);
+const stripePromise = stripeConfigured ? loadStripe(publishableKey) : null;
 
 export default function CheckoutPage() {
-  if (!hasStripe) {
-    return <CheckoutInner hasStripe={false} stripe={null} elements={null} />;
+  if (!stripeConfigured) {
+    return <CheckoutInner stripeConfigured={false} stripeReady={false} stripe={null} elements={null} />;
   }
-
-  const stripePromise = loadStripe(publishableKey);
 
   return (
     <Elements stripe={stripePromise}>
@@ -55,7 +54,8 @@ function CheckoutWithStripe() {
   const elements = useElements();
   return (
     <CheckoutInner
-      hasStripe={!!stripe}
+      stripeConfigured={stripeConfigured}
+      stripeReady={!!stripe}
       stripe={stripe}
       elements={elements}
     />
@@ -63,12 +63,13 @@ function CheckoutWithStripe() {
 }
 
 type CheckoutInnerProps = {
-  hasStripe: boolean;
+  stripeConfigured: boolean;
+  stripeReady: boolean;
   stripe: any;
   elements: any;
 };
 
-function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
+function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: CheckoutInnerProps) {
   const router = useRouter();
   const { items, subtotal, clear } = useCart();
   const [step, setStep] = useState<CheckoutStep>("form");
@@ -824,7 +825,7 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
 
       const isStripePsp = !pspUsed || pspUsed === "stripe";
 
-      if (clientSecret && isStripePsp && !hasStripe) {
+      if (clientSecret && isStripePsp && !stripeConfigured) {
         setError(
           "Card payments aren’t available right now because Stripe isn’t configured on this site. Please contact support or try again later.",
         );
@@ -832,7 +833,7 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
         return;
       }
 
-      if (clientSecret && hasStripe && isStripePsp) {
+      if (clientSecret && stripeConfigured && isStripePsp) {
         if (!stripe || !elements) {
           setError(
             "Payment form is not ready. Please refresh the page and try again.",
@@ -1427,11 +1428,16 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
                   </label>
                 </div>
 
-                {hasStripe && isPaymentStep && (!pspUsed || pspUsed === "stripe") && (
+                {stripeConfigured && isPaymentStep && (!pspUsed || pspUsed === "stripe") && (
                   <div className="grid grid-cols-1 gap-2">
                     <label className="text-[11px] font-medium text-slate-700">
                       Card details
                       <div className="mt-1 rounded-xl border border-slate-200 bg-white px-3 py-2">
+                        {!stripeReady && (
+                          <div className="pb-1 text-[11px] text-slate-500">
+                            Loading secure card fields…
+                          </div>
+                        )}
                         <CardElement
                           options={{
                             style: {
@@ -1453,7 +1459,7 @@ function CheckoutInner({ hasStripe, stripe, elements }: CheckoutInnerProps) {
                   </div>
                 )}
 
-                {!hasStripe && isPaymentStep && (!pspUsed || pspUsed === "stripe") && (
+                {!stripeConfigured && isPaymentStep && (!pspUsed || pspUsed === "stripe") && (
                   <p className="text-[11px] text-rose-500">
                     Card payments aren’t configured on this site (missing Stripe publishable key). Please contact support or try again later.
                   </p>
