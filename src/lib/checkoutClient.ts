@@ -223,10 +223,22 @@ export async function previewQuoteFromCart(params: {
     throw new Error("Cannot preview quote with empty cart");
   }
 
+  const missingVariant = params.items.filter((item) => !item.variantId);
+  if (missingVariant.length > 0) {
+    const titles = missingVariant
+      .slice(0, 3)
+      .map((i) => i.title)
+      .filter(Boolean)
+      .join(", ");
+    throw new Error(
+      `Please select a size/color for ${titles || "one or more items"} (missing variant selection). Remove the item from your cart and add it again from the product details page.`,
+    );
+  }
+
   const merchantId = params.items[0].merchantId || "demo_merchant";
   const items = params.items.map((item) => ({
     product_id: item.productId || item.id,
-    variant_id: item.variantId || undefined,
+    variant_id: item.variantId,
     quantity: item.quantity,
   }));
 
@@ -272,6 +284,18 @@ export async function createOrderWithQuote(params: {
     throw new Error("Cannot create order with empty cart");
   }
 
+  const missingVariant = params.items.filter((item) => !item.variantId);
+  if (missingVariant.length > 0) {
+    const titles = missingVariant
+      .slice(0, 3)
+      .map((i) => i.title)
+      .filter(Boolean)
+      .join(", ");
+    throw new Error(
+      `Please select a size/color for ${titles || "one or more items"} (missing variant selection). Remove the item from your cart and add it again from the product details page.`,
+    );
+  }
+
   const merchantId = params.items[0].merchantId || "demo_merchant";
 
   const creatorId = params.items[0].creatorId;
@@ -285,7 +309,7 @@ export async function createOrderWithQuote(params: {
     quantity: item.quantity,
     unit_price: item.price,
     subtotal: item.price * item.quantity,
-    ...(item.variantId ? { variant_id: item.variantId } : {}),
+    variant_id: item.variantId,
     ...(item.variantSku ? { sku: item.variantSku } : {}),
     ...(item.selectedOptions ? { selected_options: item.selectedOptions } : {}),
   }));
@@ -341,6 +365,18 @@ export async function createOrderFromCart(params: {
     throw new Error("Cannot create order with empty cart");
   }
 
+  const missingVariant = params.items.filter((item) => !item.variantId);
+  if (missingVariant.length > 0) {
+    const titles = missingVariant
+      .slice(0, 3)
+      .map((i) => i.title)
+      .filter(Boolean)
+      .join(", ");
+    throw new Error(
+      `Please select a size/color for ${titles || "one or more items"} (missing variant selection). Remove the item from your cart and add it again from the product details page.`,
+    );
+  }
+
   // Use first item's merchant as the order-level merchant; fall back to a demo id.
   const merchantId = params.items[0].merchantId || "demo_merchant";
 
@@ -355,7 +391,7 @@ export async function createOrderFromCart(params: {
     quantity: item.quantity,
     unit_price: item.price,
     subtotal: item.price * item.quantity,
-    ...(item.variantId ? { variant_id: item.variantId } : {}),
+    variant_id: item.variantId,
     ...(item.variantSku ? { sku: item.variantSku } : {}),
     ...(item.selectedOptions ? { selected_options: item.selectedOptions } : {}),
   }));

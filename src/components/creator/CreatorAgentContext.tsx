@@ -809,18 +809,34 @@ export function CreatorAgentProvider({
   };
 
   const addToCart = (product: Product) => {
+    const variants = product.variants || [];
+    const canQuickAdd = variants.length === 1 && variants[0]?.id;
+    if (!canQuickAdd) {
+      // Need variant selection for checkout; open detail modal so the user can pick size/color.
+      openDetail(product);
+      return;
+    }
+    const v = variants[0];
+    const variantKey = v.id;
+    const resolvedPrice =
+      typeof v.price === "number" && !Number.isNaN(v.price)
+        ? v.price
+        : product.price;
     addItem({
-      id: product.id,
+      id: `${product.id}:${variantKey}`,
       productId: product.id,
       merchantId: product.merchantId,
       title: product.title,
-      price: product.price,
-      imageUrl: product.imageUrl,
+      price: resolvedPrice,
+      imageUrl: v.imageUrl || product.imageUrl,
       quantity: 1,
       currency: product.currency,
       creatorId: creator.id,
       creatorSlug: creator.slug,
       creatorName: creator.name,
+      variantId: variantKey,
+      variantSku: v.sku,
+      selectedOptions: v.options || undefined,
       bestDeal: product.bestDeal ?? null,
       allDeals: product.allDeals ?? null,
     });

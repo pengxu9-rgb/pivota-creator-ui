@@ -4,6 +4,7 @@ import type { Product } from "@/types/product";
 import { useCart } from "@/components/cart/CartProvider";
 import { Search, ShoppingCart } from "lucide-react";
 import { useRef } from "react";
+import { useRouter } from "next/navigation";
 
 type Props = {
   product: Product;
@@ -44,6 +45,7 @@ export function ProductCard({
   onViewDetails,
 }: Props) {
   const { addItem } = useCart();
+  const router = useRouter();
   const isCompact = variant === "compact";
   const lastTouchTsRef = useRef(0);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -282,18 +284,47 @@ export function ProductCard({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
+                const variants = product.variants || [];
+                const canQuickAdd = variants.length === 1 && variants[0]?.id;
+                if (!canQuickAdd) {
+                  // Variant selection is required for checkout (Shopify requires variant_id).
+                  // Route to internal product detail page to let the buyer pick size/color.
+                  if (creatorSlug) {
+                    const qp = product.merchantId
+                      ? `?merchant_id=${encodeURIComponent(product.merchantId)}`
+                      : "";
+                    router.push(`/creator/${creatorSlug}/product/${encodeURIComponent(product.id)}${qp}`);
+                    return;
+                  }
+                  if (onViewDetails) {
+                    onViewDetails(product);
+                    return;
+                  }
+                  handleCardClick();
+                  return;
+                }
+
+                const hookup = variants[0];
+                const variantKey = hookup.id;
+                const resolvedPrice =
+                  typeof hookup.price === "number" && !Number.isNaN(hookup.price)
+                    ? hookup.price
+                    : product.price;
                 addItem({
-                  id: product.id,
+                  id: `${product.id}:${variantKey}`,
                   productId: product.id,
                   merchantId: product.merchantId,
                   title: product.title,
-                  price: product.price,
-                  imageUrl: product.imageUrl,
+                  price: resolvedPrice,
+                  imageUrl: hookup.imageUrl || product.imageUrl,
                   quantity: 1,
                   currency: product.currency,
                   creatorId,
                   creatorSlug,
                   creatorName,
+                  variantId: variantKey,
+                  variantSku: hookup.sku,
+                  selectedOptions: hookup.options || undefined,
                   bestDeal: product.bestDeal ?? null,
                   allDeals: product.allDeals ?? null,
                 });
