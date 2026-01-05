@@ -130,6 +130,7 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
   const [lockedPromotionLines, setLockedPromotionLines] = useState<any[]>([]);
   const [lockedLineItems, setLockedLineItems] = useState<any[]>([]);
   const [lockedQuoteMeta, setLockedQuoteMeta] = useState<any>(null);
+  const [lockedCurrency, setLockedCurrency] = useState<string | null>(null);
 
   const existingPricing =
     existingOrderId && existingTotalMinor != null
@@ -163,16 +164,24 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
 
   const currency =
     existingCurrency ||
+    lockedCurrency ||
     lockedQuoteMeta?.currency ||
     quote?.currency ||
     items[0]?.currency ||
+    placedItems?.[0]?.currency ||
     "USD";
 
-  const estimateCurrency = items[0]?.currency || "USD";
+  const estimateCurrency = items[0]?.currency || placedItems?.[0]?.currency || lockedCurrency || "USD";
 
   const toNumber = (v: any) => {
     const n = typeof v === "number" ? v : Number(v);
     return Number.isFinite(n) ? n : 0;
+  };
+
+  const normalizeCurrencyCode = (v: any) => {
+    const s = typeof v === "string" ? v : v != null ? String(v) : "";
+    const cur = s.trim().toUpperCase();
+    return cur || null;
   };
 
   const promotionDiscountFromLines = (lines: any[]) =>
@@ -593,11 +602,17 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
             ? anyOrder.line_items
             : [];
           const respQuoteMeta = anyOrder.quote || null;
+          const respCurrency =
+            normalizeCurrencyCode(anyOrder.currency) ||
+            normalizeCurrencyCode(respQuoteMeta?.currency) ||
+            normalizeCurrencyCode(quoteToUse.currency) ||
+            normalizeCurrencyCode(items[0]?.currency);
 
           setLockedPricing(respPricing);
           setLockedPromotionLines(respPromotionLines);
           setLockedLineItems(respLineItems);
           setLockedQuoteMeta(respQuoteMeta);
+          setLockedCurrency(respCurrency);
 
           // Use pricing/promotion_lines (not subtotal-total guessing).
           const totalFromPricing =
@@ -624,6 +639,9 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
               : placedTotal ?? placedSubtotal ?? subtotal,
           );
           setPlacedDiscount(null);
+          if (existingCurrency) {
+            setLockedCurrency(normalizeCurrencyCode(existingCurrency));
+          }
         }
 
         // Enter payment step and return; the next click will actually trigger
@@ -921,6 +939,7 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
           setLockedPromotionLines([]);
           setLockedLineItems([]);
           setLockedQuoteMeta(null);
+          setLockedCurrency(null);
           setIsPaymentStep(false);
           setOrderId(undefined);
           setError(
