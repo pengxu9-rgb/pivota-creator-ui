@@ -216,8 +216,10 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
     if (!paymentInitKey) return;
     if (!orderIdForPayment) return;
 
-    // Only prefetch for Stripe card flow.
-    const isStripePsp = !pspUsed || pspUsed === "stripe";
+    // Only prefetch for Stripe card flow. When the PSP is not known yet, we avoid
+    // calling submit_payment early because the backend may select a different PSP
+    // (e.g. Adyen), which can unexpectedly change the UI (Google Pay / wallets).
+    const isStripePsp = pspUsed === "stripe";
     if (!isStripePsp) return;
 
     // For new orders, wait until we have server-side locked totals so we don't
@@ -300,11 +302,62 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
     return m;
   }, [isPaymentStep, lockedLineItems, quote, step]);
 
-  const effectiveSubtotal = activePricing ? toNumber((activePricing as any).subtotal) : subtotal;
+  const effectivePromotionDiscount = promotionDiscountFromLines(activePromotionLines);
+  const hasLockedQuote = Boolean(quote && quote?.pricing && !quoteLoading && !quoteError);
+
+  const derivedLineItemsSubtotal = useMemo(() => {
+    const list = (step === "success" ? placedItems : items) || [];
+    let sum = 0;
+    for (const item of list as any[]) {
+      const estimatedUnitPrice =
+        typeof item?.price === "number" && !Number.isNaN(item.price) ? item.price : 0;
+      const variantKey =
+        item?.variantId != null
+          ? String(item.variantId)
+          : item?.variant_id != null
+            ? String(item.variant_id)
+            : null;
+      const pricingLine = variantKey ? activeLineItemByVariantId.get(variantKey) : null;
+      const lockedUnitPriceRaw =
+        pricingLine?.unit_price_effective ??
+        pricingLine?.unit_price_original ??
+        pricingLine?.unit_price ??
+        pricingLine?.price ??
+        null;
+      const lockedUnitPrice = lockedUnitPriceRaw != null ? toNumber(lockedUnitPriceRaw) : null;
+      const usingLockedUnit =
+        !existingOrderId &&
+        lockedUnitPrice != null &&
+        lockedUnitPrice > 0 &&
+        (hasLockedQuote || isPaymentStep || step === "success");
+      const unitPrice = usingLockedUnit ? lockedUnitPrice : estimatedUnitPrice;
+      const qty = Number.isFinite(item?.quantity) ? Number(item.quantity) : Number(item?.quantity || 0);
+      if (unitPrice > 0 && qty > 0) {
+        sum += unitPrice * qty;
+      }
+    }
+    return Number.isFinite(sum) ? sum : 0;
+  }, [
+    activeLineItemByVariantId,
+    existingOrderId,
+    hasLockedQuote,
+    isPaymentStep,
+    items,
+    placedItems,
+    step,
+  ]);
+
+  const pricingSubtotal = activePricing ? toNumber((activePricing as any).subtotal) : subtotal;
+  const effectiveSubtotal =
+    pricingSubtotal > 0 ? pricingSubtotal : derivedLineItemsSubtotal > 0 ? derivedLineItemsSubtotal : subtotal;
   const effectiveShippingFee = activePricing ? toNumber((activePricing as any).shipping_fee) : 0;
   const effectiveTax = activePricing ? toNumber((activePricing as any).tax) : 0;
-  const effectiveTotal = activePricing ? toNumber((activePricing as any).total) : subtotal;
-  const effectivePromotionDiscount = promotionDiscountFromLines(activePromotionLines);
+  const pricingTotal = activePricing ? toNumber((activePricing as any).total) : subtotal;
+  const computedTotal =
+    effectiveSubtotal - effectivePromotionDiscount + effectiveShippingFee + effectiveTax;
+  const effectiveTotal =
+    pricingTotal > 0 ? pricingTotal : computedTotal > 0 ? computedTotal : effectiveSubtotal;
+
   const displayPromotionLines = (activePromotionLines || []).filter((pl: any) => {
     const label = String(pl?.label || "");
     const reason = pl?.metadata?.reason;
@@ -317,7 +370,6 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
     (accountsUser && accountsUser.email) || email || loginEmail || "";
 
   const cartSubtotalEstimate = subtotal;
-  const hasLockedQuote = Boolean(quote && quote?.pricing && !quoteLoading && !quoteError);
   const currenciesMatch = estimateCurrency === currency;
   const subtotalDelta = hasLockedQuote && currenciesMatch ? effectiveSubtotal - cartSubtotalEstimate : 0;
   const showCurrencySwitchNote =
