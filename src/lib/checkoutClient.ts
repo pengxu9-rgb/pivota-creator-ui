@@ -107,6 +107,9 @@ export function isRetryableQuoteError(code: string | null): boolean {
 export type CheckoutOrderResponse = {
   order_id?: string;
   currency?: string;
+  presentment_currency?: string;
+  charge_currency?: string;
+  settlement_currency?: string | null;
   total_amount_minor?: number;
   total_amount?: number;
   payment_status?: string;
@@ -130,6 +133,9 @@ export type QuotePreviewResponse = {
   engine: string;
   engine_ref?: string | null;
   currency: string;
+  presentment_currency?: string;
+  charge_currency?: string;
+  settlement_currency?: string | null;
   pricing: {
     subtotal: number;
     discount_total: number;

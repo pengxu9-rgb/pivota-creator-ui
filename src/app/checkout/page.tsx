@@ -173,7 +173,11 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
   const currency =
     existingCurrency ||
     lockedCurrency ||
+    (lockedQuoteMeta as any)?.charge_currency ||
+    (lockedQuoteMeta as any)?.presentment_currency ||
     lockedQuoteMeta?.currency ||
+    (quote as any)?.charge_currency ||
+    (quote as any)?.presentment_currency ||
     quote?.currency ||
     items[0]?.currency ||
     placedItems?.[0]?.currency ||
@@ -758,8 +762,13 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
             ? (quoteToUse as any).line_items
             : [];
           const respCurrency =
+            normalizeCurrencyCode(anyOrder.charge_currency) ||
+            normalizeCurrencyCode(anyOrder.presentment_currency) ||
             normalizeCurrencyCode(anyOrder.currency) ||
+            normalizeCurrencyCode(respQuoteMeta?.charge_currency) ||
+            normalizeCurrencyCode(respQuoteMeta?.presentment_currency) ||
             normalizeCurrencyCode(respQuoteMeta?.currency) ||
+            normalizeCurrencyCode((quoteToUse as any)?.presentment_currency) ||
             normalizeCurrencyCode(quoteToUse.currency) ||
             normalizeCurrencyCode(items[0]?.currency);
 
