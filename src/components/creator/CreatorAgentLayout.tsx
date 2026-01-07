@@ -51,6 +51,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
     currentSession,
     sessionDecision,
     startNewSession,
+    onboardingActive,
   } = useCreatorAgent();
 
   const { addItem } = useCart();
@@ -69,12 +70,15 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
 
   const [isMobileChatOpen, setIsMobileChatOpen] = useState(false);
   const [resumeDismissed, setResumeDismissed] = useState(false);
+  const forcedOnboarding = searchParams?.get("onboarding") === "1";
+  const onboardingVisible = forcedOnboarding || onboardingActive;
 
   // Allow deep links (and onboarding) to open the chat panel on mobile.
   useEffect(() => {
     if (!isMobile) return;
     const shouldOpen = searchParams?.get("chat") === "1";
     if (!shouldOpen) return;
+    if (onboardingVisible) return;
     setIsMobileChatOpen(true);
 
     try {
@@ -85,7 +89,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
     } catch {
       // ignore
     }
-  }, [isMobile, pathname, router, searchParams]);
+  }, [isMobile, onboardingVisible, pathname, router, searchParams]);
 
   // Local state for desktop detail modal (style / size selection and gallery)
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(
@@ -393,7 +397,8 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
       </div>
 
       <div className="relative z-10 flex min-h-screen flex-col lg:h-screen">
-        <header className="border-b border-[#f6ebe0] bg-white px-4 py-3 lg:px-8">
+        {!onboardingVisible && (
+          <header className="border-b border-[#f6ebe0] bg-white px-4 py-3 lg:px-8">
           <div className="mx-auto flex max-w-6xl items-center gap-3">
             <div className="flex items-center gap-3">
               <div className="relative h-9 w-9 overflow-hidden rounded-full bg-[#f6b59b]">
@@ -489,12 +494,14 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
               </button>
             </div>
           </div>
-        </header>
+          </header>
+        )}
 
         <div className="flex flex-1 flex-col bg-[#fffaf5] lg:flex-row lg:overflow-hidden">
-          {renderChatPanel(
-            "hidden w-full flex-col border-b border-[#f6ebe0] bg-white px-4 py-4 lg:flex lg:w-[360px] lg:border-b-0 lg:border-r lg:px-6",
-          )}
+          {!onboardingVisible &&
+            renderChatPanel(
+              "hidden w-full flex-col border-b border-[#f6ebe0] bg-white px-4 py-4 lg:flex lg:w-[360px] lg:border-b-0 lg:border-r lg:px-6",
+            )}
 
           <section className="flex flex-1 flex-col bg-[#fffaf5] px-4 py-4 lg:px-8">
             <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-20 lg:pb-0">
@@ -504,7 +511,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
         </div>
 
 	        {/* Mobile chat floating button */}
-	        {!isMobileChatOpen && (
+	        {!onboardingVisible && !isMobileChatOpen && (
 	          <button
 	            type="button"
 	            onClick={() => setIsMobileChatOpen(true)}
@@ -518,7 +525,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
 	        )}
 
         {/* Mobile chat sheet */}
-        {isMobileChatOpen && (
+        {!onboardingVisible && isMobileChatOpen && (
           <div className="fixed inset-0 z-[60] flex min-h-0 flex-col bg-[#fffefc] pb-[calc(env(safe-area-inset-bottom)+5rem)] overscroll-contain lg:hidden">
             <div className="flex items-center justify-between border-b border-[#f6ebe0] bg-[#fffefc] px-4 py-3">
               <div className="flex items-center gap-2">

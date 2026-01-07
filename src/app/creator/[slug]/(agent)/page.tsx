@@ -109,7 +109,8 @@ export default function CreatorAgentPage() {
     handleSeeSimilar,
     handleViewDetails,
     prefetchProductDetail,
-    currentSession,
+    onboardingActive,
+    markOnboardingSeen,
   } = useCreatorAgent();
 
   const router = useRouter();
@@ -136,63 +137,14 @@ export default function CreatorAgentPage() {
     includeEmpty: true,
   });
 
-  const onboardingKey = useMemo(
-    () => `pivota_creator_onboarding_seen_v1_${creator.slug}`,
-    [creator.slug],
-  );
   const forcedOnboarding = searchParams?.get("onboarding") === "1";
-  const [showOnboarding, setShowOnboarding] = useState<boolean>(forcedOnboarding);
   const [onboardingDraft, setOnboardingDraft] = useState("");
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (forcedOnboarding) {
-      setShowOnboarding(true);
-      return;
-    }
-
-    const seen = window.localStorage.getItem(onboardingKey) === "1";
-    const hasUserHistory =
-      recentQueries.length > 0 ||
-      userQueries.length > 0 ||
-      Boolean(currentSession?.lastUserQuery);
-
-    if (seen || hasUserHistory) {
-      if (!seen) {
-        try {
-          window.localStorage.setItem(onboardingKey, "1");
-        } catch {
-          // ignore
-        }
-      }
-      setShowOnboarding(false);
-      return;
-    }
-
-    setShowOnboarding(true);
-  }, [
-    forcedOnboarding,
-    onboardingKey,
-    recentQueries.length,
-    userQueries.length,
-    currentSession?.lastUserQuery,
-  ]);
-
-  const dismissOnboarding = () => {
-    if (typeof window !== "undefined") {
-      try {
-        window.localStorage.setItem(onboardingKey, "1");
-      } catch {
-        // ignore
-      }
-    }
-    setShowOnboarding(false);
-  };
+  const showOnboarding = forcedOnboarding || onboardingActive;
 
   const submitOnboarding = async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed) return;
-    dismissOnboarding();
+    markOnboardingSeen();
 
     const next = new URLSearchParams(searchParams?.toString());
     next.delete("onboarding");
@@ -413,7 +365,7 @@ export default function CreatorAgentPage() {
   return (
     <>
       {activeTab === "forYou" && showOnboarding && (
-        <div className="space-y-6">
+      <div className="space-y-6">
             <div className="rounded-3xl border border-[#f4e2d4] bg-[#fffaf5] px-5 py-10 text-center shadow-sm sm:px-10">
               <div className="text-[12px] text-[#8c715c]">
               Welcome to {creator.name}&apos;s Studio!
@@ -461,7 +413,7 @@ export default function CreatorAgentPage() {
                 ))}
                 <button
                   type="button"
-                  onClick={dismissOnboarding}
+                  onClick={markOnboardingSeen}
                   className="rounded-full px-4 py-2 text-[12px] text-slate-500 hover:text-slate-700"
                 >
                   Skip

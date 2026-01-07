@@ -83,6 +83,8 @@ interface CreatorAgentContextValue {
   currentSession: SessionMeta | null;
   sessionDecision: DecisionResult | null;
   startNewSession: () => void;
+  onboardingActive: boolean;
+  markOnboardingSeen: () => void;
   similarBaseProduct: Product | null;
   similarItems: SimilarProductItem[];
   isSimilarLoading: boolean;
@@ -269,6 +271,11 @@ export function CreatorAgentProvider({
     [creator.slug],
   );
 
+  const onboardingStorageKey = useMemo(
+    () => `pivota_creator_onboarding_seen_v1_${creator.slug}`,
+    [creator.slug],
+  );
+
   const sessionStorageKey = useMemo(
     () => `pivota_creator_sessions_${creator.slug}`,
     [creator.slug],
@@ -280,6 +287,19 @@ export function CreatorAgentProvider({
   );
 
   const deviceId = useMemo(() => getOrCreateDeviceId(), []);
+
+  const [onboardingActive, setOnboardingActive] = useState(false);
+
+  const markOnboardingSeen = useCallback(() => {
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.setItem(onboardingStorageKey, "1");
+      } catch {
+        // ignore
+      }
+    }
+    setOnboardingActive(false);
+  }, [onboardingStorageKey]);
 
   const safeStringify = (value: any) => {
     try {
@@ -297,6 +317,7 @@ export function CreatorAgentProvider({
   const sendMessage = async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || isLoading) return;
+    markOnboardingSeen();
 
     const userMsg: ChatMessage = {
       id: `u-${Date.now()}`,
@@ -628,6 +649,23 @@ export function CreatorAgentProvider({
     }
   }, [recentQueriesStorageKey]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const seen = window.localStorage.getItem(onboardingStorageKey) === "1";
+    const hasUserMessage = messages.some((m) => m.role === "user");
+    const hasHistory =
+      hasUserMessage ||
+      recentQueries.length > 0 ||
+      Boolean(currentSession?.lastUserQuery);
+
+    setOnboardingActive(!seen && !hasHistory);
+  }, [
+    onboardingStorageKey,
+    messages,
+    recentQueries.length,
+    currentSession?.lastUserQuery,
+  ]);
+
   // 根据消息更新当前会话摘要/时间戳。
   useEffect(() => {
     if (!currentSession) return;
@@ -900,6 +938,8 @@ export function CreatorAgentProvider({
     currentSession,
     sessionDecision,
     startNewSession,
+    onboardingActive,
+    markOnboardingSeen,
     similarBaseProduct,
     similarItems,
     isSimilarLoading,
