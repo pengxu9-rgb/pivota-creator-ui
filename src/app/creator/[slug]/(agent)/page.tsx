@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { ProductCard } from "@/components/product/ProductCard";
 import { useCreatorAgent } from "@/components/creator/CreatorAgentContext";
@@ -105,12 +105,15 @@ export default function CreatorAgentPage() {
     userQueries,
     recentQueries,
     setInput,
+    sendMessage,
     handleSeeSimilar,
     handleViewDetails,
     prefetchProductDetail,
+    currentSession,
   } = useCreatorAgent();
 
   const router = useRouter();
+  const pathname = usePathname();
   const { items: cartItems } = useCart();
   const searchParams = useSearchParams();
   const activeTab: "forYou" | "deals" = useMemo(() => {
@@ -132,6 +135,82 @@ export default function CreatorAgentPage() {
     locale: FORCED_LOCALE,
     includeEmpty: true,
   });
+
+  const onboardingKey = useMemo(
+    () => `pivota_creator_onboarding_seen_v1_${creator.slug}`,
+    [creator.slug],
+  );
+  const forcedOnboarding = searchParams?.get("onboarding") === "1";
+  const [showOnboarding, setShowOnboarding] = useState<boolean>(forcedOnboarding);
+  const [onboardingDraft, setOnboardingDraft] = useState("");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (forcedOnboarding) {
+      setShowOnboarding(true);
+      return;
+    }
+
+    const seen = window.localStorage.getItem(onboardingKey) === "1";
+    const hasUserHistory =
+      recentQueries.length > 0 ||
+      userQueries.length > 0 ||
+      Boolean(currentSession?.lastUserQuery);
+
+    if (seen || hasUserHistory) {
+      if (!seen) {
+        try {
+          window.localStorage.setItem(onboardingKey, "1");
+        } catch {
+          // ignore
+        }
+      }
+      setShowOnboarding(false);
+      return;
+    }
+
+    setShowOnboarding(true);
+  }, [
+    forcedOnboarding,
+    onboardingKey,
+    recentQueries.length,
+    userQueries.length,
+    currentSession?.lastUserQuery,
+  ]);
+
+  const dismissOnboarding = () => {
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.setItem(onboardingKey, "1");
+      } catch {
+        // ignore
+      }
+    }
+    setShowOnboarding(false);
+  };
+
+  const submitOnboarding = async (text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    dismissOnboarding();
+
+    const next = new URLSearchParams(searchParams?.toString());
+    next.delete("onboarding");
+    next.set("chat", "1");
+    const qs = next.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname);
+
+    await sendMessage(trimmed);
+  };
+
+  const onboardingPrompts = useMemo(
+    () => [
+      { label: "Comfy work from home", prompt: "Comfy work from home outfits" },
+      { label: "Date night under $150", prompt: "Date night outfit under $150" },
+      { label: "Summer essentials", prompt: "Summer essentials for my closet" },
+    ],
+    [],
+  );
 
   // Reset visible items when products or tab changes.
   useEffect(() => {
@@ -198,6 +277,11 @@ export default function CreatorAgentPage() {
     if (!prefillQuery) return;
     setInput(prefillQuery);
   }, [prefillQuery, setInput]);
+
+  useEffect(() => {
+    if (!prefillQuery) return;
+    setOnboardingDraft(prefillQuery);
+  }, [prefillQuery]);
 
   const recentQueryList = useMemo(
     () =>
@@ -328,7 +412,102 @@ export default function CreatorAgentPage() {
 
   return (
     <>
-      {activeTab === "forYou" && (
+      {activeTab === "forYou" && showOnboarding && (
+        <div className="space-y-6">
+            <div className="rounded-3xl border border-[#f4e2d4] bg-[#fffaf5] px-5 py-10 text-center shadow-sm sm:px-10">
+              <div className="text-[12px] text-[#8c715c]">
+              Welcome to {creator.name}&apos;s Studio!
+              </div>
+            <div className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
+              Ask me anything!
+            </div>
+
+            <div className="mx-auto mt-6 w-full max-w-2xl">
+              <div className="flex items-center gap-3 rounded-3xl border border-[#f4e2d4] bg-white px-4 py-3 shadow-md">
+                <input
+                  value={onboardingDraft}
+                  onChange={(e) => setOnboardingDraft(e.target.value)}
+                  placeholder="e.g. casual outfits for a weekend trip..."
+                  className="w-full bg-transparent text-[14px] text-slate-900 outline-none placeholder:text-slate-400"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      submitOnboarding(onboardingDraft);
+                    }
+                  }}
+                  inputMode="search"
+                />
+                <button
+                  type="button"
+                  onClick={() => submitOnboarding(onboardingDraft)}
+                  disabled={isLoading || onboardingDraft.trim().length === 0}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[#f4cbb8] text-slate-900 shadow-sm disabled:opacity-60"
+                  aria-label="Send"
+                >
+                  <span className="text-[14px]">➤</span>
+                </button>
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                {onboardingPrompts.map((p) => (
+                  <button
+                    key={p.label}
+                    type="button"
+                    onClick={() => submitOnboarding(p.prompt)}
+                    className="rounded-full bg-[#f6efe8] px-4 py-2 text-[12px] text-[#3f3125] hover:bg-[#efe6dd]"
+                  >
+                    {p.label}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={dismissOnboarding}
+                  className="rounded-full px-4 py-2 text-[12px] text-slate-500 hover:text-slate-700"
+                >
+                  Skip
+                </button>
+              </div>
+            </div>
+          </div>
+
+            <div className="space-y-3">
+              <div className="text-center text-[14px] font-semibold text-slate-900">
+              {creator.name}&apos;s Picks
+              </div>
+
+            {isFeaturedLoading ? (
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {Array.from({ length: 4 }).map((_, idx) => (
+                  <div
+                    key={idx}
+                    className="h-40 animate-pulse rounded-3xl bg-slate-100"
+                  />
+                ))}
+              </div>
+            ) : products.length === 0 ? (
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 text-center text-[12px] text-slate-600">
+                Browse categories or ask a question to get personalized picks.
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {products.slice(0, 8).map((p) => (
+                  <ProductCard
+                    key={`onboarding-${p.id}`}
+                    product={p}
+                    creatorName={creator.name}
+                    creatorId={creator.id}
+                    creatorSlug={creator.slug}
+                    onSeeSimilar={handleSeeSimilar}
+                    onViewDetails={handleViewDetails}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {activeTab === "forYou" && !showOnboarding && (
         <>
           <div className="space-y-4">
             <SectionHeader

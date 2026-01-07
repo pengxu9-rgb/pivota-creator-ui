@@ -70,6 +70,23 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
   const [isMobileChatOpen, setIsMobileChatOpen] = useState(false);
   const [resumeDismissed, setResumeDismissed] = useState(false);
 
+  // Allow deep links (and onboarding) to open the chat panel on mobile.
+  useEffect(() => {
+    if (!isMobile) return;
+    const shouldOpen = searchParams?.get("chat") === "1";
+    if (!shouldOpen) return;
+    setIsMobileChatOpen(true);
+
+    try {
+      const next = new URLSearchParams(searchParams?.toString());
+      next.delete("chat");
+      const qs = next.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname);
+    } catch {
+      // ignore
+    }
+  }, [isMobile, pathname, router, searchParams]);
+
   // Local state for desktop detail modal (style / size selection and gallery)
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(
     {},

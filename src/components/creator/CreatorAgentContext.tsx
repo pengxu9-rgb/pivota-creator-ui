@@ -94,6 +94,7 @@ interface CreatorAgentContextValue {
   closeDetail: () => void;
   closeSimilar: () => void;
   handleSend: () => Promise<void>;
+  sendMessage: (text: string) => Promise<void>;
   handleSeeSimilar: (base: Product) => Promise<void>;
   handleViewDetails: (base: Product) => void;
   setPromptFromContext: (prompt: string) => void;
@@ -293,8 +294,8 @@ export function CreatorAgentProvider({
     }
   };
 
-  const handleSend = async () => {
-    const trimmed = input.trim();
+  const sendMessage = async (text: string) => {
+    const trimmed = text.trim();
     if (!trimmed || isLoading) return;
 
     const userMsg: ChatMessage = {
@@ -306,22 +307,6 @@ export function CreatorAgentProvider({
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setIsLoading(true);
-
-    setRecentQueries((prev) => {
-      const withoutDuplicate = prev.filter((q) => q !== trimmed);
-      const updated = [...withoutDuplicate, trimmed].slice(-5);
-      if (typeof window !== "undefined") {
-        try {
-          window.localStorage.setItem(
-            recentQueriesStorageKey,
-            JSON.stringify(updated),
-          );
-        } catch (err) {
-          console.error("Failed to persist recent queries", err);
-        }
-      }
-      return updated;
-    });
 
     setRecentQueries((prev) => {
       const withoutDuplicate = prev.filter((q) => q !== trimmed);
@@ -427,6 +412,10 @@ export function CreatorAgentProvider({
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSend = async () => {
+    return sendMessage(input);
   };
 
   const handleSeeSimilar = async (base: Product) => {
@@ -922,6 +911,7 @@ export function CreatorAgentProvider({
     closeDetail,
     closeSimilar,
     handleSend,
+    sendMessage,
     handleSeeSimilar,
     handleViewDetails,
     setPromptFromContext,
