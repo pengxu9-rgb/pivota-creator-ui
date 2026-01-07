@@ -732,6 +732,21 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
           // charged amount (including promotions).
           const anyOrder = orderRes as any;
           const paymentObj = (anyOrder.payment || {}) as any;
+          const initialOrderAction =
+            (anyOrder.payment_action as any) || (paymentObj.payment_action as any) || null;
+
+          if (initialOrderAction?.type === "redirect_url") {
+            const initialRedirectUrl =
+              initialOrderAction?.url ||
+              (typeof initialOrderAction?.client_secret === "string"
+                ? initialOrderAction.client_secret
+                : null);
+
+            if (initialRedirectUrl && typeof window !== "undefined") {
+              window.location.href = initialRedirectUrl;
+              return;
+            }
+          }
 
           let orderPsp: string | null =
             (anyOrder.psp as string | null) ||
