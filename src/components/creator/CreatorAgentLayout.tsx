@@ -560,7 +560,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
         )}
 
         {similarBaseProduct && (
-          <div className="fixed inset-0 z-50 flex items-center bg-black/40 px-4 py-20 sm:py-10">
+          <div className="fixed inset-0 z-[90] flex items-center bg-black/40 px-4 py-20 sm:py-10">
             <div className="mx-auto flex max-h-[80vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-[#f0e2d6] bg-[#fffdf9] text-[#3f3125] shadow-xl sm:p-0">
               <div className="flex items-center justify-between gap-2 border-b border-[#f0e2d6] px-4 py-3 sm:px-6">
                 <div>
