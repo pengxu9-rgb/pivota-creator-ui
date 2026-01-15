@@ -158,6 +158,7 @@ export async function callPivotaCreatorAgent(params: {
   messages: CreatorAgentMessage[];
   userId?: string | null;
   recentQueries?: string[];
+  traceId?: string | null;
 }): Promise<CreatorAgentResponse> {
   const urlEnv = (process.env.PIVOTA_AGENT_URL || process.env.NEXT_PUBLIC_PIVOTA_AGENT_URL) as
     | string
@@ -234,6 +235,7 @@ export async function callPivotaCreatorAgent(params: {
       // 目前后端不会使用 persona，只作为元信息占位，方便未来在网关/Agent 层接入。
       persona: params.personaPrompt,
       source: "creator-agent-ui",
+      ...(params.traceId ? { trace_id: params.traceId } : {}),
     },
   };
 

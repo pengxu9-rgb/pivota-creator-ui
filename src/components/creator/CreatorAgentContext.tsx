@@ -289,6 +289,16 @@ export function CreatorAgentProvider({
   const deviceId = useMemo(() => getOrCreateDeviceId(), []);
 
   const [onboardingActive, setOnboardingActive] = useState(false);
+  const [recentQueriesHydrated, setRecentQueriesHydrated] = useState(false);
+  const featuredLoadedKeyRef = useRef<string | null>(null);
+
+  const buildTraceId = useCallback(
+    (purpose: "chat" | "featured") => {
+      const base = currentSession?.id || deviceId || "anon";
+      return `creator:${creator.id}:${base}:${purpose}`;
+    },
+    [creator.id, currentSession?.id, deviceId],
+  );
 
   const markOnboardingSeen = useCallback(() => {
     if (typeof window !== "undefined") {
@@ -354,6 +364,7 @@ export function CreatorAgentProvider({
     })();
 
     try {
+      const traceId = buildTraceId("chat");
       const res = await fetch("/api/creator-agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -363,8 +374,9 @@ export function CreatorAgentProvider({
             role: m.role,
             content: m.content,
           })),
-          userId: accountsUser?.id || accountsUser?.email || null,
+          userId: accountsUser?.id || null,
           recentQueries: historyForBackend,
+          traceId,
         }),
       });
 
@@ -386,8 +398,22 @@ export function CreatorAgentProvider({
 
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}));
-        setLastResponse(errBody);
-        throw new Error("request failed");
+        setLastResponse({ ...errBody, status: res.status });
+        const friendly =
+          res.status === 409
+            ? "I'm still working on your last request. Please wait a moment and try again."
+            : res.status === 429
+              ? "I’m seeing repeated requests and the backend is rate-limiting to prevent loops. Please wait a moment and try a slightly different query."
+              : "I'm having trouble reaching the backend. Please try again in a moment.";
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `a-error-${Date.now()}`,
+            role: "assistant",
+            content: friendly,
+          },
+        ]);
+        return;
       }
 
       const data = (await res.json()) as {
@@ -646,6 +672,8 @@ export function CreatorAgentProvider({
       }
     } catch (err) {
       console.error("Failed to load recent queries", err);
+    } finally {
+      setRecentQueriesHydrated(true);
     }
   }, [recentQueriesStorageKey]);
 
@@ -720,8 +748,9 @@ export function CreatorAgentProvider({
               role: "user" | "assistant";
               content: string;
             }[],
-            userId: accountsUser?.id || accountsUser?.email || null,
+            userId: accountsUser?.id || null,
             recentQueries: historyForBackend,
+            traceId: buildTraceId("featured"),
           }),
         });
         if (!res.ok) return;
@@ -774,6 +803,10 @@ export function CreatorAgentProvider({
       }
     };
 
+    if (!recentQueriesHydrated) return;
+    const featuredKey = `${creator.id}:${accountsUser?.id || `anon:${deviceId}`}`;
+    if (featuredLoadedKeyRef.current === featuredKey) return;
+    featuredLoadedKeyRef.current = featuredKey;
     loadFeatured();
 
     return () => {
@@ -784,8 +817,11 @@ export function CreatorAgentProvider({
     isDebug,
     isMockMode,
     accountsUser?.id,
-    accountsUser?.email,
     recentQueries,
+    deviceId,
+    recentQueriesHydrated,
+    buildTraceId,
+    prefetchProductDetail,
   ]);
 
   useEffect(() => {
@@ -880,7 +916,7 @@ export function CreatorAgentProvider({
     const now = new Date();
     const ctx: SessionEntryContext = {
       entrySource: "HOME",
-      userId: accountsUser?.id || accountsUser?.email || null,
+      userId: accountsUser?.id || null,
       deviceId,
       creatorId: creator.id,
     };
