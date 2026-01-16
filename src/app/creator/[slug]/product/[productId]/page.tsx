@@ -167,6 +167,16 @@ export default function CreatorProductDetailPage() {
     product?.inventoryQuantity ??
     undefined;
 
+  const safeSingleVariantFallback =
+    product?.variantsComplete === false &&
+    (!product.options || product.options.length === 0) &&
+    (product.variants?.length ?? 0) === 1 &&
+    (product.variants?.[0]?.title === "Default" ||
+      product.variants?.[0]?.title === "Default Title");
+
+  const canAddToCart =
+    Boolean(selectedVariant?.id) && (product?.variantsComplete === true || safeSingleVariantFallback);
+
   const handleBack = () => {
     if (typeof window !== "undefined" && window.history.length > 1) {
       router.back();
@@ -416,10 +426,16 @@ export default function CreatorProductDetailPage() {
                   <div className="pt-2 flex gap-2">
                     <button
                       type="button"
-                      className="flex-1 rounded-full bg-[#f6b59b] px-3 py-2 text-[12px] font-medium text-white shadow-sm hover:bg-[#f29b7f]"
+                      disabled={!canAddToCart}
+                      className={`flex-1 rounded-full px-3 py-2 text-[12px] font-medium text-white shadow-sm ${
+                        canAddToCart
+                          ? "bg-[#f6b59b] hover:bg-[#f29b7f]"
+                          : "cursor-not-allowed bg-[#f6b59b]/50"
+                      }`}
                       onClick={() => {
+                        if (!canAddToCart) return;
                         const variant = selectedVariant;
-                        const variantKey = variant?.id || "default";
+                        const variantKey = variant!.id;
                         addItem({
                           id: `${product.id}:${variantKey}`,
                           productId: product.id,
@@ -435,8 +451,8 @@ export default function CreatorProductDetailPage() {
                           creatorId: creator.id,
                           creatorSlug: creator.slug,
                           creatorName: creator.name,
-                          variantId: variant?.id,
-                          variantSku: variant?.sku,
+                          variantId: variant!.id,
+                          variantSku: variant!.sku,
                           selectedOptions:
                             Object.keys(selectedOptions).length > 0
                               ? selectedOptions
@@ -450,11 +466,17 @@ export default function CreatorProductDetailPage() {
                     </button>
                     <button
                       type="button"
-                      className="flex-1 rounded-full border border-[#f0e2d6] bg-white px-3 py-2 text-[12px] font-medium text-[#8c715c] shadow-sm hover:bg-[#fff0e3]"
+                      disabled={!canAddToCart}
+                      className={`flex-1 rounded-full border border-[#f0e2d6] bg-white px-3 py-2 text-[12px] font-medium shadow-sm ${
+                        canAddToCart
+                          ? "text-[#8c715c] hover:bg-[#fff0e3]"
+                          : "cursor-not-allowed text-[#8c715c]/50"
+                      }`}
                       onClick={() => {
+                        if (!canAddToCart) return;
                         clear();
                         const variant = selectedVariant;
-                        const variantKey = variant?.id || "default";
+                        const variantKey = variant!.id;
                         addItem({
                           id: `${product.id}:${variantKey}`,
                           productId: product.id,
@@ -470,8 +492,8 @@ export default function CreatorProductDetailPage() {
                           creatorId: creator.id,
                           creatorSlug: creator.slug,
                           creatorName: creator.name,
-                          variantId: variant?.id,
-                          variantSku: variant?.sku,
+                          variantId: variant!.id,
+                          variantSku: variant!.sku,
                           selectedOptions:
                             Object.keys(selectedOptions).length > 0
                               ? selectedOptions

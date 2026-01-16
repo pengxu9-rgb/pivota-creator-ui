@@ -873,7 +873,15 @@ export function CreatorAgentProvider({
 
   const addToCart = (product: Product) => {
     const variants = product.variants || [];
-    const canQuickAdd = variants.length === 1 && variants[0]?.id;
+    const safeSingleVariantFallback =
+      product.variantsComplete === false &&
+      (!product.options || product.options.length === 0) &&
+      variants.length === 1 &&
+      (variants[0]?.title === "Default" || variants[0]?.title === "Default Title");
+    const canQuickAdd =
+      variants.length === 1 &&
+      variants[0]?.id &&
+      (product.variantsComplete === true || safeSingleVariantFallback);
     if (!canQuickAdd) {
       // Need variant selection for checkout; open detail modal so the user can pick size/color.
       openDetail(product);

@@ -183,6 +183,17 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
     detailProduct?.inventoryQuantity ??
     undefined;
 
+  const safeSingleVariantFallback =
+    detailProduct?.variantsComplete === false &&
+    (!detailProduct.options || detailProduct.options.length === 0) &&
+    (detailProduct.variants?.length ?? 0) === 1 &&
+    (detailProduct.variants?.[0]?.title === "Default" ||
+      detailProduct.variants?.[0]?.title === "Default Title");
+
+  const canAddToCartFromDetail =
+    Boolean(selectedVariant?.id) &&
+    (detailProduct?.variantsComplete === true || safeSingleVariantFallback);
+
   const bannerText = sessionDecision?.ui.banner;
   const showResumeCard =
     !resumeDismissed &&
@@ -914,12 +925,18 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                   <div className="mt-2 flex flex-col gap-2 pt-1 sm:flex-row">
                     <button
                       type="button"
-                      className="flex-1 rounded-full bg-[#f6b59b] px-3 py-2 text-[12px] font-medium text-white shadow-sm hover:bg-[#f29b7f]"
+                      disabled={!canAddToCartFromDetail}
+                      className={`flex-1 rounded-full px-3 py-2 text-[12px] font-medium text-white shadow-sm ${
+                        canAddToCartFromDetail
+                          ? "bg-[#f6b59b] hover:bg-[#f29b7f]"
+                          : "cursor-not-allowed bg-[#f6b59b]/50"
+                      }`}
                       onClick={() => {
+                        if (!canAddToCartFromDetail) return;
                         const product = detailProduct;
                         const variant = selectedVariant;
                         const images = detailImages;
-                        const variantKey = variant?.id || "default";
+                        const variantKey = variant!.id;
                         addItem({
                           id: `${product.id}:${variantKey}`,
                           productId: product.id,

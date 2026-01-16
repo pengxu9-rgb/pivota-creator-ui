@@ -107,6 +107,12 @@ export interface Product {
   // Optional rich detail fields for variant / gallery UI
   images?: string[];
   variants?: ProductVariant[];
+  /**
+   * Whether `variants` represents the complete set of variants/options from the upstream store.
+   * If false, the list may be synthesized from a single `variant_id` reference and must not be
+   * used for silent SKU selection.
+   */
+  variantsComplete?: boolean;
 }
 
 // Treat ProductBestDeal as a reusable offer type for similarity responses.

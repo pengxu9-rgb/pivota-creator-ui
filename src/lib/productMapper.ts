@@ -219,6 +219,12 @@ export function mapRawProduct(raw: RawProduct): Product {
   const options = normalizeOptions(raw);
   const images = normalizeImages(raw);
   const variants = normalizeVariants(raw);
+  const variantsComplete =
+    (raw as any)?.attributes?.variants && Array.isArray((raw as any).attributes.variants)
+      ? true
+      : Array.isArray((raw as any)?.variants)
+      ? true
+      : false;
 
   return {
     id: raw.id,
@@ -247,6 +253,7 @@ export function mapRawProduct(raw: RawProduct): Product {
     options,
     images,
     variants,
+    variantsComplete,
   };
 }
 
