@@ -32,6 +32,7 @@ type CreateOrderPayload = {
     address_line1: string;
     address_line2?: string;
     city: string;
+    province?: string;
     country: string;
     postal_code: string;
     phone?: string;
@@ -221,6 +222,7 @@ export async function previewQuoteFromCart(params: {
   addressLine1: string;
   addressLine2?: string;
   city: string;
+  province?: string;
   country: string;
   postalCode: string;
   phone?: string;
@@ -261,6 +263,7 @@ export async function previewQuoteFromCart(params: {
           address_line1: params.addressLine1,
           address_line2: params.addressLine2,
           city: params.city,
+          province: params.province,
           country: params.country,
           postal_code: params.postalCode,
           phone: params.phone,
@@ -281,6 +284,7 @@ export async function createOrderWithQuote(params: {
   addressLine1: string;
   addressLine2?: string;
   city: string;
+  province?: string;
   country: string;
   postalCode: string;
   phone?: string;
@@ -331,6 +335,7 @@ export async function createOrderWithQuote(params: {
       address_line1: params.addressLine1,
       address_line2: params.addressLine2,
       city: params.city,
+      province: params.province,
       country: params.country,
       postal_code: params.postalCode,
       phone: params.phone,
@@ -362,6 +367,7 @@ export async function createOrderFromCart(params: {
   addressLine1: string;
   addressLine2?: string;
   city: string;
+  province?: string;
   country: string;
   postalCode: string;
   phone?: string;
@@ -410,6 +416,7 @@ export async function createOrderFromCart(params: {
     addressLine1: params.addressLine1,
     addressLine2: params.addressLine2,
     city: params.city,
+    province: params.province,
     country: params.country,
     postalCode: params.postalCode,
     phone: params.phone,
@@ -424,6 +431,7 @@ export async function createOrderFromCart(params: {
     addressLine1: params.addressLine1,
     addressLine2: params.addressLine2,
     city: params.city,
+    province: params.province,
     country: params.country,
     postalCode: params.postalCode,
     phone: params.phone,

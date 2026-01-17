@@ -23,6 +23,7 @@ export function saveShippingAddress(address: ShippingAddress): void {
       address_line1: address.address_line1 ?? "",
       address_line2: address.address_line2 ?? "",
       city: address.city ?? "",
+      province: address.province ?? "",
       country: address.country ?? "",
       postal_code: address.postal_code ?? "",
       phone: address.phone ?? "",
@@ -41,9 +42,9 @@ export function hasNonEmptyAddress(
     address.name ||
       address.address_line1 ||
       address.city ||
+      address.province ||
       address.country ||
       address.postal_code ||
       address.phone,
   );
 }
-

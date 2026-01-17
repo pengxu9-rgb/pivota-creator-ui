@@ -296,16 +296,18 @@ export function ProductCard({
                   (product.variantsComplete === true || safeSingleVariantFallback);
                 if (!canQuickAdd) {
                   // Variant selection is required for checkout (Shopify requires variant_id).
-                  // Route to internal product detail page to let the buyer pick size/color.
+                  if (onViewDetails) {
+                    onViewDetails(product);
+                    return;
+                  }
+                  // Fallback: route to internal product detail page to let the buyer pick size/color.
                   if (creatorSlug) {
                     const qp = product.merchantId
                       ? `?merchant_id=${encodeURIComponent(product.merchantId)}`
                       : "";
-                    router.push(`/creator/${creatorSlug}/product/${encodeURIComponent(product.id)}${qp}`);
-                    return;
-                  }
-                  if (onViewDetails) {
-                    onViewDetails(product);
+                    router.push(
+                      `/creator/${creatorSlug}/product/${encodeURIComponent(product.id)}${qp}`
+                    );
                     return;
                   }
                   handleCardClick();

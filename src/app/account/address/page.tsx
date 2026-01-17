@@ -26,6 +26,7 @@ function AddressPageInner() {
     address_line1: "",
     address_line2: "",
     city: "",
+    province: "",
     country: "",
     postal_code: "",
     phone: "",
@@ -52,6 +53,7 @@ function AddressPageInner() {
           address_line1: addr.address_line1 ?? "",
           address_line2: addr.address_line2 ?? "",
           city: addr.city ?? "",
+          province: addr.province ?? "",
           country: addr.country ?? "",
           postal_code: addr.postal_code ?? "",
           phone: addr.phone ?? "",
@@ -166,6 +168,19 @@ function AddressPageInner() {
                     </div>
                     <div>
                       <label className="mb-1 block text-[11px] font-medium text-[#8c715c]">
+                        State / province
+                      </label>
+                      <input
+                        type="text"
+                        value={form.province ?? ""}
+                        onChange={handleChange("province")}
+                        className="w-full rounded-xl border border-[#f0e2d6] bg-white px-3 py-2 text-xs text-[#3f3125] outline-none focus:border-[#3f3125]"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div>
+                      <label className="mb-1 block text-[11px] font-medium text-[#8c715c]">
                         Country / region
                       </label>
                       <input
@@ -175,8 +190,6 @@ function AddressPageInner() {
                         className="w-full rounded-xl border border-[#f0e2d6] bg-white px-3 py-2 text-xs text-[#3f3125] outline-none focus:border-[#3f3125]"
                       />
                     </div>
-                  </div>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div>
                       <label className="mb-1 block text-[11px] font-medium text-[#8c715c]">
                         Postal code

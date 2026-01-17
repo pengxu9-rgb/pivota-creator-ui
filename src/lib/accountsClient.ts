@@ -145,6 +145,7 @@ export type ShippingAddress = {
   address_line1?: string;
   address_line2?: string;
   city?: string;
+  province?: string;
   country?: string;
   postal_code?: string;
   phone?: string;
@@ -172,6 +173,7 @@ export async function getLatestPaidOrderShippingAddress(): Promise<ShippingAddre
     address_line1: addr.address_line1 ?? "",
     address_line2: addr.address_line2 ?? "",
     city: addr.city ?? "",
+    province: addr.province ?? addr.state ?? "",
     country: addr.country ?? "",
     postal_code: addr.postal_code ?? "",
     phone: addr.phone ?? "",

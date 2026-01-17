@@ -88,6 +88,7 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
   const [addressLine1, setAddressLine1] = useState("");
   const [addressLine2, setAddressLine2] = useState("");
   const [city, setCity] = useState("");
+  const [province, setProvince] = useState("");
   const [country, setCountry] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [phone, setPhone] = useState("");
@@ -422,6 +423,7 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
               setAddressLine1(addr.address_line1 || "");
               setAddressLine2(addr.address_line2 || "");
               setCity(addr.city || "");
+              setProvince(addr.province || "");
               setCountry(addr.country || "");
               setPostalCode(addr.postal_code || "");
               setPhone(addr.phone || "");
@@ -442,7 +444,7 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
     return () => {
       cancelled = true;
     };
-  }, [existingOrderId, hasPrefilledAddress, name, addressLine1, city, country, postalCode]);
+  }, [existingOrderId, hasPrefilledAddress, name, addressLine1, city, province, country, postalCode]);
 
   // Support continuing payment for an existing order from the Orders page.
   useEffect(() => {
@@ -513,6 +515,7 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
             addressLine1,
             addressLine2: addressLine2 || undefined,
             city,
+            province: province || undefined,
             country,
             postalCode,
             phone: phone || undefined,
@@ -656,6 +659,7 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
               addressLine1,
               addressLine2: addressLine2 || undefined,
               city,
+              province: province || undefined,
               country,
               postalCode,
               phone: phone || undefined,
@@ -674,6 +678,7 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
               addressLine1,
               addressLine2: addressLine2 || undefined,
               city,
+              province: province || undefined,
               country,
               postalCode,
               phone: phone || undefined,
@@ -691,6 +696,7 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
                 addressLine1,
                 addressLine2: addressLine2 || undefined,
                 city,
+                province: province || undefined,
                 country,
                 postalCode,
                 phone: phone || undefined,
@@ -706,6 +712,7 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
                 addressLine1,
                 addressLine2: addressLine2 || undefined,
                 city,
+                province: province || undefined,
                 country,
                 postalCode,
                 phone: phone || undefined,
@@ -1576,6 +1583,16 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
                       />
                     </label>
                     <label className="text-[11px] font-medium text-slate-700">
+                      State / Province
+                      <input
+                        value={province}
+                        onChange={(e) => setProvince(e.target.value)}
+                        className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 shadow-sm outline-none focus:border-slate-900"
+                      />
+                    </label>
+                  </div>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <label className="text-[11px] font-medium text-slate-700">
                       Country / Region
                       <input
                         required
@@ -1584,8 +1601,6 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
                         className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 shadow-sm outline-none focus:border-slate-900"
                       />
                     </label>
-                  </div>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <label className="text-[11px] font-medium text-slate-700">
                       Postal code
                       <input
@@ -1595,15 +1610,15 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
                         className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 shadow-sm outline-none focus:border-slate-900"
                       />
                     </label>
-                    <label className="text-[11px] font-medium text-slate-700">
-                      Phone (optional)
-                      <input
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 shadow-sm outline-none focus:border-slate-900"
-                      />
-                    </label>
                   </div>
+                  <label className="text-[11px] font-medium text-slate-700">
+                    Phone (optional)
+                    <input
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 shadow-sm outline-none focus:border-slate-900"
+                    />
+                  </label>
                   <label className="text-[11px] font-medium text-slate-700">
                     Notes for the creator / merchant (optional)
                     <textarea
