@@ -263,13 +263,26 @@ export default function OrdersPage() {
                 const canCancel =
                   order.payment_status === "pending" && !isCancelled;
 
-                const canContinuePayment =
-                  order.permissions?.can_pay && !isCancelled;
+              const canContinuePayment =
+                order.permissions?.can_pay && !isCancelled;
+
+              const detailUrl = `/account/orders/${encodeURIComponent(
+                order.order_id,
+              )}${creatorSlug ? `?creator=${encodeURIComponent(creatorSlug)}` : ""}`;
 
                 return (
                   <div
                     key={order.order_id}
-                    className="flex flex-col gap-3 rounded-3xl border border-[#f4e2d4] bg-white px-3 py-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:flex-row sm:items-center sm:gap-4 sm:px-4 sm:py-4"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => router.push(detailUrl)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        router.push(detailUrl);
+                      }
+                    }}
+                    className="flex cursor-pointer flex-col gap-3 rounded-3xl border border-[#f4e2d4] bg-white px-3 py-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:flex-row sm:items-center sm:gap-4 sm:px-4 sm:py-4"
                   >
                     <div className="hidden h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-[#f5e3d4] sm:block">
                       {previewImageUrl ? (
@@ -289,9 +302,16 @@ export default function OrdersPage() {
                     <div className="flex flex-1 flex-col gap-1">
                       <div className="flex items-center justify-between gap-2">
                         <div>
-                          <p className="text-[13px] font-semibold text-[#3f3125]">
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              router.push(detailUrl);
+                            }}
+                            className="text-left text-[13px] font-semibold text-[#3f3125] hover:underline"
+                          >
                             {order.order_id}
-                          </p>
+                          </button>
                           <p className="mt-0.5 text-[11px] text-[#a38b78]">
                             {new Date(order.created_at).toLocaleDateString(
                               undefined,
@@ -340,10 +360,21 @@ export default function OrdersPage() {
                         {statusLabel}
                       </p>
                       <div className="mt-1 flex flex-wrap gap-2 justify-start sm:justify-end">
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            router.push(detailUrl);
+                          }}
+                          className="rounded-full border border-[#f0e2d6] px-3 py-1 text-[10px] font-medium text-[#8c715c] hover:bg-[#fff0e3]"
+                        >
+                          View details
+                        </button>
                         {canContinuePayment && (
                           <button
                             type="button"
-                            onClick={() =>
+                            onClick={(event) => {
+                              event.stopPropagation();
                               router.push(
                                 `/checkout?orderId=${encodeURIComponent(
                                   order.order_id,
@@ -352,8 +383,8 @@ export default function OrdersPage() {
                                 }&currency=${order.currency}&items_summary=${encodeURIComponent(
                                   order.items_summary || "",
                                 )}`,
-                              )
-                            }
+                              );
+                            }}
                             className="rounded-full bg-[#3f3125] px-3 py-1 text-[10px] font-medium text-white shadow-sm hover:bg-black"
                           >
                             Continue payment
@@ -362,7 +393,8 @@ export default function OrdersPage() {
                         {canCancel && (
                           <button
                             type="button"
-                            onClick={async () => {
+                            onClick={async (event) => {
+                              event.stopPropagation();
                               try {
                                 const reason = window.prompt(
                                   "Optional: tell us why you’re cancelling this order (leave empty to skip).",

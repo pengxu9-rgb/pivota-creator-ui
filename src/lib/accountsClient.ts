@@ -30,8 +30,8 @@ export type OrdersListItem = {
   created_at: string;
   // Optional lightweight metadata for Creator-style order cards
   first_item_image_url?: string | null;
-   // Optional SKU and option snapshot for the first item,
-   // if the backend provides them.
+  // Optional SKU and option snapshot for the first item,
+  // if the backend provides them.
   first_item_variant_sku?: string | null;
   first_item_selected_options?: Record<string, string> | null;
   shipping_city?: string | null;
@@ -138,6 +138,33 @@ export async function cancelOrder(orderId: string, reason?: string): Promise<voi
     method: "POST",
     body: reason ? JSON.stringify({ reason }) : undefined,
   });
+}
+
+export type OrderDetailResponse = {
+  order?: OrdersListItem & {
+    items?: Array<Record<string, unknown>>;
+    shipping_address?: ShippingAddress;
+    subtotal_amount_minor?: number | string | null;
+    discount_amount_minor?: number | string | null;
+    shipping_amount_minor?: number | string | null;
+    tax_amount_minor?: number | string | null;
+    total_amount_minor?: number | string | null;
+    subtotal_amount?: number | string | null;
+    discount_amount?: number | string | null;
+    shipping_amount?: number | string | null;
+    tax_amount?: number | string | null;
+    total_amount?: number | string | null;
+    tracking?: Record<string, unknown> | null;
+  };
+  [k: string]: unknown;
+};
+
+export async function getOrderDetail(orderId: string): Promise<OrderDetailResponse> {
+  return callAccounts(`/orders/${encodeURIComponent(orderId)}`);
+}
+
+export async function getOrderTracking(orderId: string): Promise<Record<string, unknown>> {
+  return callAccounts(`/orders/${encodeURIComponent(orderId)}/tracking`);
 }
 
 export type ShippingAddress = {
