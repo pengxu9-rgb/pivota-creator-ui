@@ -17,12 +17,14 @@ import {
   cancelOrder,
   getOrderDetail,
   getOrderTracking,
+  requestRefund,
   type OrdersListItem,
   type ShippingAddress,
 } from "@/lib/accountsClient";
 import { getCreatorBySlug } from "@/config/creatorAgents";
 
 type NormalizedItem = {
+  id?: string | null;
   title: string;
   quantity: number;
   unitPrice: number | null;
@@ -58,6 +60,8 @@ type NormalizedOrder = {
   currency: string;
   items: NormalizedItem[];
   shippingAddress?: ShippingAddress | null;
+  paymentMethod?: string | null;
+  refundStatus?: string | null;
   permissions?: OrdersListItem["permissions"];
   totals: {
     subtotal: number;
@@ -129,6 +133,18 @@ function normalizeItems(rawOrder: Record<string, unknown>): NormalizedItem[] {
 
   return itemsSource.map((raw) => {
     const item = raw as Record<string, unknown>;
+    const id = pickFirstString(item, [
+      "line_item_id",
+      "lineItemId",
+      "item_id",
+      "itemId",
+      "id",
+      "variant_id",
+      "variantId",
+      "sku_id",
+      "skuId",
+      "sku",
+    ]);
     const title =
       pickFirstString(item, ["product_title", "title", "name", "product_name"]) ||
       "Item";
@@ -159,6 +175,7 @@ function normalizeItems(rawOrder: Record<string, unknown>): NormalizedItem[] {
         : null;
 
     return {
+      id,
       title,
       quantity,
       unitPrice,
@@ -202,6 +219,37 @@ function extractTracking(raw: Record<string, unknown>): TrackingInfo | null {
     events: events as TrackingEvent[] | null,
     timeline: timeline as TrackingInfo["timeline"] | null,
   };
+}
+
+function formatPaymentMethod(rawOrder: Record<string, unknown>): string | null {
+  const method = pickFirstString(rawOrder, [
+    "payment_method",
+    "payment_method_type",
+    "payment_method_label",
+    "payment_method_name",
+    "payment_type",
+  ]);
+  const brand = pickFirstString(rawOrder, [
+    "payment_method_brand",
+    "card_brand",
+    "brand",
+  ]);
+  const wallet = pickFirstString(rawOrder, ["wallet_type", "wallet"]);
+  const provider = pickFirstString(rawOrder, [
+    "payment_provider",
+    "payment_gateway",
+    "gateway",
+  ]);
+
+  const parts = [method, brand, wallet, provider].filter(
+    (part) => typeof part === "string" && part.trim().length > 0,
+  ) as string[];
+  if (parts.length === 0) return null;
+
+  const unique = Array.from(
+    new Set(parts.map((p) => p.trim())),
+  );
+  return unique.join(" · ");
 }
 
 function normalizeOrder(rawData: Record<string, unknown>): NormalizedOrder | null {
@@ -248,6 +296,17 @@ function normalizeOrder(rawData: Record<string, unknown>): NormalizedOrder | nul
     (rawOrder.shipping as ShippingAddress) ||
     undefined;
 
+  const paymentMethod = formatPaymentMethod(rawOrder);
+  const refundStatus =
+    pickFirstString(rawOrder, [
+      "refund_status",
+      "refundStatus",
+      "refund_status_raw",
+      "after_sales_status",
+      "afterSalesStatus",
+      "after_sales_case_status",
+    ]) || null;
+
   return {
     id,
     createdAt,
@@ -258,6 +317,8 @@ function normalizeOrder(rawData: Record<string, unknown>): NormalizedOrder | nul
     currency,
     items,
     shippingAddress,
+    paymentMethod,
+    refundStatus,
     permissions: rawOrder.permissions as OrdersListItem["permissions"],
     totals: {
       subtotal,
@@ -290,6 +351,12 @@ export default function OrderDetailPage() {
   const [actionLoading, setActionLoading] = useState<null | "track" | "cancel" | "refund">(null);
   const [error, setError] = useState<string | null>(null);
   const [isAuthed, setIsAuthed] = useState<boolean | null>(null);
+  const [refundOpen, setRefundOpen] = useState(false);
+  const [refundAmount, setRefundAmount] = useState("");
+  const [refundReason, setRefundReason] = useState("");
+  const [refundItems, setRefundItems] = useState<Record<number, boolean>>({});
+  const [refundNote, setRefundNote] = useState<string | null>(null);
+  const [refundSubmitted, setRefundSubmitted] = useState(false);
 
   const formatDate = useMemo(() => {
     const fmt = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -355,6 +422,20 @@ export default function OrderDetailPage() {
     };
   }, [orderId]);
 
+  useEffect(() => {
+    if (!order) return;
+    const defaults: Record<number, boolean> = {};
+    order.items.forEach((_, idx) => {
+      defaults[idx] = true;
+    });
+    setRefundItems(defaults);
+    setRefundAmount("");
+    setRefundReason("");
+    setRefundNote(null);
+    setRefundSubmitted(false);
+    setRefundOpen(false);
+  }, [order?.id]);
+
   const handleRequireLogin = () => {
     const returnTo =
       typeof window !== "undefined"
@@ -406,13 +487,47 @@ export default function OrderDetailPage() {
     }
   };
 
-  const handleRefund = () => {
+  const handleRefundRequest = async () => {
     if (!order) return;
-    const subject = encodeURIComponent(`Order support: ${order.id}`);
-    const body = encodeURIComponent(
-      `Hi team,\n\nI would like to request a refund for order ${order.id}.\n\nThanks,`,
-    );
-    window.location.assign(`mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`);
+    setRefundNote(null);
+    const selected = order.items.filter((_, idx) => refundItems[idx]);
+    const amountValue = refundAmount.trim()
+      ? parseNumber(refundAmount)
+      : 0;
+
+    if (!selected.length && !amountValue) {
+      setRefundNote("Select items or enter a refund amount.");
+      return;
+    }
+    if (!window.confirm("Send this refund request to the merchant?")) return;
+
+    setActionLoading("refund");
+    try {
+      const payload = {
+        amount: amountValue > 0 ? Math.round(amountValue * 100) / 100 : undefined,
+        currency: order.totals.currency,
+        reason: refundReason.trim() || undefined,
+        items: selected.length
+          ? selected.map((item) => ({
+              item_id: item.id || undefined,
+              title: item.title,
+              quantity: item.quantity,
+              amount: item.subtotal ?? undefined,
+            }))
+          : undefined,
+      };
+      await requestRefund(order.id, payload);
+      setRefundSubmitted(true);
+      setRefundOpen(false);
+      const detail = await getOrderDetail(order.id);
+      const normalized = normalizeOrder(detail as Record<string, unknown>);
+      if (normalized) setOrder(normalized);
+    } catch (err) {
+      console.error(err);
+      setRefundNote("We couldn’t submit the refund request. Please try again.");
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   const statusToneClasses = (statusRaw: string, paymentStatusRaw: string, fulfillmentRaw: string, deliveryRaw: string) => {
@@ -463,6 +578,18 @@ export default function OrderDetailPage() {
     order?.fulfillmentStatus.toLowerCase() === "shipped" ||
     order?.deliveryStatus.toLowerCase() === "shipped";
   const isDelivered = order?.deliveryStatus.toLowerCase() === "delivered";
+  const refundStatusLower = (order?.refundStatus || "").toLowerCase();
+  const refundLocked =
+    refundStatusLower.includes("pending") ||
+    refundStatusLower.includes("requested") ||
+    refundStatusLower.includes("approved") ||
+    refundStatusLower.includes("processing") ||
+    refundSubmitted;
+  const refundStatusLabel = order?.refundStatus
+    ? `Refund status: ${order.refundStatus}`
+    : refundSubmitted
+    ? "Refund request sent. Awaiting merchant approval."
+    : null;
 
   const progressSteps = useMemo(() => {
     if (!order) return [];
@@ -533,6 +660,19 @@ export default function OrderDetailPage() {
 
   const itemsCountLabel = order
     ? `${order.items.length} item${order.items.length === 1 ? "" : "s"}`
+    : "";
+  const selectedRefundItems = order
+    ? order.items.filter((_, idx) => refundItems[idx])
+    : [];
+  const refundMax = selectedRefundItems.reduce(
+    (sum, item) => sum + (item.subtotal ?? 0),
+    0,
+  );
+  const shippingRegion = order?.shippingAddress
+    ? order.shippingAddress.province ||
+      (order.shippingAddress as unknown as { state?: string }).state ||
+      (order.shippingAddress as unknown as { region?: string }).region ||
+      ""
     : "";
 
   return (
@@ -691,13 +831,98 @@ export default function OrderDetailPage() {
                 {isPaid && (
                   <button
                     type="button"
-                    onClick={handleRefund}
-                    disabled={actionLoading !== null}
+                    onClick={() => setRefundOpen((prev) => !prev)}
+                    disabled={actionLoading !== null || refundLocked}
                     className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#f0e2d6] px-3 py-2 text-[11px] font-medium text-[#8c715c] hover:bg-[#fff0e3] disabled:opacity-60"
                   >
                     <RotateCcw className="h-4 w-4" />
-                    Request refund
+                    {refundLocked ? "Refund requested" : refundOpen ? "Hide refund form" : "Request refund"}
                   </button>
+                )}
+
+                {refundOpen && order && !refundLocked && (
+                  <div className="mt-3 rounded-2xl border border-[#f0e2d6] bg-[#fffaf6] px-3 py-3 text-[11px] text-[#8c715c]">
+                    <div className="text-[11px] text-[#8c715c]">
+                      Select items or enter a refund amount. Merchant approval
+                      is required.
+                    </div>
+                    <div className="mt-3 space-y-2">
+                      {order.items.map((item, idx) => (
+                        <label key={`${item.title}-${idx}`} className="flex items-start gap-2">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(refundItems[idx])}
+                            onChange={(event) =>
+                              setRefundItems((prev) => ({
+                                ...prev,
+                                [idx]: event.target.checked,
+                              }))
+                            }
+                            className="mt-0.5 h-3.5 w-3.5 rounded border-[#d9c6b3] text-[#3f3125]"
+                          />
+                          <span className="text-[11px] text-[#8c715c]">
+                            {item.title}
+                            <span className="ml-1 text-[10px] text-[#b29a84]">
+                              · Qty {item.quantity}
+                              {item.subtotal != null
+                                ? ` · ${formatMoney(item.subtotal, order.totals.currency)}`
+                                : ""}
+                            </span>
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-1 gap-2">
+                      <label className="text-[11px] text-[#8c715c]">
+                        Refund amount (optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={refundAmount}
+                        onChange={(event) => setRefundAmount(event.target.value)}
+                        placeholder={
+                          refundMax > 0
+                            ? `Up to ${formatMoney(refundMax, order.totals.currency)}`
+                            : "Enter amount"
+                        }
+                        className="w-full rounded-xl border border-[#f0e2d6] bg-white px-3 py-2 text-[11px] text-[#3f3125] outline-none focus:border-[#3f3125]"
+                      />
+                    </div>
+
+                    <div className="mt-3">
+                      <label className="text-[11px] text-[#8c715c]">
+                        Reason (optional)
+                      </label>
+                      <textarea
+                        value={refundReason}
+                        onChange={(event) => setRefundReason(event.target.value)}
+                        rows={3}
+                        className="mt-1 w-full rounded-xl border border-[#f0e2d6] bg-white px-3 py-2 text-[11px] text-[#3f3125] outline-none focus:border-[#3f3125]"
+                      />
+                    </div>
+
+                    {refundNote && (
+                      <div className="mt-2 text-[10px] text-rose-500">
+                        {refundNote}
+                      </div>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={handleRefundRequest}
+                      disabled={actionLoading !== null}
+                      className="mt-3 inline-flex w-full items-center justify-center rounded-full bg-[#3f3125] px-3 py-2 text-[11px] font-medium text-white shadow-sm hover:bg-black disabled:opacity-60"
+                    >
+                      {actionLoading === "refund" ? "Submitting…" : "Submit refund request"}
+                    </button>
+                  </div>
+                )}
+
+                {refundStatusLabel && (
+                  <div className="mt-2 text-[11px] text-[#a38b78]">
+                    {refundStatusLabel}
+                  </div>
                 )}
               </div>
 
@@ -889,7 +1114,7 @@ export default function OrderDetailPage() {
                       )}
                       <div>
                         {order.shippingAddress.city}
-                        {order.shippingAddress.province ? `, ${order.shippingAddress.province}` : ""}
+                        {shippingRegion ? `, ${shippingRegion}` : ""}
                         {order.shippingAddress.postal_code ? ` ${order.shippingAddress.postal_code}` : ""}
                       </div>
                       <div>{order.shippingAddress.country}</div>
@@ -909,6 +1134,14 @@ export default function OrderDetailPage() {
                       {statusLabel(order)}
                     </span>
                   </div>
+                  {order.paymentMethod && (
+                    <div className="flex items-center justify-between">
+                      <span>Method</span>
+                      <span className="font-medium text-[#3f3125]">
+                        {order.paymentMethod}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between">
                     <span>Amount</span>
                     <span className="font-medium text-[#3f3125]">

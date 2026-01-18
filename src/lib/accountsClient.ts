@@ -167,6 +167,30 @@ export async function getOrderTracking(orderId: string): Promise<Record<string, 
   return callAccounts(`/orders/${encodeURIComponent(orderId)}/tracking`);
 }
 
+export type RefundRequestItem = {
+  item_id?: string;
+  title?: string;
+  quantity?: number;
+  amount?: number;
+};
+
+export type RefundRequestPayload = {
+  amount?: number;
+  currency?: string;
+  reason?: string;
+  items?: RefundRequestItem[];
+};
+
+export async function requestRefund(
+  orderId: string,
+  payload: RefundRequestPayload,
+): Promise<Record<string, unknown>> {
+  return callAccounts(`/orders/${encodeURIComponent(orderId)}/refund`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
 export type ShippingAddress = {
   name?: string;
   address_line1?: string;
