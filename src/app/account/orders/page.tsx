@@ -392,9 +392,6 @@ export default function OrdersPage() {
                           View details
                         </button>
                       </div>
-                      <p className="max-w-full truncate text-[10px] text-[#a38b78] sm:max-w-[220px]">
-                        {statusLabel}
-                      </p>
                       <div className="mt-0.5 flex flex-wrap gap-1.5 justify-start sm:justify-end">
                         {canContinuePayment && (
                           <button
