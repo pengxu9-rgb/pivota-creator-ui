@@ -371,29 +371,31 @@ export default function OrdersPage() {
                     </div>
 
                     <div className="mt-1 flex min-w-0 flex-col items-start gap-0.5 text-left text-[10px] sm:mt-0 sm:items-end sm:text-right">
-                      <p className="text-[13px] font-semibold text-[#3f3125] sm:text-sm">
-                        {order.currency}{" "}
-                        {(
-                          typeof order.total_amount_minor === "number" &&
-                          !Number.isNaN(order.total_amount_minor)
-                            ? order.total_amount_minor / 100
-                            : 0
-                        ).toFixed(2)}
-                      </p>
-                      <p className="max-w-full truncate text-[10px] text-[#a38b78] sm:max-w-[220px]">
-                        {statusLabel}
-                      </p>
-                      <div className="mt-0.5 flex flex-wrap gap-1.5 justify-start sm:justify-end">
+                      <div className="flex w-full items-center justify-between gap-2 sm:justify-end">
+                        <p className="text-[13px] font-semibold text-[#3f3125] sm:text-sm">
+                          {order.currency}{" "}
+                          {(
+                            typeof order.total_amount_minor === "number" &&
+                            !Number.isNaN(order.total_amount_minor)
+                              ? order.total_amount_minor / 100
+                              : 0
+                          ).toFixed(2)}
+                        </p>
                         <button
                           type="button"
                           onClick={(event) => {
                             event.stopPropagation();
                             router.push(detailUrl);
                           }}
-                          className="rounded-full border border-[#f0e2d6] px-2.5 py-0.5 text-[10px] font-medium text-[#8c715c] hover:bg-[#fff0e3]"
+                          className="shrink-0 rounded-full border border-[#f0e2d6] px-2.5 py-0.5 text-[10px] font-medium text-[#8c715c] hover:bg-[#fff0e3]"
                         >
                           View details
                         </button>
+                      </div>
+                      <p className="max-w-full truncate text-[10px] text-[#a38b78] sm:max-w-[220px]">
+                        {statusLabel}
+                      </p>
+                      <div className="mt-0.5 flex flex-wrap gap-1.5 justify-start sm:justify-end">
                         {canContinuePayment && (
                           <button
                             type="button"
