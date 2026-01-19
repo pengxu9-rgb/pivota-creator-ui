@@ -181,12 +181,26 @@ export default function OrdersPage() {
         ) : (
           <section className="flex flex-1 flex-col gap-3 pb-8 text-sm">
             {visibleOrders.map((order) => {
-              const isCancelled =
-                order.status === "cancelled" || order.status === "refunded";
+                const isCancelled =
+                  order.status === "cancelled" || order.status === "refunded";
 
                 const statusLabel = (() => {
                   if (order.status === "cancelled") return "Cancelled";
                   if (order.status === "refunded") return "Refunded";
+
+                  const delivery = (order.delivery_status || "").toLowerCase();
+                  const fulfillment = (order.fulfillment_status || "").toLowerCase();
+                  if (delivery === "delivered" || fulfillment === "delivered") {
+                    return "Delivered";
+                  }
+                  if (
+                    delivery === "in_transit" ||
+                    delivery === "shipped" ||
+                    fulfillment === "shipped" ||
+                    fulfillment === "fulfilled"
+                  ) {
+                    return "Shipped";
+                  }
 
                   if (order.payment_status === "paid") return "Paid";
 
@@ -209,13 +223,19 @@ export default function OrdersPage() {
                 const shortStatus = (() => {
                   if (order.status === "cancelled") return "Cancelled";
                   if (order.status === "refunded") return "Refunded";
-                  if (
-                    order.delivery_status === "delivered" ||
-                    order.fulfillment_status === "delivered"
-                  ) {
+                  const delivery = (order.delivery_status || "").toLowerCase();
+                  const fulfillment = (order.fulfillment_status || "").toLowerCase();
+                  if (delivery === "delivered" || fulfillment === "delivered") {
                     return "Delivered";
                   }
-                  if (order.fulfillment_status === "shipped") return "Shipped";
+                  if (
+                    delivery === "in_transit" ||
+                    delivery === "shipped" ||
+                    fulfillment === "shipped" ||
+                    fulfillment === "fulfilled"
+                  ) {
+                    return "Shipped";
+                  }
                   if (order.payment_status === "pending") return "Payment pending";
                   if (order.payment_status === "paid") return "Paid";
                   return order.status || "Processing";
@@ -225,13 +245,17 @@ export default function OrdersPage() {
                   if (order.status === "cancelled" || order.status === "refunded") {
                     return "bg-rose-50 text-rose-600 border border-rose-100";
                   }
-                  if (
-                    order.delivery_status === "delivered" ||
-                    order.fulfillment_status === "delivered"
-                  ) {
+                  const delivery = (order.delivery_status || "").toLowerCase();
+                  const fulfillment = (order.fulfillment_status || "").toLowerCase();
+                  if (delivery === "delivered" || fulfillment === "delivered") {
                     return "bg-emerald-50 text-emerald-700 border border-emerald-100";
                   }
-                  if (order.fulfillment_status === "shipped") {
+                  if (
+                    delivery === "in_transit" ||
+                    delivery === "shipped" ||
+                    fulfillment === "shipped" ||
+                    fulfillment === "fulfilled"
+                  ) {
                     return "bg-sky-50 text-sky-700 border border-sky-100";
                   }
                   if (order.payment_status === "pending") {

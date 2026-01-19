@@ -287,19 +287,40 @@ function extractTracking(raw: Record<string, unknown>): TrackingInfo | null {
   const candidate = candidates.find((c) => c && typeof c === "object");
   if (!candidate) return null;
 
-  const carrier = pickFirstString(candidate, ["carrier", "shipping_carrier"]);
-  const trackingNumber = pickFirstString(candidate, ["tracking_number", "trackingNo", "tracking_number_code"]);
-  const trackingUrl = pickFirstString(candidate, ["tracking_url", "trackingUrl", "url"]);
+  const shipments =
+    Array.isArray((candidate as any).shipments) && (candidate as any).shipments.length > 0
+      ? (candidate as any).shipments
+      : null;
+  const shipment =
+    shipments && shipments[0] && typeof shipments[0] === "object"
+      ? (shipments[0] as Record<string, unknown>)
+      : null;
+
+  const primary = shipment || candidate;
+  const carrier =
+    pickFirstString(primary, ["carrier", "shipping_carrier"]) ||
+    pickFirstString(candidate, ["carrier", "shipping_carrier"]);
+  const trackingNumber =
+    pickFirstString(primary, ["tracking_number", "trackingNo", "tracking_number_code"]) ||
+    pickFirstString(candidate, ["tracking_number", "trackingNo", "tracking_number_code"]);
+  const trackingUrl =
+    pickFirstString(primary, ["tracking_url", "trackingUrl", "url"]) ||
+    pickFirstString(candidate, ["tracking_url", "trackingUrl", "url"]);
   const status =
+    pickFirstString(primary, ["status", "fulfillment_status", "delivery_status"]) ||
     pickFirstString(candidate, ["status", "fulfillment_status", "delivery_status"]) ||
     null;
   const events =
-    (Array.isArray(candidate.events) && candidate.events) ||
-    (Array.isArray(candidate.tracking_events) && candidate.tracking_events) ||
+    (Array.isArray((primary as any).events) && (primary as any).events) ||
+    (Array.isArray((primary as any).tracking_events) && (primary as any).tracking_events) ||
+    (Array.isArray((candidate as any).events) && (candidate as any).events) ||
+    (Array.isArray((candidate as any).tracking_events) && (candidate as any).tracking_events) ||
     null;
   const timeline =
-    (Array.isArray(candidate.timeline) && candidate.timeline) ||
-    (Array.isArray(candidate.progress) && candidate.progress) ||
+    (Array.isArray((primary as any).timeline) && (primary as any).timeline) ||
+    (Array.isArray((primary as any).progress) && (primary as any).progress) ||
+    (Array.isArray((candidate as any).timeline) && (candidate as any).timeline) ||
+    (Array.isArray((candidate as any).progress) && (candidate as any).progress) ||
     null;
 
   return {
@@ -571,7 +592,7 @@ function normalizeOrder(rawData: Record<string, unknown>): NormalizedOrder | nul
       total,
       currency: currency.toUpperCase(),
     },
-    tracking: extractTracking(rawOrder),
+    tracking: extractTracking(rawData),
   };
 }
 
@@ -784,7 +805,12 @@ export default function OrderDetailPage() {
     if (delivery === "delivered") {
       return "bg-emerald-50 text-emerald-700 border border-emerald-100";
     }
-    if (fulfillment === "shipped") {
+    if (
+      delivery === "in_transit" ||
+      delivery === "shipped" ||
+      fulfillment === "shipped" ||
+      fulfillment === "fulfilled"
+    ) {
       return "bg-sky-50 text-sky-700 border border-sky-100";
     }
     if (paymentStatus === "pending") {
@@ -804,8 +830,17 @@ export default function OrderDetailPage() {
     const status = order.status.toLowerCase();
     if (status === "cancelled" || status === "canceled") return "Cancelled";
     if (status === "refunded") return "Refunded";
-    if (order.deliveryStatus.toLowerCase() === "delivered") return "Delivered";
-    if (order.fulfillmentStatus.toLowerCase() === "shipped") return "Shipped";
+    const delivery = order.deliveryStatus.toLowerCase();
+    const fulfillment = order.fulfillmentStatus.toLowerCase();
+    if (delivery === "delivered" || fulfillment === "delivered") return "Delivered";
+    if (
+      delivery === "in_transit" ||
+      delivery === "shipped" ||
+      fulfillment === "shipped" ||
+      fulfillment === "fulfilled"
+    ) {
+      return "Shipped";
+    }
     if (order.paymentStatus.toLowerCase() === "failed") return "Payment failed";
     if (order.paymentStatus.toLowerCase() === "pending") return "Payment pending";
     if (order.paymentStatus.toLowerCase() === "paid") return "Paid";
@@ -818,9 +853,13 @@ export default function OrderDetailPage() {
     order?.status.toLowerCase() === "refunded";
   const isPaid = order?.paymentStatus.toLowerCase() === "paid";
   const isShipped =
+    order?.deliveryStatus.toLowerCase() === "in_transit" ||
+    order?.deliveryStatus.toLowerCase() === "shipped" ||
     order?.fulfillmentStatus.toLowerCase() === "shipped" ||
-    order?.deliveryStatus.toLowerCase() === "shipped";
-  const isDelivered = order?.deliveryStatus.toLowerCase() === "delivered";
+    order?.fulfillmentStatus.toLowerCase() === "fulfilled";
+  const isDelivered =
+    order?.deliveryStatus.toLowerCase() === "delivered" ||
+    order?.fulfillmentStatus.toLowerCase() === "delivered";
   const refundStatusLower = (order?.refundStatus || "").toLowerCase();
   const refundLocked =
     refundStatusLower.includes("pending") ||
