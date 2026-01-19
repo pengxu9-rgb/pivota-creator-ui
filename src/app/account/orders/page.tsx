@@ -129,13 +129,13 @@ export default function OrdersPage() {
         </header>
 
         {loading ? (
-          <section className="flex flex-1 flex-col gap-3 pb-8">
+          <section className="flex flex-1 flex-col gap-2 pb-8">
             {Array.from({ length: 3 }).map((_, idx) => (
               <div
                 key={idx}
-                className="flex items-center gap-4 rounded-3xl border border-[#f4e2d4] bg-white/70 px-4 py-4 shadow-sm"
+                className="flex items-center gap-3 rounded-2xl border border-[#f4e2d4] bg-white/70 px-3 py-2 shadow-sm sm:px-4 sm:py-3"
               >
-                <div className="hidden h-16 w-16 rounded-2xl bg-[#f5e3d4] sm:block" />
+                <div className="hidden h-12 w-12 rounded-xl bg-[#f5e3d4] sm:block" />
                 <div className="flex flex-1 flex-col gap-2">
                   <div className="h-3 w-32 rounded-full bg-[#f2e3d8]" />
                   <div className="h-3 w-48 rounded-full bg-[#f2e3d8]" />
@@ -179,7 +179,7 @@ export default function OrdersPage() {
             </p>
           </section>
         ) : (
-          <section className="flex flex-1 flex-col gap-3 pb-8 text-sm">
+          <section className="flex flex-1 flex-col gap-2 pb-8 text-sm">
             {visibleOrders.map((order) => {
                 const isCancelled =
                   order.status === "cancelled" || order.status === "refunded";
@@ -306,9 +306,9 @@ export default function OrdersPage() {
                         router.push(detailUrl);
                       }
                     }}
-                    className="flex cursor-pointer flex-col gap-3 rounded-3xl border border-[#f4e2d4] bg-white px-3 py-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:flex-row sm:items-center sm:gap-4 sm:px-4 sm:py-4"
+                    className="flex cursor-pointer flex-col gap-2 rounded-2xl border border-[#f4e2d4] bg-white px-3 py-2 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:flex-row sm:items-center sm:gap-3 sm:px-4 sm:py-3"
                   >
-                    <div className="hidden h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-[#f5e3d4] sm:block">
+                    <div className="hidden h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-[#f5e3d4] sm:block">
                       {previewImageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -323,20 +323,20 @@ export default function OrdersPage() {
                       )}
                     </div>
 
-                    <div className="flex flex-1 flex-col gap-1">
+                    <div className="flex flex-1 flex-col gap-0.5">
                       <div className="flex items-center justify-between gap-2">
-                        <div>
+                        <div className="min-w-0">
                           <button
                             type="button"
                             onClick={(event) => {
                               event.stopPropagation();
                               router.push(detailUrl);
                             }}
-                            className="text-left text-[13px] font-semibold text-[#3f3125] hover:underline"
+                            className="text-left text-[12px] font-semibold text-[#3f3125] hover:underline sm:text-[13px]"
                           >
                             {order.order_id}
                           </button>
-                          <p className="mt-0.5 text-[11px] text-[#a38b78]">
+                          <p className="mt-0.5 truncate text-[10px] text-[#a38b78]">
                             {new Date(order.created_at).toLocaleDateString(
                               undefined,
                               {
@@ -350,19 +350,19 @@ export default function OrdersPage() {
                           </p>
                         </div>
                         <span
-                          className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-medium ${statusToneClasses}`}
+                          className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[9px] font-medium ${statusToneClasses} sm:text-[10px]`}
                         >
                           {shortStatus}
                         </span>
                       </div>
 
                       {order.creator_name && (
-                        <p className="text-[10px] text-[#b29a84]">
+                        <p className="hidden truncate text-[10px] text-[#b29a84] sm:block">
                           Creator: {order.creator_name}
                         </p>
                       )}
                       {(firstItemOptionsText || firstItemSku) && (
-                        <p className="text-[10px] text-[#b29a84]">
+                        <p className="hidden truncate text-[10px] text-[#b29a84] sm:block">
                           {firstItemOptionsText}
                           {firstItemOptionsText && firstItemSku ? " · " : ""}
                           {firstItemSku ? `SKU: ${firstItemSku}` : ""}
@@ -370,8 +370,8 @@ export default function OrdersPage() {
                       )}
                     </div>
 
-                    <div className="mt-2 flex flex-col items-start gap-1 text-left text-[11px] sm:mt-0 sm:items-end sm:text-right">
-                      <p className="text-sm font-semibold text-[#3f3125]">
+                    <div className="mt-1 flex min-w-0 flex-col items-start gap-0.5 text-left text-[10px] sm:mt-0 sm:items-end sm:text-right">
+                      <p className="text-[13px] font-semibold text-[#3f3125] sm:text-sm">
                         {order.currency}{" "}
                         {(
                           typeof order.total_amount_minor === "number" &&
@@ -380,17 +380,17 @@ export default function OrdersPage() {
                             : 0
                         ).toFixed(2)}
                       </p>
-                      <p className="max-w-[200px] text-[10px] text-[#a38b78]">
+                      <p className="max-w-full truncate text-[10px] text-[#a38b78] sm:max-w-[220px]">
                         {statusLabel}
                       </p>
-                      <div className="mt-1 flex flex-wrap gap-2 justify-start sm:justify-end">
+                      <div className="mt-0.5 flex flex-wrap gap-1.5 justify-start sm:justify-end">
                         <button
                           type="button"
                           onClick={(event) => {
                             event.stopPropagation();
                             router.push(detailUrl);
                           }}
-                          className="rounded-full border border-[#f0e2d6] px-3 py-1 text-[10px] font-medium text-[#8c715c] hover:bg-[#fff0e3]"
+                          className="rounded-full border border-[#f0e2d6] px-2.5 py-0.5 text-[10px] font-medium text-[#8c715c] hover:bg-[#fff0e3]"
                         >
                           View details
                         </button>
@@ -409,7 +409,7 @@ export default function OrdersPage() {
                                 )}`,
                               );
                             }}
-                            className="rounded-full bg-[#3f3125] px-3 py-1 text-[10px] font-medium text-white shadow-sm hover:bg-black"
+                            className="rounded-full bg-[#3f3125] px-2.5 py-0.5 text-[10px] font-medium text-white shadow-sm hover:bg-black"
                           >
                             Continue payment
                           </button>
@@ -449,7 +449,7 @@ export default function OrdersPage() {
                                 }
                               }
                             }}
-                            className="rounded-full border border-[#f0e2d6] px-3 py-1 text-[10px] font-medium text-[#8c715c] hover:bg-[#fff0e3]"
+                            className="rounded-full border border-[#f0e2d6] px-2.5 py-0.5 text-[10px] font-medium text-[#8c715c] hover:bg-[#fff0e3]"
                           >
                             Cancel order
                           </button>
