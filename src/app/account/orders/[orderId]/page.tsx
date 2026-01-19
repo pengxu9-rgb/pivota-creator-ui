@@ -278,11 +278,19 @@ function normalizeItems(rawOrder: Record<string, unknown>): NormalizedItem[] {
 }
 
 function extractTracking(raw: Record<string, unknown>): TrackingInfo | null {
+  const rawOrder =
+    raw.order && typeof raw.order === "object"
+      ? (raw.order as Record<string, unknown>)
+      : null;
   const candidates: Array<Record<string, unknown> | null | undefined> = [
     raw.tracking as Record<string, unknown>,
     raw.tracking_info as Record<string, unknown>,
+    rawOrder?.tracking as Record<string, unknown>,
+    rawOrder?.tracking_info as Record<string, unknown>,
     raw.fulfillment as Record<string, unknown>,
+    rawOrder?.fulfillment as Record<string, unknown>,
     raw.shipping as Record<string, unknown>,
+    rawOrder?.shipping as Record<string, unknown>,
   ];
   const candidate = candidates.find((c) => c && typeof c === "object");
   if (!candidate) return null;
