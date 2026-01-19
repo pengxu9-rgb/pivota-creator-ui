@@ -95,6 +95,16 @@ function pickFirstString(obj: Record<string, unknown>, keys: string[]): string |
   return null;
 }
 
+function pickFirstNumber(obj: Record<string, unknown>, keys: string[]): number | null {
+  for (const key of keys) {
+    const value = obj[key];
+    if (value == null) continue;
+    const parsed = parseNumber(value);
+    if (Number.isFinite(parsed) && parsed !== 0) return parsed;
+  }
+  return null;
+}
+
 function normalizeImageUrl(raw: string): string | null {
   const v = raw.trim();
   if (!v) return null;
@@ -103,6 +113,40 @@ function normalizeImageUrl(raw: string): string | null {
   if (v.startsWith("https://")) return v;
   if (v.startsWith("http://")) return `https://${v.slice("http://".length)}`;
   return null;
+}
+
+function coerceArray(value: unknown): unknown[] | null {
+  if (Array.isArray(value)) return value;
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      return null;
+    }
+  }
+  if (value && typeof value === "object") {
+    const obj = value as Record<string, unknown>;
+    if (Array.isArray(obj.items)) return obj.items;
+    if (Array.isArray(obj.line_items)) return obj.line_items;
+  }
+  return null;
+}
+
+function normalizePaymentLabel(raw: string): string {
+  const normalized = raw
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+  if (normalized === "apple pay") return "Apple Pay";
+  if (normalized === "google pay") return "Google Pay";
+  if (normalized === "paypal") return "PayPal";
+  if (normalized === "card") return "Card";
+  if (normalized === "cash") return "Cash";
+  if (normalized === "klarna") return "Klarna";
+  if (normalized === "afterpay") return "Afterpay";
+  return normalized.replace(/\b\w/g, (m) => m.toUpperCase());
 }
 
 function readMajorAmount(
@@ -125,14 +169,25 @@ function readMajorAmount(
 
 function normalizeItems(rawOrder: Record<string, unknown>): NormalizedItem[] {
   const itemsSource =
-    (Array.isArray(rawOrder.items) && rawOrder.items) ||
-    (Array.isArray(rawOrder.line_items) && rawOrder.line_items) ||
-    (Array.isArray(rawOrder.order_items) && rawOrder.order_items) ||
-    (Array.isArray(rawOrder.products) && rawOrder.products) ||
+    coerceArray(rawOrder.items) ||
+    coerceArray(rawOrder.line_items) ||
+    coerceArray(rawOrder.order_items) ||
+    coerceArray(rawOrder.products) ||
+    coerceArray(rawOrder.items_json) ||
+    coerceArray(rawOrder.itemsJson) ||
+    coerceArray(rawOrder.items_detail) ||
+    coerceArray(rawOrder.itemsDetail) ||
+    coerceArray(rawOrder.order_items_json) ||
+    coerceArray(rawOrder.orderItems) ||
+    coerceArray(rawOrder.line_items_json) ||
+    coerceArray(rawOrder.lineItems) ||
     [];
 
-  return itemsSource.map((raw) => {
+  const normalized = itemsSource.map((raw) => {
     const item = raw as Record<string, unknown>;
+    const product = (item.product || item.merchandise || item.item || item.variant || item.product_detail) as
+      | Record<string, unknown>
+      | undefined;
     const id = pickFirstString(item, [
       "line_item_id",
       "lineItemId",
@@ -147,32 +202,51 @@ function normalizeItems(rawOrder: Record<string, unknown>): NormalizedItem[] {
     ]);
     const title =
       pickFirstString(item, ["product_title", "title", "name", "product_name"]) ||
+      (product ? pickFirstString(product, ["product_title", "title", "name"]) : null) ||
       "Item";
     const quantity = Math.max(1, Math.round(parseNumber(item.quantity ?? item.qty ?? 1)));
 
     const unitPrice =
-      readMajorAmount(item, ["unit_price_minor", "unit_price_cents", "price_minor"], ["unit_price", "price", "amount"]) ??
+      readMajorAmount(
+        item,
+        ["unit_price_minor", "unit_price_cents", "price_minor", "amount_minor", "unit_amount_minor"],
+        ["unit_price", "price", "amount", "unit_amount"],
+      ) ??
       null;
     const subtotal =
-      readMajorAmount(item, ["subtotal_minor", "subtotal_cents", "line_total_minor"], ["subtotal", "line_total", "total"]) ??
+      readMajorAmount(
+        item,
+        ["subtotal_minor", "subtotal_cents", "line_total_minor", "total_amount_minor"],
+        ["subtotal", "line_total", "total", "total_amount"],
+      ) ??
       (unitPrice != null ? unitPrice * quantity : null);
 
-    const imageRaw = pickFirstString(item, [
-      "product_image_url",
-      "image_url",
-      "image",
-      "thumbnail_url",
-      "thumb_url",
-      "image_src",
-    ]);
+    const imageRaw =
+      pickFirstString(item, [
+        "product_image_url",
+        "image_url",
+        "image",
+        "thumbnail_url",
+        "thumb_url",
+        "image_src",
+      ]) ||
+      (product
+        ? pickFirstString(product, ["image_url", "image", "thumbnail_url", "image_src"])
+        : null) ||
+      (item.image && typeof item.image === "object"
+        ? pickFirstString(item.image as Record<string, unknown>, ["src", "url"])
+        : null);
     const imageUrl = imageRaw ? normalizeImageUrl(imageRaw) : null;
 
-    const options =
-      item.selected_options && typeof item.selected_options === "object"
-        ? Object.entries(item.selected_options as Record<string, unknown>)
-            .map(([key, value]) => `${key}: ${String(value)}`)
-            .join(" · ")
-        : null;
+    const optionsSource =
+      (item.selected_options && typeof item.selected_options === "object" ? item.selected_options : null) ||
+      (item.options && typeof item.options === "object" ? item.options : null) ||
+      (item.variant_options && typeof item.variant_options === "object" ? item.variant_options : null);
+    const options = optionsSource
+      ? Object.entries(optionsSource as Record<string, unknown>)
+          .map(([key, value]) => `${key}: ${String(value)}`)
+          .join(" · ")
+      : null;
 
     return {
       id,
@@ -184,6 +258,23 @@ function normalizeItems(rawOrder: Record<string, unknown>): NormalizedItem[] {
       optionsText: options,
     };
   });
+
+  if (normalized.length === 0) {
+    const summary = pickFirstString(rawOrder, ["items_summary", "itemsSummary", "summary"]);
+    if (summary) {
+      return [
+        {
+          title: summary,
+          quantity: 1,
+          unitPrice: null,
+          subtotal: null,
+          imageUrl: null,
+        },
+      ];
+    }
+  }
+
+  return normalized;
 }
 
 function extractTracking(raw: Record<string, unknown>): TrackingInfo | null {
@@ -228,11 +319,18 @@ function formatPaymentMethod(rawOrder: Record<string, unknown>): string | null {
     "payment_method_label",
     "payment_method_name",
     "payment_type",
+    "payment_method_display",
   ]);
   const brand = pickFirstString(rawOrder, [
     "payment_method_brand",
     "card_brand",
     "brand",
+    "card_brand_name",
+  ]);
+  const last4 = pickFirstString(rawOrder, [
+    "card_last4",
+    "last4",
+    "card_last_4",
   ]);
   const wallet = pickFirstString(rawOrder, ["wallet_type", "wallet"]);
   const provider = pickFirstString(rawOrder, [
@@ -240,16 +338,95 @@ function formatPaymentMethod(rawOrder: Record<string, unknown>): string | null {
     "payment_gateway",
     "gateway",
   ]);
+  const details =
+    (rawOrder.payment_method_details as Record<string, unknown>) ||
+    (rawOrder.paymentMethodDetails as Record<string, unknown>) ||
+    (rawOrder.payment_details as Record<string, unknown>) ||
+    (rawOrder.paymentDetails as Record<string, unknown>) ||
+    null;
 
-  const parts = [method, brand, wallet, provider].filter(
-    (part) => typeof part === "string" && part.trim().length > 0,
-  ) as string[];
+  const detailMethod = details ? pickFirstString(details, ["type", "method", "payment_method"]) : null;
+  const detailWallet = details
+    ? pickFirstString(details, ["wallet", "wallet_type", "walletType"])
+    : null;
+  const detailCard =
+    details && typeof details.card === "object"
+      ? (details.card as Record<string, unknown>)
+      : null;
+  const detailBrand = detailCard ? pickFirstString(detailCard, ["brand", "network"]) : null;
+  const detailLast4 = detailCard ? pickFirstString(detailCard, ["last4", "last_4"]) : null;
+
+  const parts = [method, detailMethod, brand, detailBrand, wallet, detailWallet, provider]
+    .filter((part) => typeof part === "string" && part.trim().length > 0)
+    .map((part) => normalizePaymentLabel(String(part))) as string[];
+
+  if (last4 || detailLast4) {
+    parts.push(`•••• ${last4 || detailLast4}`);
+  }
   if (parts.length === 0) return null;
 
   const unique = Array.from(
     new Set(parts.map((p) => p.trim())),
   );
   return unique.join(" · ");
+}
+
+function normalizeShippingAddress(
+  rawOrder: Record<string, unknown>,
+  rawShipping?: Record<string, unknown> | null,
+): ShippingAddress | null {
+  const source = rawShipping && typeof rawShipping === "object" ? rawShipping : null;
+  const name =
+    (source ? pickFirstString(source, ["name", "full_name", "recipient_name"]) : null) ||
+    pickFirstString(rawOrder, ["shipping_name", "recipient_name"]) ||
+    "";
+  const addressLine1 =
+    (source
+      ? pickFirstString(source, ["address_line1", "address1", "line1", "address_line_1", "street1", "street"])
+      : null) ||
+    pickFirstString(rawOrder, ["shipping_address_line1", "shipping_address1", "shipping_line1", "shipping_street"]) ||
+    "";
+  const addressLine2 =
+    (source
+      ? pickFirstString(source, ["address_line2", "address2", "line2", "address_line_2", "street2", "unit", "apt"])
+      : null) ||
+    pickFirstString(rawOrder, ["shipping_address_line2", "shipping_address2", "shipping_line2"]) ||
+    "";
+  const city =
+    (source ? pickFirstString(source, ["city", "town", "locality"]) : null) ||
+    pickFirstString(rawOrder, ["shipping_city", "shipping_town"]) ||
+    "";
+  const province =
+    (source ? pickFirstString(source, ["province", "state", "state_code", "region", "state_name"]) : null) ||
+    pickFirstString(rawOrder, ["shipping_state", "shipping_state_code", "shipping_province", "shipping_region"]) ||
+    "";
+  const country =
+    (source ? pickFirstString(source, ["country", "country_code", "country_name"]) : null) ||
+    pickFirstString(rawOrder, ["shipping_country", "shipping_country_code"]) ||
+    "";
+  const postalCode =
+    (source ? pickFirstString(source, ["postal_code", "zip", "zipcode", "zip_code", "postal"]) : null) ||
+    pickFirstString(rawOrder, ["shipping_postal_code", "shipping_zip"]) ||
+    "";
+  const phone =
+    (source ? pickFirstString(source, ["phone", "phone_number"]) : null) ||
+    pickFirstString(rawOrder, ["shipping_phone"]) ||
+    "";
+
+  if (!name && !addressLine1 && !city && !country && !postalCode) {
+    return null;
+  }
+
+  return {
+    name,
+    address_line1: addressLine1,
+    address_line2: addressLine2,
+    city,
+    province,
+    country,
+    postal_code: postalCode,
+    phone,
+  };
 }
 
 function normalizeOrder(rawData: Record<string, unknown>): NormalizedOrder | null {
@@ -291,10 +468,13 @@ function normalizeOrder(rawData: Record<string, unknown>): NormalizedOrder | nul
     Math.max(0, subtotal - discounts + shipping + taxes);
 
   const shippingAddress =
-    (rawOrder.shipping_address as ShippingAddress) ||
-    (rawOrder.shippingAddress as ShippingAddress) ||
-    (rawOrder.shipping as ShippingAddress) ||
-    undefined;
+    normalizeShippingAddress(
+      rawOrder,
+      (rawOrder.shipping_address as Record<string, unknown>) ||
+        (rawOrder.shippingAddress as Record<string, unknown>) ||
+        (rawOrder.shipping as Record<string, unknown>) ||
+        null,
+    ) || undefined;
 
   const paymentMethod = formatPaymentMethod(rawOrder);
   const refundStatus =
