@@ -312,7 +312,10 @@ function extractTracking(raw: Record<string, unknown>): TrackingInfo | null {
   };
 }
 
-function formatPaymentMethod(rawOrder: Record<string, unknown>): string | null {
+function formatPaymentMethod(
+  rawOrder: Record<string, unknown>,
+  rawData?: Record<string, unknown>,
+): string | null {
   const method = pickFirstString(rawOrder, [
     "payment_method",
     "payment_method_type",
@@ -338,6 +341,28 @@ function formatPaymentMethod(rawOrder: Record<string, unknown>): string | null {
     "payment_gateway",
     "gateway",
   ]);
+  const paymentRoot =
+    (rawData?.payment as Record<string, unknown>) ||
+    (rawOrder.payment as Record<string, unknown>) ||
+    null;
+  const paymentRecords = paymentRoot && Array.isArray(paymentRoot.records)
+    ? paymentRoot.records
+    : null;
+  const record =
+    paymentRecords && paymentRecords.length > 0 && typeof paymentRecords[0] === "object"
+      ? (paymentRecords[0] as Record<string, unknown>)
+      : null;
+  const recordProvider = record ? pickFirstString(record, ["provider", "gateway"]) : null;
+  const recordMethod = record
+    ? pickFirstString(record, ["payment_method", "payment_method_type", "method", "type"])
+    : null;
+  const recordWallet = record ? pickFirstString(record, ["wallet", "wallet_type"]) : null;
+  const recordBrand = record
+    ? pickFirstString(record, ["card_brand", "brand", "network"])
+    : null;
+  const recordLast4 = record
+    ? pickFirstString(record, ["last4", "card_last4", "card_last_4"])
+    : null;
   const details =
     (rawOrder.payment_method_details as Record<string, unknown>) ||
     (rawOrder.paymentMethodDetails as Record<string, unknown>) ||
@@ -356,12 +381,24 @@ function formatPaymentMethod(rawOrder: Record<string, unknown>): string | null {
   const detailBrand = detailCard ? pickFirstString(detailCard, ["brand", "network"]) : null;
   const detailLast4 = detailCard ? pickFirstString(detailCard, ["last4", "last_4"]) : null;
 
-  const parts = [method, detailMethod, brand, detailBrand, wallet, detailWallet, provider]
+  const parts = [
+    method,
+    detailMethod,
+    recordMethod,
+    brand,
+    detailBrand,
+    recordBrand,
+    wallet,
+    detailWallet,
+    recordWallet,
+    provider,
+    recordProvider,
+  ]
     .filter((part) => typeof part === "string" && part.trim().length > 0)
     .map((part) => normalizePaymentLabel(String(part))) as string[];
 
-  if (last4 || detailLast4) {
-    parts.push(`•••• ${last4 || detailLast4}`);
+  if (last4 || detailLast4 || recordLast4) {
+    parts.push(`•••• ${last4 || detailLast4 || recordLast4}`);
   }
   if (parts.length === 0) return null;
 
@@ -373,11 +410,17 @@ function formatPaymentMethod(rawOrder: Record<string, unknown>): string | null {
 
 function normalizeShippingAddress(
   rawOrder: Record<string, unknown>,
+  rawData?: Record<string, unknown>,
   rawShipping?: Record<string, unknown> | null,
 ): ShippingAddress | null {
   const source = rawShipping && typeof rawShipping === "object" ? rawShipping : null;
+  const customer =
+    (rawData?.customer as Record<string, unknown>) ||
+    (rawOrder.customer as Record<string, unknown>) ||
+    null;
   const name =
     (source ? pickFirstString(source, ["name", "full_name", "recipient_name"]) : null) ||
+    (customer ? pickFirstString(customer, ["name", "full_name"]) : null) ||
     pickFirstString(rawOrder, ["shipping_name", "recipient_name"]) ||
     "";
   const addressLine1 =
@@ -410,6 +453,7 @@ function normalizeShippingAddress(
     "";
   const phone =
     (source ? pickFirstString(source, ["phone", "phone_number"]) : null) ||
+    (customer ? pickFirstString(customer, ["phone", "phone_number"]) : null) ||
     pickFirstString(rawOrder, ["shipping_phone"]) ||
     "";
 
@@ -448,7 +492,22 @@ function normalizeOrder(rawData: Record<string, unknown>): NormalizedOrder | nul
     pickFirstString(rawOrder, ["currency", "currency_code", "payment_currency"]) ||
     "USD";
 
-  const items = normalizeItems(rawOrder);
+  const itemsPayload: Record<string, unknown> = {
+    ...rawOrder,
+    items: rawOrder.items ?? rawData.items,
+    line_items: rawOrder.line_items ?? rawData.line_items,
+    order_items: rawOrder.order_items ?? rawData.order_items,
+    products: rawOrder.products ?? rawData.products,
+    items_json: rawOrder.items_json ?? rawData.items_json,
+    itemsJson: rawOrder.itemsJson ?? rawData.itemsJson,
+    items_detail: rawOrder.items_detail ?? rawData.items_detail,
+    itemsDetail: rawOrder.itemsDetail ?? rawData.itemsDetail,
+    order_items_json: rawOrder.order_items_json ?? rawData.order_items_json,
+    orderItems: rawOrder.orderItems ?? rawData.orderItems,
+    line_items_json: rawOrder.line_items_json ?? rawData.line_items_json,
+    lineItems: rawOrder.lineItems ?? rawData.lineItems,
+  };
+  const items = normalizeItems(itemsPayload);
   const itemSubtotal = items.reduce((sum, item) => sum + (item.subtotal ?? 0), 0);
 
   const subtotal =
@@ -470,13 +529,17 @@ function normalizeOrder(rawData: Record<string, unknown>): NormalizedOrder | nul
   const shippingAddress =
     normalizeShippingAddress(
       rawOrder,
+      rawData,
       (rawOrder.shipping_address as Record<string, unknown>) ||
         (rawOrder.shippingAddress as Record<string, unknown>) ||
         (rawOrder.shipping as Record<string, unknown>) ||
+        (rawData.shipping_address as Record<string, unknown>) ||
+        (rawData.shippingAddress as Record<string, unknown>) ||
+        (rawData.shipping as Record<string, unknown>) ||
         null,
     ) || undefined;
 
-  const paymentMethod = formatPaymentMethod(rawOrder);
+  const paymentMethod = formatPaymentMethod(rawOrder, rawData);
   const refundStatus =
     pickFirstString(rawOrder, [
       "refund_status",
