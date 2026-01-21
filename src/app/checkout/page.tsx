@@ -101,6 +101,7 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
   const [existingTotalMinor, setExistingTotalMinor] = useState<number | null>(null);
   const [existingCurrency, setExistingCurrency] = useState<string | null>(null);
   const [existingItemsSummary, setExistingItemsSummary] = useState<string | null>(null);
+  const [existingOrderParamsLoaded, setExistingOrderParamsLoaded] = useState(false);
   const [hasPrefilledAddress, setHasPrefilledAddress] = useState(false);
 
   // Auth state for inline email login
@@ -141,6 +142,7 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
   const [paymentInitLoading, setPaymentInitLoading] = useState(false);
   const [paymentInitError, setPaymentInitError] = useState<string | null>(null);
   const [prefetchedPaymentRes, setPrefetchedPaymentRes] = useState<SubmitPaymentResponse | null>(null);
+  const prefillAttemptedRef = useRef(false);
 
   const existingPricing =
     existingOrderId && existingTotalMinor != null
@@ -391,6 +393,7 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
   }, [country]);
 
   useEffect(() => {
+    if (!existingOrderParamsLoaded) return;
     let cancelled = false;
     const loadMe = async () => {
       try {
@@ -406,41 +409,6 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
         } else {
           setAuthStep("email");
         }
-
-        // Prefill shipping address:
-        // 1) Prefer locally saved default address (from Profile / previous checkouts)
-        // 2) Fallback to the latest paid order on this account.
-        // Only when we are not continuing payment for an existing order
-        // and the user hasn't started typing their own address.
-        if (me && !existingOrderId && !cancelled) {
-          try {
-            let addr = loadSavedShippingAddress();
-            if (!hasNonEmptyAddress(addr)) {
-              addr = await getLatestPaidOrderShippingAddress();
-            }
-            if (
-              addr &&
-              !hasPrefilledAddress &&
-              !name &&
-              !addressLine1 &&
-              !city &&
-              !country &&
-              !postalCode
-            ) {
-              setName(addr.name || "");
-              setAddressLine1(addr.address_line1 || "");
-              setAddressLine2(addr.address_line2 || "");
-              setCity(addr.city || "");
-              setProvince(addr.province || "");
-              setCountry(normalizeCountryCode(addr.country) || "US");
-              setPostalCode(addr.postal_code || "");
-              setPhone(addr.phone || "");
-              setHasPrefilledAddress(true);
-            }
-          } catch (addrErr) {
-            console.error(addrErr);
-          }
-        }
       } catch (err) {
         console.error(err);
         if (!cancelled) {
@@ -452,7 +420,65 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
     return () => {
       cancelled = true;
     };
-  }, [existingOrderId, hasPrefilledAddress, name, addressLine1, city, province, country, postalCode]);
+  }, [existingOrderParamsLoaded]);
+
+  useEffect(() => {
+    if (!existingOrderParamsLoaded) return;
+    if (!accountsUser) return;
+    if (existingOrderId) return;
+    if (prefillAttemptedRef.current) return;
+    if (hasPrefilledAddress) {
+      prefillAttemptedRef.current = true;
+      return;
+    }
+
+    const userStartedTyping = Boolean(name || addressLine1 || city || province || postalCode);
+    const countryLooksUntouched = !country || country === "US";
+    if (userStartedTyping || !countryLooksUntouched) {
+      prefillAttemptedRef.current = true;
+      return;
+    }
+
+    let cancelled = false;
+    prefillAttemptedRef.current = true;
+    (async () => {
+      try {
+        let addr = loadSavedShippingAddress();
+        if (!hasNonEmptyAddress(addr)) {
+          addr = await getLatestPaidOrderShippingAddress();
+        }
+        if (cancelled) return;
+        if (!addr) return;
+
+        setName(addr.name || "");
+        setAddressLine1(addr.address_line1 || "");
+        setAddressLine2(addr.address_line2 || "");
+        setCity(addr.city || "");
+        setProvince(addr.province || "");
+        setCountry(normalizeCountryCode(addr.country) || "US");
+        setPostalCode(addr.postal_code || "");
+        setPhone(addr.phone || "");
+        setHasPrefilledAddress(true);
+      } catch (addrErr) {
+        console.error(addrErr);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    accountsUser,
+    existingOrderId,
+    existingOrderParamsLoaded,
+    hasPrefilledAddress,
+    name,
+    addressLine1,
+    city,
+    province,
+    country,
+    postalCode,
+  ]);
 
   // Support continuing payment for an existing order from the Orders page.
   useEffect(() => {
@@ -480,6 +506,8 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
       }
     } catch (err) {
       console.error(err);
+    } finally {
+      setExistingOrderParamsLoaded(true);
     }
   }, []);
 
