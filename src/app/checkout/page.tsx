@@ -28,6 +28,7 @@ import {
   saveShippingAddress,
   hasNonEmptyAddress,
 } from "@/lib/addressStorage";
+import { normalizeCountryCode, SHIPPING_COUNTRY_GROUPS } from "@/lib/shippingCountries";
 import "@adyen/adyen-web/dist/adyen.css";
 
 type CheckoutStep = "form" | "submitting" | "success" | "error";
@@ -89,7 +90,7 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
   const [addressLine2, setAddressLine2] = useState("");
   const [city, setCity] = useState("");
   const [province, setProvince] = useState("");
-  const [country, setCountry] = useState("");
+  const [country, setCountry] = useState("US");
   const [postalCode, setPostalCode] = useState("");
   const [phone, setPhone] = useState("");
   const [notes, setNotes] = useState("");
@@ -383,6 +384,13 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
     !existingOrderId && !isPaymentStep && hasLockedQuote && currenciesMatch && Math.abs(subtotalDelta) >= 0.01;
 
   useEffect(() => {
+    const normalized = normalizeCountryCode(country);
+    if (normalized && normalized !== country) {
+      setCountry(normalized);
+    }
+  }, [country]);
+
+  useEffect(() => {
     let cancelled = false;
     const loadMe = async () => {
       try {
@@ -424,7 +432,7 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
               setAddressLine2(addr.address_line2 || "");
               setCity(addr.city || "");
               setProvince(addr.province || "");
-              setCountry(addr.country || "");
+              setCountry(normalizeCountryCode(addr.country) || "US");
               setPostalCode(addr.postal_code || "");
               setPhone(addr.phone || "");
               setHasPrefilledAddress(true);
@@ -492,9 +500,11 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
       return;
     }
 
+    const normalizedCountry = normalizeCountryCode(country);
+
     // Quote preview needs checkout-critical fields; if missing, don't call pricing.
     const hasRequired =
-      displayEmail.trim() && name && addressLine1 && city && country && postalCode;
+      displayEmail.trim() && name && addressLine1 && city && normalizedCountry && postalCode;
     if (!hasRequired) {
       setQuote(null);
       setQuoteError(null);
@@ -516,7 +526,7 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
             addressLine2: addressLine2 || undefined,
             city,
             province: province || undefined,
-            country,
+            country: normalizedCountry!,
             postalCode,
             phone: phone || undefined,
           });
@@ -604,33 +614,34 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
       setError("Your cart is empty.");
       return;
     }
-    const effectiveEmail =
-      displayEmail.trim() ||
-      email.trim();
+	    const effectiveEmail =
+	      displayEmail.trim() ||
+	      email.trim();
+	    const normalizedCountry = normalizeCountryCode(country);
 
-    // Ensure we have some email to attach to the order.
-    if (!effectiveEmail) {
-      setError("Please enter a valid email before placing the order.");
-      return;
-    }
-    if (!name || !addressLine1 || !city || !country || !postalCode) {
-      setError("Please fill in all required fields.");
-      return;
-    }
+	    // Ensure we have some email to attach to the order.
+	    if (!effectiveEmail) {
+	      setError("Please enter a valid email before placing the order.");
+	      return;
+	    }
+	    if (!name || !addressLine1 || !city || !normalizedCountry || !postalCode) {
+	      setError("Please fill in all required fields.");
+	      return;
+	    }
 
     try {
       setError(null);
 
       // Update the saved default shipping address for future checkouts.
-      saveShippingAddress({
-        name,
-        address_line1: addressLine1,
-        address_line2: addressLine2 || "",
-        city,
-        country,
-        postal_code: postalCode,
-        phone: phone || "",
-      });
+	      saveShippingAddress({
+	        name,
+	        address_line1: addressLine1,
+	        address_line2: addressLine2 || "",
+	        city,
+	        country: normalizedCountry,
+	        postal_code: postalCode,
+	        phone: phone || "",
+	      });
 
       // Step 1: ensure we have an order id. For new orders, the first click
       // only creates the order and prepares the payment step so that Stripe
@@ -651,73 +662,73 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
           // Ensure we have a locked quote for strong price consistency.
           let quoteToUse = quote;
           if (!quoteToUse) {
-            quoteToUse = await previewQuoteFromCart({
-              items,
-              discountCodes,
-              email: effectiveEmail,
-              name,
-              addressLine1,
-              addressLine2: addressLine2 || undefined,
-              city,
-              province: province || undefined,
-              country,
-              postalCode,
-              phone: phone || undefined,
-            });
+	            quoteToUse = await previewQuoteFromCart({
+	              items,
+	              discountCodes,
+	              email: effectiveEmail,
+	              name,
+	              addressLine1,
+	              addressLine2: addressLine2 || undefined,
+	              city,
+	              province: province || undefined,
+	              country: normalizedCountry,
+	              postalCode,
+	              phone: phone || undefined,
+	            });
             setQuote(quoteToUse);
           }
 
           let orderRes: CheckoutOrderResponse;
           try {
-            orderRes = await createOrderWithQuote({
-              quoteId: quoteToUse.quote_id,
-              items,
-              discountCodes,
-              email: effectiveEmail,
-              name,
-              addressLine1,
-              addressLine2: addressLine2 || undefined,
-              city,
-              province: province || undefined,
-              country,
-              postalCode,
-              phone: phone || undefined,
-              notes: notes || undefined,
-            });
+	            orderRes = await createOrderWithQuote({
+	              quoteId: quoteToUse.quote_id,
+	              items,
+	              discountCodes,
+	              email: effectiveEmail,
+	              name,
+	              addressLine1,
+	              addressLine2: addressLine2 || undefined,
+	              city,
+	              province: province || undefined,
+	              country: normalizedCountry,
+	              postalCode,
+	              phone: phone || undefined,
+	              notes: notes || undefined,
+	            });
           } catch (err) {
             const { code } = parseAgentGatewayError(err);
             if (isRetryableQuoteError(code)) {
               // Auto refresh quote (expired/mismatch) and retry order create once.
-              const refreshedQuote = await previewQuoteFromCart({
-                items,
-                discountCodes,
-                email: effectiveEmail,
-                name,
-                addressLine1,
-                addressLine2: addressLine2 || undefined,
-                city,
-                province: province || undefined,
-                country,
-                postalCode,
-                phone: phone || undefined,
-              });
+	              const refreshedQuote = await previewQuoteFromCart({
+	                items,
+	                discountCodes,
+	                email: effectiveEmail,
+	                name,
+	                addressLine1,
+	                addressLine2: addressLine2 || undefined,
+	                city,
+	                province: province || undefined,
+	                country: normalizedCountry,
+	                postalCode,
+	                phone: phone || undefined,
+	              });
               setQuote(refreshedQuote);
 
-              orderRes = await createOrderWithQuote({
-                quoteId: refreshedQuote.quote_id,
-                items,
-                discountCodes,
-                email: effectiveEmail,
-                name,
-                addressLine1,
-                addressLine2: addressLine2 || undefined,
-                city,
-                province: province || undefined,
-                country,
-                postalCode,
-                phone: phone || undefined,
-                notes: notes || undefined,
-              });
+	              orderRes = await createOrderWithQuote({
+	                quoteId: refreshedQuote.quote_id,
+	                items,
+	                discountCodes,
+	                email: effectiveEmail,
+	                name,
+	                addressLine1,
+	                addressLine2: addressLine2 || undefined,
+	                city,
+	                province: province || undefined,
+	                country: normalizedCountry,
+	                postalCode,
+	                phone: phone || undefined,
+	                notes: notes || undefined,
+	              });
             } else {
               throw err;
             }
@@ -1592,15 +1603,25 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
                     </label>
                   </div>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <label className="text-[11px] font-medium text-slate-700">
-                      Country / Region
-                      <input
-                        required
-                        value={country}
-                        onChange={(e) => setCountry(e.target.value)}
-                        className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 shadow-sm outline-none focus:border-slate-900"
-                      />
-                    </label>
+	                    <label className="text-[11px] font-medium text-slate-700">
+	                      Country / Region
+	                      <select
+	                        required
+	                        value={country}
+	                        onChange={(e) => setCountry(e.target.value)}
+	                        className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 shadow-sm outline-none focus:border-slate-900"
+	                      >
+	                        {SHIPPING_COUNTRY_GROUPS.map((group) => (
+	                          <optgroup key={group.label} label={group.label}>
+	                            {group.countries.map((c) => (
+	                              <option key={c.code} value={c.code}>
+	                                {c.name}
+	                              </option>
+	                            ))}
+	                          </optgroup>
+	                        ))}
+	                      </select>
+	                    </label>
                     <label className="text-[11px] font-medium text-slate-700">
                       Postal code
                       <input
