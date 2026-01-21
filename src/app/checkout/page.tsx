@@ -661,12 +661,13 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
     try {
       setError(null);
 
-      // Update the saved default shipping address for future checkouts.
+	      // Update the saved default shipping address for future checkouts.
 	      saveShippingAddress({
 	        name,
 	        address_line1: addressLine1,
 	        address_line2: addressLine2 || "",
 	        city,
+	        province: province || "",
 	        country: normalizedCountry,
 	        postal_code: postalCode,
 	        phone: phone || "",
