@@ -552,21 +552,22 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
       cancelled = true;
       clearTimeout(t);
     };
-  }, [
-    items,
-    existingOrderId,
-    isPaymentStep,
-    step,
-    displayEmail,
-    name,
-    addressLine1,
-    addressLine2,
-    city,
-    country,
-    postalCode,
-    phone,
-    discountCodes,
-  ]);
+	  }, [
+	    items,
+	    existingOrderId,
+	    isPaymentStep,
+	    step,
+	    displayEmail,
+	    name,
+	    addressLine1,
+	    addressLine2,
+	    city,
+	    province,
+	    country,
+	    postalCode,
+	    phone,
+	    discountCodes,
+	  ]);
 
   const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault();
