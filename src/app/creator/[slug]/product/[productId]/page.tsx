@@ -1,530 +1,402 @@
 'use client';
 
-import { useEffect, useMemo, useState } from "react";
-import { useParams, useSearchParams, useRouter } from "next/navigation";
-import { getCreatorBySlug } from "@/config/creatorAgents";
-import type { Product } from "@/types/product";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { useCart } from "@/components/cart/CartProvider";
+import { getCreatorBySlug } from "@/config/creatorAgents";
+import type { Offer, PDPPayload, Variant } from "@/features/pdp/types";
+import { BeautyPDPContainer } from "@/features/pdp/containers/BeautyPDPContainer";
+import { GenericPDPContainer } from "@/features/pdp/containers/GenericPDPContainer";
+import { isBeautyProduct } from "@/features/pdp/utils/isBeautyProduct";
+
+type ResolveResponse = {
+  status?: string;
+  product_group_id?: string;
+  offers_count?: number;
+  offers?: Offer[];
+  default_offer_id?: string;
+  best_price_offer_id?: string;
+  cache?: { hit?: boolean; age_ms?: number; ttl_ms?: number };
+};
+
+function formatPrice(amount: number, currency: string) {
+  const n = Number.isFinite(amount) ? amount : 0;
+  const c = currency || "USD";
+  try {
+    return new Intl.NumberFormat("en-US", { style: "currency", currency: c }).format(n);
+  } catch {
+    return `$${n.toFixed(2)}`;
+  }
+}
+
+function summarizeOffer(offer: Offer) {
+  const eta = offer.shipping?.eta_days_range;
+  const etaLabel = eta ? `${eta[0]}–${eta[1]}d` : "ETA unknown";
+  const returnsLabel =
+    offer.returns?.return_window_days != null
+      ? offer.returns.free_returns
+        ? `${offer.returns.return_window_days}d free returns`
+        : `${offer.returns.return_window_days}d returns`
+      : "Returns unknown";
+  return { etaLabel, returnsLabel };
+}
+
+function pickPdpPayload(raw: any): PDPPayload | null {
+  if (!raw || typeof raw !== "object") return null;
+  const payload = raw.pdp_payload ?? raw.pdpPayload ?? raw.payload ?? null;
+  return payload && typeof payload === "object" ? (payload as PDPPayload) : null;
+}
 
 export default function CreatorProductDetailPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { addItem, clear, close } = useCart();
 
   const slugParam = params?.slug;
   const slug = Array.isArray(slugParam) ? slugParam[0] : slugParam;
   const productIdParam = params?.productId;
-  const productId =
-    Array.isArray(productIdParam) ? productIdParam[0] : productIdParam;
+  const productId = Array.isArray(productIdParam) ? productIdParam[0] : productIdParam;
+
+  const creator = slug ? getCreatorBySlug(slug) : undefined;
 
   const merchantId =
     searchParams?.get("merchant_id") ||
     searchParams?.get("merchantId") ||
     "";
 
-  const creator = slug ? getCreatorBySlug(slug) : undefined;
+  const forcedTemplate = (searchParams?.get("pdp") || "").toLowerCase();
+  const debug = Boolean(searchParams?.get("pdp_debug") || searchParams?.get("debug"));
 
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
-  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [resolveState, setResolveState] = useState<{
+    loading: boolean;
+    error: string | null;
+    data: ResolveResponse | null;
+  }>({ loading: false, error: null, data: null });
+  const [resolveNonce, setResolveNonce] = useState(0);
 
-  const { addItem, clear, close } = useCart();
+  const [pdpState, setPdpState] = useState<{
+    loading: boolean;
+    error: string | null;
+    payload: PDPPayload | null;
+  }>({ loading: false, error: null, payload: null });
+  const [pdpNonce, setPdpNonce] = useState(0);
+
+  const resolvedMode = useMemo(() => {
+    if (forcedTemplate === "beauty") return "beauty";
+    if (forcedTemplate === "generic") return "generic";
+    if (pdpState.payload) return isBeautyProduct(pdpState.payload.product) ? "beauty" : "generic";
+    return "generic";
+  }, [forcedTemplate, pdpState.payload]);
+
+  const basePath = useMemo(() => {
+    if (!creator?.slug || !productId) return null;
+    return `/creator/${encodeURIComponent(creator.slug)}/product/${encodeURIComponent(productId)}`;
+  }, [creator?.slug, productId]);
+
+  const setMerchantInUrl = useCallback((args: { merchantId: string; offerId?: string }) => {
+    if (!basePath) return;
+    const next = new URLSearchParams(searchParams?.toString() || "");
+    next.set("merchant_id", args.merchantId);
+    if (args.offerId) next.set("offer_id", args.offerId);
+    router.replace(`${basePath}?${next.toString()}`);
+  }, [basePath, router, searchParams]);
 
   useEffect(() => {
-    if (!creator || !productId || !merchantId) {
-      setLoading(false);
-      if (!creator) {
-        setError("Creator not found.");
-      } else {
-        setError("Missing product or merchant information.");
-      }
-      return;
-    }
+    if (!basePath || !productId) return;
+    if (merchantId) return;
 
     let cancelled = false;
-
-    const loadDetail = async () => {
+    const run = async () => {
       try {
-        setLoading(true);
-        const res = await fetch("/api/creator-agent/product-detail", {
+        setResolveState({ loading: true, error: null, data: null });
+        const res = await fetch("/api/creator-agent/resolve-product-candidates", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            productId,
+            limit: 10,
+            debug,
+          }),
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => null);
+          const detail = body?.detail || "Failed to resolve sellers";
+          throw new Error(detail);
+        }
+        const data = (await res.json()) as ResolveResponse;
+        if (cancelled) return;
+
+        const offers = Array.isArray(data.offers) ? data.offers : [];
+        const count = typeof data.offers_count === "number" ? data.offers_count : offers.length;
+
+        if (count === 1 && offers[0]?.merchant_id) {
+          setMerchantInUrl({ merchantId: offers[0].merchant_id, offerId: offers[0].offer_id });
+          return;
+        }
+
+        setResolveState({ loading: false, error: null, data });
+      } catch (err) {
+        if (cancelled) return;
+        const msg = err instanceof Error ? err.message : String(err);
+        setResolveState({ loading: false, error: msg || "Can’t load sellers for this product right now. Please retry.", data: null });
+      }
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [basePath, debug, merchantId, productId, resolveNonce, setMerchantInUrl]);
+
+  useEffect(() => {
+    if (!merchantId || !productId) return;
+
+    let cancelled = false;
+    const run = async () => {
+      try {
+        setPdpState({ loading: true, error: null, payload: null });
+        const res = await fetch("/api/creator-agent/pdp", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             merchantId,
             productId,
+            include: ["recommendations"],
+            debug,
           }),
         });
-
         if (!res.ok) {
           const body = await res.json().catch(() => null);
-          const detail =
-            body?.detail || `Failed to load product detail (status ${res.status})`;
+          const detail = body?.detail || "Failed to load product";
           throw new Error(detail);
         }
-
-        const data = (await res.json()) as { product?: Product };
-        if (!cancelled) {
-          if (data.product) {
-            setProduct(data.product);
-            setSelectedOptions({});
-            setSelectedVariantId(null);
-            setActiveImageIndex(0);
-            setError(null);
-          } else {
-            setError("Product not found.");
-          }
-        }
+        const data = await res.json();
+        const pdp_payload = pickPdpPayload(data);
+        if (!pdp_payload) throw new Error("PDP payload missing");
+        if (!cancelled) setPdpState({ loading: false, error: null, payload: pdp_payload });
       } catch (err) {
-        console.error("[creator product detail] load error", err);
-        if (!cancelled) {
-          setError("Failed to load product detail.");
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        if (cancelled) return;
+        const msg = err instanceof Error ? err.message : String(err);
+        setPdpState({
+          loading: false,
+          error: msg || "Failed to load product",
+          payload: null,
+        });
       }
     };
-
-    loadDetail();
-
+    run();
     return () => {
       cancelled = true;
     };
-  }, [creator, merchantId, productId]);
+  }, [debug, merchantId, pdpNonce, productId]);
 
-  // Initialise selection state when product loads.
-  useEffect(() => {
-    if (!product) return;
+  const handleAddToCart = (args: { variant: Variant; quantity: number; merchant_id?: string; offer_id?: string }) => {
+    if (!creator || !pdpState.payload) return;
+    const variant = args.variant;
+    const price =
+      variant.price?.current.amount ??
+      pdpState.payload.product.price?.current.amount ??
+      0;
+    const currency =
+      variant.price?.current.currency ??
+      pdpState.payload.product.price?.current.currency ??
+      "USD";
+    const imageUrl = variant.image_url || pdpState.payload.product.image_url || undefined;
+    const selectedOptions = Array.isArray(variant.options)
+      ? Object.fromEntries(variant.options.map((o) => [o.name, o.value]))
+      : undefined;
+    const merchant = String(args.merchant_id || merchantId || "").trim() || undefined;
+    const offerId = String(args.offer_id || "").trim() || undefined;
 
-    const nextSelected: Record<string, string> = {};
-
-    if (product.variants && product.variants.length > 0) {
-      const first = product.variants[0];
-      if (first.options) {
-        for (const [name, value] of Object.entries(first.options)) {
-          if (value != null) {
-            nextSelected[name] = String(value);
-          }
-        }
-      }
-      setSelectedVariantId(first.id);
-    } else if (product.options && product.options.length > 0) {
-      for (const opt of product.options) {
-        if (opt.values && opt.values.length > 0) {
-          nextSelected[opt.name] = opt.values[0];
-        }
-      }
-      setSelectedVariantId(null);
-    }
-
-    setSelectedOptions(nextSelected);
-    setActiveImageIndex(0);
-  }, [product]);
-
-  const selectedVariant = useMemo(() => {
-    if (!product?.variants || product.variants.length === 0) return null;
-
-    if (selectedVariantId) {
-      const byId = product.variants.find((v) => v.id === selectedVariantId);
-      if (byId) return byId;
-    }
-
-    const entries = Object.entries(selectedOptions).filter(
-      ([, v]) => typeof v === "string" && v,
-    );
-    if (!entries.length) {
-      return product.variants[0];
-    }
-
-    const match =
-      product.variants.find((v) => {
-        if (!v.options) return false;
-        return entries.every(
-          ([name, value]) =>
-            String(v.options?.[name] ?? "").trim() === String(value),
-        );
-      }) ?? null;
-
-    return match || product.variants[0];
-  }, [product, selectedOptions, selectedVariantId]);
-
-  const images = useMemo(() => {
-    if (!product) return [];
-    if (Array.isArray(product.images) && product.images.length > 0) {
-      return product.images;
-    }
-    return product.imageUrl ? [product.imageUrl] : [];
-  }, [product]);
-
-  const displayPrice =
-    (selectedVariant && selectedVariant.price) ?? product?.price ?? 0;
-  const displayInventory =
-    (selectedVariant && selectedVariant.inventoryQuantity) ??
-    product?.inventoryQuantity ??
-    undefined;
-
-  const safeSingleVariantFallback =
-    product?.variantsComplete === false &&
-    (!product.options || product.options.length === 0) &&
-    (product.variants?.length ?? 0) === 1 &&
-    (product.variants?.[0]?.title === "Default" ||
-      product.variants?.[0]?.title === "Default Title");
-
-  const canAddToCart =
-    Boolean(selectedVariant?.id) && (product?.variantsComplete === true || safeSingleVariantFallback);
-
-  const handleBack = () => {
-    if (typeof window !== "undefined" && window.history.length > 1) {
-      router.back();
-    } else if (creator) {
-      router.push(`/creator/${creator.slug}`);
-    } else {
-      router.push("/");
-    }
+    addItem({
+      id: [pdpState.payload.product.product_id, variant.variant_id, offerId || merchant || "unknown"].join(":"),
+      title: pdpState.payload.product.title,
+      price: typeof price === "number" && Number.isFinite(price) ? price : 0,
+      currency,
+      imageUrl,
+      quantity: Math.max(1, Math.floor(args.quantity || 1)),
+      productId: pdpState.payload.product.product_id,
+      merchantId: merchant,
+      offerId,
+      creatorId: creator.id,
+      creatorSlug: creator.slug,
+      creatorName: creator.name,
+      variantId: variant.variant_id,
+      variantSku: variant.sku_id,
+      selectedOptions,
+    });
   };
+
+  const handleBuyNow = (args: { variant: Variant; quantity: number; merchant_id?: string; offer_id?: string }) => {
+    clear();
+    handleAddToCart(args);
+    close();
+    router.push("/checkout");
+  };
+
+  const chooseSellerGate = !merchantId && !pdpState.payload;
 
   if (!creator) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#fffefc] text-[#3f3125]">
-        <div className="text-sm text-[#a38b78]">Creator agent not found.</div>
+      <main className="min-h-screen flex items-center justify-center bg-background text-foreground">
+        <div className="text-sm text-muted-foreground">Creator not found.</div>
+      </main>
+    );
+  }
+
+  if (!productId) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-background text-foreground">
+        <div className="text-sm text-muted-foreground">Missing product id.</div>
+      </main>
+    );
+  }
+
+  if (chooseSellerGate) {
+    const offers = resolveState.data?.offers || [];
+    const defaultOfferId = resolveState.data?.default_offer_id;
+    const bestPriceOfferId = resolveState.data?.best_price_offer_id;
+
+    return (
+      <main className="min-h-screen bg-background text-foreground">
+        <div className="max-w-md mx-auto px-4 py-6">
+          <h1 className="text-lg font-semibold">Choose a seller</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            This product is available from multiple sellers. Please pick one to continue.
+          </p>
+
+          {resolveState.loading ? (
+            <div className="mt-6 text-sm text-muted-foreground">Loading sellers…</div>
+          ) : null}
+
+          {resolveState.error ? (
+            <div className="mt-6 rounded-xl border border-border bg-card p-4">
+              <div className="text-sm font-medium">Failed to load product</div>
+              <div className="mt-1 text-sm text-muted-foreground">
+                Can’t load sellers for this product right now. Please retry.
+              </div>
+            <div className="mt-4">
+              <Button
+                onClick={() => {
+                  setResolveState({ loading: false, error: null, data: null });
+                  setResolveNonce((n) => n + 1);
+                }}
+                className="w-full"
+              >
+                Retry
+              </Button>
+              </div>
+            </div>
+          ) : null}
+
+          {!resolveState.loading && !resolveState.error ? (
+            <div className="mt-6 space-y-3">
+              {offers.map((offer) => {
+                const { etaLabel, returnsLabel } = summarizeOffer(offer);
+                const isDefault = defaultOfferId && offer.offer_id === defaultOfferId;
+                const isBestPrice = bestPriceOfferId && offer.offer_id === bestPriceOfferId;
+                return (
+                  <div
+                    key={offer.offer_id}
+                    className="rounded-2xl border border-border bg-card p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-semibold">
+                          {offer.merchant_name || offer.merchant_id}
+                        </div>
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          {etaLabel} · {returnsLabel}
+                        </div>
+                        <div className="mt-2 text-base font-bold">
+                          {formatPrice(offer.price.amount, offer.price.currency)}
+                        </div>
+                        <div className="mt-2 flex items-center gap-2">
+                          {isDefault ? (
+                            <span className="rounded-full bg-primary/10 text-primary px-2 py-0.5 text-[11px] font-medium">
+                              Recommended
+                            </span>
+                          ) : null}
+                          {isBestPrice ? (
+                            <span className="rounded-full bg-secondary text-secondary-foreground px-2 py-0.5 text-[11px] font-medium">
+                              Best price
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+                      <Button
+                        onClick={() => setMerchantInUrl({ merchantId: offer.merchant_id, offerId: offer.offer_id })}
+                        className="shrink-0"
+                      >
+                        Select
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
+      </main>
+    );
+  }
+
+  if (pdpState.loading) {
+    return (
+      <main className="min-h-screen bg-background text-foreground">
+        <div className="max-w-md mx-auto px-4 py-10">
+          <div className="h-5 w-40 bg-muted/30 rounded animate-pulse" />
+          <div className="mt-4 h-64 bg-muted/20 rounded-2xl animate-pulse" />
+          <div className="mt-4 space-y-2">
+            <div className="h-4 w-3/4 bg-muted/20 rounded animate-pulse" />
+            <div className="h-4 w-2/3 bg-muted/20 rounded animate-pulse" />
+          </div>
+          <div className="mt-6 text-sm text-muted-foreground">Loading product…</div>
+        </div>
+      </main>
+    );
+  }
+
+  if (pdpState.error || !pdpState.payload) {
+    return (
+      <main className="min-h-screen bg-background text-foreground">
+        <div className="max-w-md mx-auto px-4 py-10">
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <div className="text-sm font-semibold">Failed to load product</div>
+            <div className="mt-1 text-sm text-muted-foreground">{pdpState.error || "Unknown error"}</div>
+            <div className="mt-4 flex gap-2">
+              <Button
+                onClick={() => {
+                  setPdpState({ loading: false, error: null, payload: null });
+                  setPdpNonce((n) => n + 1);
+                }}
+                className="flex-1"
+              >
+                Retry
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => router.back()}
+                className="flex-1"
+              >
+                Back
+              </Button>
+            </div>
+          </div>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#fffefc] via-[#fffaf6] to-[#fff7f2] text-[#3f3125]">
-      <div className="pointer-events-none fixed inset-0 -z-10">
-        <div className="absolute -left-24 top-0 h-72 w-72 rounded-full bg-[#ffe7d6]/20 blur-3xl" />
-        <div className="absolute right-0 top-24 h-80 w-80 rounded-full bg-[#ffe0cc]/18 blur-3xl" />
-        <div className="absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-[#fff2e3]/22 blur-3xl" />
-      </div>
-
-      <div className="relative z-10 flex min-h-screen flex-col">
-        {/* Top bar */}
-        <header className="flex items-center justify-between border-b border-[#f6ebe0] bg-white/90 px-4 py-3 text-xs shadow-sm backdrop-blur-sm sm:px-6 lg:px-10">
-          <button
-            type="button"
-            onClick={handleBack}
-            className="rounded-full border border-[#f0e2d6] px-3 py-1 text-[11px] text-[#8c715c] hover:bg-[#fff0e3]"
-          >
-            ← Back
-          </button>
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 overflow-hidden rounded-full border border-[#f6ebe0] shadow-sm sm:h-10 sm:w-10">
-              <img
-                src={creator.avatarUrl}
-                alt={creator.name}
-                className="h-full w-full object-cover"
-              />
-            </div>
-            <div className="text-right">
-              <div className="text-xs font-semibold text-[#3f3125] sm:text-sm">
-                {creator.name}
-              </div>
-              {creator.tagline && (
-                <p className="mt-0.5 text-[11px] text-[#a38b78]">
-                  {creator.tagline}
-                </p>
-              )}
-            </div>
-          </div>
-        </header>
-
-        <div className="flex flex-1 justify-center px-4 py-4 sm:px-6 lg:px-10">
-          <div className="flex w-full max-w-4xl flex-col gap-6 rounded-3xl bg-[#fffaf5]/95 p-4 shadow-xl sm:p-6 lg:p-8">
-            {loading && (
-              <div className="flex flex-1 items-center justify-center text-sm text-[#a38b78]">
-                Loading product…
-              </div>
-            )}
-
-            {!loading && error && (
-              <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
-                <p className="text-sm text-[#a38b78]">{error}</p>
-                <button
-                  type="button"
-                  className="rounded-full bg-[#f6b59b] px-4 py-2 text-xs font-medium text-white shadow-sm hover:bg-[#f29b7f]"
-                  onClick={handleBack}
-                >
-                  Back to creator
-                </button>
-              </div>
-            )}
-
-            {!loading && !error && product && (
-              <div className="flex flex-1 flex-col gap-6 md:flex-row">
-                {images.length > 0 && (
-                  <div className="md:w-1/2 w-full flex flex-col gap-3">
-                    <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-[#f5e3d4]">
-                      <img
-                        src={
-                          images[
-                            Math.max(
-                              0,
-                              Math.min(activeImageIndex, images.length - 1),
-                            )
-                          ]
-                        }
-                        alt={product.title}
-                        className="absolute inset-0 h-full w-full object-cover"
-                      />
-                    </div>
-                    {images.length > 1 && (
-                      <div className="flex gap-2 overflow-x-auto pt-1">
-                        {images.map((url, idx) => (
-                          <button
-                            key={url + idx.toString()}
-                            type="button"
-                            onClick={() => setActiveImageIndex(idx)}
-                            className={`h-16 w-12 flex-shrink-0 overflow-hidden rounded-xl border ${
-                              idx === activeImageIndex
-                                ? "border-[#3f3125]"
-                                : "border-[#f0e2d6]"
-                            } bg-[#f6e6d8]`}
-                          >
-                            <img
-                              src={url}
-                              alt={product.title}
-                              className="h-full w-full object-cover"
-                            />
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                <div className="flex flex-1 flex-col gap-4 text-[13px]">
-                  <div>
-                    <h1 className="text-base font-semibold text-[#3f3125] sm:text-lg">
-                      {product.title}
-                    </h1>
-                    {product.merchantName && (
-                      <p className="mt-0.5 text-[11px] text-[#a38b78]">
-                        Sold by {product.merchantName}
-                      </p>
-                    )}
-                  </div>
-
-                  {product.description && (
-                    <div className="mt-1">
-                      {product.descriptionHtml ? (
-                        <div
-                          className="product-description"
-                          // 描述来自自有后端 + Shopify，当前信任来源，只在详情页使用富文本。
-                          dangerouslySetInnerHTML={{
-                            __html: product.descriptionHtml,
-                          }}
-                        />
-                      ) : (
-                        <p className="text-[12px] leading-relaxed text-[#8c715c]">
-                          {product.description}
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-	                  <div className="space-y-2 text-[13px]">
-	                    <div className="text-[11px] font-medium uppercase tracking-wide text-[#a38b78]">
-	                      Price
-	                    </div>
-	                    <div className="text-lg font-semibold text-[#3f3125]">
-	                      {product.currency}{" "}
-	                      {(
-	                        typeof displayPrice === "number" &&
-	                        !Number.isNaN(displayPrice)
-	                          ? displayPrice
-	                          : 0
-	                      ).toFixed(2)}
-	                    </div>
-	                    {product.bestDeal?.label && (
-	                      <div className="text-[12px] font-medium text-[#f28b7a]">
-	                        {product.bestDeal.label}
-	                      </div>
-	                    )}
-	                    {!product.bestDeal?.freeShipping &&
-	                      product.allDeals?.some((d) => d.freeShipping) && (
-	                        <div className="text-[11px] font-medium text-[#8c715c]">
-	                          Free shipping available
-	                        </div>
-	                      )}
-	                  </div>
-
-                  {Array.isArray(product.options) &&
-                    product.options.length > 0 && (
-                      <div className="space-y-3 text-[12px]">
-                        {product.options
-                          .filter(
-                            (opt) =>
-                              opt.values && opt.values.length > 0,
-                          )
-                          .map((opt) => (
-                            <div key={opt.name}>
-                              <div className="text-[11px] font-medium uppercase tracking-wide text-[#a38b78]">
-                                {opt.name}
-                              </div>
-                              <div className="mt-1 flex flex-wrap gap-2">
-                                {opt.values.map((value) => (
-                                  <button
-                                    key={value}
-                                    type="button"
-                                    onClick={() => {
-                                      const next = {
-                                        ...selectedOptions,
-                                        [opt.name]: value,
-                                      };
-                                      setSelectedOptions(next);
-                                      if (product.variants && product.variants.length > 0) {
-                                        const match =
-                                          product.variants.find((v) => {
-                                            if (!v.options) return false;
-                                            return Object.entries(next).every(
-                                              ([name, val]) =>
-                                                String(v.options?.[name] ?? "").trim() ===
-                                                String(val),
-                                            );
-                                          }) ?? product.variants[0];
-                                        setSelectedVariantId(match.id);
-                                        if (match.imageUrl) {
-                                          const idx = images.findIndex(
-                                            (url) => url === match.imageUrl,
-                                          );
-                                          if (idx >= 0) {
-                                            setActiveImageIndex(idx);
-                                          }
-                                        }
-                                      }
-                                    }}
-                                    className={`min-w-[2.5rem] rounded-full border px-3 py-1 text-[11px] ${
-                                      selectedOptions[opt.name] === value
-                                        ? "border-[#3f3125] bg-[#3f3125] text-white"
-                                        : "border-[#f0e2d6] bg-white text-[#8c715c]"
-                                    }`}
-                                  >
-                                    {value}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    )}
-
-                  {typeof displayInventory === "number" && (
-                    <p className="text-[11px] text-[#a38b78]">
-                      Stock:{" "}
-                      {displayInventory > 0
-                        ? `${displayInventory} available`
-                        : "Out of stock"}
-                    </p>
-                  )}
-
-                  <div className="pt-2 flex gap-2">
-                    <button
-                      type="button"
-                      disabled={!canAddToCart}
-                      className={`flex-1 rounded-full px-3 py-2 text-[12px] font-medium text-white shadow-sm ${
-                        canAddToCart
-                          ? "bg-[#f6b59b] hover:bg-[#f29b7f]"
-                          : "cursor-not-allowed bg-[#f6b59b]/50"
-                      }`}
-                      onClick={() => {
-                        if (!canAddToCart) return;
-                        const variant = selectedVariant;
-                        const variantKey = variant!.id;
-                        addItem({
-                          id: `${product.id}:${variantKey}`,
-                          productId: product.id,
-                          merchantId: product.merchantId,
-                          title: product.title,
-                          price: displayPrice,
-                          imageUrl:
-                            (variant && variant.imageUrl) ||
-                            images[0] ||
-                            product.imageUrl,
-                          quantity: 1,
-                          currency: product.currency,
-                          creatorId: creator.id,
-                          creatorSlug: creator.slug,
-                          creatorName: creator.name,
-                          variantId: variant!.id,
-                          variantSku: variant!.sku,
-                          selectedOptions:
-                            Object.keys(selectedOptions).length > 0
-                              ? selectedOptions
-                              : undefined,
-                          bestDeal: product.bestDeal ?? null,
-                          allDeals: product.allDeals ?? null,
-                        });
-                      }}
-                    >
-                      Add to cart
-                    </button>
-                    <button
-                      type="button"
-                      disabled={!canAddToCart}
-                      className={`flex-1 rounded-full border border-[#f0e2d6] bg-white px-3 py-2 text-[12px] font-medium shadow-sm ${
-                        canAddToCart
-                          ? "text-[#8c715c] hover:bg-[#fff0e3]"
-                          : "cursor-not-allowed text-[#8c715c]/50"
-                      }`}
-                      onClick={() => {
-                        if (!canAddToCart) return;
-                        clear();
-                        const variant = selectedVariant;
-                        const variantKey = variant!.id;
-                        addItem({
-                          id: `${product.id}:${variantKey}`,
-                          productId: product.id,
-                          merchantId: product.merchantId,
-                          title: product.title,
-                          price: displayPrice,
-                          imageUrl:
-                            (variant && variant.imageUrl) ||
-                            images[0] ||
-                            product.imageUrl,
-                          quantity: 1,
-                          currency: product.currency,
-                          creatorId: creator.id,
-                          creatorSlug: creator.slug,
-                          creatorName: creator.name,
-                          variantId: variant!.id,
-                          variantSku: variant!.sku,
-                          selectedOptions:
-                            Object.keys(selectedOptions).length > 0
-                              ? selectedOptions
-                              : undefined,
-                          bestDeal: product.bestDeal ?? null,
-                          allDeals: product.allDeals ?? null,
-                        });
-                        close();
-                        router.push("/checkout");
-                      }}
-                    >
-                      Buy now
-                    </button>
-                  </div>
-
-                  {product.detailUrl && (
-                    <a
-                      href={product.detailUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex text-[11px] text-[#a38b78] hover:underline"
-                    >
-                      Open store page
-                    </a>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+    <main className="min-h-screen lovable-pdp">
+      {resolvedMode === "beauty" ? (
+        <BeautyPDPContainer payload={pdpState.payload} onAddToCart={handleAddToCart} onBuyNow={handleBuyNow} />
+      ) : (
+        <GenericPDPContainer payload={pdpState.payload} onAddToCart={handleAddToCart} onBuyNow={handleBuyNow} />
+      )}
     </main>
   );
 }

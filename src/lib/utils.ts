@@ -1,6 +1,4 @@
-export function cn(
-  ...classes: Array<string | null | undefined | false>
-): string {
-  return classes.filter(Boolean).join(" ");
+export function cn(...inputs: Array<string | undefined | null | false>) {
+  return inputs.filter(Boolean).join(' ');
 }
 

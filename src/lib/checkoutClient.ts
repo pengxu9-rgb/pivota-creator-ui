@@ -15,6 +15,7 @@ const X_AGENT_API_KEY =
 
 type CreateOrderPayload = {
   merchant_id: string;
+  offer_id?: string;
   quote_id?: string;
   discount_codes?: string[];
   selected_delivery_option?: Record<string, any>;
@@ -231,6 +232,20 @@ export async function previewQuoteFromCart(params: {
     throw new Error("Cannot preview quote with empty cart");
   }
 
+  const merchants = new Set(
+    params.items.map((i) => String(i.merchantId || "").trim()).filter(Boolean),
+  );
+  if (merchants.size > 1) {
+    throw new Error("Checkout currently supports one seller at a time. Please remove items from other sellers.");
+  }
+
+  const offers = new Set(
+    params.items.map((i) => String(i.offerId || "").trim()).filter(Boolean),
+  );
+  if (offers.size > 1) {
+    throw new Error("Checkout currently supports one offer at a time. Please remove items from other offers.");
+  }
+
   const missingVariant = params.items.filter((item) => !item.variantId);
   if (missingVariant.length > 0) {
     const titles = missingVariant
@@ -244,6 +259,7 @@ export async function previewQuoteFromCart(params: {
   }
 
   const merchantId = params.items[0].merchantId || "demo_merchant";
+  const offerId = params.items[0].offerId || undefined;
   const items = params.items.map((item) => ({
     product_id: item.productId || item.id,
     variant_id: item.variantId,
@@ -255,6 +271,7 @@ export async function previewQuoteFromCart(params: {
     payload: {
       quote: {
         merchant_id: merchantId,
+        ...(offerId ? { offer_id: offerId } : {}),
         items,
         discount_codes: params.discountCodes || [],
         customer_email: params.email || undefined,
@@ -294,6 +311,20 @@ export async function createOrderWithQuote(params: {
     throw new Error("Cannot create order with empty cart");
   }
 
+  const merchants = new Set(
+    params.items.map((i) => String(i.merchantId || "").trim()).filter(Boolean),
+  );
+  if (merchants.size > 1) {
+    throw new Error("Checkout currently supports one seller at a time. Please remove items from other sellers.");
+  }
+
+  const offers = new Set(
+    params.items.map((i) => String(i.offerId || "").trim()).filter(Boolean),
+  );
+  if (offers.size > 1) {
+    throw new Error("Checkout currently supports one offer at a time. Please remove items from other offers.");
+  }
+
   const missingVariant = params.items.filter((item) => !item.variantId);
   if (missingVariant.length > 0) {
     const titles = missingVariant
@@ -307,6 +338,7 @@ export async function createOrderWithQuote(params: {
   }
 
   const merchantId = params.items[0].merchantId || "demo_merchant";
+  const offerId = params.items[0].offerId || undefined;
 
   const creatorId = params.items[0].creatorId;
   const creatorSlug = params.items[0].creatorSlug;
@@ -326,6 +358,7 @@ export async function createOrderWithQuote(params: {
 
   const orderPayload: CreateOrderPayload = {
     merchant_id: merchantId,
+    ...(offerId ? { offer_id: offerId } : {}),
     quote_id: params.quoteId,
     discount_codes: params.discountCodes || [],
     customer_email: params.email,
