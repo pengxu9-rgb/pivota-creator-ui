@@ -30,7 +30,7 @@ export function BeautyDetailsSection({
   return (
     <div className="py-4">
       {heroUrl ? (
-        <div className="aspect-[4/5] bg-gradient-to-b from-muted to-background">
+        <div className="relative aspect-[4/5] bg-gradient-to-b from-muted to-background">
           <Image src={heroUrl} alt={product.title} fill className="object-contain" unoptimized />
         </div>
       ) : null}
@@ -68,4 +68,3 @@ export function BeautyDetailsSection({
     </div>
   );
 }
-

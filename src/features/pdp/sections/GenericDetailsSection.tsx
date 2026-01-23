@@ -7,7 +7,7 @@ import { DetailsAccordion } from '@/features/pdp/sections/DetailsAccordion';
 function stripHtml(input?: string) {
   return String(input || '')
     .replace(/<[^>]+>/g, ' ')
-    .replace(/\\s+/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
@@ -57,4 +57,3 @@ export function GenericDetailsSection({
     </div>
   );
 }
-

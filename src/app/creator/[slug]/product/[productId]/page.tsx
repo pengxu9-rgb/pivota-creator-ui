@@ -5,7 +5,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/components/cart/CartProvider";
 import { getCreatorBySlug } from "@/config/creatorAgents";
-import type { Offer, PDPPayload, Variant } from "@/features/pdp/types";
+import type { Module, Offer, PDPPayload, RecommendationsData, Variant } from "@/features/pdp/types";
 import { BeautyPDPContainer } from "@/features/pdp/containers/BeautyPDPContainer";
 import { GenericPDPContainer } from "@/features/pdp/containers/GenericPDPContainer";
 import { isBeautyProduct } from "@/features/pdp/utils/isBeautyProduct";
@@ -18,6 +18,11 @@ type ResolveResponse = {
   default_offer_id?: string;
   best_price_offer_id?: string;
   cache?: { hit?: boolean; age_ms?: number; ttl_ms?: number };
+};
+
+type RecommendationsResponse = {
+  strategy?: string;
+  items?: RecommendationsData["items"];
 };
 
 function formatPrice(amount: number, currency: string) {
@@ -46,6 +51,35 @@ function pickPdpPayload(raw: any): PDPPayload | null {
   if (!raw || typeof raw !== "object") return null;
   const payload = raw.pdp_payload ?? raw.pdpPayload ?? raw.payload ?? null;
   return payload && typeof payload === "object" ? (payload as PDPPayload) : null;
+}
+
+function hasRecommendationItems(payload: PDPPayload): boolean {
+  const m = payload.modules.find((x) => x.type === "recommendations");
+  const items = (m?.data as any)?.items;
+  return Array.isArray(items) && items.length > 0;
+}
+
+function upsertRecommendations(payload: PDPPayload, recs: RecommendationsData): PDPPayload {
+  const existing = payload.modules.findIndex((m) => m.type === "recommendations");
+  const nextModules: Module[] =
+    existing >= 0
+      ? payload.modules.map((m, idx) => (idx === existing ? { ...m, data: recs } : m))
+      : [
+          ...payload.modules,
+          {
+            module_id: "recommendations",
+            type: "recommendations",
+            priority: 90,
+            title: "Similar",
+            data: recs,
+          },
+        ];
+
+  return {
+    ...payload,
+    modules: nextModules,
+    x_recommendations_state: "ready",
+  };
 }
 
 export default function CreatorProductDetailPage() {
@@ -163,7 +197,6 @@ export default function CreatorProductDetailPage() {
           body: JSON.stringify({
             merchantId,
             productId,
-            include: ["recommendations"],
             debug,
           }),
         });
@@ -175,7 +208,15 @@ export default function CreatorProductDetailPage() {
         const data = await res.json();
         const pdp_payload = pickPdpPayload(data);
         if (!pdp_payload) throw new Error("PDP payload missing");
-        if (!cancelled) setPdpState({ loading: false, error: null, payload: pdp_payload });
+        if (cancelled) return;
+
+        // Don’t block first paint on recommendations. Always show the frame first,
+        // then progressively hydrate the Similar section.
+        const nextPayload: PDPPayload = {
+          ...pdp_payload,
+          x_recommendations_state: hasRecommendationItems(pdp_payload) ? "ready" : "loading",
+        };
+        setPdpState({ loading: false, error: null, payload: nextPayload });
       } catch (err) {
         if (cancelled) return;
         const msg = err instanceof Error ? err.message : String(err);
@@ -191,6 +232,53 @@ export default function CreatorProductDetailPage() {
       cancelled = true;
     };
   }, [debug, merchantId, pdpNonce, productId]);
+
+  useEffect(() => {
+    if (!merchantId || !productId || !pdpState.payload) return;
+    if (pdpState.payload.x_recommendations_state !== "loading") return;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const res = await fetch("/api/creator-agent/recommendations", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            merchantId,
+            productId,
+            limit: 6,
+            debug,
+          }),
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => null);
+          const detail = body?.detail || "Failed to load recommendations";
+          throw new Error(detail);
+        }
+
+        const json = (await res.json()) as RecommendationsResponse;
+        const items = Array.isArray(json.items) ? json.items : [];
+        const recs: RecommendationsData = { strategy: json.strategy, items };
+
+        if (cancelled) return;
+        setPdpState((prev) => {
+          if (!prev.payload) return prev;
+          return { ...prev, payload: upsertRecommendations(prev.payload, recs) };
+        });
+      } catch {
+        if (cancelled) return;
+        setPdpState((prev) => {
+          if (!prev.payload) return prev;
+          return { ...prev, payload: { ...prev.payload, x_recommendations_state: "ready" } };
+        });
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [debug, merchantId, pdpState.payload, productId]);
 
   const handleAddToCart = (args: { variant: Variant; quantity: number; merchant_id?: string; offer_id?: string }) => {
     if (!creator || !pdpState.payload) return;

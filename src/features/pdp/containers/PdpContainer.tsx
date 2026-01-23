@@ -291,8 +291,10 @@ export function PdpContainer({
 
   const hasReviews = !!reviews;
   const hasRecommendations = !!recommendations?.items?.length;
-  const isRecommendationsLoading = payload.x_recommendations_state === 'loading';
-  const showRecommendationsSection = hasRecommendations || isRecommendationsLoading;
+  const recommendationsState = payload.x_recommendations_state;
+  const isRecommendationsLoading = recommendationsState === 'loading';
+  const showRecommendationsSection =
+    hasRecommendations || recommendationsState === 'loading' || recommendationsState === 'ready';
   const showShades = resolvedMode === 'beauty' && variants.length > 1;
   const showSizeGuide = resolvedMode === 'generic' && !!payload.product.size_guide;
   const showSizeHelper = useMemo(() => {
@@ -1035,7 +1037,11 @@ export function PdpContainer({
                 <RecommendationsGrid data={recommendations} />
               ) : isRecommendationsLoading ? (
                 <RecommendationsSkeleton />
-              ) : null}
+              ) : (
+                <div className="py-8 text-center text-sm text-muted-foreground">
+                  No recommendations yet.
+                </div>
+              )}
             </div>
           </div>
         ) : null}

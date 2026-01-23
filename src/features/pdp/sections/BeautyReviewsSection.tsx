@@ -33,7 +33,8 @@ export function BeautyReviewsSection({
   showEmpty?: boolean;
 }) {
   const hasSummary = data.review_count > 0 && data.rating > 0;
-  const ratingValue = data.scale ? (data.rating / data.scale) * 5 : 0;
+  const rating5 = data.scale ? (data.rating / data.scale) * 5 : 0;
+  const ratingLabel = Number.isFinite(data.rating) ? data.rating.toFixed(1) : "0.0";
   const distribution = data.star_distribution?.map((item) => {
     const percent = item.percent ?? (item.count && data.review_count ? item.count / data.review_count : 0);
     return { ...item, percent };
@@ -54,13 +55,11 @@ export function BeautyReviewsSection({
         {hasSummary ? (
           <div className="flex gap-4">
             <div className="text-center">
-              <div className="text-3xl font-bold">{ratingValue.toFixed(1)}</div>
-              <div className="flex gap-0.5 mt-1 justify-center">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className="h-3 w-3 fill-gold text-gold" />
-                ))}
+              <div className="text-3xl font-bold">{ratingLabel}</div>
+              <div className="mt-1 flex justify-center">
+                <StarRating value={rating5} />
               </div>
-              <p className="text-[11px] text-muted-foreground mt-1">{data.review_count} ratings</p>
+              <p className="text-[11px] text-muted-foreground mt-1">{data.review_count} reviews</p>
             </div>
 
             {distribution?.length ? (
@@ -187,4 +186,3 @@ export function BeautyReviewsSection({
     </div>
   );
 }
-
