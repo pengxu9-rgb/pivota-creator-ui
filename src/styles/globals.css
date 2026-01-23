@@ -65,3 +65,40 @@ a {
   line-height: 1.6 !important;
   color: #8c715c !important;
 }
+
+/* Lovable PDP theme scope (used by standard PDP renderer) */
+.lovable-pdp {
+  --background: 0 0% 98%;
+  --foreground: 0 0% 10%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 10%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 10%;
+
+  --primary: 168 76% 42%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 0 0% 96%;
+  --secondary-foreground: 0 0% 20%;
+
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 45%;
+
+  --accent: 30 60% 95%;
+  --accent-foreground: 30 60% 30%;
+
+  --gold: 38 90% 50%;
+  --gold-foreground: 0 0% 100%;
+
+  --success: 145 60% 40%;
+  --destructive: 0 65% 50%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 0 0% 92%;
+  --input: 0 0% 92%;
+  --ring: 168 76% 42%;
+
+  --radius: 0.5rem;
+}
