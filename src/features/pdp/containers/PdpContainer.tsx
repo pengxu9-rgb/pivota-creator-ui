@@ -285,6 +285,18 @@ export function PdpContainer({
     acc[action.action_type] = action.label;
     return acc;
   }, {});
+  const addToCartLabel = (() => {
+    const label = actionsByType.add_to_cart;
+    if (!label) return 'Add to Cart';
+    if (/out\s*of\s*stock/i.test(label)) return 'Add to Cart';
+    return label;
+  })();
+  const buyNowLabel = (() => {
+    const label = actionsByType.buy_now;
+    if (!label) return 'Buy Now';
+    if (/out\s*of\s*stock/i.test(label)) return 'Buy Now';
+    return label;
+  })();
   const headerHeight = 44;
   const navRowHeight = navVisible ? 36 : 0;
   const scrollMarginTop = headerHeight + navRowHeight + 14;
@@ -1071,7 +1083,7 @@ export function PdpContainer({
                     <div className="flex flex-1 gap-2">
                       <Button
                         variant="outline"
-                        className="flex-1 h-10 rounded-full font-semibold text-sm"
+                        className="flex-1 h-12 rounded-2xl font-semibold text-[15px] border-2 border-foreground/70 bg-white text-foreground hover:bg-muted/40"
                         disabled={!isInStock}
                         onClick={() => {
                           pdpTracking.track('pdp_action_click', { action_type: 'add_to_cart', variant_id: selectedVariant.variant_id });
@@ -1084,10 +1096,10 @@ export function PdpContainer({
                           });
                         }}
                       >
-                        {actionsByType.add_to_cart || 'Add to Cart'}
+                        {addToCartLabel}
                       </Button>
                       <Button
-                        className="flex-[1.5] h-10 rounded-full bg-primary hover:bg-primary/90 font-semibold text-sm"
+                        className="flex-[1.5] h-12 rounded-2xl bg-[#2FC5B4] hover:bg-[#27b2a3] text-white font-semibold text-[15px]"
                         disabled={!isInStock}
                         onClick={() => {
                           pdpTracking.track('pdp_action_click', { action_type: 'buy_now', variant_id: selectedVariant.variant_id });
@@ -1100,7 +1112,7 @@ export function PdpContainer({
                           });
                         }}
                       >
-                        {actionsByType.buy_now || 'Buy Now'}
+                        {buyNowLabel}
                       </Button>
                     </div>
                   </div>

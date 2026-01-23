@@ -35,10 +35,34 @@ export function BeautyReviewsSection({
   const hasSummary = data.review_count > 0 && data.rating > 0;
   const rating5 = data.scale ? (data.rating / data.scale) * 5 : 0;
   const ratingLabel = Number.isFinite(data.rating) ? data.rating.toFixed(1) : "0.0";
-  const distribution = data.star_distribution?.map((item) => {
-    const percent = item.percent ?? (item.count && data.review_count ? item.count / data.review_count : 0);
-    return { ...item, percent };
-  });
+  const distributionRows = (() => {
+    const raw = Array.isArray(data.star_distribution) ? data.star_distribution : [];
+    const map = new Map<number, { stars: number; count?: number; percent?: number }>();
+    raw.forEach((item) => {
+      const stars = Number(item.stars);
+      if (!Number.isFinite(stars)) return;
+      map.set(stars, { stars, count: item.count, percent: item.percent });
+    });
+
+    return [5, 4, 3, 2, 1].map((stars) => {
+      const item = map.get(stars);
+      let percent = 0;
+      if (item) {
+        if (typeof item.percent === "number" && Number.isFinite(item.percent)) {
+          percent = item.percent;
+        } else if (
+          typeof item.count === "number" &&
+          Number.isFinite(item.count) &&
+          data.review_count
+        ) {
+          percent = item.count / data.review_count;
+        }
+      }
+      if (percent > 1) percent = percent / 100;
+      percent = Math.max(0, Math.min(1, percent));
+      return { stars, percent };
+    });
+  })();
 
   return (
     <div className="py-4">
@@ -62,22 +86,20 @@ export function BeautyReviewsSection({
               <p className="text-[11px] text-muted-foreground mt-1">{data.review_count} reviews</p>
             </div>
 
-            {distribution?.length ? (
-              <div className="flex-1 space-y-1">
-                {distribution.slice(0, 5).map((dist) => (
-                  <div key={dist.stars} className="flex items-center gap-2 text-xs">
-                    <span className="w-3 text-muted-foreground">{dist.stars}</span>
-                    <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gold rounded-full"
-                        style={{ width: `${Math.round((dist.percent || 0) * 100)}%` }}
-                      />
-                    </div>
-                    <span className="w-8 text-right text-muted-foreground">{Math.round((dist.percent || 0) * 100)}%</span>
+            <div className="flex-1 space-y-1">
+              {distributionRows.map((dist) => (
+                <div key={dist.stars} className="flex items-center gap-2 text-xs">
+                  <span className="w-3 text-muted-foreground">{dist.stars}</span>
+                  <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gold rounded-full"
+                      style={{ width: `${Math.round(dist.percent * 100)}%` }}
+                    />
                   </div>
-                ))}
-              </div>
-            ) : null}
+                  <span className="w-8 text-right text-muted-foreground">{Math.round(dist.percent * 100)}%</span>
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">No reviews yet. Be the first to share your thoughts.</p>
