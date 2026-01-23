@@ -53,14 +53,12 @@ export async function POST(req: Request) {
     }
 
     const invokeUrl = getInvokeUrl();
-    const payload = {
+    const product = { merchant_id: merchantId, product_id: productId, variant_id: productId };
+    const baseRequest = {
       operation: "get_pdp",
       payload: {
-        // Some upstreams still use variant_id; keep both for compatibility.
-        product: { merchant_id: merchantId, product_id: productId, variant_id: productId },
+        product,
         ...(includeList.length ? { include: includeList } : {}),
-        // Some upstream get_pdp implementations expect an explicit `similar` payload
-        // when recommendations are requested.
         ...(wantsRecommendations
           ? {
               similar: {
@@ -76,21 +74,53 @@ export async function POST(req: Request) {
       metadata: { source: "creator-agent-ui" },
     };
 
-    const res = await fetch(invokeUrl, {
+    const fallbackRequest = {
+      operation: "get_pdp",
+      payload: {
+        product,
+        ...(debug ? { debug: true } : {}),
+      },
+      metadata: { source: "creator-agent-ui" },
+    };
+
+    let res = await fetch(invokeUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...authHeaders() },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(baseRequest),
     });
 
     if (!res.ok) {
       const text = await res.text().catch(() => "");
-      return NextResponse.json(
-        {
-          error: "Failed to fetch pdp payload",
-          detail: `get_pdp failed with status ${res.status}${text ? ` body: ${text}` : ""}`,
-        },
-        { status: 500 },
-      );
+
+      // Fallback: if recommendations break upstream, retry without `include`/`similar`
+      // so the PDP can still render.
+      if (wantsRecommendations) {
+        const retry = await fetch(invokeUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...authHeaders() },
+          body: JSON.stringify(fallbackRequest),
+        });
+        if (retry.ok) {
+          res = retry;
+        } else {
+          const retryText = await retry.text().catch(() => "");
+          return NextResponse.json(
+            {
+              error: "Failed to fetch pdp payload",
+              detail: `get_pdp failed with status ${retry.status}${retryText ? ` body: ${retryText}` : ""}`,
+            },
+            { status: 500 },
+          );
+        }
+      } else {
+        return NextResponse.json(
+          {
+            error: "Failed to fetch pdp payload",
+            detail: `get_pdp failed with status ${res.status}${text ? ` body: ${text}` : ""}`,
+          },
+          { status: 500 },
+        );
+      }
     }
 
     const raw = await res.json();
