@@ -42,6 +42,8 @@ export async function POST(req: Request) {
     };
 
     const includeRaw = Boolean(debug);
+    const includeList = Array.isArray(include) ? include.filter(Boolean) : [];
+    const wantsRecommendations = includeList.includes("recommendations");
 
     if (!merchantId || !productId) {
       return NextResponse.json(
@@ -54,8 +56,21 @@ export async function POST(req: Request) {
     const payload = {
       operation: "get_pdp",
       payload: {
-        product: { merchant_id: merchantId, product_id: productId },
-        ...(Array.isArray(include) && include.length ? { include } : {}),
+        // Some upstreams still use variant_id; keep both for compatibility.
+        product: { merchant_id: merchantId, product_id: productId, variant_id: productId },
+        ...(includeList.length ? { include: includeList } : {}),
+        // Some upstream get_pdp implementations expect an explicit `similar` payload
+        // when recommendations are requested.
+        ...(wantsRecommendations
+          ? {
+              similar: {
+                merchant_id: merchantId,
+                product_id: productId,
+                variant_id: productId,
+                limit: 6,
+              },
+            }
+          : {}),
         ...(debug ? { debug: true } : {}),
       },
       metadata: { source: "creator-agent-ui" },
