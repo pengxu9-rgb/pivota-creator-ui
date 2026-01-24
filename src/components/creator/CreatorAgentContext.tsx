@@ -185,22 +185,45 @@ export function CreatorAgentProvider({
   // can open with full Style/Size and images immediately when possible.
   const detailCacheRef = useRef<Map<string, Product>>(new Map());
   const detailInFlightRef = useRef<Set<string>>(new Set());
+  const detailQueuedRef = useRef<Set<string>>(new Set());
+  const detailPrefetchQueueRef = useRef<Array<{ key: string; base: Product }>>(
+    [],
+  );
+  const detailPrefetchInFlightCountRef = useRef(0);
+  const runDetailPrefetchRef = useRef<
+    (item: { key: string; base: Product }) => void
+  >(() => {});
+  const DETAIL_PREFETCH_CONCURRENCY = 2;
 
   const makeCacheKey = (p: { id?: string; merchantId?: string | null }) => {
     if (!p.id) return "";
     return p.merchantId ? `${p.merchantId}:${p.id}` : String(p.id);
   };
 
-  const prefetchProductDetail = useCallback(
-    async (base: Product) => {
+  const drainDetailPrefetchQueue = useCallback(() => {
+    while (
+      detailPrefetchInFlightCountRef.current < DETAIL_PREFETCH_CONCURRENCY &&
+      detailPrefetchQueueRef.current.length > 0
+    ) {
+      const next = detailPrefetchQueueRef.current.shift();
+      if (!next) break;
+      runDetailPrefetchRef.current(next);
+    }
+  }, []);
+
+  runDetailPrefetchRef.current = (item) => {
+    void (async () => {
+      const { base, key } = item;
+      detailQueuedRef.current.delete(key);
+
       if (!base.id || !base.merchantId) return;
-      const key = makeCacheKey(base);
-      if (!key) return;
       if (detailCacheRef.current.has(key) || detailInFlightRef.current.has(key)) {
         return;
       }
 
       detailInFlightRef.current.add(key);
+      detailPrefetchInFlightCountRef.current += 1;
+
       try {
         const res = await fetch("/api/creator-agent/product-detail", {
           method: "POST",
@@ -218,34 +241,31 @@ export function CreatorAgentProvider({
         const merged: Product = { ...base, ...data.product };
         detailCacheRef.current.set(key, merged);
 
-         // Eagerly prefetch primary images so that when the user opens
-         // the desktop detail modal, the gallery can render without an
-         // extra image round-trip.
-         if (typeof window !== "undefined") {
-           try {
-             const urls = new Set<string>();
-             if (merged.imageUrl) {
-               urls.add(merged.imageUrl);
-             }
-             if (Array.isArray(merged.images) && merged.images.length > 0) {
-               merged.images.slice(0, 4).forEach((u) => {
-                 if (typeof u === "string" && u.trim()) {
-                   urls.add(u);
-                 }
-               });
-             }
-             urls.forEach((url) => {
-               try {
-                 const img = new Image();
-                 img.src = url;
-               } catch {
-                 // ignore individual preload errors
-               }
-             });
-           } catch (err) {
-             console.error("[creator detail] image preload error", err);
-           }
-         }
+        // Prefetch only the primary image (avoid network spikes).
+        if (typeof window !== "undefined") {
+          const first =
+            (typeof merged.imageUrl === "string" && merged.imageUrl.trim()
+              ? merged.imageUrl
+              : null) ||
+            (Array.isArray(merged.images)
+              ? merged.images.find((u) => typeof u === "string" && u.trim()) || null
+              : null);
+          if (first) {
+            const schedule = () => {
+              try {
+                const img = new Image();
+                img.src = first;
+              } catch {
+                // ignore preload errors
+              }
+            };
+            if ("requestIdleCallback" in window) {
+              (window as any).requestIdleCallback(schedule, { timeout: 800 });
+            } else {
+              setTimeout(schedule, 200);
+            }
+          }
+        }
 
         // If the modal is currently showing this product, update it in-place.
         setDetailProduct((prev) => {
@@ -257,9 +277,33 @@ export function CreatorAgentProvider({
         console.error("[creator detail] prefetch error", err);
       } finally {
         detailInFlightRef.current.delete(key);
+        detailPrefetchInFlightCountRef.current = Math.max(
+          0,
+          detailPrefetchInFlightCountRef.current - 1,
+        );
+        drainDetailPrefetchQueue();
       }
+    })();
+  };
+
+  const prefetchProductDetail = useCallback(
+    (base: Product) => {
+      if (!base.id || !base.merchantId) return;
+      const key = makeCacheKey(base);
+      if (!key) return;
+      if (
+        detailCacheRef.current.has(key) ||
+        detailInFlightRef.current.has(key) ||
+        detailQueuedRef.current.has(key)
+      ) {
+        return;
+      }
+
+      detailQueuedRef.current.add(key);
+      detailPrefetchQueueRef.current.push({ key, base });
+      drainDetailPrefetchQueue();
     },
-    [],
+    [drainDetailPrefetchQueue],
   );
 
   const isMockMode =
