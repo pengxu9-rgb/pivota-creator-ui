@@ -81,14 +81,15 @@ export function BeautyReviewsSection({
       const item = map.get(stars);
       let percent: number | null = null;
       if (item) {
-        if (typeof item.percent === "number" && Number.isFinite(item.percent)) {
-          percent = item.percent;
-        } else if (
+        const rc = Number(data.review_count) || 0;
+        if (
           typeof item.count === "number" &&
           Number.isFinite(item.count) &&
-          data.review_count
+          rc > 0
         ) {
-          percent = item.count / data.review_count;
+          percent = item.count / rc;
+        } else if (typeof item.percent === "number" && Number.isFinite(item.percent)) {
+          percent = item.percent;
         }
       }
       if (typeof percent === "number" && Number.isFinite(percent)) {
