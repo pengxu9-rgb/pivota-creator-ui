@@ -123,7 +123,7 @@ export async function POST(req: Request) {
 
     const includeRaw = Boolean(debug);
     const includeList = Array.isArray(include) ? include.filter(Boolean) : [];
-    const wantsRecommendations = includeList.includes("recommendations");
+    const finalInclude = includeList.length ? includeList : ["offers", "reviews_preview", "similar"];
 
     if (!productId) {
       return NextResponse.json(
@@ -142,7 +142,7 @@ export async function POST(req: Request) {
           product_id: productId,
           ...(merchantIdNormalized ? { merchant_id: merchantIdNormalized } : {}),
         },
-        ...(includeList.length ? { include: includeList } : {}),
+        include: finalInclude,
         options: {
           ...(debug ? { debug: true } : {}),
         },
@@ -168,9 +168,9 @@ export async function POST(req: Request) {
     if (!res.ok) {
       const text = await res.text().catch(() => "");
 
-      // Fallback: if recommendations break upstream, retry without `include`/`similar`
-      // so the PDP can still render.
-      if (merchantIdNormalized && wantsRecommendations) {
+      // Fallback: if get_pdp_v2 fails (unsupported upstream, etc), retry via legacy get_pdp
+      // when we have a concrete merchant_id.
+      if (merchantIdNormalized) {
         const retry = await fetch(invokeUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json", ...authHeaders() },
