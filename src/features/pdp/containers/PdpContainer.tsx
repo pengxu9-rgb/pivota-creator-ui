@@ -1061,60 +1061,58 @@ export function PdpContainer({
 
       {mounted
         ? createPortal(
-            <div className="fixed inset-x-0 bottom-0 z-[2147483646]">
-              <div
-                className="mx-auto max-w-md px-3"
-                style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
-              >
-                <div className="rounded-2xl border border-border bg-white shadow-[0_-10px_24px_rgba(0,0,0,0.12)] overflow-hidden mb-2">
-                  {pricePromo?.promotions?.length ? (
-                    <div className="flex items-center justify-between px-4 py-2 bg-primary/5 text-xs">
-                      <span className="flex items-center gap-2">
-                        <span className="text-primary">🎁</span>
-                        <span>{pricePromo.promotions[0].label}</span>
-                      </span>
+            <div
+              className="fixed inset-x-0 bottom-0 z-[2147483646] bg-white/85 backdrop-blur-md border-t border-border"
+              style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+            >
+              <div className="mx-auto max-w-md px-3 py-3">
+                {pricePromo?.promotions?.length ? (
+                  <div className="mb-2 rounded-xl border border-border bg-primary/5 px-3 py-2 text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="text-primary">🎁</span>
+                      <span className="flex-1 truncate">{pricePromo.promotions[0].label}</span>
                       <button className="text-muted-foreground" aria-label="Dismiss promotion">
                         ×
                       </button>
                     </div>
-                  ) : null}
+                  </div>
+                ) : null}
 
-                  <div className="flex items-center gap-3 px-3 py-2.5">
-                    <div className="flex flex-1 gap-2">
-                      <Button
-                        variant="outline"
-                        className="flex-1 h-12 rounded-2xl font-semibold text-[15px] border-2 border-foreground/70 bg-white text-foreground hover:bg-muted/40"
-                        disabled={!isInStock}
-                        onClick={() => {
-                          pdpTracking.track('pdp_action_click', { action_type: 'add_to_cart', variant_id: selectedVariant.variant_id });
-                          dispatchPdpAction('add_to_cart', {
-                            variant: selectedVariant,
-                            quantity: resolvedQuantity,
-                            merchant_id: effectiveMerchantId,
-                            offer_id: selectedOffer?.offer_id || undefined,
-                            onAddToCart,
-                          });
-                        }}
-                      >
-                        {addToCartLabel}
-                      </Button>
-                      <Button
-                        className="flex-[1.5] h-12 rounded-2xl bg-[#2FC5B4] hover:bg-[#27b2a3] text-white font-semibold text-[15px]"
-                        disabled={!isInStock}
-                        onClick={() => {
-                          pdpTracking.track('pdp_action_click', { action_type: 'buy_now', variant_id: selectedVariant.variant_id });
-                          dispatchPdpAction('buy_now', {
-                            variant: selectedVariant,
-                            quantity: resolvedQuantity,
-                            merchant_id: effectiveMerchantId,
-                            offer_id: selectedOffer?.offer_id || undefined,
-                            onBuyNow,
-                          });
-                        }}
-                      >
-                        {buyNowLabel}
-                      </Button>
-                    </div>
+                <div className="rounded-[22px] border border-foreground/20 bg-white p-2 shadow-[0_-10px_24px_rgba(0,0,0,0.10)]">
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button
+                      variant="outline"
+                      className="h-12 w-full rounded-[18px] font-semibold text-[15px] border-2 border-[#2b1b14]/70 bg-white text-[#2b1b14] hover:bg-muted/40"
+                      disabled={!isInStock}
+                      onClick={() => {
+                        pdpTracking.track('pdp_action_click', { action_type: 'add_to_cart', variant_id: selectedVariant.variant_id });
+                        dispatchPdpAction('add_to_cart', {
+                          variant: selectedVariant,
+                          quantity: resolvedQuantity,
+                          merchant_id: effectiveMerchantId,
+                          offer_id: selectedOffer?.offer_id || undefined,
+                          onAddToCart,
+                        });
+                      }}
+                    >
+                      {addToCartLabel}
+                    </Button>
+                    <Button
+                      className="h-12 w-full rounded-[18px] bg-[#2FC5B4] hover:bg-[#27b2a3] text-white font-semibold text-[15px]"
+                      disabled={!isInStock}
+                      onClick={() => {
+                        pdpTracking.track('pdp_action_click', { action_type: 'buy_now', variant_id: selectedVariant.variant_id });
+                        dispatchPdpAction('buy_now', {
+                          variant: selectedVariant,
+                          quantity: resolvedQuantity,
+                          merchant_id: effectiveMerchantId,
+                          offer_id: selectedOffer?.offer_id || undefined,
+                          onBuyNow,
+                        });
+                      }}
+                    >
+                      {buyNowLabel}
+                    </Button>
                   </div>
                 </div>
               </div>

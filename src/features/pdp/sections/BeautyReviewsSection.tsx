@@ -36,17 +36,50 @@ export function BeautyReviewsSection({
   const rating5 = data.scale ? (data.rating / data.scale) * 5 : 0;
   const ratingLabel = Number.isFinite(data.rating) ? data.rating.toFixed(1) : "0.0";
   const distributionRows = (() => {
-    const raw = Array.isArray(data.star_distribution) ? data.star_distribution : [];
+    const anyData = data as any;
+
+    const rawFromAny = (() => {
+      const candidates = [
+        anyData.star_distribution,
+        anyData.starDistribution,
+        anyData.rating_distribution,
+        anyData.ratingDistribution,
+        anyData.distribution,
+      ];
+      for (const v of candidates) {
+        if (Array.isArray(v)) return v;
+      }
+      return null;
+    })();
+
+    const rawFromObject = (() => {
+      const v = anyData.star_distribution;
+      if (!v || typeof v !== "object" || Array.isArray(v)) return null;
+      return Object.entries(v).map(([k, val]) => {
+        const stars = Number(k);
+        if (!Number.isFinite(stars)) return null;
+        if (typeof val === "number") return { stars, percent: val };
+        if (val && typeof val === "object") return { stars, ...(val as any) };
+        return null;
+      }).filter(Boolean);
+    })();
+
+    const raw = (rawFromAny || rawFromObject || []) as Array<any>;
     const map = new Map<number, { stars: number; count?: number; percent?: number }>();
     raw.forEach((item) => {
-      const stars = Number(item.stars);
+      if (!item || typeof item !== "object") return;
+      const starsRaw = (item as any).stars ?? (item as any).star ?? (item as any).rating ?? (item as any).score;
+      const stars = Number(starsRaw);
       if (!Number.isFinite(stars)) return;
-      map.set(stars, { stars, count: item.count, percent: item.percent });
+      const count = (item as any).count ?? (item as any).n ?? (item as any).num ?? (item as any).total;
+      const percent =
+        (item as any).percent ?? (item as any).ratio ?? (item as any).pct ?? (item as any).percentage ?? (item as any).share;
+      map.set(stars, { stars, count, percent });
     });
 
     return [5, 4, 3, 2, 1].map((stars) => {
       const item = map.get(stars);
-      let percent = 0;
+      let percent: number | null = null;
       if (item) {
         if (typeof item.percent === "number" && Number.isFinite(item.percent)) {
           percent = item.percent;
@@ -58,11 +91,24 @@ export function BeautyReviewsSection({
           percent = item.count / data.review_count;
         }
       }
-      if (percent > 1) percent = percent / 100;
-      percent = Math.max(0, Math.min(1, percent));
+      if (typeof percent === "number" && Number.isFinite(percent)) {
+        if (percent > 1) {
+          const rc = Number(data.review_count) || 0;
+          const maybeCount =
+            rc > 0 &&
+            percent <= rc &&
+            !(typeof item?.count === "number" && Number.isFinite(item.count));
+          percent = maybeCount && rc ? percent / rc : percent / 100;
+        }
+        percent = Math.max(0, Math.min(1, percent));
+      } else {
+        percent = null;
+      }
       return { stars, percent };
     });
   })();
+
+  const hasValidDistribution = distributionRows.some((r) => typeof r.percent === "number" && r.percent > 0);
 
   return (
     <div className="py-4">
@@ -93,12 +139,19 @@ export function BeautyReviewsSection({
                   <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                     <div
                       className="h-full bg-gold rounded-full"
-                      style={{ width: `${Math.round(dist.percent * 100)}%` }}
+                      style={{ width: `${Math.round((dist.percent ?? 0) * 100)}%` }}
                     />
                   </div>
-                  <span className="w-8 text-right text-muted-foreground">{Math.round(dist.percent * 100)}%</span>
+                  <span className="w-8 text-right text-muted-foreground">
+                    {dist.percent == null ? "—" : `${Math.round(dist.percent * 100)}%`}
+                  </span>
                 </div>
               ))}
+              {!hasValidDistribution ? (
+                <div className="pt-1 text-[11px] text-muted-foreground">
+                  Rating breakdown is not available for this product yet.
+                </div>
+              ) : null}
             </div>
           </div>
         ) : (
