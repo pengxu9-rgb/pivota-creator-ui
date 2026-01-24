@@ -92,6 +92,20 @@ function pickPdpV2Payload(raw: any) {
       title: "Reviews",
       data: reviewsData,
     });
+  } else if (reviewsModule) {
+    // Keep a stable UI section when the server returns the module but no data is available.
+    payload.modules = (Array.isArray(payload.modules) ? payload.modules : []).filter((m: any) => m?.type !== "reviews_preview");
+    payload.modules.push({
+      module_id: "reviews_preview",
+      type: "reviews_preview",
+      priority: 50,
+      title: "Reviews",
+      data: {
+        scale: 5,
+        rating: 0,
+        review_count: 0,
+      },
+    });
   }
 
   const similarModule = modules.find((m: any) => isRecord(m) && m.type === "similar") || null;
@@ -105,6 +119,8 @@ function pickPdpV2Payload(raw: any) {
       title: "Similar",
       data: similarData,
     });
+    payload.x_recommendations_state = "ready";
+  } else if (similarModule) {
     payload.x_recommendations_state = "ready";
   }
 

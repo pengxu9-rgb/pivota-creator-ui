@@ -1095,7 +1095,43 @@ export function PdpContainer({
                     </div>
                   ) : null}
 
-                  <div className="flex items-center gap-3 px-3 py-2.5">
+                  <div className="px-4 pt-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="text-[15px] font-semibold leading-none">
+                          {formatPrice(displayPriceAmount, displayCurrency)}
+                        </div>
+                        <div className="mt-1 text-[11px] text-muted-foreground">
+                          {selectedOffer?.merchant_name || selectedOffer?.merchant_id ? (
+                            offers.length > 1 ? (
+                              <button
+                                type="button"
+                                className="truncate hover:text-foreground underline-offset-2 hover:underline"
+                                onClick={() => {
+                                  pdpTracking.track('pdp_action_click', { action_type: 'open_offer_sheet', source: 'cta_bar' });
+                                  setShowOfferSheet(true);
+                                }}
+                              >
+                                Sold by {selectedOffer?.merchant_name || selectedOffer?.merchant_id} · Other offers ({Math.max(0, offers.length - 1)})
+                              </button>
+                            ) : (
+                              <span className="truncate">
+                                Sold by {selectedOffer?.merchant_name || selectedOffer?.merchant_id}
+                              </span>
+                            )
+                          ) : null}
+                          {effectiveShippingEta?.length ? (
+                            <span>
+                              {(selectedOffer?.merchant_name || selectedOffer?.merchant_id) ? ' · ' : ''}
+                              ETA {effectiveShippingEta[0]}–{effectiveShippingEta[1]}d
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 px-3 pb-3 pt-2.5">
                     <div className="flex flex-1 gap-2">
                       <Button
                         variant="outline"
