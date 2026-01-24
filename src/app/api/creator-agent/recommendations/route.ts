@@ -106,7 +106,11 @@ export async function POST(req: Request) {
     const payload = {
       operation: "find_similar_products",
       payload: {
-        // Keep payload small: only similarity inputs.
+        // Prefer the flat payload shape because some upstreams validate it strictly.
+        // Keep the nested `similar` shape as a compat fallback for older gateways/mocks.
+        merchant_id: merchantId,
+        product_id: productId,
+        limit: resolvedLimit,
         similar: {
           merchant_id: merchantId,
           product_id: productId,
@@ -160,4 +164,3 @@ export async function POST(req: Request) {
     );
   }
 }
-

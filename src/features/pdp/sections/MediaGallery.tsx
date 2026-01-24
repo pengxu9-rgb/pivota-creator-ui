@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import { Grid3X3, Play } from 'lucide-react';
+import { useEffect, useMemo, useRef } from 'react';
 import type { MediaGalleryData } from '@/features/pdp/types';
 import { cn } from '@/lib/utils';
 
@@ -28,10 +29,63 @@ export function MediaGallery({
   const heroUrl = hero?.url || fallbackUrl;
   const isContain = fit === 'object-contain';
 
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const touchActive = useRef(false);
+
+  const canSwipe = useMemo(() => items.length > 1 && typeof onSelect === 'function', [items.length, onSelect]);
+
+  useEffect(() => {
+    touchStartX.current = null;
+    touchStartY.current = null;
+    touchActive.current = false;
+  }, [items.length]);
+
   return (
     <div>
       <div className="relative">
-        <div className={cn('relative', aspectClass, isContain ? 'bg-muted/30' : 'bg-black/5')}>
+        <div
+          className={cn('relative', aspectClass, isContain ? 'bg-muted/30' : 'bg-black/5')}
+          onTouchStart={(e) => {
+            if (!canSwipe) return;
+            const t = e.touches?.[0];
+            if (!t) return;
+            touchStartX.current = t.clientX;
+            touchStartY.current = t.clientY;
+            touchActive.current = true;
+          }}
+          onTouchMove={(e) => {
+            if (!touchActive.current) return;
+            const t = e.touches?.[0];
+            if (!t) return;
+            const dx = Math.abs(t.clientX - (touchStartX.current ?? t.clientX));
+            const dy = Math.abs(t.clientY - (touchStartY.current ?? t.clientY));
+            if (dx > 10 && dx > dy) {
+              e.preventDefault();
+            }
+          }}
+          onTouchEnd={(e) => {
+            if (!touchActive.current || !canSwipe) return;
+            touchActive.current = false;
+
+            const startX = touchStartX.current;
+            const startY = touchStartY.current;
+            touchStartX.current = null;
+            touchStartY.current = null;
+
+            const t = e.changedTouches?.[0];
+            if (!t || startX == null || startY == null) return;
+            const dx = t.clientX - startX;
+            const dy = t.clientY - startY;
+
+            if (Math.abs(dy) > Math.abs(dx)) return;
+            if (Math.abs(dx) < 40) return;
+
+            const nextIndex = dx < 0 ? clampedIndex + 1 : clampedIndex - 1;
+            const bounded = Math.max(0, Math.min(items.length - 1, nextIndex));
+            if (bounded !== clampedIndex) onSelect?.(bounded);
+          }}
+        >
           {heroUrl ? (
             <Image src={heroUrl} alt={hero?.alt_text || title} fill className={fit} unoptimized />
           ) : (
@@ -81,4 +135,3 @@ export function MediaGallery({
     </div>
   );
 }
-

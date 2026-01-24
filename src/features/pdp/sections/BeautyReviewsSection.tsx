@@ -110,6 +110,9 @@ export function BeautyReviewsSection({
   })();
 
   const hasValidDistribution = distributionRows.some((r) => typeof r.percent === "number" && r.percent > 0);
+  const displayDistributionRows = hasValidDistribution
+    ? distributionRows
+    : distributionRows.map((r) => ({ ...r, percent: null }));
 
   return (
     <div className="py-4">
@@ -134,7 +137,7 @@ export function BeautyReviewsSection({
             </div>
 
             <div className="flex-1 space-y-1">
-              {distributionRows.map((dist) => (
+              {displayDistributionRows.map((dist) => (
                 <div key={dist.stars} className="flex items-center gap-2 text-xs">
                   <span className="w-3 text-muted-foreground">{dist.stars}</span>
                   <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
