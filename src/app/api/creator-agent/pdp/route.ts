@@ -26,9 +26,89 @@ function authHeaders(): Record<string, string> {
   };
 }
 
+function isRecord(value: unknown): value is Record<string, any> {
+  return Boolean(value && typeof value === "object" && !Array.isArray(value));
+}
+
 function pickPdpPayload(raw: any) {
   if (!raw || typeof raw !== "object") return null;
   return raw.pdp_payload ?? raw.output?.pdp_payload ?? raw.data?.pdp_payload ?? null;
+}
+
+function pickPdpV2Payload(raw: any) {
+  if (!isRecord(raw)) return null;
+  const modules = Array.isArray((raw as any).modules) ? (raw as any).modules : [];
+  const canonical = modules.find((m: any) => isRecord(m) && m.type === "canonical") || null;
+  const canonicalData = isRecord((canonical as any)?.data) ? (canonical as any).data : null;
+  const base = canonicalData?.pdp_payload;
+  if (!isRecord(base)) return null;
+
+  const payload: any = {
+    ...base,
+    ...(isRecord((base as any).product) ? { product: { ...(base as any).product } } : {}),
+    ...(Array.isArray((base as any).modules) ? { modules: [...(base as any).modules] } : { modules: [] }),
+    ...(Array.isArray((base as any).actions) ? { actions: [...(base as any).actions] } : { actions: [] }),
+  };
+
+  const subject = isRecord((raw as any).subject) ? ((raw as any).subject as any) : null;
+  const subjectGroupId =
+    subject && String(subject.type || "").trim().toLowerCase() === "product_group"
+      ? String(subject.id || "").trim()
+      : "";
+  const canonicalGroupId =
+    canonicalData && typeof canonicalData.product_group_id === "string"
+      ? canonicalData.product_group_id.trim()
+      : "";
+  const productGroupId = canonicalGroupId || subjectGroupId;
+  if (productGroupId) payload.product_group_id = productGroupId;
+
+  const offersModule = modules.find((m: any) => isRecord(m) && m.type === "offers") || null;
+  const offersData = isRecord((offersModule as any)?.data) ? (offersModule as any).data : null;
+  if (offersData) {
+    const offers = Array.isArray(offersData.offers) ? offersData.offers : null;
+    if (offers) payload.offers = offers;
+    const offersCount =
+      typeof offersData.offers_count === "number"
+        ? offersData.offers_count
+        : offers
+          ? offers.length
+          : payload.offers_count;
+    if (offersCount != null) payload.offers_count = offersCount;
+    if (typeof offersData.default_offer_id === "string") payload.default_offer_id = offersData.default_offer_id;
+    if (typeof offersData.best_price_offer_id === "string") payload.best_price_offer_id = offersData.best_price_offer_id;
+    if (!payload.product_group_id && typeof offersData.product_group_id === "string" && offersData.product_group_id.trim()) {
+      payload.product_group_id = offersData.product_group_id.trim();
+    }
+  }
+
+  const reviewsModule = modules.find((m: any) => isRecord(m) && m.type === "reviews_preview") || null;
+  const reviewsData = isRecord((reviewsModule as any)?.data) ? (reviewsModule as any).data : null;
+  if (reviewsData) {
+    payload.modules = (Array.isArray(payload.modules) ? payload.modules : []).filter((m: any) => m?.type !== "reviews_preview");
+    payload.modules.push({
+      module_id: "reviews_preview",
+      type: "reviews_preview",
+      priority: 50,
+      title: "Reviews",
+      data: reviewsData,
+    });
+  }
+
+  const similarModule = modules.find((m: any) => isRecord(m) && m.type === "similar") || null;
+  const similarData = isRecord((similarModule as any)?.data) ? (similarModule as any).data : null;
+  if (similarData) {
+    payload.modules = (Array.isArray(payload.modules) ? payload.modules : []).filter((m: any) => m?.type !== "recommendations");
+    payload.modules.push({
+      module_id: "recommendations",
+      type: "recommendations",
+      priority: 90,
+      title: "Similar",
+      data: similarData,
+    });
+    payload.x_recommendations_state = "ready";
+  }
+
+  return payload;
 }
 
 export async function POST(req: Request) {
@@ -45,34 +125,27 @@ export async function POST(req: Request) {
     const includeList = Array.isArray(include) ? include.filter(Boolean) : [];
     const wantsRecommendations = includeList.includes("recommendations");
 
-    if (!merchantId || !productId) {
+    if (!productId) {
       return NextResponse.json(
-        { error: "Missing merchantId or productId" },
+        { error: "Missing productId" },
         { status: 400 },
       );
     }
 
     const invokeUrl = getInvokeUrl();
-    const product = { merchant_id: merchantId, product_id: productId, variant_id: productId };
+    const merchantIdNormalized = merchantId ? String(merchantId).trim() : "";
+    const product = { merchant_id: merchantIdNormalized, product_id: productId, variant_id: productId };
     const baseRequest = {
-      operation: "get_pdp",
+      operation: "get_pdp_v2",
       payload: {
-        // Some upstreams still use variant_id; keep both for compatibility.
-        product,
+        product_ref: {
+          product_id: productId,
+          ...(merchantIdNormalized ? { merchant_id: merchantIdNormalized } : {}),
+        },
         ...(includeList.length ? { include: includeList } : {}),
-        // Some upstream get_pdp implementations expect an explicit `similar` payload
-        // when recommendations are requested.
-        ...(wantsRecommendations
-          ? {
-              similar: {
-                merchant_id: merchantId,
-                product_id: productId,
-                variant_id: productId,
-                limit: 6,
-              },
-            }
-          : {}),
-        ...(debug ? { debug: true } : {}),
+        options: {
+          ...(debug ? { debug: true } : {}),
+        },
       },
       metadata: { source: "creator-agent-ui" },
     };
@@ -97,7 +170,7 @@ export async function POST(req: Request) {
 
       // Fallback: if recommendations break upstream, retry without `include`/`similar`
       // so the PDP can still render.
-      if (wantsRecommendations) {
+      if (merchantIdNormalized && wantsRecommendations) {
         const retry = await fetch(invokeUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json", ...authHeaders() },
@@ -120,7 +193,7 @@ export async function POST(req: Request) {
         return NextResponse.json(
           {
             error: "Failed to fetch pdp payload",
-            detail: `get_pdp failed with status ${res.status}${text ? ` body: ${text}` : ""}`,
+            detail: `get_pdp_v2 failed with status ${res.status}${text ? ` body: ${text}` : ""}`,
           },
           { status: 500 },
         );
@@ -128,7 +201,7 @@ export async function POST(req: Request) {
     }
 
     const raw = await res.json();
-    const pdp_payload = pickPdpPayload(raw);
+    const pdp_payload = pickPdpV2Payload(raw) || pickPdpPayload(raw);
 
     if (!pdp_payload) {
       return NextResponse.json(
