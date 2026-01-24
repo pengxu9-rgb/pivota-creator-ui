@@ -412,6 +412,54 @@ export default function CreatorProductDetailPage() {
     };
   }, [debug, merchantId, pdpNonce, productId]);
 
+  // Multi-offer: even after a merchant is chosen (merchant_id in URL), we still want to
+  // show "Other offers (N)" on the PDP. Some backends return offers[] in get_pdp, but
+  // we can reliably fetch the small offer summary via resolve_product_candidates.
+  useEffect(() => {
+    if (!merchantId || !productId) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/creator-agent/resolve-product-candidates", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            productId,
+            limit: 10,
+            debug,
+          }),
+        });
+        if (!res.ok) return;
+        const data = (await res.json()) as ResolveResponse;
+        if (cancelled) return;
+
+        const offers = Array.isArray(data.offers) ? data.offers : [];
+        const offersCount = typeof data.offers_count === "number" ? data.offers_count : offers.length;
+        if (!offersCount || offersCount <= 1) return;
+
+        setPdpState((prev) => {
+          if (!prev.payload) return prev;
+          const next: PDPPayload = {
+            ...prev.payload,
+            product_group_id: data.product_group_id || prev.payload.product_group_id,
+            offers: prev.payload.offers?.length ? prev.payload.offers : offers,
+            offers_count: prev.payload.offers_count ?? offersCount,
+            default_offer_id: data.default_offer_id || prev.payload.default_offer_id,
+            best_price_offer_id: data.best_price_offer_id || prev.payload.best_price_offer_id,
+          };
+          return { ...prev, payload: next };
+        });
+      } catch {
+        // non-blocking
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [debug, merchantId, productId]);
+
   useEffect(() => {
     if (!merchantId || !productId || !pdpState.payload) return;
     if (pdpState.payload.x_recommendations_state !== "loading") return;

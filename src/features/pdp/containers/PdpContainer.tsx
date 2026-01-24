@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { createPortal } from 'react-dom';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ChevronLeft, Share2, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type {
@@ -108,6 +108,7 @@ export function PdpContainer({
   const [mounted, setMounted] = useState(false);
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const allowMockRecentPurchases =
     (payload.product.merchant_id || '') !== 'external_seed';
@@ -148,7 +149,12 @@ export function PdpContainer({
   const recommendations = getModuleData<RecommendationsData>(payload, 'recommendations');
 
   const offers = useMemo(() => payload.offers ?? [], [payload.offers]);
+  const offerIdFromQuery = useMemo(() => {
+    const v = String(searchParams?.get('offer_id') || searchParams?.get('offerId') || '').trim();
+    return v || null;
+  }, [searchParams]);
   const [selectedOfferId, setSelectedOfferId] = useState<string | null>(() => {
+    if (offerIdFromQuery && offers.some((o) => o.offer_id === offerIdFromQuery)) return offerIdFromQuery;
     const merchantId = String(payload.product.merchant_id || '').trim();
     const merchantOfferId = merchantId
       ? offers.find((o) => o.merchant_id === merchantId)?.offer_id
@@ -171,12 +177,22 @@ export function PdpContainer({
   }, []);
 
   useEffect(() => {
+    if (offerIdFromQuery && offers.some((o) => o.offer_id === offerIdFromQuery)) {
+      setSelectedOfferId(offerIdFromQuery);
+      return;
+    }
     const merchantId = String(payload.product.merchant_id || '').trim();
     const merchantOfferId = merchantId
       ? offers.find((o) => o.merchant_id === merchantId)?.offer_id
       : null;
     setSelectedOfferId(merchantOfferId || payload.default_offer_id || offers[0]?.offer_id || null);
-  }, [payload.product.product_id, payload.product.merchant_id, payload.default_offer_id, offers]);
+  }, [
+    offerIdFromQuery,
+    payload.product.product_id,
+    payload.product.merchant_id,
+    payload.default_offer_id,
+    offers,
+  ]);
 
   useEffect(() => {
     if (!offerDebugEnabled) return;
