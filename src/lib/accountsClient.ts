@@ -1,7 +1,6 @@
 // Accounts API is proxied through same-origin routes so auth cookies remain first-party.
 // This avoids third-party cookie issues (e.g. in-app browsers / iOS Safari) and reduces CORS risk.
 const ACCOUNTS_API_BASE = "/api/accounts";
-const ACCOUNTS_ROOT_API_BASE = "/api/accounts-root";
 
 type ApiError = Error & { status?: number; detail?: any; code?: string };
 
@@ -119,11 +118,13 @@ async function callAccounts(
   return callAccountsBase(ACCOUNTS_API_BASE, path, options);
 }
 
-async function callAccountsRoot(
+async function callUgc(
   path: string,
   options: RequestInit & { skipJson?: boolean } = {},
 ) {
-  return callAccountsBase(ACCOUNTS_ROOT_API_BASE, path, options);
+  // UGC endpoints are proxied via Next.js rewrites (see `next.config.mjs`) so they
+  // stay first-party without needing a separate `/api/*` handler.
+  return callAccountsBase("", path, options);
 }
 
 export async function getPdpV2Personalization(args: {
@@ -189,7 +190,7 @@ export async function createReviewFromUser(args: {
   const productId = String(args.productId || "").trim();
   if (!productId) return null;
 
-  return callAccountsRoot("/buyer/reviews/v1/reviews/from_user", {
+  return callUgc("/buyer/reviews/v1/reviews/from_user", {
     method: "POST",
     cache: "no-store",
     body: JSON.stringify({
@@ -216,7 +217,7 @@ export async function postQuestion(args: {
   const productId = String(args.productId || "").trim();
   if (!productId) return null;
 
-  return callAccountsRoot("/questions", {
+  return callUgc("/questions", {
     method: "POST",
     cache: "no-store",
     body: JSON.stringify({

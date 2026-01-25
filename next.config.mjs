@@ -18,6 +18,16 @@ const nextConfig = {
         destination:
           "https://web-production-fedb.up.railway.app/accounts/:path*",
       },
+      // Proxy UGC endpoints (reviews/questions) as first-party too.
+      {
+        source: "/buyer/reviews/v1/:path*",
+        destination:
+          "https://web-production-fedb.up.railway.app/buyer/reviews/v1/:path*",
+      },
+      {
+        source: "/questions",
+        destination: "https://web-production-fedb.up.railway.app/questions",
+      },
     ];
   },
 };
