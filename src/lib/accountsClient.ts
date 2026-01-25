@@ -28,6 +28,7 @@ export interface AccountsUser {
   phone: string | null;
   primary_role: string;
   is_guest: boolean;
+  has_password?: boolean;
 }
 
 type OrdersPermissions = {
@@ -92,13 +93,13 @@ async function callAccountsBase(
 
   if (!res.ok) {
     const code =
-      (typeof data?.detail === "string" ? data.detail : undefined) ||
       data?.detail?.error?.code ||
+      (typeof data?.detail === "string" ? data.detail : undefined) ||
       data?.error?.code ||
       undefined;
     const message =
-      (typeof data?.detail === "string" ? data.detail : undefined) ||
       data?.detail?.error?.message ||
+      (typeof data?.detail === "string" ? data.detail : undefined) ||
       data?.error?.message ||
       res.statusText;
     const err: ApiError = new Error(message);
@@ -241,6 +242,23 @@ export async function accountsVerify(email: string, otp: string) {
 
   // Some deployments wrap the user inside { user, memberships, ... }.
   return (data as any).user || data;
+}
+
+export async function accountsLoginWithPassword(email: string, password: string) {
+  return callAccounts("/auth/password/login", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
+}
+
+export async function accountsSetPassword(newPassword: string, currentPassword?: string) {
+  return callAccounts("/auth/password/set", {
+    method: "POST",
+    body: JSON.stringify({
+      new_password: newPassword,
+      current_password: currentPassword || undefined,
+    }),
+  });
 }
 
 export async function accountsMe(): Promise<AccountsUser | null> {
