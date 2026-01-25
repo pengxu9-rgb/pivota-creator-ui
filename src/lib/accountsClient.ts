@@ -1,7 +1,7 @@
-const ACCOUNTS_BASE = (
-  process.env.NEXT_PUBLIC_ACCOUNTS_BASE ||
-  "https://web-production-fedb.up.railway.app/accounts"
-).replace(/\/$/, "");
+// Accounts API is proxied through same-origin routes so auth cookies remain first-party.
+// This avoids third-party cookie issues (e.g. in-app browsers / iOS Safari) and reduces CORS risk.
+const ACCOUNTS_API_BASE = "/api/accounts";
+const ACCOUNTS_ROOT_API_BASE = "/api/accounts-root";
 
 type ApiError = Error & { status?: number; detail?: any; code?: string };
 
@@ -60,11 +60,12 @@ export type OrdersListItem = {
   creator_slug?: string | null;
 };
 
-async function callAccounts(
+async function callAccountsBase(
+  base: string,
   path: string,
   options: RequestInit & { skipJson?: boolean } = {},
 ) {
-  const url = `${ACCOUNTS_BASE}${path}`;
+  const url = `${base}${path}`;
   const { skipJson, headers, method, body, ...rest } = options as any;
   const res = await fetch(url, {
     ...rest,
@@ -110,10 +111,18 @@ async function callAccounts(
   return data;
 }
 
-function getAccountsOriginBase(): string {
-  const base = String(ACCOUNTS_BASE || "").trim().replace(/\/$/, "");
-  if (base.endsWith("/accounts")) return base.slice(0, -"/accounts".length);
-  return base;
+async function callAccounts(
+  path: string,
+  options: RequestInit & { skipJson?: boolean } = {},
+) {
+  return callAccountsBase(ACCOUNTS_API_BASE, path, options);
+}
+
+async function callAccountsRoot(
+  path: string,
+  options: RequestInit & { skipJson?: boolean } = {},
+) {
+  return callAccountsBase(ACCOUNTS_ROOT_API_BASE, path, options);
 }
 
 export async function getPdpV2Personalization(args: {
@@ -176,15 +185,12 @@ export async function createReviewFromUser(args: {
   title?: string | null;
   body?: string | null;
 }) {
-  const root = getAccountsOriginBase();
   const productId = String(args.productId || "").trim();
-  if (!root || !productId) return null;
+  if (!productId) return null;
 
-  const res = await fetch(`${root}/buyer/reviews/v1/reviews/from_user`, {
+  return callAccountsRoot("/buyer/reviews/v1/reviews/from_user", {
     method: "POST",
-    credentials: "include",
     cache: "no-store",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       product_id: productId,
       ...(args.productGroupId ? { product_group_id: String(args.productGroupId) } : {}),
@@ -199,34 +205,6 @@ export async function createReviewFromUser(args: {
       body: args.body == null ? null : String(args.body),
     }),
   });
-
-  const text = await res.text();
-  let data: any;
-  try {
-    data = text ? JSON.parse(text) : {};
-  } catch {
-    data = { raw: text };
-  }
-
-  if (!res.ok) {
-    const code =
-      (typeof data?.detail === "string" ? data.detail : undefined) ||
-      data?.detail?.error?.code ||
-      data?.error?.code ||
-      undefined;
-    const message =
-      (typeof data?.detail === "string" ? data.detail : undefined) ||
-      data?.detail?.error?.message ||
-      data?.error?.message ||
-      res.statusText;
-    const err: ApiError = new Error(message);
-    err.status = res.status;
-    err.detail = data;
-    err.code = code;
-    throw err;
-  }
-
-  return data;
 }
 
 export async function postQuestion(args: {
@@ -234,49 +212,18 @@ export async function postQuestion(args: {
   productGroupId?: string | null;
   question: string;
 }) {
-  const root = getAccountsOriginBase();
   const productId = String(args.productId || "").trim();
-  if (!root || !productId) return null;
+  if (!productId) return null;
 
-  const res = await fetch(`${root}/questions`, {
+  return callAccountsRoot("/questions", {
     method: "POST",
-    credentials: "include",
     cache: "no-store",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       productId,
       ...(args.productGroupId ? { productGroupId: String(args.productGroupId) } : {}),
       question: String(args.question || ""),
     }),
   });
-
-  const text = await res.text();
-  let data: any;
-  try {
-    data = text ? JSON.parse(text) : {};
-  } catch {
-    data = { raw: text };
-  }
-
-  if (!res.ok) {
-    const code =
-      (typeof data?.detail === "string" ? data.detail : undefined) ||
-      data?.detail?.error?.code ||
-      data?.error?.code ||
-      undefined;
-    const message =
-      (typeof data?.detail === "string" ? data.detail : undefined) ||
-      data?.detail?.error?.message ||
-      data?.error?.message ||
-      res.statusText;
-    const err: ApiError = new Error(message);
-    err.status = res.status;
-    err.detail = data;
-    err.code = code;
-    throw err;
-  }
-
-  return data;
 }
 
 export async function accountsLogin(email: string) {
