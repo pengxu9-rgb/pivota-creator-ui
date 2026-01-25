@@ -658,17 +658,18 @@ export function PdpContainer({
                             pdpTracking.track('pdp_action_click', { action_type: 'select_variant', variant_id: variant.variant_id });
                           }}
                           className={cn(
-                            'flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] whitespace-nowrap transition-all',
+                            'flex items-center gap-1.5 rounded-full border bg-card px-2.5 py-1 text-[10px] text-foreground whitespace-nowrap transition-colors',
+                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]',
                             isSelected
-                              ? 'border-primary bg-primary/20 font-semibold text-primary ring-2 ring-primary/50 shadow-sm'
-                              : 'border-border hover:border-primary/50',
+                              ? 'border-[color:var(--accent-600)] bg-[var(--accent-50)] text-[color:var(--accent-800)] font-semibold'
+                              : 'border-border hover:bg-muted/30 hover:border-muted-foreground/40',
                           )}
                         >
                           {variant.swatch?.hex ? (
                             <span
                               className={cn(
-                                'h-3 w-3 rounded-full ring-1 ring-border',
-                                isSelected ? 'ring-primary/50' : 'ring-border',
+                                'h-3 w-3 rounded-full ring-1',
+                                isSelected ? 'ring-[color:var(--accent-600)]' : 'ring-border',
                               )}
                               style={{ backgroundColor: variant.swatch.hex }}
                             />
@@ -798,10 +799,12 @@ export function PdpContainer({
                             key={color}
                             onClick={() => handleColorSelect(color)}
                             className={cn(
-                              'flex-shrink-0 rounded-full border px-3 py-1 text-xs transition-colors',
+                              'flex-shrink-0 rounded-full border bg-card px-3 py-1 text-xs text-foreground transition-colors',
+                              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]',
+                              'disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30 disabled:text-muted-foreground',
                               isSelected
-                                ? 'border-primary bg-primary/20 text-primary ring-2 ring-primary/50'
-                                : 'border-border hover:border-primary/50',
+                                ? 'border-[color:var(--accent-600)] bg-[var(--accent-50)] text-[color:var(--accent-800)] font-semibold'
+                                : 'border-border hover:bg-muted/30 hover:border-muted-foreground/40',
                             )}
                           >
                             {color}
@@ -836,10 +839,15 @@ export function PdpContainer({
                           key={size}
                           onClick={() => handleSizeSelect(size)}
                           className={cn(
-                            'rounded-full border px-3 py-1 text-xs transition-colors',
+                            'relative inline-flex h-10 min-w-10 items-center justify-center rounded-full border bg-card px-3 text-xs leading-none text-foreground transition-colors',
+                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]',
+                            'disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30 disabled:text-muted-foreground',
                             isSelected
-                              ? 'border-primary bg-primary/20 text-primary ring-2 ring-primary/50'
-                              : 'border-border hover:border-primary/50',
+                              ? cn(
+                                  'border-[color:var(--accent-600)] bg-[var(--accent-50)] text-[color:var(--accent-800)] font-semibold',
+                                  "after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:h-2.5 after:w-2.5 after:-translate-x-1/2 after:rounded-full after:bg-[var(--accent-600)]",
+                                )
+                              : 'border-border hover:bg-muted/30 hover:border-muted-foreground/40',
                           )}
                         >
                           {size}

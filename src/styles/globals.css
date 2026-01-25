@@ -4,6 +4,12 @@
 
 :root {
   color-scheme: light;
+
+  /* Option selection tokens (for pills/circles) */
+  --accent-50: #EAF7F3;
+  --accent-600: #1A8E70;
+  --accent-800: #0B5B4B;
+  --focus-ring: rgba(26, 142, 112, 0.25);
 }
 
 body {
@@ -99,6 +105,12 @@ a {
   --border: 0 0% 92%;
   --input: 0 0% 92%;
   --ring: 168 76% 42%;
+
+  /* Option selection tokens (for pills/circles) */
+  --accent-50: #EAF7F3;
+  --accent-600: #1A8E70;
+  --accent-800: #0B5B4B;
+  --focus-ring: rgba(26, 142, 112, 0.25);
 
   --radius: 0.5rem;
 }
