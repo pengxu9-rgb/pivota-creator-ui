@@ -1289,7 +1289,7 @@ export function PdpContainer({
                 className="mx-auto max-w-md px-3"
                 style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
               >
-                <div className="rounded-2xl border border-border bg-white shadow-[0_-10px_24px_rgba(0,0,0,0.12)] overflow-hidden mb-2">
+                <div className="rounded-2xl bg-white shadow-[0_-10px_24px_rgba(0,0,0,0.12)] overflow-hidden mb-2">
                   {pricePromo?.promotions?.length ? (
                     <div className="flex items-center justify-between px-4 py-2 bg-primary/5 text-xs">
                       <span className="flex items-center gap-2">
@@ -1358,7 +1358,7 @@ export function PdpContainer({
                         {addToCartLabel}
                       </Button>
                       <Button
-                        className="flex-[1.5] h-10 rounded-full bg-primary hover:bg-primary/90 font-semibold text-sm"
+                        className="flex-[1.5] h-10 rounded-full bg-purple-600 hover:bg-purple-700 text-white font-semibold text-sm disabled:opacity-60 disabled:hover:bg-purple-600"
                         disabled={!isInStock}
                         onClick={() => {
                           pdpTracking.track('pdp_action_click', { action_type: 'buy_now', variant_id: selectedVariant.variant_id });
