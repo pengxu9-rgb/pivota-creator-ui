@@ -18,6 +18,7 @@ import {
 } from "@/lib/checkoutClient";
 import {
   accountsLogin,
+  accountsLoginWithPassword,
   accountsVerify,
   accountsMe,
   getLatestPaidOrderShippingAddress,
@@ -33,6 +34,7 @@ import "@adyen/adyen-web/dist/adyen.css";
 
 type CheckoutStep = "form" | "submitting" | "success" | "error";
 type AuthStep = "checking" | "email" | "otp" | "authed";
+type AuthMethod = "otp" | "password";
 
 const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "";
 const stripeConfigured = Boolean(publishableKey);
@@ -106,8 +108,10 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
 
   // Auth state for inline email login
   const [authStep, setAuthStep] = useState<AuthStep>("checking");
+  const [authMethod, setAuthMethod] = useState<AuthMethod>("otp");
   const [loginEmail, setLoginEmail] = useState("");
   const [otp, setOtp] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
   const [authError, setAuthError] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
   const [accountsUser, setAccountsUser] = useState<AccountsUser | null>(null);
@@ -611,6 +615,36 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
     } catch (err) {
       console.error(err);
       setAuthError("We couldn’t send the code. Please check your email and try again.");
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handlePasswordSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!loginEmail || !loginPassword) {
+      setAuthError("Please enter your email and password.");
+      return;
+    }
+    setAuthError(null);
+    setAuthLoading(true);
+    try {
+      const data = await accountsLoginWithPassword(loginEmail, loginPassword);
+      const user = (data as any)?.user || data;
+      setAccountsUser(user as AccountsUser);
+      setEmail(loginEmail);
+      setAuthStep("authed");
+    } catch (err: any) {
+      const code = err?.code;
+      if (code === "NO_PASSWORD") {
+        setAuthError("No password is set for this account. Use email code once, then set a password.");
+        setAuthMethod("otp");
+      } else if (code === "INVALID_CREDENTIALS") {
+        setAuthError("Email or password is incorrect.");
+      } else {
+        console.error(err);
+        setAuthError("We couldn’t sign you in. Please try again.");
+      }
     } finally {
       setAuthLoading(false);
     }
@@ -1492,6 +1526,32 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
                   )}
                   {authStep === "email" && (
                     <>
+                      <div className="grid grid-cols-2 gap-2 text-[11px]">
+                        <button
+                          type="button"
+                          disabled={authLoading}
+                          onClick={() => setAuthMethod("password")}
+                          className={`rounded-full border px-3 py-1 font-medium shadow-sm ${
+                            authMethod === "password"
+                              ? "border-slate-900 bg-slate-900 text-white"
+                              : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100"
+                          }`}
+                        >
+                          Password
+                        </button>
+                        <button
+                          type="button"
+                          disabled={authLoading}
+                          onClick={() => setAuthMethod("otp")}
+                          className={`rounded-full border px-3 py-1 font-medium shadow-sm ${
+                            authMethod === "otp"
+                              ? "border-slate-900 bg-slate-900 text-white"
+                              : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100"
+                          }`}
+                        >
+                          Email code
+                        </button>
+                      </div>
                       <label className="text-[11px] font-medium text-slate-700">
                         Email
                         <input
@@ -1502,14 +1562,40 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
                           className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 shadow-sm outline-none focus:border-slate-900"
                         />
                       </label>
-                      <button
-                        type="button"
-                        disabled={authLoading}
-                        onClick={handleSendCode}
-                        className="w-full rounded-full bg-slate-900 px-4 py-1.5 text-[11px] font-medium text-white shadow-sm hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {authLoading ? "Sending code…" : "Send verification code"}
-                      </button>
+                      {authMethod === "password" ? (
+                        <>
+                          <label className="text-[11px] font-medium text-slate-700">
+                            Password
+                            <input
+                              type="password"
+                              required
+                              value={loginPassword}
+                              onChange={(e) => setLoginPassword(e.target.value)}
+                              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 shadow-sm outline-none focus:border-slate-900"
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            disabled={authLoading}
+                            onClick={handlePasswordSignIn}
+                            className="w-full rounded-full bg-slate-900 px-4 py-1.5 text-[11px] font-medium text-white shadow-sm hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {authLoading ? "Signing in…" : "Sign in"}
+                          </button>
+                          <p className="text-[11px] text-slate-500">
+                            No password yet? Use Email code once, then set a password on the login page.
+                          </p>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={authLoading}
+                          onClick={handleSendCode}
+                          className="w-full rounded-full bg-slate-900 px-4 py-1.5 text-[11px] font-medium text-white shadow-sm hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {authLoading ? "Sending code…" : "Send verification code"}
+                        </button>
+                      )}
                     </>
                   )}
                   {authStep === "otp" && (

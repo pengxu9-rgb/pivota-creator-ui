@@ -61,6 +61,20 @@ function ProfilePageInner() {
     }
   };
 
+  const handleOpenPassword = () => {
+    if (!me) {
+      handleRequireLogin();
+      return;
+    }
+    if (creatorConfig) {
+      router.push(
+        `/account/password?creator=${encodeURIComponent(creatorConfig.slug)}`,
+      );
+    } else {
+      router.push("/account/password");
+    }
+  };
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-[#fffefc] via-[#fffaf6] to-[#fff7f2] text-[#3f3125]">
       <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 py-6 lg:px-8">
@@ -153,6 +167,23 @@ function ProfilePageInner() {
               </div>
               <div className="mt-0.5 text-[11px] text-[#a38b78]">
                 Track order status, delivery and refunds.
+              </div>
+            </div>
+            <span className="text-[11px] text-[#c19a7d]">›</span>
+          </button>
+
+          {/* 密码 */}
+          <button
+            type="button"
+            className="flex items-center justify-between rounded-2xl border border-[#f4e2d4] bg-white/90 px-4 py-3 text-left shadow-sm"
+            onClick={handleOpenPassword}
+          >
+            <div>
+              <div className="text-xs font-semibold text-[#3f3125]">
+                Password & security
+              </div>
+              <div className="mt-0.5 text-[11px] text-[#a38b78]">
+                Set or change your password.
               </div>
             </div>
             <span className="text-[11px] text-[#c19a7d]">›</span>
