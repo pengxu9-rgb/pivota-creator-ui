@@ -1,6 +1,7 @@
 'use client';
 
 import type { PDPPayload, Variant } from '@/features/pdp/types';
+import type { UgcCapabilities } from '@/lib/accountsClient';
 import { PdpContainer } from '@/features/pdp/containers/PdpContainer';
 
 export function GenericPDPContainer({
@@ -9,12 +10,14 @@ export function GenericPDPContainer({
   onBuyNow,
   onWriteReview,
   onSeeAllReviews,
+  ugcCapabilities,
 }: {
   payload: PDPPayload;
   onAddToCart: (args: { variant: Variant; quantity: number }) => void;
   onBuyNow: (args: { variant: Variant; quantity: number }) => void;
   onWriteReview?: () => void;
   onSeeAllReviews?: () => void;
+  ugcCapabilities?: UgcCapabilities | null;
 }) {
   return (
     <PdpContainer
@@ -24,7 +27,7 @@ export function GenericPDPContainer({
       onBuyNow={onBuyNow}
       onWriteReview={onWriteReview}
       onSeeAllReviews={onSeeAllReviews}
+      ugcCapabilities={ugcCapabilities}
     />
   );
 }
-

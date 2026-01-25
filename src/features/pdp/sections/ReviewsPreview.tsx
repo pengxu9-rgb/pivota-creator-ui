@@ -26,6 +26,8 @@ export function ReviewsPreview({
   onSeeAll?: () => void;
 }) {
   const hasSummary = data.review_count > 0 && data.rating > 0;
+  const writeLabel = (data.entry_points?.write_review?.label || '').trim() || 'Write a review';
+  const openLabel = (data.entry_points?.open_reviews?.label || '').trim() || 'See all reviews';
 
   return (
     <div className="rounded-2xl bg-card border border-border p-4">
@@ -33,7 +35,7 @@ export function ReviewsPreview({
         <div className="text-sm font-semibold">Reviews</div>
         {onWriteReview ? (
           <button className="text-xs font-medium text-primary" onClick={onWriteReview}>
-            {data.entry_points?.write_review?.label || 'Write a review'}
+            {writeLabel}
           </button>
         ) : null}
       </div>
@@ -62,10 +64,9 @@ export function ReviewsPreview({
       )}
       {onSeeAll ? (
         <button className="mt-4 w-full text-sm text-primary font-medium" onClick={onSeeAll}>
-          {data.entry_points?.open_reviews?.label || 'See all reviews'}
+          {openLabel}
         </button>
       ) : null}
     </div>
   );
 }
-

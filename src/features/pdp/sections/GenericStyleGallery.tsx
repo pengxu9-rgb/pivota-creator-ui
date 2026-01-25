@@ -3,15 +3,22 @@
 import Image from 'next/image';
 import { Play } from 'lucide-react';
 import type { MediaItem } from '@/features/pdp/types';
+import { cn } from '@/lib/utils';
 
 export function GenericStyleGallery({
   items,
   showEmpty = false,
   title = 'Style Gallery',
+  ctaLabel = 'Share yours +',
+  ctaEnabled = true,
+  onCtaClick,
 }: {
   items: MediaItem[];
   showEmpty?: boolean;
   title?: string;
+  ctaLabel?: string;
+  ctaEnabled?: boolean;
+  onCtaClick?: () => void;
 }) {
   if (!items.length && !showEmpty) return null;
 
@@ -22,7 +29,17 @@ export function GenericStyleGallery({
           {title}
           {items.length ? ` (${items.length})` : ''}
         </h3>
-        <button className="text-xs text-primary">Share yours +</button>
+        <button
+          type="button"
+          onClick={onCtaClick}
+          aria-disabled={!ctaEnabled}
+          className={cn(
+            'text-xs font-medium text-primary transition-opacity',
+            ctaEnabled ? 'hover:underline' : 'opacity-50 cursor-not-allowed',
+          )}
+        >
+          {ctaLabel}
+        </button>
       </div>
       {items.length ? (
         <div className="grid grid-cols-3 gap-1 rounded-lg overflow-hidden">
@@ -45,4 +62,3 @@ export function GenericStyleGallery({
     </div>
   );
 }
-

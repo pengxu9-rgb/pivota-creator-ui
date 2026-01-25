@@ -9,6 +9,7 @@ import type { Module, PDPPayload, Variant } from "@/features/pdp/types";
 import { BeautyPDPContainer } from "@/features/pdp/containers/BeautyPDPContainer";
 import { GenericPDPContainer } from "@/features/pdp/containers/GenericPDPContainer";
 import { isBeautyProduct } from "@/features/pdp/utils/isBeautyProduct";
+import { getPdpV2Personalization, type UgcCapabilities } from "@/lib/accountsClient";
 
 function pickPdpPayload(raw: any): PDPPayload | null {
   if (!raw || typeof raw !== "object") return null;
@@ -200,6 +201,16 @@ export default function CreatorProductDetailPage() {
     payload: PDPPayload | null;
   }>({ loading: true, error: null, payload: null });
   const [pdpNonce, setPdpNonce] = useState(0);
+  const [ugcCapabilities, setUgcCapabilities] = useState<UgcCapabilities | null>({
+    canUploadMedia: false,
+    canWriteReview: false,
+    canAskQuestion: false,
+    reasons: {
+      upload: "NOT_AUTHENTICATED",
+      review: "NOT_AUTHENTICATED",
+      question: "NOT_AUTHENTICATED",
+    },
+  });
 
   const resolvedMode = useMemo(() => {
     if (forcedTemplate === "beauty") return "beauty";
@@ -273,6 +284,43 @@ export default function CreatorProductDetailPage() {
       cancelled = true;
     };
   }, [debug, merchantId, pdpNonce, productId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const pid = String(pdpState.payload?.product?.product_id || "").trim();
+    if (!pid) return;
+    const pgid = String(pdpState.payload?.product_group_id || "").trim() || null;
+
+    setUgcCapabilities({
+      canUploadMedia: false,
+      canWriteReview: false,
+      canAskQuestion: false,
+      reasons: {
+        upload: "NOT_AUTHENTICATED",
+        review: "NOT_AUTHENTICATED",
+        question: "NOT_AUTHENTICATED",
+      },
+    });
+
+    (async () => {
+      try {
+        const caps = await getPdpV2Personalization({
+          productId: pid,
+          ...(pgid ? { productGroupId: pgid } : {}),
+        });
+        if (cancelled) return;
+        if (caps) setUgcCapabilities(caps);
+      } catch (err: any) {
+        if (cancelled) return;
+        if (err?.code === "NOT_AUTHENTICATED" || err?.status === 401) return;
+        // Keep defaults.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pdpState.payload?.product?.product_id, pdpState.payload?.product_group_id]);
 
   const handleAddToCart = (args: { variant: Variant; quantity: number; merchant_id?: string; offer_id?: string }) => {
     if (!creator || !pdpState.payload) return;
@@ -385,9 +433,19 @@ export default function CreatorProductDetailPage() {
   return (
     <main className="min-h-screen lovable-pdp">
       {resolvedMode === "beauty" ? (
-        <BeautyPDPContainer payload={pdpState.payload} onAddToCart={handleAddToCart} onBuyNow={handleBuyNow} />
+        <BeautyPDPContainer
+          payload={pdpState.payload}
+          onAddToCart={handleAddToCart}
+          onBuyNow={handleBuyNow}
+          ugcCapabilities={ugcCapabilities}
+        />
       ) : (
-        <GenericPDPContainer payload={pdpState.payload} onAddToCart={handleAddToCart} onBuyNow={handleBuyNow} />
+        <GenericPDPContainer
+          payload={pdpState.payload}
+          onAddToCart={handleAddToCart}
+          onBuyNow={handleBuyNow}
+          ugcCapabilities={ugcCapabilities}
+        />
       )}
     </main>
   );
