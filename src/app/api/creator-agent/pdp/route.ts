@@ -138,8 +138,9 @@ export async function POST(req: Request) {
     };
 
     const includeRaw = Boolean(debug);
+    const includeProvided = Object.prototype.hasOwnProperty.call(body || {}, "include");
     const includeList = Array.isArray(include) ? include.filter(Boolean) : [];
-    const finalInclude = includeList.length ? includeList : ["offers", "reviews_preview", "similar"];
+    const finalInclude = includeProvided ? includeList : ["offers", "reviews_preview", "similar"];
 
     if (!productId) {
       return NextResponse.json(
@@ -218,6 +219,7 @@ export async function POST(req: Request) {
 
     const raw = await res.json();
     const pdp_payload = pickPdpV2Payload(raw) || pickPdpPayload(raw);
+    const subject = isRecord((raw as any)?.subject) ? ((raw as any).subject as any) : null;
 
     if (!pdp_payload) {
       return NextResponse.json(
@@ -229,7 +231,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json(
-      includeRaw ? { pdp_payload, raw } : { pdp_payload },
+      includeRaw ? { pdp_payload, subject, raw } : { pdp_payload, subject },
       { status: 200 },
     );
   } catch (error) {

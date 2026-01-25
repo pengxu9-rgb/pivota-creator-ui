@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { ChevronRight } from 'lucide-react';
 import type { MediaItem, Variant } from '@/features/pdp/types';
 import { getOptionValue } from '@/features/pdp/utils/variantOptions';
+import { cn } from '@/lib/utils';
 
 export function BeautyShadesSection({
   selectedVariant,
@@ -13,6 +14,9 @@ export function BeautyShadesSection({
   mediaItems = [],
   brandName,
   showEmpty = false,
+  shareCtaLabel = 'Share yours +',
+  shareCtaEnabled = true,
+  onShareCtaClick,
 }: {
   selectedVariant: Variant;
   popularLooks?: string[];
@@ -21,6 +25,9 @@ export function BeautyShadesSection({
   mediaItems?: MediaItem[];
   brandName?: string;
   showEmpty?: boolean;
+  shareCtaLabel?: string;
+  shareCtaEnabled?: boolean;
+  onShareCtaClick?: () => void;
 }) {
   const undertone = selectedVariant.beauty_meta?.undertone || getOptionValue(selectedVariant, ['undertone', 'tone']);
   const shadeHex = selectedVariant.beauty_meta?.shade_hex || selectedVariant.swatch?.hex;
@@ -94,7 +101,17 @@ export function BeautyShadesSection({
       <div className="px-4 py-3 border-b border-border">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold">Community Feedback</h3>
-          <button className="text-xs text-primary font-medium">Share yours +</button>
+          <button
+            type="button"
+            onClick={onShareCtaClick}
+            aria-disabled={!shareCtaEnabled}
+            className={cn(
+              'text-xs text-primary font-medium transition-opacity',
+              shareCtaEnabled ? 'hover:underline' : 'opacity-50 cursor-not-allowed',
+            )}
+          >
+            {shareCtaLabel}
+          </button>
         </div>
         <p className="mt-1.5 text-xs text-muted-foreground">Share how this shade looks on you to help others choose.</p>
       </div>
@@ -132,4 +149,3 @@ export function BeautyShadesSection({
     </div>
   );
 }
-

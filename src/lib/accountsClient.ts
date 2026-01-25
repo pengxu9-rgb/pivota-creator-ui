@@ -3,7 +3,24 @@ const ACCOUNTS_BASE = (
   "https://web-production-fedb.up.railway.app/accounts"
 ).replace(/\/$/, "");
 
-type ApiError = Error & { status?: number; detail?: any };
+type ApiError = Error & { status?: number; detail?: any; code?: string };
+
+export type UgcCapabilityReason =
+  | "NOT_AUTHENTICATED"
+  | "NOT_PURCHASER"
+  | "ALREADY_REVIEWED"
+  | "RATE_LIMITED";
+
+export type UgcCapabilities = {
+  canUploadMedia: boolean;
+  canWriteReview: boolean;
+  canAskQuestion: boolean;
+  reasons?: {
+    upload?: UgcCapabilityReason;
+    review?: UgcCapabilityReason;
+    question?: UgcCapabilityReason;
+  };
+};
 
 export interface AccountsUser {
   id: string;
@@ -48,17 +65,19 @@ async function callAccounts(
   options: RequestInit & { skipJson?: boolean } = {},
 ) {
   const url = `${ACCOUNTS_BASE}${path}`;
+  const { skipJson, headers, method, body, ...rest } = options as any;
   const res = await fetch(url, {
-    method: options.method || "GET",
+    ...rest,
+    method: method || "GET",
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      ...(options.headers || {}),
+      ...(headers || {}),
     },
-    body: options.body,
+    body,
   });
 
-  if (options.skipJson) {
+  if (skipJson) {
     return res;
   }
 
@@ -71,13 +90,189 @@ async function callAccounts(
   }
 
   if (!res.ok) {
+    const code =
+      (typeof data?.detail === "string" ? data.detail : undefined) ||
+      data?.detail?.error?.code ||
+      data?.error?.code ||
+      undefined;
     const message =
+      (typeof data?.detail === "string" ? data.detail : undefined) ||
       data?.detail?.error?.message ||
       data?.error?.message ||
       res.statusText;
     const err: ApiError = new Error(message);
     err.status = res.status;
     err.detail = data;
+    err.code = code;
+    throw err;
+  }
+
+  return data;
+}
+
+function getAccountsOriginBase(): string {
+  const base = String(ACCOUNTS_BASE || "").trim().replace(/\/$/, "");
+  if (base.endsWith("/accounts")) return base.slice(0, -"/accounts".length);
+  return base;
+}
+
+export async function getPdpV2Personalization(args: {
+  productId: string;
+  productGroupId?: string | null;
+}): Promise<UgcCapabilities | null> {
+  const productId = String(args.productId || "").trim();
+  if (!productId) return null;
+
+  const params = new URLSearchParams({ productId });
+  const groupId = String(args.productGroupId || "").trim();
+  if (groupId) params.set("productGroupId", groupId);
+
+  const res = (await callAccounts(`/pdp/v2/personalization?${params.toString()}`, {
+    cache: "no-store",
+  })) as any;
+  const caps = res?.ugcCapabilities;
+  if (!caps || typeof caps !== "object") return null;
+  return {
+    canUploadMedia: Boolean(caps.canUploadMedia),
+    canWriteReview: Boolean(caps.canWriteReview),
+    canAskQuestion: Boolean(caps.canAskQuestion),
+    reasons: caps.reasons || {},
+  } as UgcCapabilities;
+}
+
+export async function getReviewEligibility(args: {
+  productId: string;
+  productGroupId?: string | null;
+}): Promise<{ eligible: boolean; reason?: string } | null> {
+  const productId = String(args.productId || "").trim();
+  if (!productId) return null;
+
+  const params = new URLSearchParams({ productId });
+  const groupId = String(args.productGroupId || "").trim();
+  if (groupId) params.set("productGroupId", groupId);
+
+  try {
+    return (await callAccounts(`/reviews/eligibility?${params.toString()}`, {
+      cache: "no-store",
+    })) as any;
+  } catch (err: any) {
+    if (err?.status === 401 || err?.code === "NOT_AUTHENTICATED" || err?.code === "UNAUTHENTICATED") {
+      return null;
+    }
+    throw err;
+  }
+}
+
+export async function createReviewFromUser(args: {
+  productId: string;
+  productGroupId?: string | null;
+  subject: {
+    merchant_id: string;
+    platform: string;
+    platform_product_id: string;
+    variant_id?: string | null;
+  };
+  rating: number;
+  title?: string | null;
+  body?: string | null;
+}) {
+  const root = getAccountsOriginBase();
+  const productId = String(args.productId || "").trim();
+  if (!root || !productId) return null;
+
+  const res = await fetch(`${root}/buyer/reviews/v1/reviews/from_user`, {
+    method: "POST",
+    credentials: "include",
+    cache: "no-store",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      product_id: productId,
+      ...(args.productGroupId ? { product_group_id: String(args.productGroupId) } : {}),
+      subject: {
+        merchant_id: String(args.subject.merchant_id || ""),
+        platform: String(args.subject.platform || ""),
+        platform_product_id: String(args.subject.platform_product_id || ""),
+        variant_id: args.subject.variant_id == null ? null : String(args.subject.variant_id),
+      },
+      rating: Number(args.rating),
+      title: args.title == null ? null : String(args.title),
+      body: args.body == null ? null : String(args.body),
+    }),
+  });
+
+  const text = await res.text();
+  let data: any;
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = { raw: text };
+  }
+
+  if (!res.ok) {
+    const code =
+      (typeof data?.detail === "string" ? data.detail : undefined) ||
+      data?.detail?.error?.code ||
+      data?.error?.code ||
+      undefined;
+    const message =
+      (typeof data?.detail === "string" ? data.detail : undefined) ||
+      data?.detail?.error?.message ||
+      data?.error?.message ||
+      res.statusText;
+    const err: ApiError = new Error(message);
+    err.status = res.status;
+    err.detail = data;
+    err.code = code;
+    throw err;
+  }
+
+  return data;
+}
+
+export async function postQuestion(args: {
+  productId: string;
+  productGroupId?: string | null;
+  question: string;
+}) {
+  const root = getAccountsOriginBase();
+  const productId = String(args.productId || "").trim();
+  if (!root || !productId) return null;
+
+  const res = await fetch(`${root}/questions`, {
+    method: "POST",
+    credentials: "include",
+    cache: "no-store",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      productId,
+      ...(args.productGroupId ? { productGroupId: String(args.productGroupId) } : {}),
+      question: String(args.question || ""),
+    }),
+  });
+
+  const text = await res.text();
+  let data: any;
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = { raw: text };
+  }
+
+  if (!res.ok) {
+    const code =
+      (typeof data?.detail === "string" ? data.detail : undefined) ||
+      data?.detail?.error?.code ||
+      data?.error?.code ||
+      undefined;
+    const message =
+      (typeof data?.detail === "string" ? data.detail : undefined) ||
+      data?.detail?.error?.message ||
+      data?.error?.message ||
+      res.statusText;
+    const err: ApiError = new Error(message);
+    err.status = res.status;
+    err.detail = data;
+    err.code = code;
     throw err;
   }
 

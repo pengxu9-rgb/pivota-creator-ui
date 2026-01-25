@@ -23,14 +23,26 @@ export function BeautyReviewsSection({
   data,
   onWriteReview,
   onSeeAll,
+  onAskQuestion,
   brandName,
   showEmpty = false,
+  writeReviewLabel = 'Write a review',
+  writeReviewEnabled = true,
+  openReviewsLabel = 'View all reviews',
+  askQuestionLabel = 'Ask a question',
+  askQuestionEnabled = true,
 }: {
   data: ReviewsPreviewData;
   onWriteReview?: () => void;
   onSeeAll?: () => void;
+  onAskQuestion?: () => void;
   brandName?: string;
   showEmpty?: boolean;
+  writeReviewLabel?: string;
+  writeReviewEnabled?: boolean;
+  openReviewsLabel?: string;
+  askQuestionLabel?: string;
+  askQuestionEnabled?: boolean;
 }) {
   const hasSummary = data.review_count > 0 && data.rating > 0;
   const rating5 = data.scale ? (data.rating / data.scale) * 5 : 0;
@@ -120,8 +132,16 @@ export function BeautyReviewsSection({
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-sm font-semibold">Reviews ({data.review_count})</h3>
           {onWriteReview ? (
-            <button onClick={onWriteReview} className="text-xs font-medium text-primary">
-              {data.entry_points?.write_review?.label || 'Write a review'}
+            <button
+              type="button"
+              onClick={onWriteReview}
+              aria-disabled={!writeReviewEnabled}
+              className={cn(
+                'text-xs font-medium text-primary transition-opacity',
+                writeReviewEnabled ? 'hover:underline' : 'opacity-50 cursor-not-allowed',
+              )}
+            >
+              {writeReviewLabel}
             </button>
           ) : null}
         </div>
@@ -223,7 +243,7 @@ export function BeautyReviewsSection({
           onClick={onSeeAll}
           className="w-full mt-2 py-2.5 text-sm text-muted-foreground flex items-center justify-center gap-1 hover:text-foreground"
         >
-          {data.entry_points?.open_reviews?.label || 'View all reviews'} <ChevronRight className="h-4 w-4" />
+          {openReviewsLabel} <ChevronRight className="h-4 w-4" />
         </button>
       ) : null}
 
@@ -231,7 +251,19 @@ export function BeautyReviewsSection({
         <div className="mt-3 px-3">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-semibold">Questions</h3>
-            <button className="text-xs font-medium text-primary">Ask a question</button>
+            {onAskQuestion ? (
+              <button
+                type="button"
+                onClick={onAskQuestion}
+                aria-disabled={!askQuestionEnabled}
+                className={cn(
+                  'text-xs font-medium text-primary transition-opacity',
+                  askQuestionEnabled ? 'hover:underline' : 'opacity-50 cursor-not-allowed',
+                )}
+              >
+                {askQuestionLabel}
+              </button>
+            ) : null}
           </div>
           <div className="flex gap-3 overflow-x-auto pb-2">
             {data.questions?.map((disc, idx) => (
