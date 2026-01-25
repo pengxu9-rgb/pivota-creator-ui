@@ -27,7 +27,7 @@ export function RecommendationsGrid({ data }: { data: RecommendationsData }) {
         {data.items.slice(0, 6).map((p) => (
           <Link
             key={p.product_id}
-            href={`../${encodeURIComponent(p.product_id)}${
+            href={`${encodeURIComponent(p.product_id)}${
               p.merchant_id ? `?merchant_id=${encodeURIComponent(p.merchant_id)}` : ''
             }`}
             className="rounded-xl bg-card border border-border overflow-hidden hover:shadow-md transition-shadow"
@@ -88,4 +88,3 @@ export function RecommendationsSkeleton() {
     </div>
   );
 }
-
