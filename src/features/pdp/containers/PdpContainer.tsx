@@ -585,6 +585,16 @@ export function PdpContainer({
   const uploadReason = ugcCapabilities?.reasons?.upload;
   const reviewReason = ugcCapabilities?.reasons?.review;
   const questionReason = ugcCapabilities?.reasons?.question;
+  const ugcUserState =
+    uploadReason === 'NOT_AUTHENTICATED' ||
+    reviewReason === 'NOT_AUTHENTICATED' ||
+    questionReason === 'NOT_AUTHENTICATED'
+      ? 'anonymous'
+      : reviewReason === 'ALREADY_REVIEWED'
+        ? 'already_reviewed'
+        : canUploadMedia || canWriteReview
+          ? 'purchaser'
+          : 'non_purchaser';
 
   const notify = (message: string, tone: 'info' | 'error' = 'info') => {
     setNotice({ message, tone });
@@ -606,7 +616,13 @@ export function PdpContainer({
   };
 
   const handleUploadMedia = () => {
-    pdpTracking.track('pdp_action_click', { action_type: 'ugc_upload' });
+    pdpTracking.track('pdp_action_click', {
+      action_type: 'ugc_upload',
+      target: 'share_yours',
+      entry_point: 'station',
+      user_state: ugcUserState,
+      reason: uploadReason || null,
+    });
     if (canUploadMedia) {
       notify('Uploads are coming soon.', 'info');
       return;
@@ -619,7 +635,13 @@ export function PdpContainer({
   };
 
   const handleWriteReview = () => {
-    pdpTracking.track('pdp_action_click', { action_type: 'open_embed', target: 'write_review' });
+    pdpTracking.track('pdp_action_click', {
+      action_type: 'open_embed',
+      target: 'write_review',
+      entry_point: 'station',
+      user_state: ugcUserState,
+      reason: reviewReason || null,
+    });
     if (canWriteReview) {
       if (onWriteReview) {
         onWriteReview();
@@ -643,7 +665,13 @@ export function PdpContainer({
   };
 
   const handleAskQuestion = () => {
-    pdpTracking.track('pdp_action_click', { action_type: 'ugc_question' });
+    pdpTracking.track('pdp_action_click', {
+      action_type: 'ugc_question',
+      target: 'ask_question',
+      entry_point: 'station',
+      user_state: ugcUserState,
+      reason: questionReason || null,
+    });
     if (canAskQuestion) {
       setQuestionOpen(true);
       return;

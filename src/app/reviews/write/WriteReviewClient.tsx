@@ -150,6 +150,9 @@ export default function WriteReviewPage() {
   const [product, setProduct] = useState<any | null>(null);
   const [inAppPdp, setInAppPdp] = useState<{ payload: PDPPayload; subject: any | null } | null>(null);
   const [inAppEligibility, setInAppEligibility] = useState<{ eligible: boolean; reason?: string } | null>(null);
+  const [invitationEligibility, setInvitationEligibility] = useState<{ eligible: boolean; reason?: string } | null>(
+    null,
+  );
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -167,6 +170,17 @@ export default function WriteReviewPage() {
     if (productIdParam) return "in_app";
     return "missing";
   }, [invitationToken, productIdParam]);
+  const accountsUserId = accountsUser?.id;
+
+  const invitationProductIdForEligibility = useMemo(() => {
+    if (!activeSubject) return "";
+    return safeString(product?.product_id || activeSubject.platform_product_id).trim();
+  }, [activeSubject, product?.product_id]);
+
+  const invitationProductGroupIdForEligibility = useMemo(() => {
+    const groupId = safeString(product?.product_group_id).trim();
+    return groupId || null;
+  }, [product?.product_group_id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -307,6 +321,40 @@ export default function WriteReviewPage() {
     let cancelled = false;
 
     const run = async () => {
+      if (mode !== "invitation") {
+        setInvitationEligibility(null);
+        return;
+      }
+      if (!accountsUserId) {
+        setInvitationEligibility(null);
+        return;
+      }
+      if (!invitationProductIdForEligibility) {
+        setInvitationEligibility(null);
+        return;
+      }
+
+      try {
+        const elig = await getReviewEligibility({
+          productId: invitationProductIdForEligibility,
+          ...(invitationProductGroupIdForEligibility ? { productGroupId: invitationProductGroupIdForEligibility } : {}),
+        });
+        if (!cancelled) setInvitationEligibility(elig);
+      } catch {
+        // Ignore eligibility failures; server will enforce on submit.
+      }
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [mode, accountsUserId, invitationProductIdForEligibility, invitationProductGroupIdForEligibility]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const run = async () => {
       if (mode !== "in_app" || !productIdParam) return;
 
       setLoading(true);
@@ -324,7 +372,7 @@ export default function WriteReviewPage() {
         if (!pdp) throw new Error("Failed to load product");
         setInAppPdp(pdp);
 
-        if (accountsUser) {
+        if (accountsUserId) {
           const elig = await getReviewEligibility({
             productId: productIdParam,
             ...(pdp.payload.product_group_id ? { productGroupId: pdp.payload.product_group_id } : {}),
@@ -343,49 +391,71 @@ export default function WriteReviewPage() {
     return () => {
       cancelled = true;
     };
-  }, [mode, productIdParam, merchantIdParam, accountsUser?.id]);
+  }, [mode, productIdParam, merchantIdParam, accountsUserId]);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (submitting) return;
 
     if (mode === "invitation") {
-      if (!submissionToken || !submissionPayload?.merchant_id || !activeSubject) return;
+      if (!activeSubject) return;
+
+      if (authChecking) return;
+
+      if (!accountsUser) {
+        const redirect = `${window.location.pathname}${window.location.search}`;
+        setNotice({ message: "Please sign in to write a review.", tone: "info" });
+        router.push(`/account/login?return_to=${encodeURIComponent(redirect)}`);
+        return;
+      }
+
+      if (invitationEligibility && !invitationEligibility.eligible) {
+        const reason = String(invitationEligibility.reason || "").toUpperCase();
+        if (reason === "ALREADY_REVIEWED") {
+          setNotice({ message: "You already reviewed this product.", tone: "info" });
+        } else {
+          setNotice({ message: "Only purchasers can write a review.", tone: "info" });
+        }
+        return;
+      }
+
+      if (!invitationProductIdForEligibility) {
+        setNotice({ message: "Missing product context.", tone: "error" });
+        return;
+      }
 
       setSubmitting(true);
       try {
-        const idempotencyKey = `${submissionPayload.jti || "jti"}:${activeSubject.platform}:${activeSubject.platform_product_id}:${activeSubject.variant_id || ""}`.slice(
-          0,
-          180,
-        );
-
-        const res = await fetch("/api/reviews/buyer/create", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            submission_token: submissionToken,
-            idempotency_key: idempotencyKey,
+        const data = await createReviewFromUser({
+          productId: invitationProductIdForEligibility,
+          ...(invitationProductGroupIdForEligibility ? { productGroupId: invitationProductGroupIdForEligibility } : {}),
+          subject: {
             merchant_id: activeSubject.merchant_id,
             platform: activeSubject.platform,
             platform_product_id: activeSubject.platform_product_id,
             variant_id: activeSubject.variant_id || null,
-            rating,
-            title: title.trim() || null,
-            body: body.trim() || null,
-          }),
+          },
+          rating,
+          title: title.trim() || null,
+          body: body.trim() || null,
         });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          const detail = (data?.detail || data?.error || data?.message || "Submit failed") as string;
-          throw new Error(detail);
-        }
 
-        const rid = Number(data?.review_id);
+        const rid = Number((data as any)?.review_id);
         if (Number.isFinite(rid)) setReviewId(rid);
         setNotice({ message: "Review submitted.", tone: "info" });
-      } catch (err) {
-        console.error(err);
-        setNotice({ message: (err as Error).message || "Submit failed", tone: "error" });
+      } catch (err: any) {
+        if (err?.code === "NOT_AUTHENTICATED" || err?.code === "UNAUTHENTICATED" || err?.status === 401) {
+          const redirect = `${window.location.pathname}${window.location.search}`;
+          setNotice({ message: "Please sign in to write a review.", tone: "info" });
+          router.push(`/account/login?return_to=${encodeURIComponent(redirect)}`);
+        } else if (err?.code === "NOT_PURCHASER" || err?.status === 403) {
+          setNotice({ message: "Only purchasers can write a review.", tone: "info" });
+        } else if (err?.code === "ALREADY_REVIEWED" || err?.status === 409) {
+          setNotice({ message: "You already reviewed this product.", tone: "info" });
+        } else {
+          console.error(err);
+          setNotice({ message: err?.message || "Submit failed", tone: "error" });
+        }
       } finally {
         setSubmitting(false);
       }
@@ -592,6 +662,35 @@ export default function WriteReviewPage() {
                       Submit another (new link)
                     </Button>
                   ) : null}
+                </div>
+              </div>
+            ) : mode === "invitation" && authChecking ? (
+              <div className="rounded-2xl border border-slate-200 bg-white/70 p-4 text-sm text-slate-600">
+                Checking your account…
+              </div>
+            ) : mode === "invitation" && !accountsUser ? (
+              <div className="rounded-2xl border border-slate-200 bg-white/70 p-4 text-sm text-slate-600">
+                <div className="font-semibold text-slate-900">Login required</div>
+                <div className="mt-1">Please sign in to write a review.</div>
+                <div className="mt-4">
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      const redirect = `${window.location.pathname}${window.location.search}`;
+                      router.push(`/account/login?return_to=${encodeURIComponent(redirect)}`);
+                    }}
+                  >
+                    Sign in
+                  </Button>
+                </div>
+              </div>
+            ) : mode === "invitation" && invitationEligibility && !invitationEligibility.eligible ? (
+              <div className="rounded-2xl border border-slate-200 bg-white/70 p-4 text-sm text-slate-600">
+                <div className="font-semibold text-slate-900">Not eligible</div>
+                <div className="mt-1">
+                  {String(invitationEligibility.reason || "").toUpperCase() === "ALREADY_REVIEWED"
+                    ? "You already reviewed this product."
+                    : "Only purchasers can write a review."}
                 </div>
               </div>
             ) : (
