@@ -125,6 +125,75 @@ async function fetchProductDetail(args: { merchantId: string; productId: string 
   return (data && typeof data === "object" ? (data as any).product : null) as any;
 }
 
+function isRecord(value: unknown): value is Record<string, any> {
+  return Boolean(value && typeof value === "object" && !Array.isArray(value));
+}
+
+function inferPlatformFromProductId(productId: string): string | null {
+  const pid = String(productId || "").trim();
+  if (!pid) return null;
+
+  // Shopify product ids are typically numeric strings (often 10-14 digits).
+  if (/^\d{10,}$/.test(pid) || /^gid:\/\/shopify\//.test(pid)) return "shopify";
+
+  // Wix ids are commonly UUID-like.
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(pid)) {
+    return "wix";
+  }
+
+  return null;
+}
+
+function parsePlatformFromProductKey(productKey: string): string | null {
+  const key = String(productKey || "").trim();
+  if (!key) return null;
+  const idx = key.indexOf(":");
+  if (idx <= 0) return null;
+  const platform = key.slice(0, idx).trim();
+  return platform || null;
+}
+
+async function fetchSubjectRefFromProductDetail(args: {
+  merchantId: string;
+  productId: string;
+}): Promise<{ platform: string; platform_product_id: string } | null> {
+  const merchantId = String(args.merchantId || "").trim();
+  const productId = String(args.productId || "").trim();
+  if (!merchantId || !productId) return null;
+
+  const res = await fetch("/api/creator-agent/product-detail", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ merchantId, productId }),
+  });
+  if (!res.ok) return null;
+  const data = await res.json().catch(() => null);
+  if (!isRecord(data)) return null;
+
+  const rawAgentResponse = data.rawAgentResponse;
+  const rawProduct = isRecord(rawAgentResponse)
+    ? (rawAgentResponse as any).product || (rawAgentResponse as any).output?.product || (rawAgentResponse as any).product_raw || rawAgentResponse
+    : null;
+
+  if (!isRecord(rawProduct)) return null;
+
+  const ref = (rawProduct as any).product_ref || (rawProduct as any).productRef || null;
+  const platform =
+    safeString((isRecord(ref) ? ref.platform : null) || (rawProduct as any).platform || (rawProduct as any).source_platform)
+      .trim()
+      .toLowerCase() || "";
+  const platformProductId =
+    safeString(
+      (isRecord(ref) ? (ref.platform_product_id || ref.platformProductId) : null) ||
+        (rawProduct as any).platform_product_id ||
+        (rawProduct as any).platformProductId ||
+        (rawProduct as any).platform_productId,
+    ).trim() || productId;
+
+  if (!platform || !platformProductId) return null;
+  return { platform, platform_product_id: platformProductId };
+}
+
 function safeString(input: unknown): string {
   if (typeof input === "string") return input;
   if (input == null) return "";
@@ -483,24 +552,62 @@ export default function WriteReviewPage() {
       return;
     }
 
-    const canonical = (inAppPdp.subject as any)?.canonical_product_ref || null;
-    const canonicalMerchantId = safeString(canonical?.merchant_id).trim();
-    const canonicalPlatform = safeString(canonical?.platform).trim();
-    const canonicalPlatformProductId = safeString(canonical?.product_id).trim();
-    if (!canonicalMerchantId || !canonicalPlatform || !canonicalPlatformProductId) {
-      setNotice({ message: "Missing canonical product reference.", tone: "error" });
-      return;
-    }
-
     setSubmitting(true);
     try {
+      const canonicalRaw =
+        (inAppPdp.subject as any)?.canonical_product_ref ||
+        (inAppPdp.subject as any)?.canonicalProductRef ||
+        null;
+
+      let resolvedMerchantId =
+        safeString(canonicalRaw?.merchant_id || canonicalRaw?.merchantId).trim() ||
+        safeString(merchantIdParam).trim() ||
+        safeString((inAppPdp.payload as any)?.product?.merchant_id).trim() ||
+        safeString((inAppPdp.payload as any)?.offers?.[0]?.merchant_id).trim();
+
+      let resolvedPlatform =
+        safeString(canonicalRaw?.platform).trim().toLowerCase() ||
+        parsePlatformFromProductKey(
+          safeString((inAppPdp.subject as any)?.product_key || (inAppPdp.subject as any)?.productKey),
+        ) ||
+        "";
+
+      let resolvedPlatformProductId =
+        safeString(
+          canonicalRaw?.platform_product_id ||
+            canonicalRaw?.platformProductId ||
+            canonicalRaw?.product_id ||
+            canonicalRaw?.productId,
+        ).trim() || productIdParam;
+
+      if ((!resolvedPlatform || !resolvedPlatformProductId) && resolvedMerchantId) {
+        const fromDetail = await fetchSubjectRefFromProductDetail({
+          merchantId: resolvedMerchantId,
+          productId: resolvedPlatformProductId || productIdParam,
+        });
+        if (fromDetail) {
+          if (!resolvedPlatform) resolvedPlatform = fromDetail.platform;
+          if (!resolvedPlatformProductId) resolvedPlatformProductId = fromDetail.platform_product_id;
+        }
+      }
+
+      if (!resolvedPlatform) {
+        const inferred = inferPlatformFromProductId(resolvedPlatformProductId || productIdParam);
+        if (inferred) resolvedPlatform = inferred;
+      }
+
+      if (!resolvedMerchantId || !resolvedPlatform || !resolvedPlatformProductId) {
+        setNotice({ message: "Missing canonical product reference.", tone: "error" });
+        return;
+      }
+
       const data = await createReviewFromUser({
         productId: productIdParam,
         ...(inAppPdp.payload.product_group_id ? { productGroupId: inAppPdp.payload.product_group_id } : {}),
         subject: {
-          merchant_id: canonicalMerchantId,
-          platform: canonicalPlatform,
-          platform_product_id: canonicalPlatformProductId,
+          merchant_id: resolvedMerchantId,
+          platform: resolvedPlatform,
+          platform_product_id: resolvedPlatformProductId,
           variant_id: null,
         },
         rating,
