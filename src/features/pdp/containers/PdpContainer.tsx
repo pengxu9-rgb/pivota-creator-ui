@@ -845,7 +845,6 @@ export function PdpContainer({
                             isSelected
                               ? cn(
                                   'border-[color:var(--accent-600)] bg-[var(--accent-50)] text-[color:var(--accent-800)] font-semibold',
-                                  "after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:h-2.5 after:w-2.5 after:-translate-x-1/2 after:rounded-full after:bg-[var(--accent-600)]",
                                 )
                               : 'border-border hover:bg-muted/30 hover:border-muted-foreground/40',
                           )}
