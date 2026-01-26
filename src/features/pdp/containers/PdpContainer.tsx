@@ -579,6 +579,27 @@ export function PdpContainer({
   const productId = String(payload.product.product_id || '').trim();
   const productGroupId =
     String(payload.product_group_id || selectedOffer?.product_group_id || '').trim() || null;
+  const merchantId = String(payload.product.merchant_id || '').trim() || null;
+
+  const openQuestionsHub = () => {
+    if (!productId) return;
+    const params = new URLSearchParams();
+    params.set('product_id', productId);
+    if (productGroupId) params.set('product_group_id', productGroupId);
+    if (merchantId) params.set('merchant_id', merchantId);
+    router.push(`/community/questions?${params.toString()}`);
+  };
+
+  const openQuestionThread = (questionId: number) => {
+    if (!productId) return;
+    const qid = Number(questionId);
+    if (!Number.isFinite(qid) || qid <= 0) return;
+    const params = new URLSearchParams();
+    params.set('product_id', productId);
+    if (productGroupId) params.set('product_group_id', productGroupId);
+    if (merchantId) params.set('merchant_id', merchantId);
+    router.push(`/community/questions/${qid}?${params.toString()}`);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -604,21 +625,27 @@ export function PdpContainer({
 
   const mergedQuestions = useMemo(() => {
     const seen = new Set<string>();
-    const out: Array<{ question: string; answer?: string; replies?: number }> = [];
+    const out: Array<{ question_id?: number; question: string; answer?: string; replies?: number }> = [];
 
     for (const q of ugcQuestions) {
       const text = String(q?.question || '').trim();
-      if (!text || seen.has(text)) continue;
-      seen.add(text);
-      out.push({ question: text });
+      const qid = Number(q?.question_id) || 0;
+      const key = qid ? `id:${qid}` : `q:${text}`;
+      if (!text || seen.has(key)) continue;
+      seen.add(key);
+      out.push({
+        ...(qid ? { question_id: qid } : {}),
+        question: text,
+        ...(typeof q?.replies === 'number' ? { replies: q.replies } : {}),
+      });
     }
 
     const legacy = (reviews as any)?.questions;
     if (Array.isArray(legacy)) {
       for (const q of legacy) {
         const text = String(q?.question || '').trim();
-        if (!text || seen.has(text)) continue;
-        seen.add(text);
+        if (!text || seen.has(`q:${text}`)) continue;
+        seen.add(`q:${text}`);
         out.push(q);
       }
     }
@@ -753,17 +780,19 @@ export function PdpContainer({
 
     setQuestionSubmitting(true);
     try {
-      await postQuestion({
+      const res = await postQuestion({
         productId,
         ...(productGroupId ? { productGroupId } : {}),
         question,
       });
+      const qid = Number((res as any)?.question_id ?? (res as any)?.questionId ?? (res as any)?.id) || Date.now();
       notify('Question submitted.', 'info');
       setUgcQuestions((prev) => {
         const next: QuestionListItem = {
-          question_id: Date.now(),
+          question_id: qid,
           question,
           created_at: new Date().toISOString(),
+          replies: 0,
         };
         return [next, ...(prev || []).filter((it) => String(it?.question || '').trim() !== question)].slice(0, 10);
       });
@@ -1202,6 +1231,15 @@ export function PdpContainer({
               onAskQuestion={handleAskQuestion}
               askQuestionLabel="Ask a question"
               askQuestionEnabled={canAskQuestion}
+              onSeeAllQuestions={() => {
+                pdpTracking.track('pdp_action_click', { action_type: 'open_embed', target: 'open_questions' });
+                openQuestionsHub();
+              }}
+              openQuestionsLabel="View all"
+              onOpenQuestion={(questionId) => {
+                pdpTracking.track('pdp_action_click', { action_type: 'open_embed', target: 'open_question_thread' });
+                openQuestionThread(questionId);
+              }}
             />
           </div>
         ) : null}

@@ -192,6 +192,7 @@ export interface ReviewsPreviewData {
     count?: number;
   }>;
   questions?: Array<{
+    question_id?: number;
     question: string;
     answer?: string;
     replies?: number;
@@ -225,4 +226,3 @@ export interface RecommendationsData {
     merchant_id?: string;
   }>;
 }
-

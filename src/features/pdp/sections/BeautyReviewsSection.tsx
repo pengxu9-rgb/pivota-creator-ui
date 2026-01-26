@@ -24,6 +24,8 @@ export function BeautyReviewsSection({
   onWriteReview,
   onSeeAll,
   onAskQuestion,
+  onSeeAllQuestions,
+  onOpenQuestion,
   brandName,
   showEmpty = false,
   writeReviewLabel = 'Write a review',
@@ -31,11 +33,14 @@ export function BeautyReviewsSection({
   openReviewsLabel = 'View all reviews',
   askQuestionLabel = 'Ask a question',
   askQuestionEnabled = true,
+  openQuestionsLabel = 'View all',
 }: {
   data: ReviewsPreviewData;
   onWriteReview?: () => void;
   onSeeAll?: () => void;
   onAskQuestion?: () => void;
+  onSeeAllQuestions?: () => void;
+  onOpenQuestion?: (questionId: number) => void;
   brandName?: string;
   showEmpty?: boolean;
   writeReviewLabel?: string;
@@ -43,6 +48,7 @@ export function BeautyReviewsSection({
   openReviewsLabel?: string;
   askQuestionLabel?: string;
   askQuestionEnabled?: boolean;
+  openQuestionsLabel?: string;
 }) {
   const hasSummary = data.review_count > 0 && data.rating > 0;
   const rating5 = data.scale ? (data.rating / data.scale) * 5 : 0;
@@ -266,13 +272,46 @@ export function BeautyReviewsSection({
             ) : null}
           </div>
           <div className="flex gap-3 overflow-x-auto pb-2">
-            {data.questions?.map((disc, idx) => (
-              <div key={`${disc.question}-${idx}`} className="min-w-[220px] rounded-xl bg-card border border-border p-3">
-                <p className="text-sm font-medium">{disc.question}</p>
-                {disc.answer ? <p className="mt-2 text-xs text-muted-foreground">&quot;{disc.answer}&quot;</p> : null}
-                {disc.replies != null ? <p className="mt-2 text-xs text-muted-foreground">{disc.replies} replies</p> : null}
-              </div>
-            ))}
+            {data.questions?.map((disc, idx) => {
+              const key = `${disc.question}-${idx}`;
+              const content = (
+                <>
+                  <p className="text-sm font-medium">{disc.question}</p>
+                  {disc.answer ? <p className="mt-2 text-xs text-muted-foreground">&quot;{disc.answer}&quot;</p> : null}
+                  {disc.replies != null ? (
+                    <p className="mt-2 text-xs text-muted-foreground">{disc.replies} replies</p>
+                  ) : null}
+                </>
+              );
+
+              if (onOpenQuestion && disc.question_id) {
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => onOpenQuestion(Number(disc.question_id))}
+                    className="min-w-[220px] rounded-xl bg-card border border-border p-3 text-left hover:border-primary/50"
+                  >
+                    {content}
+                  </button>
+                );
+              }
+
+              return (
+                <div key={key} className="min-w-[220px] rounded-xl bg-card border border-border p-3">
+                  {content}
+                </div>
+              );
+            })}
+            {onSeeAllQuestions && data.questions?.length ? (
+              <button
+                type="button"
+                onClick={onSeeAllQuestions}
+                className="min-w-[120px] rounded-xl border border-dashed border-border p-3 text-xs text-muted-foreground hover:border-primary/50"
+              >
+                {openQuestionsLabel} <ChevronRight className="inline h-4 w-4 align-[-2px]" />
+              </button>
+            ) : null}
             {!data.questions?.length ? (
               <div className="min-w-[220px] rounded-xl border border-dashed border-border p-3 text-xs text-muted-foreground">
                 No questions yet.
