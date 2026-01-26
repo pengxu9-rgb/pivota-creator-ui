@@ -178,6 +178,7 @@ export interface ReviewsPreviewData {
   scale: number;
   rating: number;
   review_count: number;
+  rating_count?: number;
   star_distribution?: Array<{
     stars: number;
     count?: number;

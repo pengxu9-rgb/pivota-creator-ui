@@ -7,6 +7,7 @@ type ApiError = Error & { status?: number; detail?: any; code?: string };
 export type UgcCapabilityReason =
   | "NOT_AUTHENTICATED"
   | "NOT_PURCHASER"
+  | "NOT_VERIFIED_FOR_RATING"
   | "ALREADY_REVIEWED"
   | "RATE_LIMITED";
 
@@ -21,6 +22,7 @@ export type UgcCapabilities = {
     rating?: UgcCapabilityReason;
     question?: UgcCapabilityReason;
   };
+  review?: any | null;
 };
 
 export interface AccountsUser {
@@ -148,15 +150,26 @@ export async function getPdpV2Personalization(args: {
   return {
     canUploadMedia: Boolean(caps.canUploadMedia),
     canWriteReview: Boolean(caps.canWriteReview),
+    canRateReview: Boolean(caps.canRateReview),
     canAskQuestion: Boolean(caps.canAskQuestion),
     reasons: caps.reasons || {},
+    review: (caps as any).review ?? null,
   } as UgcCapabilities;
 }
 
 export async function getReviewEligibility(args: {
   productId: string;
   productGroupId?: string | null;
-}): Promise<{ eligible: boolean; reason?: string } | null> {
+}): Promise<
+  | {
+      eligible: boolean;
+      reason?: string;
+      canRate?: boolean;
+      ratingReason?: string;
+      action?: "CREATE" | "UPGRADE" | "ADD_RATING";
+    }
+  | null
+> {
   const productId = String(args.productId || "").trim();
   if (!productId) return null;
 
@@ -185,7 +198,7 @@ export async function createReviewFromUser(args: {
     platform_product_id: string;
     variant_id?: string | null;
   };
-  rating: number;
+  rating?: number | null;
   title?: string | null;
   body?: string | null;
 }) {
@@ -204,7 +217,7 @@ export async function createReviewFromUser(args: {
         platform_product_id: String(args.subject.platform_product_id || ""),
         variant_id: args.subject.variant_id == null ? null : String(args.subject.variant_id),
       },
-      rating: Number(args.rating),
+      rating: args.rating == null ? null : Number(args.rating),
       title: args.title == null ? null : String(args.title),
       body: args.body == null ? null : String(args.body),
     }),

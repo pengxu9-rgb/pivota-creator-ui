@@ -53,6 +53,20 @@ export function BeautyReviewsSection({
   const hasSummary = data.review_count > 0 && data.rating > 0;
   const rating5 = data.scale ? (data.rating / data.scale) * 5 : 0;
   const ratingLabel = Number.isFinite(data.rating) ? data.rating.toFixed(1) : "0.0";
+  const ratingCount = (() => {
+    const anyData = data as any;
+    const candidates = [
+      anyData.rating_count,
+      anyData.ratingCount,
+      anyData.rated_review_count,
+      anyData.ratedReviewCount,
+    ];
+    for (const v of candidates) {
+      const n = Number(v);
+      if (Number.isFinite(n) && n >= 0) return n;
+    }
+    return Number(data.review_count) || 0;
+  })();
   const distributionRows = (() => {
     const anyData = data as any;
 
@@ -99,7 +113,7 @@ export function BeautyReviewsSection({
       const item = map.get(stars);
       let percent: number | null = null;
       if (item) {
-        const rc = Number(data.review_count) || 0;
+        const rc = Number.isFinite(ratingCount) ? ratingCount : Number(data.review_count) || 0;
         if (
           typeof item.count === "number" &&
           Number.isFinite(item.count) &&
@@ -112,7 +126,7 @@ export function BeautyReviewsSection({
       }
       if (typeof percent === "number" && Number.isFinite(percent)) {
         if (percent > 1) {
-          const rc = Number(data.review_count) || 0;
+          const rc = Number.isFinite(ratingCount) ? ratingCount : Number(data.review_count) || 0;
           const maybeCount =
             rc > 0 &&
             percent <= rc &&
@@ -159,7 +173,10 @@ export function BeautyReviewsSection({
               <div className="mt-1 flex justify-center">
                 <StarRating value={rating5} />
               </div>
-              <p className="text-[11px] text-muted-foreground mt-1">{data.review_count} reviews</p>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                {data.review_count} reviews
+                {ratingCount > 0 && ratingCount !== data.review_count ? ` · ${ratingCount} ratings` : ""}
+              </p>
             </div>
 
             <div className="flex-1 space-y-1">

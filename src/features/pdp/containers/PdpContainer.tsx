@@ -679,7 +679,7 @@ export function PdpContainer({
       ? 'anonymous'
       : reviewReason === 'ALREADY_REVIEWED'
         ? 'already_reviewed'
-        : canUploadMedia || canWriteReview
+        : canUploadMedia
           ? 'purchaser'
           : 'non_purchaser';
 
