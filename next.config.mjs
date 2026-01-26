@@ -25,6 +25,10 @@ const nextConfig = {
           "https://web-production-fedb.up.railway.app/buyer/reviews/v1/:path*",
       },
       {
+        source: "/questions",
+        destination: "https://web-production-fedb.up.railway.app/questions",
+      },
+      {
         source: "/questions/:path*",
         destination: "https://web-production-fedb.up.railway.app/questions/:path*",
       },
