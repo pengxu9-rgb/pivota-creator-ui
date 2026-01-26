@@ -34,6 +34,22 @@ function formatDealEndsAt(endAt: string | undefined): string | null {
   return `Ends in ${diffDays}d`;
 }
 
+function normalizeHttpUrl(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (!/^https?:\/\//i.test(trimmed)) return null;
+  return trimmed;
+}
+
+function isExternalRedirectOnlyProduct(product: Product): boolean {
+  const merchantId = String(product.merchantId || "").trim();
+  if (merchantId === "external_seed") return true;
+  const detailUrl = normalizeHttpUrl(product.detailUrl);
+  if (detailUrl && detailUrl.includes("/r?token=")) return true;
+  return false;
+}
+
 export function ProductCard({
   product,
   variant = "default",
@@ -284,6 +300,15 @@ export function ProductCard({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
+                if (isExternalRedirectOnlyProduct(product)) {
+                  const redirectUrl = normalizeHttpUrl(product.detailUrl);
+                  if (redirectUrl) {
+                    window.open(redirectUrl, "_blank", "noopener,noreferrer");
+                  } else {
+                    handleCardClick();
+                  }
+                  return;
+                }
                 const variants = product.variants || [];
                 const safeSingleVariantFallback =
                   product.variantsComplete === false &&

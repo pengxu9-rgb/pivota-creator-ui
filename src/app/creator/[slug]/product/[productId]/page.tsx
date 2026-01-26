@@ -29,6 +29,94 @@ function safeNumber(input: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+function safeUrl(input: unknown): string {
+  if (typeof input !== "string") return "";
+  return input.trim();
+}
+
+function getExternalRedirectUrlFromOffer(offer: unknown): string {
+  if (!offer || typeof offer !== "object") return "";
+  const o = offer as any;
+
+  const direct =
+    safeUrl(o.external_redirect_url) ||
+    safeUrl(o.externalRedirectUrl) ||
+    safeUrl(o.redirect_url) ||
+    safeUrl(o.redirectUrl);
+  if (direct) return direct;
+
+  const action = o.action && typeof o.action === "object" ? (o.action as any) : null;
+  if (!action) return "";
+
+  return (
+    safeUrl(action.external_redirect_url) ||
+    safeUrl(action.externalRedirectUrl) ||
+    safeUrl(action.redirect_url) ||
+    safeUrl(action.redirectUrl) ||
+    safeUrl(action.url) ||
+    safeUrl(action.href)
+  );
+}
+
+function getExternalRedirectUrlFromProduct(product: unknown): string {
+  if (!product || typeof product !== "object") return "";
+  const p = product as any;
+  return (
+    safeUrl(p.external_redirect_url) ||
+    safeUrl(p.externalRedirectUrl) ||
+    safeUrl(p.redirect_url) ||
+    safeUrl(p.redirectUrl) ||
+    safeUrl(p.detail_url) ||
+    safeUrl(p.detailUrl)
+  );
+}
+
+function resolveExternalRedirectUrl(payload: PDPPayload, args?: { offer_id?: string; merchant_id?: string }): string {
+  const offerId = typeof args?.offer_id === "string" ? args.offer_id.trim() : "";
+  const merchantId = typeof args?.merchant_id === "string" ? args.merchant_id.trim() : "";
+
+  const offersAny = (payload as any).offers;
+  const offers = Array.isArray(offersAny) ? offersAny : [];
+
+  if (offerId) {
+    const found = offers.find((o: any) => typeof o?.offer_id === "string" && o.offer_id === offerId);
+    const url = getExternalRedirectUrlFromOffer(found);
+    if (url) return url;
+  }
+
+  if (merchantId) {
+    const candidates = offers.filter((o: any) => typeof o?.merchant_id === "string" && o.merchant_id === merchantId);
+    for (const c of candidates) {
+      const url = getExternalRedirectUrlFromOffer(c);
+      if (url) return url;
+    }
+  }
+
+  if (typeof (payload as any).default_offer_id === "string") {
+    const found = offers.find(
+      (o: any) => typeof o?.offer_id === "string" && o.offer_id === (payload as any).default_offer_id,
+    );
+    const url = getExternalRedirectUrlFromOffer(found);
+    if (url) return url;
+  }
+
+  for (const o of offers) {
+    const url = getExternalRedirectUrlFromOffer(o);
+    if (url) return url;
+  }
+
+  return getExternalRedirectUrlFromProduct((payload as any).product);
+}
+
+function buildRedirectNotice(url: string): string {
+  try {
+    const host = new URL(url).hostname;
+    return host ? `Redirecting to ${host} in a new tab…` : "Redirecting to external website in a new tab…";
+  } catch {
+    return "Redirecting to external website in a new tab…";
+  }
+}
+
 function buildFallbackPdpPayload(args: {
   merchantId: string;
   productId: string;
@@ -201,6 +289,7 @@ export default function CreatorProductDetailPage() {
     payload: PDPPayload | null;
   }>({ loading: true, error: null, payload: null });
   const [pdpNonce, setPdpNonce] = useState(0);
+  const [redirectNotice, setRedirectNotice] = useState<string | null>(null);
   const [ugcCapabilities, setUgcCapabilities] = useState<UgcCapabilities | null>({
     canUploadMedia: false,
     canWriteReview: false,
@@ -322,8 +411,70 @@ export default function CreatorProductDetailPage() {
     };
   }, [pdpState.payload?.product?.product_id, pdpState.payload?.product_group_id]);
 
+  useEffect(() => {
+    if (!redirectNotice) return;
+    const t = window.setTimeout(() => setRedirectNotice(null), 4000);
+    return () => window.clearTimeout(t);
+  }, [redirectNotice]);
+
+  const openExternalRedirect = (url: string) => {
+    if (!url) return;
+    setRedirectNotice(buildRedirectNotice(url));
+    try {
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch {
+      window.location.href = url;
+    }
+  };
+
+  const resolveRedirectViaGateway = async (args: { merchant_id?: string; offer_id?: string }): Promise<string> => {
+    if (!pdpState.payload) return "";
+    const pid = safeString(pdpState.payload.product?.product_id || productId).trim();
+    if (!pid) return "";
+
+    const mid =
+      typeof args.merchant_id === "string"
+        ? args.merchant_id
+        : safeString(pdpState.payload.product?.merchant_id || merchantId).trim() || undefined;
+
+    try {
+      const res = await fetch("/api/creator-agent/resolve-product-candidates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId: pid,
+          ...(mid ? { merchantId: mid } : {}),
+          limit: 12,
+        }),
+      });
+      if (!res.ok) return "";
+      const data = await res.json();
+
+      const offers =
+        Array.isArray((data as any)?.offers)
+          ? (data as any).offers
+          : Array.isArray((data as any)?.output?.offers)
+            ? (data as any).output.offers
+            : [];
+
+      for (const offer of offers) {
+        const url = getExternalRedirectUrlFromOffer(offer);
+        if (url) return url;
+      }
+    } catch {
+      // ignore
+    }
+
+    return "";
+  };
+
   const handleAddToCart = (args: { variant: Variant; quantity: number; merchant_id?: string; offer_id?: string }) => {
     if (!creator || !pdpState.payload) return;
+    const redirectUrl = resolveExternalRedirectUrl(pdpState.payload, args);
+    if (redirectUrl) {
+      openExternalRedirect(redirectUrl);
+      return;
+    }
     const variant = args.variant;
     const price =
       variant.price?.current.amount ??
@@ -359,7 +510,21 @@ export default function CreatorProductDetailPage() {
     });
   };
 
-  const handleBuyNow = (args: { variant: Variant; quantity: number; merchant_id?: string; offer_id?: string }) => {
+  const handleBuyNow = async (args: { variant: Variant; quantity: number; merchant_id?: string; offer_id?: string }) => {
+    if (!creator || !pdpState.payload) return;
+
+    const redirectUrl = resolveExternalRedirectUrl(pdpState.payload, args);
+    if (redirectUrl) {
+      openExternalRedirect(redirectUrl);
+      return;
+    }
+
+    const resolved = await resolveRedirectViaGateway(args);
+    if (resolved) {
+      openExternalRedirect(resolved);
+      return;
+    }
+
     clear();
     handleAddToCart(args);
     close();
@@ -432,6 +597,14 @@ export default function CreatorProductDetailPage() {
 
   return (
     <main className="min-h-screen lovable-pdp">
+      {redirectNotice ? (
+        <div
+          role="status"
+          className="fixed top-3 left-1/2 z-50 -translate-x-1/2 rounded-full border border-border bg-background/90 px-3 py-1 text-xs text-foreground shadow backdrop-blur"
+        >
+          {redirectNotice}
+        </div>
+      ) : null}
       {resolvedMode === "beauty" ? (
         <BeautyPDPContainer
           payload={pdpState.payload}
