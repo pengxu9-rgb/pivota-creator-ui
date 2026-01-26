@@ -115,7 +115,11 @@ function buildRedirectNotice(url: string): string {
     const u = new URL(url);
     const token = u.searchParams.get("token") || "";
     if (token) {
-      const payloadPart = token.split(".")[0] || "";
+      const parts = token.split(".");
+      const payloadPart =
+        parts.length === 3
+          ? parts[1] || ""
+          : parts[0] || "";
       const decoded = decodeBase64UrlJson(payloadPart);
       const dest = decoded && typeof decoded.dest === "string" ? decoded.dest : "";
       if (dest) {
@@ -156,11 +160,17 @@ function isExternalOnlyProduct(payload: PDPPayload | null, args?: { merchant_id?
   if (merchantId === "external_seed") return true;
   if (offerId && offerId.includes("external_seed")) return true;
 
+  const productSource = safeString((payload as any).product?.source).trim().toLowerCase();
+  if (productSource === "external_seed") return true;
+
   const productGroupId = safeString((payload as any).product_group_id).trim().toLowerCase();
   if (productGroupId.startsWith("pg:external:") || productGroupId.startsWith("pg:external_seed:")) return true;
 
   const productId = safeString(payload.product?.product_id).trim().toLowerCase();
   if (productId.startsWith("ext_") || productId.startsWith("ext:")) return true;
+
+  if (safeUrl((payload as any).product?.external_redirect_url)) return true;
+  if (safeUrl((payload as any).product?.externalRedirectUrl)) return true;
 
   const offersAny = (payload as any).offers;
   const offers = Array.isArray(offersAny) ? offersAny : [];
@@ -435,10 +445,12 @@ export default function CreatorProductDetailPage() {
     setUgcCapabilities({
       canUploadMedia: false,
       canWriteReview: false,
+      canRateReview: false,
       canAskQuestion: false,
       reasons: {
         upload: "NOT_AUTHENTICATED",
         review: "NOT_AUTHENTICATED",
+        rating: "NOT_AUTHENTICATED",
         question: "NOT_AUTHENTICATED",
       },
     });
@@ -509,6 +521,11 @@ export default function CreatorProductDetailPage() {
       mid = safeString(offers[0]?.merchant_id).trim();
     }
 
+    if (!mid) {
+      const source = safeString((pdpState.payload as any)?.product?.source).trim().toLowerCase();
+      if (source === "external_seed") mid = "external_seed";
+    }
+
     if (!mid) return "";
 
     try {
@@ -523,7 +540,15 @@ export default function CreatorProductDetailPage() {
       if (!res.ok) return "";
       const data = await res.json().catch(() => null);
       const detail = data && typeof data === "object" ? (data as any).product : null;
-      return getExternalRedirectUrlFromProduct(detail);
+      const rawAgentResponse = data && typeof data === "object" ? (data as any).rawAgentResponse : null;
+      const rawProduct =
+        rawAgentResponse && typeof rawAgentResponse === "object"
+          ? (rawAgentResponse as any).product || (rawAgentResponse as any).output?.product || (rawAgentResponse as any).data?.product
+          : null;
+      return (
+        getExternalRedirectUrlFromProduct(rawProduct) ||
+        getExternalRedirectUrlFromProduct(detail)
+      );
     } catch {
       return "";
     }
