@@ -27,6 +27,14 @@ type SubmissionTokenPayload = {
   verification?: string;
 };
 
+type ReviewEligibility = {
+  eligible: boolean;
+  reason?: string;
+  canRate?: boolean;
+  ratingReason?: string;
+  action?: "CREATE" | "UPGRADE" | "ADD_RATING";
+};
+
 function b64UrlToUtf8(b64url: string): string {
   const b64 = b64url.replace(/-/g, "+").replace(/_/g, "/");
   const padLen = (4 - (b64.length % 4)) % 4;
@@ -218,10 +226,8 @@ export default function WriteReviewPage() {
   const [selectedSubjectIdx, setSelectedSubjectIdx] = useState(0);
   const [product, setProduct] = useState<any | null>(null);
   const [inAppPdp, setInAppPdp] = useState<{ payload: PDPPayload; subject: any | null } | null>(null);
-  const [inAppEligibility, setInAppEligibility] = useState<{ eligible: boolean; reason?: string } | null>(null);
-  const [invitationEligibility, setInvitationEligibility] = useState<{ eligible: boolean; reason?: string } | null>(
-    null,
-  );
+  const [inAppEligibility, setInAppEligibility] = useState<ReviewEligibility | null>(null);
+  const [invitationEligibility, setInvitationEligibility] = useState<ReviewEligibility | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -482,14 +488,19 @@ export default function WriteReviewPage() {
         const reason = String(invitationEligibility.reason || "").toUpperCase();
         if (reason === "ALREADY_REVIEWED") {
           setNotice({ message: "You already reviewed this product.", tone: "info" });
-        } else {
-          setNotice({ message: "Only purchasers can write a review.", tone: "info" });
         }
         return;
       }
 
       if (!invitationProductIdForEligibility) {
         setNotice({ message: "Missing product context.", tone: "error" });
+        return;
+      }
+
+      const canRate = invitationEligibility?.canRate ?? true;
+      const ratingToSend = canRate ? rating : null;
+      if (!canRate && !title.trim() && !body.trim()) {
+        setNotice({ message: "Please write a short comment (ratings are for verified buyers).", tone: "info" });
         return;
       }
 
@@ -504,7 +515,7 @@ export default function WriteReviewPage() {
             platform_product_id: activeSubject.platform_product_id,
             variant_id: activeSubject.variant_id || null,
           },
-          rating,
+          rating: ratingToSend,
           title: title.trim() || null,
           body: body.trim() || null,
         });
@@ -517,10 +528,18 @@ export default function WriteReviewPage() {
           const redirect = `${window.location.pathname}${window.location.search}`;
           setNotice({ message: "Please sign in to write a review.", tone: "info" });
           router.push(`/account/login?return_to=${encodeURIComponent(redirect)}`);
-        } else if (err?.code === "NOT_PURCHASER" || err?.status === 403) {
+        } else if (err?.code === "NOT_VERIFIED_FOR_RATING") {
+          setNotice({ message: "Ratings are available for verified buyers. Please submit a comment without a rating.", tone: "info" });
+        } else if (err?.code === "NOT_PURCHASER") {
           setNotice({ message: "Only purchasers can write a review.", tone: "info" });
         } else if (err?.code === "ALREADY_REVIEWED" || err?.status === 409) {
           setNotice({ message: "You already reviewed this product.", tone: "info" });
+        } else if (err?.code === "EMPTY_REVIEW") {
+          setNotice({ message: "Please write a comment or select a rating.", tone: "info" });
+        } else if (err?.status === 400) {
+          setNotice({ message: err?.message || "Invalid input.", tone: "error" });
+        } else if (err?.status === 403) {
+          setNotice({ message: err?.message || "Not allowed.", tone: "error" });
         } else {
           console.error(err);
           setNotice({ message: err?.message || "Submit failed", tone: "error" });
@@ -546,9 +565,14 @@ export default function WriteReviewPage() {
       const reason = String(inAppEligibility.reason || "").toUpperCase();
       if (reason === "ALREADY_REVIEWED") {
         setNotice({ message: "You already reviewed this product.", tone: "info" });
-      } else {
-        setNotice({ message: "Only purchasers can write a review.", tone: "info" });
       }
+      return;
+    }
+
+    const canRate = inAppEligibility?.canRate ?? true;
+    const ratingToSend = canRate ? rating : null;
+    if (!canRate && !title.trim() && !body.trim()) {
+      setNotice({ message: "Please write a short comment (ratings are for verified buyers).", tone: "info" });
       return;
     }
 
@@ -610,7 +634,7 @@ export default function WriteReviewPage() {
           platform_product_id: resolvedPlatformProductId,
           variant_id: null,
         },
-        rating,
+        rating: ratingToSend,
         title: title.trim() || null,
         body: body.trim() || null,
       });
@@ -622,10 +646,18 @@ export default function WriteReviewPage() {
         const redirect = `${window.location.pathname}${window.location.search}`;
         setNotice({ message: "Please sign in to write a review.", tone: "info" });
         router.push(`/account/login?return_to=${encodeURIComponent(redirect)}`);
-      } else if (err?.code === "NOT_PURCHASER" || err?.status === 403) {
+      } else if (err?.code === "NOT_VERIFIED_FOR_RATING") {
+        setNotice({ message: "Ratings are available for verified buyers. Please submit a comment without a rating.", tone: "info" });
+      } else if (err?.code === "NOT_PURCHASER") {
         setNotice({ message: "Only purchasers can write a review.", tone: "error" });
       } else if (err?.code === "ALREADY_REVIEWED" || err?.status === 409) {
         setNotice({ message: "You already reviewed this product.", tone: "error" });
+      } else if (err?.code === "EMPTY_REVIEW") {
+        setNotice({ message: "Please write a comment or select a rating.", tone: "info" });
+      } else if (err?.status === 400) {
+        setNotice({ message: err?.message || "Invalid input.", tone: "error" });
+      } else if (err?.status === 403) {
+        setNotice({ message: err?.message || "Not allowed.", tone: "error" });
       } else {
         setNotice({ message: err?.message || "Submit failed", tone: "error" });
       }
@@ -645,6 +677,9 @@ export default function WriteReviewPage() {
     const fromInApp = safeString(inAppPdp?.payload?.product?.image_url);
     return (fromInvitation || fromInApp).trim() || null;
   }, [inAppPdp?.payload?.product?.image_url, product]);
+
+  const activeEligibility = mode === "invitation" ? invitationEligibility : inAppEligibility;
+  const canRate = activeEligibility?.canRate ?? true;
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-[#f8fbff] via-[#eef3fb] to-[#e6ecf7] text-slate-900">
@@ -797,14 +832,28 @@ export default function WriteReviewPage() {
                 <div className="mt-1">
                   {String(invitationEligibility.reason || "").toUpperCase() === "ALREADY_REVIEWED"
                     ? "You already reviewed this product."
-                    : "Only purchasers can write a review."}
+                    : "Not eligible."}
+                </div>
+              </div>
+            ) : mode === "in_app" && inAppEligibility && !inAppEligibility.eligible ? (
+              <div className="rounded-2xl border border-slate-200 bg-white/70 p-4 text-sm text-slate-600">
+                <div className="font-semibold text-slate-900">Not eligible</div>
+                <div className="mt-1">
+                  {String(inAppEligibility.reason || "").toUpperCase() === "ALREADY_REVIEWED"
+                    ? "You already reviewed this product."
+                    : "Not eligible."}
                 </div>
               </div>
             ) : (
               <form onSubmit={submit} className="space-y-5 rounded-2xl border border-slate-200 bg-white/70 p-4">
                 <div className="space-y-2">
                   <div className="text-sm font-medium text-slate-900">Rating</div>
-                  <StarRating value={rating} onChange={setRating} disabled={submitting} />
+                  <StarRating value={rating} onChange={setRating} disabled={submitting || !canRate} />
+                  {!canRate ? (
+                    <div className="text-xs text-slate-500">
+                      Ratings are for verified buyers. You can still leave a comment below.
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="space-y-2">
@@ -836,7 +885,9 @@ export default function WriteReviewPage() {
                   <div className="text-xs text-slate-500">
                     {mode === "invitation"
                       ? "We keep your invitation token in the URL fragment to reduce leakage."
-                      : "Only verified purchasers can submit a review."}
+                      : canRate
+                        ? "Verified buyers can rate and comment."
+                        : "Sign in to comment. Ratings are for verified buyers."}
                   </div>
                   <Button type="submit" disabled={submitting || (mode === "invitation" && !activeSubject)}>
                     {submitting ? "Submitting…" : "Submit review"}
