@@ -109,11 +109,42 @@ function resolveExternalRedirectUrl(payload: PDPPayload, args?: { offer_id?: str
 }
 
 function buildRedirectNotice(url: string): string {
+  const fallback = "Redirecting to external website in a new tab…";
+
   try {
-    const host = new URL(url).hostname;
-    return host ? `Redirecting to ${host} in a new tab…` : "Redirecting to external website in a new tab…";
+    const u = new URL(url);
+    const token = u.searchParams.get("token") || "";
+    if (token) {
+      const payloadPart = token.split(".")[0] || "";
+      const decoded = decodeBase64UrlJson(payloadPart);
+      const dest = decoded && typeof decoded.dest === "string" ? decoded.dest : "";
+      if (dest) {
+        try {
+          const host = new URL(dest).hostname;
+          return host ? `Redirecting to ${host} in a new tab…` : fallback;
+        } catch {
+          return fallback;
+        }
+      }
+    }
+
+    const host = u.hostname;
+    return host ? `Redirecting to ${host} in a new tab…` : fallback;
   } catch {
-    return "Redirecting to external website in a new tab…";
+    return fallback;
+  }
+}
+
+function decodeBase64UrlJson(input: string): Record<string, unknown> | null {
+  if (!input) return null;
+  try {
+    const normalized = input.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+    const decoded = atob(padded);
+    const parsed = JSON.parse(decoded);
+    return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
+  } catch {
+    return null;
   }
 }
 
