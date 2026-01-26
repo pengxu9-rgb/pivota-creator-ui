@@ -13,10 +13,12 @@ export type UgcCapabilityReason =
 export type UgcCapabilities = {
   canUploadMedia: boolean;
   canWriteReview: boolean;
+  canRateReview?: boolean;
   canAskQuestion: boolean;
   reasons?: {
     upload?: UgcCapabilityReason;
     review?: UgcCapabilityReason;
+    rating?: UgcCapabilityReason;
     question?: UgcCapabilityReason;
   };
 };
