@@ -587,6 +587,10 @@ export function PdpContainer({
     params.set('product_id', productId);
     if (productGroupId) params.set('product_group_id', productGroupId);
     if (merchantId) params.set('merchant_id', merchantId);
+    if (typeof window !== 'undefined') {
+      const returnTo = `${window.location.pathname}${window.location.search}`.trim();
+      if (returnTo.startsWith('/')) params.set('return_to', returnTo);
+    }
     router.push(`/community/questions?${params.toString()}`);
   };
 
@@ -598,6 +602,10 @@ export function PdpContainer({
     params.set('product_id', productId);
     if (productGroupId) params.set('product_group_id', productGroupId);
     if (merchantId) params.set('merchant_id', merchantId);
+    if (typeof window !== 'undefined') {
+      const returnTo = `${window.location.pathname}${window.location.search}`.trim();
+      if (returnTo.startsWith('/')) params.set('return_to', returnTo);
+    }
     router.push(`/community/questions/${qid}?${params.toString()}`);
   };
 

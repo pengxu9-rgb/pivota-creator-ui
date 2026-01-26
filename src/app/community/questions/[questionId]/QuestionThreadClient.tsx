@@ -36,6 +36,11 @@ export default function QuestionThreadClient() {
     return `/community/questions${qs ? `?${qs}` : ""}`;
   }, [search]);
 
+  const returnTo = useMemo(() => {
+    const raw = (search.get("return_to") || "").trim();
+    return raw.startsWith("/") ? raw : "";
+  }, [search]);
+
   const [notice, setNotice] = useState<{ message: string; tone: "info" | "error" } | null>(null);
   const [loading, setLoading] = useState(true);
   const [question, setQuestion] = useState<{ question: string; created_at?: string | null; replies?: number } | null>(
@@ -152,6 +157,11 @@ export default function QuestionThreadClient() {
               </Link>
             </div>
           </div>
+          {returnTo ? (
+            <Link href={returnTo} className="text-xs font-medium text-primary hover:underline">
+              Back to product
+            </Link>
+          ) : null}
         </div>
 
         {loading ? (
@@ -207,4 +217,3 @@ export default function QuestionThreadClient() {
     </div>
   );
 }
-

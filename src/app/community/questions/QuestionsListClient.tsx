@@ -14,6 +14,7 @@ export default function QuestionsListClient() {
 
   const productId = (params.get("product_id") || params.get("productId") || "").trim();
   const productGroupId = (params.get("product_group_id") || params.get("productGroupId") || "").trim() || null;
+  const returnTo = (params.get("return_to") || "").trim();
 
   const [notice, setNotice] = useState<{ message: string; tone: "info" | "error" } | null>(null);
   const [items, setItems] = useState<QuestionListItem[]>([]);
@@ -166,6 +167,13 @@ export default function QuestionsListClient() {
           </div>
         ) : null}
 
+        {returnTo.startsWith("/") ? (
+          <div className="text-xs text-muted-foreground">
+            <Link href={returnTo} className="hover:underline">
+              Back to product
+            </Link>
+          </div>
+        ) : null}
       </div>
 
       {askOpen ? (
