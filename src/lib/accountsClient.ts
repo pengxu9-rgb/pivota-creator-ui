@@ -228,6 +228,46 @@ export async function postQuestion(args: {
   });
 }
 
+export type QuestionListItem = {
+  question_id: number;
+  question: string;
+  created_at?: string | null;
+};
+
+export async function listQuestions(args: {
+  productId: string;
+  productGroupId?: string | null;
+  limit?: number;
+}): Promise<{ count: number; items: QuestionListItem[] } | null> {
+  const productId = String(args.productId || "").trim();
+  if (!productId) return null;
+
+  const params = new URLSearchParams({ productId });
+  const groupId = String(args.productGroupId || "").trim();
+  if (groupId) params.set("productGroupId", groupId);
+
+  const limitRaw = args.limit;
+  if (typeof limitRaw === "number" && Number.isFinite(limitRaw)) {
+    params.set("limit", String(Math.max(1, Math.min(50, Math.floor(limitRaw)))));
+  }
+
+  const res = (await callUgc(`/questions?${params.toString()}`, {
+    cache: "no-store",
+  })) as any;
+
+  const items = Array.isArray(res?.items) ? res.items : [];
+  const normalized: QuestionListItem[] = items
+    .map((it: any) => ({
+      question_id: Number(it?.question_id ?? it?.questionId ?? it?.id) || 0,
+      question: String(it?.question ?? "").trim(),
+      created_at: it?.created_at ?? it?.createdAt ?? null,
+    }))
+    .filter((it: QuestionListItem) => it.question);
+  const count = Number(res?.count);
+
+  return { count: Number.isFinite(count) ? count : normalized.length, items: normalized };
+}
+
 export async function accountsLogin(email: string) {
   return callAccounts("/auth/login", {
     method: "POST",

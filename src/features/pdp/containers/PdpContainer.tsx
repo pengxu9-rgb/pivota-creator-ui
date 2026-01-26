@@ -45,7 +45,7 @@ import { GenericSizeGuide } from '@/features/pdp/sections/GenericSizeGuide';
 import { GenericDetailsSection } from '@/features/pdp/sections/GenericDetailsSection';
 import { OfferSheet } from '@/features/pdp/offers/OfferSheet';
 import { cn } from '@/lib/utils';
-import { postQuestion, type UgcCapabilities } from '@/lib/accountsClient';
+import { listQuestions, postQuestion, type QuestionListItem, type UgcCapabilities } from '@/lib/accountsClient';
 
 function getModuleData<T>(payload: PDPPayload, type: string): T | null {
   const m = payload.modules.find((x) => x.type === type);
@@ -113,6 +113,7 @@ export function PdpContainer({
   const [questionOpen, setQuestionOpen] = useState(false);
   const [questionText, setQuestionText] = useState('');
   const [questionSubmitting, setQuestionSubmitting] = useState(false);
+  const [ugcQuestions, setUgcQuestions] = useState<QuestionListItem[]>([]);
   const [notice, setNotice] = useState<{ message: string; tone: 'info' | 'error' } | null>(null);
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
   const [navVisible, setNavVisible] = useState(false);
@@ -579,6 +580,57 @@ export function PdpContainer({
   const productGroupId =
     String(payload.product_group_id || selectedOffer?.product_group_id || '').trim() || null;
 
+  useEffect(() => {
+    let cancelled = false;
+    async function run() {
+      if (!productId) return;
+      try {
+        const res = await listQuestions({
+          productId,
+          ...(productGroupId ? { productGroupId } : {}),
+          limit: 10,
+        });
+        if (cancelled) return;
+        setUgcQuestions(res?.items || []);
+      } catch {
+        // Ignore failures; Q&A will still work for submit.
+      }
+    }
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [productId, productGroupId]);
+
+  const mergedQuestions = useMemo(() => {
+    const seen = new Set<string>();
+    const out: Array<{ question: string; answer?: string; replies?: number }> = [];
+
+    for (const q of ugcQuestions) {
+      const text = String(q?.question || '').trim();
+      if (!text || seen.has(text)) continue;
+      seen.add(text);
+      out.push({ question: text });
+    }
+
+    const legacy = (reviews as any)?.questions;
+    if (Array.isArray(legacy)) {
+      for (const q of legacy) {
+        const text = String(q?.question || '').trim();
+        if (!text || seen.has(text)) continue;
+        seen.add(text);
+        out.push(q);
+      }
+    }
+
+    return out;
+  }, [reviews, ugcQuestions]);
+
+  const reviewsForRender = useMemo(() => {
+    if (!reviews) return null;
+    return { ...(reviews as any), questions: mergedQuestions } as ReviewsPreviewData;
+  }, [mergedQuestions, reviews]);
+
   const canUploadMedia = Boolean(ugcCapabilities?.canUploadMedia);
   const canWriteReview = Boolean(ugcCapabilities?.canWriteReview);
   const canAskQuestion = Boolean(ugcCapabilities?.canAskQuestion);
@@ -707,6 +759,14 @@ export function PdpContainer({
         question,
       });
       notify('Question submitted.', 'info');
+      setUgcQuestions((prev) => {
+        const next: QuestionListItem = {
+          question_id: Date.now(),
+          question,
+          created_at: new Date().toISOString(),
+        };
+        return [next, ...(prev || []).filter((it) => String(it?.question || '').trim() !== question)].slice(0, 10);
+      });
       setQuestionText('');
       setQuestionOpen(false);
     } catch (err: any) {
@@ -1124,7 +1184,7 @@ export function PdpContainer({
             style={{ scrollMarginTop }}
           >
             <BeautyReviewsSection
-              data={reviews as ReviewsPreviewData}
+              data={(reviewsForRender || reviews) as ReviewsPreviewData}
               brandName={payload.product.brand?.name}
               showEmpty
               onWriteReview={handleWriteReview}
