@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/components/cart/CartProvider";
@@ -15,6 +15,13 @@ function pickPdpPayload(raw: any): PDPPayload | null {
   if (!raw || typeof raw !== "object") return null;
   const payload = raw.pdp_payload ?? raw.pdpPayload ?? raw.payload ?? null;
   return payload && typeof payload === "object" ? (payload as PDPPayload) : null;
+}
+
+function upsertModule(payload: PDPPayload, module: Module): PDPPayload {
+  const modules = Array.isArray(payload.modules) ? payload.modules : [];
+  const next = modules.filter((m) => m.type !== module.type);
+  next.push(module);
+  return { ...payload, modules: next };
 }
 
 function safeString(input: unknown): string {
@@ -352,6 +359,7 @@ export default function CreatorProductDetailPage() {
   }>({ loading: true, error: null, payload: null });
   const [pdpNonce, setPdpNonce] = useState(0);
   const [redirectNotice, setRedirectNotice] = useState<string | null>(null);
+  const recommendationsFetchKeyRef = useRef<string>("");
   const [ugcCapabilities, setUgcCapabilities] = useState<UgcCapabilities | null>({
     canUploadMedia: false,
     canWriteReview: false,
@@ -381,6 +389,7 @@ export default function CreatorProductDetailPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            include: ["offers", "reviews_preview"],
             ...(merchantId ? { merchantId } : {}),
             productId,
             debug,
@@ -396,7 +405,7 @@ export default function CreatorProductDetailPage() {
         if (!pdp_payload) throw new Error("PDP payload missing");
         if (cancelled) return;
 
-        const nextPayload: PDPPayload = { ...pdp_payload, x_recommendations_state: "ready" };
+        const nextPayload: PDPPayload = { ...pdp_payload, x_recommendations_state: "loading" };
         setPdpState({ loading: false, error: null, payload: nextPayload });
       } catch (err) {
         if (cancelled) return;
@@ -415,7 +424,7 @@ export default function CreatorProductDetailPage() {
             const productDetail = (detailJson && typeof detailJson === "object" ? (detailJson as any).product : null) || null;
             if (productDetail && !cancelled) {
               const fallback = buildFallbackPdpPayload({ merchantId, productId, productDetail });
-              setPdpState({ loading: false, error: null, payload: fallback });
+              setPdpState({ loading: false, error: null, payload: { ...fallback, x_recommendations_state: "loading" } });
               return;
             }
           }
@@ -435,6 +444,91 @@ export default function CreatorProductDetailPage() {
       cancelled = true;
     };
   }, [debug, merchantId, pdpNonce, productId]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const payload = pdpState.payload;
+    if (!payload || pdpState.loading) return;
+
+    const pid = safeString(payload.product?.product_id || productId).trim();
+    if (!pid) return;
+
+    const mid =
+      safeString(payload.product?.merchant_id || merchantId).trim() ||
+      safeString((payload as any)?.offers?.[0]?.merchant_id).trim();
+    if (!mid) return;
+
+    const key = [mid, pid].join(":");
+    if (recommendationsFetchKeyRef.current === key) return;
+    recommendationsFetchKeyRef.current = key;
+
+    // Mark the section as loading (skeleton) without blocking initial render.
+    setPdpState((prev) => {
+      if (!prev.payload) return prev;
+      if (prev.payload.x_recommendations_state === "loading") return prev;
+      return { ...prev, payload: { ...prev.payload, x_recommendations_state: "loading" } };
+    });
+
+    let cancelled = false;
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 4500);
+
+    (async () => {
+      try {
+        const res = await fetch("/api/creator-agent/recommendations", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+          body: JSON.stringify({
+            merchantId: mid,
+            productId: pid,
+            limit: 6,
+          }),
+        });
+
+        if (!res.ok) throw new Error("Failed to fetch recommendations");
+        const data = await res.json().catch(() => null);
+        const items = Array.isArray(data?.items) ? data.items : [];
+
+        if (cancelled) return;
+
+        setPdpState((prev) => {
+          if (!prev.payload) return prev;
+          const nextPayload: PDPPayload = { ...prev.payload, x_recommendations_state: "ready" };
+
+          if (!items.length) return { ...prev, payload: nextPayload };
+
+          return {
+            ...prev,
+            payload: upsertModule(nextPayload, {
+              module_id: "recommendations",
+              type: "recommendations",
+              priority: 90,
+              title: "Similar",
+              data: {
+                strategy: typeof data?.strategy === "string" ? data.strategy : undefined,
+                items,
+              },
+            }),
+          };
+        });
+      } catch {
+        if (cancelled) return;
+        setPdpState((prev) => {
+          if (!prev.payload) return prev;
+          return { ...prev, payload: { ...prev.payload, x_recommendations_state: "ready" } };
+        });
+      } finally {
+        window.clearTimeout(timeout);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [merchantId, pdpState.loading, pdpState.payload, productId]);
 
   useEffect(() => {
     let cancelled = false;

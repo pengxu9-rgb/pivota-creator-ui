@@ -127,6 +127,14 @@ function pickPdpV2Payload(raw: any) {
   return payload;
 }
 
+function isExternalProductRef(args: { merchantId?: string; productId?: string }) {
+  const mid = String(args.merchantId || "").trim().toLowerCase();
+  const pid = String(args.productId || "").trim().toLowerCase();
+  if (mid === "external_seed") return true;
+  if (pid.startsWith("ext_") || pid.startsWith("ext:")) return true;
+  return false;
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -140,7 +148,9 @@ export async function POST(req: Request) {
     const includeRaw = Boolean(debug);
     const includeProvided = Object.prototype.hasOwnProperty.call(body || {}, "include");
     const includeList = Array.isArray(include) ? include.filter(Boolean) : [];
-    const finalInclude = includeProvided ? includeList : ["offers", "reviews_preview", "similar"];
+    // Keep the default payload lightweight so PDP can render quickly (especially for external products).
+    // Reviews/similar can be loaded progressively by the client via explicit `include`.
+    const finalInclude = includeProvided ? includeList : ["offers", "reviews_preview"];
 
     if (!productId) {
       return NextResponse.json(
@@ -151,6 +161,7 @@ export async function POST(req: Request) {
 
     const invokeUrl = getInvokeUrl();
     const merchantIdNormalized = merchantId ? String(merchantId).trim() : "";
+    const isExternal = isExternalProductRef({ merchantId: merchantIdNormalized, productId });
     const product = { merchant_id: merchantIdNormalized, product_id: productId, variant_id: productId };
     const baseRequest = {
       operation: "get_pdp_v2",
@@ -176,18 +187,43 @@ export async function POST(req: Request) {
       metadata: { source: "creator-agent-ui" },
     };
 
-    let res = await fetch(invokeUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...authHeaders() },
-      body: JSON.stringify(baseRequest),
-    });
+    const invokeTimeoutMs = isExternal ? 8000 : 15000;
+    let res: Response;
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), invokeTimeoutMs);
+      try {
+        res = await fetch(invokeUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...authHeaders() },
+          body: JSON.stringify(baseRequest),
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeout);
+      }
+    } catch (err: any) {
+      const isAbort =
+        err?.name === "AbortError" ||
+        String(err?.message || "").toLowerCase().includes("aborted");
+      if (isAbort) {
+        return NextResponse.json(
+          {
+            error: "Failed to fetch pdp payload",
+            detail: `get_pdp_v2 timed out after ${invokeTimeoutMs}ms`,
+          },
+          { status: 504 },
+        );
+      }
+      throw err;
+    }
 
     if (!res.ok) {
       const text = await res.text().catch(() => "");
 
       // Fallback: if get_pdp_v2 fails (unsupported upstream, etc), retry via legacy get_pdp
       // when we have a concrete merchant_id.
-      if (merchantIdNormalized) {
+      if (merchantIdNormalized && !isExternal) {
         const retry = await fetch(invokeUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json", ...authHeaders() },
