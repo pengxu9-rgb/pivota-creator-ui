@@ -5,6 +5,7 @@ import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { getCreatorBySlug } from "@/config/creatorAgents";
 import type { Product } from "@/types/product";
 import { useCart } from "@/components/cart/CartProvider";
+import { ProductDescription } from "@/components/product/ProductDescription";
 
 export default function CreatorProductDetailPage() {
   const params = useParams();
@@ -310,21 +311,12 @@ export default function CreatorProductDetailPage() {
                     )}
                   </div>
 
-                  {product.description && (
+                  {(product.description || product.descriptionHtml) && (
                     <div className="mt-1">
-                      {product.descriptionHtml ? (
-                        <div
-                          className="product-description"
-                          // 描述来自自有后端 + Shopify，当前信任来源，只在详情页使用富文本。
-                          dangerouslySetInnerHTML={{
-                            __html: product.descriptionHtml,
-                          }}
-                        />
-                      ) : (
-                        <p className="text-[12px] leading-relaxed text-[#8c715c]">
-                          {product.description}
-                        </p>
-                      )}
+                      <ProductDescription
+                        description={product.description}
+                        descriptionHtml={product.descriptionHtml}
+                      />
                     </div>
                   )}
 
