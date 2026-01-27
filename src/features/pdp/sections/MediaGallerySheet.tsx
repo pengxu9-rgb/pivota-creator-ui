@@ -1,10 +1,10 @@
 'use client';
 
-import Image from 'next/image';
 import { Grid3X3, Play } from 'lucide-react';
 import { useMemo } from 'react';
 import type { MediaItem } from '@/features/pdp/types';
 import { BottomSheet } from '@/components/ui/BottomSheet';
+import { normalizeMediaUrl } from '@/features/pdp/utils/mediaUrl';
 import { cn } from '@/lib/utils';
 
 export function MediaGallerySheet({
@@ -52,7 +52,13 @@ export function MediaGallerySheet({
               )}
               aria-label={`Select media ${idx + 1}`}
             >
-              <Image src={item.url} alt={item.alt_text || ''} fill className="object-cover" unoptimized />
+              <img
+                src={normalizeMediaUrl(item.url)}
+                alt={item.alt_text || ''}
+                className="absolute inset-0 h-full w-full object-cover"
+                loading="lazy"
+                decoding="async"
+              />
               {item.type === 'video' ? (
                 <div className="absolute inset-0 flex items-center justify-center bg-foreground/15">
                   <Play className="h-8 w-8 text-white drop-shadow-lg" fill="white" fillOpacity={0.35} />

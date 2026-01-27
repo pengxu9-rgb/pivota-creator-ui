@@ -1,7 +1,7 @@
-import Image from 'next/image';
 import { Grid3X3, Play } from 'lucide-react';
 import { useEffect, useMemo, useRef } from 'react';
 import type { MediaGalleryData } from '@/features/pdp/types';
+import { normalizeMediaUrl } from '@/features/pdp/utils/mediaUrl';
 import { cn } from '@/lib/utils';
 
 export function MediaGallery({
@@ -26,7 +26,7 @@ export function MediaGallery({
   const items = data?.items || [];
   const clampedIndex = typeof activeIndex === 'number' && activeIndex >= 0 && activeIndex < items.length ? activeIndex : 0;
   const hero = items[clampedIndex];
-  const heroUrl = hero?.url || fallbackUrl;
+  const heroUrl = normalizeMediaUrl(hero?.url || fallbackUrl);
   const isContain = fit === 'object-contain';
 
   const touchStartX = useRef<number | null>(null);
@@ -87,7 +87,13 @@ export function MediaGallery({
           }}
         >
           {heroUrl ? (
-            <Image src={heroUrl} alt={hero?.alt_text || title} fill className={fit} unoptimized />
+            <img
+              src={heroUrl}
+              alt={hero?.alt_text || title}
+              className={cn('absolute inset-0 h-full w-full', fit)}
+              loading="eager"
+              decoding="async"
+            />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground">No media</div>
           )}
@@ -112,7 +118,13 @@ export function MediaGallery({
                 )}
                 aria-label={`View media ${idx + 1}`}
               >
-                <Image src={item.url} alt={item.alt_text || `Media ${idx + 1}`} fill className="object-cover" unoptimized />
+                <img
+                  src={normalizeMediaUrl(item.url)}
+                  alt={item.alt_text || `Media ${idx + 1}`}
+                  className="absolute inset-0 h-full w-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                />
                 {item.type === 'video' ? (
                   <div className="absolute inset-0 flex items-center justify-center bg-foreground/20">
                     <Play className="h-3 w-3 text-white" fill="white" />

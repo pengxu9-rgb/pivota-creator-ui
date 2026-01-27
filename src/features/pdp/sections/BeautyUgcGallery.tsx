@@ -1,8 +1,8 @@
 'use client';
 
-import Image from 'next/image';
 import { Play } from 'lucide-react';
 import type { MediaItem } from '@/features/pdp/types';
+import { normalizeMediaUrl } from '@/features/pdp/utils/mediaUrl';
 import { cn } from '@/lib/utils';
 
 export function BeautyUgcGallery({
@@ -45,7 +45,13 @@ export function BeautyUgcGallery({
         <div className="grid grid-cols-3 gap-1 rounded-lg overflow-hidden">
           {items.slice(0, 6).map((item, idx) => (
             <div key={`${item.url}-${idx}`} className="relative aspect-square">
-              <Image src={item.url} alt="" fill className="object-cover" unoptimized />
+              <img
+                src={normalizeMediaUrl(item.url)}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover"
+                loading="lazy"
+                decoding="async"
+              />
               {item.type === 'video' ? <Play className="absolute top-2 right-2 h-4 w-4 text-white drop-shadow-lg" /> : null}
             </div>
           ))}

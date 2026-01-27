@@ -1,8 +1,8 @@
 'use client';
 
-import Image from 'next/image';
 import { ChevronRight } from 'lucide-react';
 import type { MediaItem, Variant } from '@/features/pdp/types';
+import { normalizeMediaUrl } from '@/features/pdp/utils/mediaUrl';
 import { getOptionValue } from '@/features/pdp/utils/variantOptions';
 import { cn } from '@/lib/utils';
 
@@ -140,7 +140,13 @@ export function BeautyShadesSection({
           <div className="grid grid-cols-2 gap-2 rounded-xl overflow-hidden">
             {galleryItems.map((item, idx) => (
               <div key={`${item.url}-${idx}`} className="relative aspect-[3/4] bg-muted">
-                <Image src={item.url} alt="" fill className="object-cover" unoptimized />
+                <img
+                  src={normalizeMediaUrl(item.url)}
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                />
               </div>
             ))}
           </div>

@@ -1,8 +1,8 @@
 'use client';
 
-import Image from 'next/image';
 import type { MediaGalleryData, Product, ProductDetailsData } from '@/features/pdp/types';
 import { DetailsAccordion } from '@/features/pdp/sections/DetailsAccordion';
+import { normalizeMediaUrl } from '@/features/pdp/utils/mediaUrl';
 
 function stripHtml(input?: string) {
   return String(input || '')
@@ -20,7 +20,7 @@ export function BeautyDetailsSection({
   product: Product;
   media?: MediaGalleryData | null;
 }) {
-  const heroUrl = media?.items?.[0]?.url || product.image_url;
+  const heroUrl = normalizeMediaUrl(media?.items?.[0]?.url || product.image_url);
   const accentImages = media?.items?.slice(1, 3) || [];
   const storySectionIndex = data.sections.findIndex((section) => /brand|story/i.test(section.heading));
   const storySection = storySectionIndex >= 0 ? data.sections[storySectionIndex] : undefined;
@@ -31,7 +31,13 @@ export function BeautyDetailsSection({
     <div className="py-4">
       {heroUrl ? (
         <div className="relative aspect-[4/5] bg-gradient-to-b from-muted to-background">
-          <Image src={heroUrl} alt={product.title} fill className="object-contain" unoptimized />
+          <img
+            src={heroUrl}
+            alt={product.title}
+            className="absolute inset-0 h-full w-full object-contain"
+            loading="eager"
+            decoding="async"
+          />
         </div>
       ) : null}
 
@@ -48,7 +54,13 @@ export function BeautyDetailsSection({
           <div className="grid grid-cols-2 gap-2 rounded-xl overflow-hidden">
             {accentImages.map((item, idx) => (
               <div key={`${item.url}-${idx}`} className="relative aspect-[3/4] bg-muted">
-                <Image src={item.url} alt="" fill className="object-cover" unoptimized />
+                <img
+                  src={normalizeMediaUrl(item.url)}
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                />
               </div>
             ))}
           </div>

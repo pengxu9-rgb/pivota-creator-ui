@@ -1,8 +1,8 @@
 'use client';
 
-import Image from 'next/image';
 import { Star, ChevronRight } from 'lucide-react';
 import type { ReviewsPreviewData } from '@/features/pdp/types';
+import { normalizeMediaUrl } from '@/features/pdp/utils/mediaUrl';
 import { cn } from '@/lib/utils';
 
 function StarRating({ value }: { value: number }) {
@@ -253,7 +253,13 @@ export function BeautyReviewsSection({
               </div>
               {review.media?.length ? (
                 <div className="relative h-16 w-16 rounded-lg overflow-hidden flex-shrink-0">
-                  <Image src={review.media[0].url} alt="" fill className="object-cover" unoptimized />
+                  <img
+                    src={normalizeMediaUrl(review.media[0].url)}
+                    alt=""
+                    className="absolute inset-0 h-full w-full object-cover"
+                    loading="lazy"
+                    decoding="async"
+                  />
                 </div>
               ) : null}
             </div>

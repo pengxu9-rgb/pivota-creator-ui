@@ -1,7 +1,7 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import { Star, ChevronRight } from 'lucide-react';
 import type { RecommendationsData } from '@/features/pdp/types';
+import { normalizeMediaUrl } from '@/features/pdp/utils/mediaUrl';
 
 function formatPrice(amount: number, currency: string) {
   const n = Number.isFinite(amount) ? amount : 0;
@@ -34,7 +34,13 @@ export function RecommendationsGrid({ data }: { data: RecommendationsData }) {
           >
             <div className="relative aspect-square bg-muted">
               {p.image_url ? (
-                <Image src={p.image_url} alt={p.title} fill className="object-cover" unoptimized />
+                <img
+                  src={normalizeMediaUrl(p.image_url)}
+                  alt={p.title}
+                  className="absolute inset-0 h-full w-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">
                   No image

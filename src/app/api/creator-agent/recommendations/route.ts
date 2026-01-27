@@ -150,12 +150,14 @@ export async function POST(req: Request) {
         err?.name === "AbortError" ||
         String(err?.message || "").toLowerCase().includes("aborted");
       if (isAbort) {
+        // Do not fail PDP when similar products are slow/unavailable.
         return NextResponse.json(
           {
-            error: "Failed to fetch recommendations",
-            detail: `find_similar_products timed out after ${timeoutMs}ms`,
+            strategy: "find_similar_products",
+            items: [],
+            x_error: "timeout",
           },
-          { status: 504 },
+          { status: 200 },
         );
       }
       throw err;

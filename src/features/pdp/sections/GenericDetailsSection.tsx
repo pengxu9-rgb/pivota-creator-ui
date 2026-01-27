@@ -1,8 +1,8 @@
 'use client';
 
-import Image from 'next/image';
 import type { MediaGalleryData, Product, ProductDetailsData } from '@/features/pdp/types';
 import { DetailsAccordion } from '@/features/pdp/sections/DetailsAccordion';
+import { normalizeMediaUrl } from '@/features/pdp/utils/mediaUrl';
 
 function stripHtml(input?: string) {
   return String(input || '')
@@ -36,14 +36,13 @@ export function GenericDetailsSection({
       {detailImages.length ? (
         <div className="space-y-2">
           {detailImages.map((item, idx) => (
-            <Image
+            <img
               key={`${item.url}-${idx}`}
-              src={item.url}
+              src={normalizeMediaUrl(item.url)}
               alt=""
-              width={800}
-              height={600}
               className="w-full h-auto rounded-lg"
-              unoptimized
+              loading="lazy"
+              decoding="async"
             />
           ))}
         </div>

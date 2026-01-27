@@ -481,22 +481,24 @@ export function PdpContainer({
     };
   }, [tabs, activeTab, navVisible, headerHeight]);
 
-  const handleColorSelect = (value: string) => {
+  const handleColorSelect = (value: string): string | null => {
     setSelectedColor(value);
     const match = findVariantByOptions({ variants, color: value, size: selectedSize });
     if (match) {
       setSelectedVariantId(match.variant_id);
       setActiveMediaIndex(0);
     }
+    return match?.variant_id || null;
   };
 
-  const handleSizeSelect = (value: string) => {
+  const handleSizeSelect = (value: string): string | null => {
     setSelectedSize(value);
     const match = findVariantByOptions({ variants, color: selectedColor, size: value });
     if (match) {
       setSelectedVariantId(match.variant_id);
       setActiveMediaIndex(0);
     }
+    return match?.variant_id || null;
   };
 
   const handleVariantSelect = (variantId: string) => {
@@ -987,6 +989,16 @@ export function PdpContainer({
                   <span className="rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-700">
                     Out of stock
                   </span>
+                ) : availableQuantity != null ? (
+                  availableQuantity <= 5 ? (
+                    <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-800">
+                      Low stock
+                    </span>
+                  ) : (
+                    <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-800">
+                      In stock
+                    </span>
+                  )
                 ) : null}
                 {compareAmount && compareAmount > displayPriceAmount ? (
                   <span className="text-[10px] text-muted-foreground line-through">
@@ -1021,6 +1033,13 @@ export function PdpContainer({
               {variants.length > 1 ? (
                 <div className="mt-0.5 text-xs text-muted-foreground">
                   Selected: <span className="text-foreground">{selectedVariant?.title}</span>
+                </div>
+              ) : selectedVariant?.sku_id || (selectedVariant?.variant_id && selectedVariant.variant_id !== payload.product.product_id) ? (
+                <div className="mt-0.5 text-xs text-muted-foreground">
+                  SKU:{' '}
+                  <span className="text-foreground">
+                    {selectedVariant.sku_id || selectedVariant.variant_id}
+                  </span>
                 </div>
               ) : null}
 
@@ -1506,10 +1525,15 @@ export function PdpContainer({
         open={resolvedMode === 'generic' && showColorSheet}
         onClose={() => setShowColorSheet(false)}
         variants={variants}
-        selectedVariantId={selectedVariant.variant_id}
-        onSelect={(variantId) => {
-          handleVariantSelect(variantId);
-          pdpTracking.track('pdp_action_click', { action_type: 'select_variant', variant_id: variantId });
+        selectedColor={selectedColor}
+        onSelectColor={(color) => {
+          const nextVariantId = handleColorSelect(color);
+          pdpTracking.track('pdp_action_click', {
+            action_type: 'select_variant',
+            variant_id: nextVariantId || undefined,
+            attribute: 'color',
+            value: color,
+          });
         }}
       />
       <OfferSheet
