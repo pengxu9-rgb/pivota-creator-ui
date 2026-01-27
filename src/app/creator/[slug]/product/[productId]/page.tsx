@@ -389,7 +389,7 @@ export default function CreatorProductDetailPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            include: ["offers"],
+            include: ["offers", "reviews_preview"],
             ...(merchantId ? { merchantId } : {}),
             productId,
             debug,
