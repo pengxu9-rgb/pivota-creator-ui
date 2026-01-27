@@ -162,13 +162,10 @@ export async function POST(req: Request) {
     }
 
     if (!res.ok) {
-      const text = await res.text().catch(() => "");
+      // Do not fail the PDP if similar products are unavailable.
       return NextResponse.json(
-        {
-          error: "Failed to fetch recommendations",
-          detail: `find_similar_products failed with status ${res.status}${text ? ` body: ${text}` : ""}`,
-        },
-        { status: 500 },
+        { strategy: "find_similar_products", items: [] },
+        { status: 200 },
       );
     }
 
@@ -189,11 +186,8 @@ export async function POST(req: Request) {
     // eslint-disable-next-line no-console
     console.error("[creator-agent/recommendations] error", error);
     return NextResponse.json(
-      {
-        error: "Failed to fetch recommendations",
-        detail: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 },
+      { strategy: "find_similar_products", items: [] },
+      { status: 200 },
     );
   }
 }

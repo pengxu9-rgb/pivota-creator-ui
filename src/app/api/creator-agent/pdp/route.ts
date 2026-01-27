@@ -187,36 +187,11 @@ export async function POST(req: Request) {
       metadata: { source: "creator-agent-ui" },
     };
 
-    const invokeTimeoutMs = isExternal ? 8000 : 15000;
-    let res: Response;
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), invokeTimeoutMs);
-      try {
-        res = await fetch(invokeUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", ...authHeaders() },
-          body: JSON.stringify(baseRequest),
-          signal: controller.signal,
-        });
-      } finally {
-        clearTimeout(timeout);
-      }
-    } catch (err: any) {
-      const isAbort =
-        err?.name === "AbortError" ||
-        String(err?.message || "").toLowerCase().includes("aborted");
-      if (isAbort) {
-        return NextResponse.json(
-          {
-            error: "Failed to fetch pdp payload",
-            detail: `get_pdp_v2 timed out after ${invokeTimeoutMs}ms`,
-          },
-          { status: 504 },
-        );
-      }
-      throw err;
-    }
+    let res = await fetch(invokeUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify(baseRequest),
+    });
 
     if (!res.ok) {
       const text = await res.text().catch(() => "");
