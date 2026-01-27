@@ -140,7 +140,9 @@ export async function POST(req: Request) {
     const includeRaw = Boolean(debug);
     const includeProvided = Object.prototype.hasOwnProperty.call(body || {}, "include");
     const includeList = Array.isArray(include) ? include.filter(Boolean) : [];
-    const finalInclude = includeProvided ? includeList : ["offers", "reviews_preview", "similar"];
+    // Keep the default payload lightweight so PDP can render quickly (especially for external products).
+    // Reviews/similar can be loaded progressively by the client via explicit `include`.
+    const finalInclude = includeProvided ? includeList : ["offers"];
 
     if (!productId) {
       return NextResponse.json(
