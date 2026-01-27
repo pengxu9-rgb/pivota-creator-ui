@@ -471,7 +471,6 @@ export default function CreatorProductDetailPage() {
 
     let cancelled = false;
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 4500);
 
     (async () => {
       try {
@@ -518,14 +517,11 @@ export default function CreatorProductDetailPage() {
           if (!prev.payload) return prev;
           return { ...prev, payload: { ...prev.payload, x_recommendations_state: "ready" } };
         });
-      } finally {
-        window.clearTimeout(timeout);
       }
     })();
 
     return () => {
       cancelled = true;
-      window.clearTimeout(timeout);
       controller.abort();
     };
   }, [merchantId, pdpState.loading, pdpState.payload, productId]);

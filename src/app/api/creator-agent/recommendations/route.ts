@@ -11,6 +11,14 @@ function getInvokeUrl(): string {
   return urlEnv;
 }
 
+function isExternalProductRef(args: { merchantId?: string; productId?: string }) {
+  const mid = String(args.merchantId || "").trim().toLowerCase();
+  const pid = String(args.productId || "").trim().toLowerCase();
+  if (mid === "external_seed") return true;
+  if (pid.startsWith("ext_") || pid.startsWith("ext:")) return true;
+  return false;
+}
+
 function authHeaders(): Record<string, string> {
   const bearer =
     process.env.PIVOTA_AGENT_API_KEY || process.env.PIVOTA_API_KEY || "";
@@ -102,6 +110,7 @@ export async function POST(req: Request) {
 
     const invokeUrl = getInvokeUrl();
     const resolvedLimit = typeof limit === "number" && Number.isFinite(limit) ? Math.max(1, Math.floor(limit)) : 6;
+    const timeoutMs = isExternalProductRef({ merchantId, productId }) ? 8000 : 12000;
 
     const payload = {
       operation: "find_similar_products",
@@ -122,11 +131,35 @@ export async function POST(req: Request) {
       metadata: { source: "creator-agent-ui" },
     };
 
-    const res = await fetch(invokeUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...authHeaders() },
-      body: JSON.stringify(payload),
-    });
+    let res: Response;
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        res = await fetch(invokeUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...authHeaders() },
+          body: JSON.stringify(payload),
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeout);
+      }
+    } catch (err: any) {
+      const isAbort =
+        err?.name === "AbortError" ||
+        String(err?.message || "").toLowerCase().includes("aborted");
+      if (isAbort) {
+        return NextResponse.json(
+          {
+            error: "Failed to fetch recommendations",
+            detail: `find_similar_products timed out after ${timeoutMs}ms`,
+          },
+          { status: 504 },
+        );
+      }
+      throw err;
+    }
 
     if (!res.ok) {
       const text = await res.text().catch(() => "");
