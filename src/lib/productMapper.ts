@@ -5,11 +5,7 @@ import type {
   ProductVariant,
   RawProduct,
 } from "@/types/product";
-
-function stripHtml(value: string | undefined | null): string {
-  if (!value) return "";
-  return value.replace(/<[^>]+>/g, "").trim();
-}
+import { formatDescriptionText, hasHtmlTags } from "@/lib/formatDescriptionText";
 
 function normalizeDeal(raw: any, productId: string): ProductBestDeal {
   if (!raw) {
@@ -226,14 +222,15 @@ export function mapRawProduct(raw: RawProduct): Product {
       ? true
       : false;
 
+  const descriptionRaw = typeof raw.description === "string" ? raw.description : "";
+  const descriptionText = formatDescriptionText(descriptionRaw);
+
   return {
     id: raw.id,
     title: raw.title,
-    description: stripHtml(raw.description),
+    description: descriptionText,
     descriptionHtml:
-      typeof raw.description === "string" && raw.description.trim().length > 0
-        ? raw.description
-        : undefined,
+      hasHtmlTags(descriptionRaw) && descriptionRaw.trim().length > 0 ? descriptionRaw : undefined,
     price: raw.price,
     currency: raw.currency || (raw as any).currency_code,
     imageUrl: raw.image_url,
