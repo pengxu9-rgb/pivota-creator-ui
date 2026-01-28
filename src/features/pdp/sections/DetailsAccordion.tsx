@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import type { ProductDetailsData } from '@/features/pdp/types';
+import { formatDescriptionText, isLikelyHeadingParagraph, splitParagraphs } from '@/lib/formatDescriptionText';
 import { cn } from '@/lib/utils';
 
 export function DetailsAccordion({ data }: { data: ProductDetailsData }) {
@@ -10,6 +11,8 @@ export function DetailsAccordion({ data }: { data: ProductDetailsData }) {
     <div className="rounded-lg border border-border bg-card overflow-hidden">
       {data.sections.map((s, idx) => {
         const isOpen = open.has(idx);
+        const formattedContent = isOpen ? formatDescriptionText(s.content) : '';
+        const paragraphs = isOpen ? splitParagraphs(formattedContent) : [];
         return (
           <div key={`${s.heading}-${idx}`} className="border-b border-border last:border-b-0">
             <button
@@ -32,8 +35,27 @@ export function DetailsAccordion({ data }: { data: ProductDetailsData }) {
               />
             </button>
             {isOpen ? (
-              <div className="px-3 pb-3 text-xs text-muted-foreground leading-relaxed whitespace-pre-line">
-                {s.content}
+              <div className="px-3 pb-3 text-xs text-muted-foreground leading-relaxed">
+                {paragraphs.length ? (
+                  <div className="space-y-2">
+                    {paragraphs.map((paragraph, paragraphIndex) =>
+                      isLikelyHeadingParagraph(paragraph) ? (
+                        <div
+                          key={`${paragraph}-${paragraphIndex}`}
+                          className="text-[11px] font-semibold tracking-wide text-foreground"
+                        >
+                          {paragraph}
+                        </div>
+                      ) : (
+                        <p key={`${paragraph}-${paragraphIndex}`} className="whitespace-pre-line">
+                          {paragraph}
+                        </p>
+                      ),
+                    )}
+                  </div>
+                ) : (
+                  <p className="whitespace-pre-line">{formattedContent}</p>
+                )}
               </div>
             ) : null}
           </div>
@@ -42,4 +64,3 @@ export function DetailsAccordion({ data }: { data: ProductDetailsData }) {
     </div>
   );
 }
-

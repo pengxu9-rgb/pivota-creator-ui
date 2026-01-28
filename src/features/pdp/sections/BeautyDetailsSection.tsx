@@ -3,13 +3,7 @@
 import type { MediaGalleryData, Product, ProductDetailsData } from '@/features/pdp/types';
 import { DetailsAccordion } from '@/features/pdp/sections/DetailsAccordion';
 import { normalizeMediaUrl } from '@/features/pdp/utils/mediaUrl';
-
-function stripHtml(input?: string) {
-  return String(input || '')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
+import { formatDescriptionText, isLikelyHeadingParagraph, splitParagraphs } from '@/lib/formatDescriptionText';
 
 export function BeautyDetailsSection({
   data,
@@ -25,7 +19,14 @@ export function BeautyDetailsSection({
   const storySectionIndex = data.sections.findIndex((section) => /brand|story/i.test(section.heading));
   const storySection = storySectionIndex >= 0 ? data.sections[storySectionIndex] : undefined;
   const remainingSections = storySectionIndex >= 0 ? data.sections.filter((_, idx) => idx !== storySectionIndex) : data.sections;
-  const introText = stripHtml(product.description) || stripHtml(remainingSections?.[0]?.content);
+  const formattedDescription =
+    formatDescriptionText(product.description) || formatDescriptionText(remainingSections?.[0]?.content);
+  const descriptionParagraphs = splitParagraphs(formattedDescription);
+  const introText =
+    descriptionParagraphs.find((p) => !isLikelyHeadingParagraph(p)) || descriptionParagraphs[0] || '';
+
+  const formattedBrandStory = formatDescriptionText(product.brand_story || storySection?.content);
+  const brandStoryParagraphs = splitParagraphs(formattedBrandStory);
 
   return (
     <div className="py-4">
@@ -45,7 +46,9 @@ export function BeautyDetailsSection({
         <h2 className="text-xl font-serif tracking-wide">{product.title}</h2>
         {product.subtitle ? <p className="mt-2 text-sm text-muted-foreground">{product.subtitle}</p> : null}
         {introText ? (
-          <div className="mt-4 text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">{introText}</div>
+          <p className="mt-4 text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto whitespace-pre-line">
+            {introText}
+          </p>
         ) : null}
       </div>
 
@@ -67,10 +70,26 @@ export function BeautyDetailsSection({
         </div>
       ) : null}
 
-      {product.brand_story || storySection ? (
+      {formattedBrandStory ? (
         <div className="px-3 py-6">
           <h3 className="text-sm font-semibold mb-2">Brand Story</h3>
-          <p className="text-sm text-muted-foreground leading-relaxed">{product.brand_story || storySection?.content}</p>
+          {brandStoryParagraphs.length ? (
+            <div className="space-y-2">
+              {brandStoryParagraphs.map((paragraph, idx) =>
+                isLikelyHeadingParagraph(paragraph) ? (
+                  <div key={`${paragraph}-${idx}`} className="text-[11px] font-semibold tracking-wide text-foreground">
+                    {paragraph}
+                  </div>
+                ) : (
+                  <p key={`${paragraph}-${idx}`} className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+                    {paragraph}
+                  </p>
+                ),
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground leading-relaxed">{formattedBrandStory}</p>
+          )}
         </div>
       ) : null}
 

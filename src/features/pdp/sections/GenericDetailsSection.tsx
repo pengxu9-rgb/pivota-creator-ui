@@ -3,13 +3,7 @@
 import type { MediaGalleryData, Product, ProductDetailsData } from '@/features/pdp/types';
 import { DetailsAccordion } from '@/features/pdp/sections/DetailsAccordion';
 import { normalizeMediaUrl } from '@/features/pdp/utils/mediaUrl';
-
-function stripHtml(input?: string) {
-  return String(input || '')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
+import { formatDescriptionText, isLikelyHeadingParagraph, splitParagraphs } from '@/lib/formatDescriptionText';
 
 export function GenericDetailsSection({
   data,
@@ -22,7 +16,8 @@ export function GenericDetailsSection({
 }) {
   const primarySection = data.sections[0];
   const secondarySections = data.sections.slice(1);
-  const description = stripHtml(primarySection?.content || product.description);
+  const description = formatDescriptionText(primarySection?.content || product.description);
+  const descriptionParagraphs = splitParagraphs(description);
   const detailImages = (media?.items || []).slice(1, 3);
 
   return (
@@ -30,7 +25,26 @@ export function GenericDetailsSection({
       <h2 className="text-sm font-semibold mb-2">Product Details</h2>
       <div className="mb-3">
         <h3 className="text-sm font-semibold mb-1.5">{primarySection?.heading || 'Fabric & Care'}</h3>
-        <p className="text-sm text-muted-foreground leading-relaxed">{description || 'Details not available.'}</p>
+        {descriptionParagraphs.length ? (
+          <div className="space-y-2">
+            {descriptionParagraphs.map((paragraph, idx) =>
+              isLikelyHeadingParagraph(paragraph) ? (
+                <div key={`${paragraph}-${idx}`} className="text-[11px] font-semibold tracking-wide text-foreground">
+                  {paragraph}
+                </div>
+              ) : (
+                <p
+                  key={`${paragraph}-${idx}`}
+                  className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line"
+                >
+                  {paragraph}
+                </p>
+              ),
+            )}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground leading-relaxed">Details not available.</p>
+        )}
       </div>
 
       {detailImages.length ? (
