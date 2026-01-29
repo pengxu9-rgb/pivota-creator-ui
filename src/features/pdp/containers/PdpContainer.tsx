@@ -829,7 +829,7 @@ export function PdpContainer({
         <div className="fixed inset-x-0 top-16 z-[2147483647] px-3">
           <div
             className={cn(
-              'mx-auto w-full max-w-md lg:max-w-5xl rounded-xl border px-3 py-2 text-xs shadow-md',
+              'mx-auto w-full max-w-md lg:max-w-6xl rounded-xl border px-3 py-2 text-xs shadow-md',
               notice.tone === 'error'
                 ? 'border-rose-200 bg-rose-50 text-rose-700'
                 : 'border-slate-900 bg-slate-900 text-white',
@@ -848,7 +848,7 @@ export function PdpContainer({
         )}
         style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
       >
-        <div className="mx-auto w-full max-w-md lg:max-w-5xl flex items-center gap-2 h-11 px-3 lg:px-6">
+        <div className="mx-auto w-full max-w-md lg:max-w-6xl flex items-center gap-2 h-11 px-3 lg:px-6">
           <button
             type="button"
             onClick={handleBack}
@@ -886,7 +886,7 @@ export function PdpContainer({
         </div>
         {navVisible ? (
           <div className="bg-white border-b border-border/60">
-            <div className="max-w-md lg:max-w-5xl mx-auto flex">
+            <div className="max-w-md lg:max-w-6xl mx-auto flex">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
@@ -908,81 +908,85 @@ export function PdpContainer({
         ) : null}
       </div>
 
-        <div className="mx-auto w-full max-w-md lg:max-w-5xl">
+        <div className="mx-auto w-full max-w-md lg:max-w-6xl lg:px-6">
         <div
           ref={(el) => {
             sectionRefs.current.product = el;
           }}
           style={{ scrollMarginTop }}
         >
-          <div className="pb-2">
-            <div className="relative">
-              <MediaGallery
-                data={galleryData}
-                title={payload.product.title}
-                fallbackUrl={heroUrl}
-                activeIndex={activeMediaIndex}
-                onSelect={(index) => setActiveMediaIndex(index)}
-                onOpenAll={() => setShowMediaSheet(true)}
-                aspectClass={resolvedMode === 'generic' ? 'aspect-square' : 'aspect-[6/5]'}
-                fit={resolvedMode === 'generic' ? 'object-contain' : 'object-cover'}
-              />
-            </div>
-
-            {resolvedMode === 'beauty' && variants.length > 1 ? (
-              <div className="border-b border-border bg-card py-1.5">
-                <div className="overflow-x-auto">
-                  <div className="flex items-center gap-1.5 px-3">
-                    {variants.slice(0, 4).map((variant) => {
-                      const isSelected = variant.variant_id === selectedVariant.variant_id;
-                      return (
-                        <button
-                          key={variant.variant_id}
-                          onClick={() => {
-                            handleVariantSelect(variant.variant_id);
-                            pdpTracking.track('pdp_action_click', { action_type: 'select_variant', variant_id: variant.variant_id });
-                          }}
-                          className={cn(
-                            'flex items-center gap-1.5 rounded-full border bg-card px-2.5 py-1 text-[10px] text-foreground whitespace-nowrap transition-colors',
-                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]',
-                            isSelected
-                              ? 'border-[color:var(--accent-600)] bg-[var(--accent-50)] text-[color:var(--accent-800)] font-semibold'
-                              : 'border-border hover:bg-muted/30 hover:border-muted-foreground/40',
-                          )}
-                        >
-                          {variant.swatch?.hex ? (
-                            <span
-                              className={cn(
-                                'h-3 w-3 rounded-full ring-1',
-                                isSelected ? 'ring-[color:var(--accent-600)]' : 'ring-border',
-                              )}
-                              style={{ backgroundColor: variant.swatch.hex }}
-                            />
-                          ) : null}
-                          <span>{variant.title}</span>
-                        </button>
-                      );
-                    })}
-                    {variants.length > 4 ? (
-                      <button
-                        onClick={() => setShowShadeSheet(true)}
-                        className="rounded-full border border-dashed border-border px-2.5 py-1 text-[10px] text-muted-foreground"
-                      >
-                        +{variants.length - 4} more
-                      </button>
-                    ) : null}
-                    <button
-                      onClick={() => setShowShadeSheet(true)}
-                      className="ml-auto text-[10px] text-primary font-medium whitespace-nowrap"
-                    >
-                      {variants.length} colors →
-                    </button>
-                  </div>
+          <div className="pb-2 lg:pb-6">
+            <div className="lg:grid lg:grid-cols-12 lg:gap-6">
+              <div className="lg:col-span-7">
+                <div className="relative lg:rounded-2xl lg:overflow-hidden lg:border lg:border-border lg:bg-card">
+                  <MediaGallery
+                    data={galleryData}
+                    title={payload.product.title}
+                    fallbackUrl={heroUrl}
+                    activeIndex={activeMediaIndex}
+                    onSelect={(index) => setActiveMediaIndex(index)}
+                    onOpenAll={() => setShowMediaSheet(true)}
+                    aspectClass={resolvedMode === 'generic' ? 'aspect-square lg:aspect-[4/3]' : 'aspect-[6/5] lg:aspect-[4/3]'}
+                    fit={resolvedMode === 'generic' ? 'object-contain' : 'object-cover'}
+                  />
                 </div>
-              </div>
-            ) : null}
 
-            <div className="px-3 py-1">
+                {resolvedMode === 'beauty' && variants.length > 1 ? (
+                  <div className="border-b border-border bg-card py-1.5 lg:border lg:rounded-xl lg:mt-3 lg:overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <div className="flex items-center gap-1.5 px-3 lg:px-3">
+                        {variants.slice(0, 4).map((variant) => {
+                          const isSelected = variant.variant_id === selectedVariant.variant_id;
+                          return (
+                            <button
+                              key={variant.variant_id}
+                              onClick={() => {
+                                handleVariantSelect(variant.variant_id);
+                                pdpTracking.track('pdp_action_click', { action_type: 'select_variant', variant_id: variant.variant_id });
+                              }}
+                              className={cn(
+                                'flex items-center gap-1.5 rounded-full border bg-card px-2.5 py-1 text-[10px] text-foreground whitespace-nowrap transition-colors',
+                                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]',
+                                isSelected
+                                  ? 'border-[color:var(--accent-600)] bg-[var(--accent-50)] text-[color:var(--accent-800)] font-semibold'
+                                  : 'border-border hover:bg-muted/30 hover:border-muted-foreground/40',
+                              )}
+                            >
+                              {variant.swatch?.hex ? (
+                                <span
+                                  className={cn(
+                                    'h-3 w-3 rounded-full ring-1',
+                                    isSelected ? 'ring-[color:var(--accent-600)]' : 'ring-border',
+                                  )}
+                                  style={{ backgroundColor: variant.swatch.hex }}
+                                />
+                              ) : null}
+                              <span>{variant.title}</span>
+                            </button>
+                          );
+                        })}
+                        {variants.length > 4 ? (
+                          <button
+                            onClick={() => setShowShadeSheet(true)}
+                            className="rounded-full border border-dashed border-border px-2.5 py-1 text-[10px] text-muted-foreground"
+                          >
+                            +{variants.length - 4} more
+                          </button>
+                        ) : null}
+                        <button
+                          onClick={() => setShowShadeSheet(true)}
+                          className="ml-auto text-[10px] text-primary font-medium whitespace-nowrap"
+                        >
+                          {variants.length} colors →
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="lg:col-span-5">
+                <div className="px-3 py-1 lg:px-0 lg:pt-2">
               <div className="flex items-baseline gap-2 flex-wrap">
                 <span className="text-[26px] font-semibold text-foreground leading-none">{formatPrice(displayPriceAmount, displayCurrency)}</span>
                 {!isInStock ? (
@@ -1172,11 +1176,13 @@ export function PdpContainer({
                   />
                 </div>
               ) : null}
+                </div>
+              </div>
             </div>
           </div>
 
           {showTrustBadges ? (
-            <div className="mx-3 mt-1.5 flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-1.5 text-[10px]">
+            <div className="mx-3 lg:mx-0 mt-1.5 flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-1.5 text-[10px]">
               {trustBadges.map((badge, idx) => (
                 <div key={`${badge}-${idx}`} className="flex items-center gap-2">
                   <span>{badge}</span>
@@ -1185,7 +1191,7 @@ export function PdpContainer({
               ))}
             </div>
           ) : (effectiveShippingEta?.length || effectiveReturns?.return_window_days) ? (
-            <div className="mx-3 rounded-lg bg-card border border-border px-3 py-1.5 text-xs text-muted-foreground flex flex-wrap gap-x-3 gap-y-1">
+            <div className="mx-3 lg:mx-0 rounded-lg bg-card border border-border px-3 py-1.5 text-xs text-muted-foreground flex flex-wrap gap-x-3 gap-y-1">
               {effectiveShippingEta?.length ? (
                 <span>
                   Shipping {effectiveShippingEta[0]}–{effectiveShippingEta[1]} days
@@ -1411,7 +1417,7 @@ export function PdpContainer({
         ? createPortal(
             <div className="fixed inset-x-0 bottom-0 z-[2147483646]">
               <div
-                className="mx-auto w-full max-w-md lg:max-w-5xl px-3 lg:px-6"
+                className="mx-auto w-full max-w-md lg:max-w-6xl px-3 lg:px-6"
                 style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
               >
                 <div className="rounded-2xl bg-white shadow-[0_-10px_24px_rgba(0,0,0,0.12)] overflow-hidden mb-2">
