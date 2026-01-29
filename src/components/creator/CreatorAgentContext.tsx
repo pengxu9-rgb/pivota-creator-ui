@@ -556,15 +556,9 @@ export function CreatorAgentProvider({
       base.id,
     )}${query ? `?${query}` : ""}`;
 
-    // In some mobile WebViews / Safari edge cases, `router.push` can be flaky
-    // when triggered from a scrollable card grid; a hard navigation is more reliable.
-    const isMobileViewport =
-      isMobile ||
-      (typeof window !== "undefined" &&
-        typeof window.matchMedia === "function" &&
-        window.matchMedia("(max-width: 1023px)").matches);
-
-    if (typeof window !== "undefined" && isMobileViewport) {
+    // In some WebViews / Safari edge cases, `router.push` can be flaky when
+    // triggered from a scrollable card grid; a hard navigation is more reliable.
+    if (typeof window !== "undefined") {
       window.location.assign(targetUrl);
       return;
     }
