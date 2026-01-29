@@ -829,7 +829,7 @@ export function PdpContainer({
         <div className="fixed inset-x-0 top-16 z-[2147483647] px-3">
           <div
             className={cn(
-              'mx-auto max-w-md rounded-xl border px-3 py-2 text-xs shadow-md',
+              'mx-auto w-full max-w-md lg:max-w-5xl rounded-xl border px-3 py-2 text-xs shadow-md',
               notice.tone === 'error'
                 ? 'border-rose-200 bg-rose-50 text-rose-700'
                 : 'border-slate-900 bg-slate-900 text-white',
@@ -848,7 +848,7 @@ export function PdpContainer({
         )}
         style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
       >
-        <div className="mx-auto max-w-md flex items-center gap-2 h-11 px-3">
+        <div className="mx-auto w-full max-w-md lg:max-w-5xl flex items-center gap-2 h-11 px-3 lg:px-6">
           <button
             type="button"
             onClick={handleBack}
@@ -886,7 +886,7 @@ export function PdpContainer({
         </div>
         {navVisible ? (
           <div className="bg-white border-b border-border/60">
-            <div className="max-w-md mx-auto flex">
+            <div className="max-w-md lg:max-w-5xl mx-auto flex">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
@@ -908,7 +908,7 @@ export function PdpContainer({
         ) : null}
       </div>
 
-        <div className="mx-auto w-full max-w-md">
+        <div className="mx-auto w-full max-w-md lg:max-w-5xl">
         <div
           ref={(el) => {
             sectionRefs.current.product = el;
@@ -1411,7 +1411,7 @@ export function PdpContainer({
         ? createPortal(
             <div className="fixed inset-x-0 bottom-0 z-[2147483646]">
               <div
-                className="mx-auto max-w-md px-3"
+                className="mx-auto w-full max-w-md lg:max-w-5xl px-3 lg:px-6"
                 style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
               >
                 <div className="rounded-2xl bg-white shadow-[0_-10px_24px_rgba(0,0,0,0.12)] overflow-hidden mb-2">
@@ -1555,7 +1555,7 @@ export function PdpContainer({
         }}
       />
       {offerDebugEnabled ? (
-        <details className="mx-auto max-w-md px-3 pb-2 text-xs text-muted-foreground">
+        <details className="mx-auto w-full max-w-md lg:max-w-5xl px-3 lg:px-6 pb-2 text-xs text-muted-foreground">
           <summary className="cursor-pointer select-none">Offer debug</summary>
           <div className="mt-2 rounded-xl border border-border bg-card/60 p-3 font-mono text-[11px] leading-relaxed">
             <div>selected_offer_id: {selectedOfferId || 'null'}</div>
