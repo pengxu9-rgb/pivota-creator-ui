@@ -543,35 +543,33 @@ export function CreatorAgentProvider({
   };
 
   const handleViewDetails = (base: Product) => {
-    // On mobile, navigate to full product detail page.
-    // On desktop, open the inline detail modal and let the layout render it.
+    // Always navigate to the full Product Detail page (mobile PDP) so the web PDP
+    // reuses the same renderer and stays consistent across devices.
+    const effectiveMerchantId =
+      base.merchantId || (base as any)?.merchant_id || null;
+    const params = new URLSearchParams();
+    if (effectiveMerchantId) {
+      params.set("merchant_id", effectiveMerchantId);
+    }
+    const query = params.toString();
+    const targetUrl = `/creator/${creator.slug}/product/${encodeURIComponent(
+      base.id,
+    )}${query ? `?${query}` : ""}`;
+
+    // In some mobile WebViews / Safari edge cases, `router.push` can be flaky
+    // when triggered from a scrollable card grid; a hard navigation is more reliable.
     const isMobileViewport =
       isMobile ||
       (typeof window !== "undefined" &&
         typeof window.matchMedia === "function" &&
         window.matchMedia("(max-width: 1023px)").matches);
 
-    if (isMobileViewport) {
-      const effectiveMerchantId =
-        base.merchantId || (base as any)?.merchant_id || null;
-      const params = new URLSearchParams();
-      if (effectiveMerchantId) {
-        params.set("merchant_id", effectiveMerchantId);
-      }
-      const query = params.toString();
-      const targetUrl = `/creator/${creator.slug}/product/${encodeURIComponent(
-        base.id,
-      )}${query ? `?${query}` : ""}`;
-      // In some mobile WebViews / Safari edge cases, `router.push` can be flaky
-      // when triggered from a scrollable card grid; a hard navigation is more reliable.
-      if (typeof window !== "undefined") {
-        window.location.assign(targetUrl);
-      } else {
-        router.push(targetUrl);
-      }
-    } else {
-      openDetail(base);
+    if (typeof window !== "undefined" && isMobileViewport) {
+      window.location.assign(targetUrl);
+      return;
     }
+
+    router.push(targetUrl);
   };
 
   const userQueries = useMemo(
