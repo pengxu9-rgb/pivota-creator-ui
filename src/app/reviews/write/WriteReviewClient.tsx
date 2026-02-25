@@ -3,14 +3,28 @@
 // NOTE: Kept as a separate client component so `page.tsx` can wrap it in `Suspense`
 // (required by Next.js when using `useSearchParams`).
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { accountsMe, createReviewFromUser, getReviewEligibility, type AccountsUser } from "@/lib/accountsClient";
+import {
+  accountsMe,
+  attachReviewMediaFromUser,
+  createReviewFromUser,
+  getPdpV2Personalization,
+  getReviewEligibility,
+  type AccountsUser,
+  type UgcCapabilities,
+} from "@/lib/accountsClient";
 import type { PDPPayload } from "@/features/pdp/types";
+import { pdpTracking } from "@/features/pdp/tracking";
 import { cn } from "@/lib/utils";
+
+const MAX_MEDIA_FILES = 5;
+const MAX_MEDIA_BYTES = 10 * 1024 * 1024;
+const ALLOWED_MEDIA_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+const ALLOWED_MEDIA_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp", "gif"]);
 
 type TokenSubject = {
   merchant_id: string;
@@ -208,6 +222,23 @@ function safeString(input: unknown): string {
   return String(input);
 }
 
+function isAllowedMediaFile(file: File): boolean {
+  const type = String(file.type || "").trim().toLowerCase();
+  if (type && ALLOWED_MEDIA_TYPES.has(type)) return true;
+  const ext = String(file.name || "")
+    .split(".")
+    .pop()
+    ?.trim()
+    .toLowerCase();
+  return Boolean(ext && ALLOWED_MEDIA_EXTENSIONS.has(ext));
+}
+
+function readReviewIdFromCapabilities(caps?: UgcCapabilities | null): number | null {
+  const rid = Number((caps as any)?.review?.review_id);
+  if (!Number.isFinite(rid) || rid <= 0) return null;
+  return Math.trunc(rid);
+}
+
 export default function WriteReviewPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -216,6 +247,7 @@ export default function WriteReviewPage() {
     (searchParams.get("product_id") || searchParams.get("productId") || "").trim() || null;
   const merchantIdParam =
     (searchParams.get("merchant_id") || searchParams.get("merchantId") || "").trim() || null;
+  const entryParam = (searchParams.get("entry") || "").trim().toLowerCase();
 
   const [accountsUser, setAccountsUser] = useState<AccountsUser | null>(null);
   const [authChecking, setAuthChecking] = useState(true);
@@ -228,6 +260,8 @@ export default function WriteReviewPage() {
   const [inAppPdp, setInAppPdp] = useState<{ payload: PDPPayload; subject: any | null } | null>(null);
   const [inAppEligibility, setInAppEligibility] = useState<ReviewEligibility | null>(null);
   const [invitationEligibility, setInvitationEligibility] = useState<ReviewEligibility | null>(null);
+  const [inAppCapabilities, setInAppCapabilities] = useState<UgcCapabilities | null>(null);
+  const [invitationCapabilities, setInvitationCapabilities] = useState<UgcCapabilities | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -237,9 +271,16 @@ export default function WriteReviewPage() {
   const [rating, setRating] = useState(5);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const [selectedMediaFiles, setSelectedMediaFiles] = useState<File[]>([]);
+  const mediaInputRef = useRef<HTMLInputElement | null>(null);
 
   const subjects = useMemo(() => submissionPayload?.subjects || [], [submissionPayload]);
   const activeSubject = subjects[selectedSubjectIdx] || null;
+  const inAppExistingReviewId = useMemo(() => readReviewIdFromCapabilities(inAppCapabilities), [inAppCapabilities]);
+  const invitationExistingReviewId = useMemo(
+    () => readReviewIdFromCapabilities(invitationCapabilities),
+    [invitationCapabilities],
+  );
   const mode = useMemo(() => {
     if (invitationToken) return "invitation";
     if (productIdParam) return "in_app";
@@ -369,10 +410,12 @@ export default function WriteReviewPage() {
     async function loadProduct() {
       if (mode !== "invitation") {
         setProduct(null);
+        setInvitationCapabilities(null);
         return;
       }
       if (!activeSubject) {
         setProduct(null);
+        setInvitationCapabilities(null);
         return;
       }
       try {
@@ -398,23 +441,35 @@ export default function WriteReviewPage() {
     const run = async () => {
       if (mode !== "invitation") {
         setInvitationEligibility(null);
+        setInvitationCapabilities(null);
         return;
       }
       if (!accountsUserId) {
         setInvitationEligibility(null);
+        setInvitationCapabilities(null);
         return;
       }
       if (!invitationProductIdForEligibility) {
         setInvitationEligibility(null);
+        setInvitationCapabilities(null);
         return;
       }
 
       try {
-        const elig = await getReviewEligibility({
-          productId: invitationProductIdForEligibility,
-          ...(invitationProductGroupIdForEligibility ? { productGroupId: invitationProductGroupIdForEligibility } : {}),
-        });
-        if (!cancelled) setInvitationEligibility(elig);
+        const [elig, personalization] = await Promise.all([
+          getReviewEligibility({
+            productId: invitationProductIdForEligibility,
+            ...(invitationProductGroupIdForEligibility ? { productGroupId: invitationProductGroupIdForEligibility } : {}),
+          }),
+          getPdpV2Personalization({
+            productId: invitationProductIdForEligibility,
+            ...(invitationProductGroupIdForEligibility ? { productGroupId: invitationProductGroupIdForEligibility } : {}),
+          }),
+        ]);
+        if (!cancelled) {
+          setInvitationEligibility(elig);
+          setInvitationCapabilities(personalization || null);
+        }
       } catch {
         // Ignore eligibility failures; server will enforce on submit.
       }
@@ -430,13 +485,19 @@ export default function WriteReviewPage() {
     let cancelled = false;
 
     const run = async () => {
-      if (mode !== "in_app" || !productIdParam) return;
+      if (mode !== "in_app" || !productIdParam) {
+        setInAppPdp(null);
+        setInAppEligibility(null);
+        setInAppCapabilities(null);
+        return;
+      }
 
       setLoading(true);
       setSubmissionToken(null);
       setSubmissionPayload(null);
       setInAppPdp(null);
       setInAppEligibility(null);
+      setInAppCapabilities(null);
 
       try {
         const pdp = await fetchCreatorPdp({
@@ -448,11 +509,20 @@ export default function WriteReviewPage() {
         setInAppPdp(pdp);
 
         if (accountsUserId) {
-          const elig = await getReviewEligibility({
-            productId: productIdParam,
-            ...(pdp.payload.product_group_id ? { productGroupId: pdp.payload.product_group_id } : {}),
-          });
-          if (!cancelled) setInAppEligibility(elig);
+          const [elig, personalization] = await Promise.all([
+            getReviewEligibility({
+              productId: productIdParam,
+              ...(pdp.payload.product_group_id ? { productGroupId: pdp.payload.product_group_id } : {}),
+            }),
+            getPdpV2Personalization({
+              productId: productIdParam,
+              ...(pdp.payload.product_group_id ? { productGroupId: pdp.payload.product_group_id } : {}),
+            }),
+          ]);
+          if (!cancelled) {
+            setInAppEligibility(elig);
+            setInAppCapabilities(personalization || null);
+          }
         }
       } catch (err) {
         console.error(err);
@@ -468,66 +538,194 @@ export default function WriteReviewPage() {
     };
   }, [mode, productIdParam, merchantIdParam, accountsUserId]);
 
+  const handleMediaInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const incoming = Array.from(event.target.files || []);
+    if (!incoming.length) return;
+
+    let invalidType = 0;
+    let tooLarge = 0;
+    let overflow = 0;
+
+    setSelectedMediaFiles((prev) => {
+      const next = [...prev];
+      for (const file of incoming) {
+        if (next.length >= MAX_MEDIA_FILES) {
+          overflow += 1;
+          continue;
+        }
+        if (!isAllowedMediaFile(file)) {
+          invalidType += 1;
+          continue;
+        }
+        if (file.size > MAX_MEDIA_BYTES) {
+          tooLarge += 1;
+          continue;
+        }
+        next.push(file);
+      }
+      return next;
+    });
+
+    if (invalidType > 0) {
+      setNotice({ message: "Only JPG, PNG, WEBP, or GIF images are supported.", tone: "info" });
+    } else if (tooLarge > 0) {
+      setNotice({ message: "Each image must be 10MB or smaller.", tone: "info" });
+    } else if (overflow > 0) {
+      setNotice({ message: `You can upload up to ${MAX_MEDIA_FILES} images.`, tone: "info" });
+    }
+
+    event.target.value = "";
+  };
+
+  const removeMediaAt = (index: number) => {
+    setSelectedMediaFiles((prev) => prev.filter((_, idx) => idx !== index));
+  };
+
+  const uploadSelectedMedia = async (targetReviewId: number): Promise<{ success: number; failed: number }> => {
+    if (!selectedMediaFiles.length) return { success: 0, failed: 0 };
+
+    let success = 0;
+    let failed = 0;
+    for (const file of selectedMediaFiles) {
+      try {
+        await attachReviewMediaFromUser({ reviewId: targetReviewId, file });
+        success += 1;
+      } catch {
+        failed += 1;
+      }
+    }
+    return { success, failed };
+  };
+
+  const trackUploadEvent = (
+    eventName: "ugc_upload_start" | "ugc_upload_success" | "ugc_upload_partial_fail",
+    payload: Record<string, unknown>,
+  ) => {
+    pdpTracking.track(eventName, {
+      flow: mode,
+      entry: entryParam || null,
+      product_id: productIdParam || invitationProductIdForEligibility || null,
+      merchant_id: merchantIdParam || activeSubject?.merchant_id || null,
+      ...payload,
+    });
+  };
+
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (submitting) return;
+    if (authChecking) return;
+
+    const redirect = `${window.location.pathname}${window.location.search}`;
+    const mediaCount = selectedMediaFiles.length;
+    const hasMedia = mediaCount > 0;
+    const redirectToLogin = () => {
+      setNotice({ message: "Please sign in to write a review.", tone: "info" });
+      router.push(`/account/login?return_to=${encodeURIComponent(redirect)}`);
+    };
 
     if (mode === "invitation") {
       if (!activeSubject) return;
-
-      if (authChecking) return;
-
       if (!accountsUser) {
-        const redirect = `${window.location.pathname}${window.location.search}`;
-        setNotice({ message: "Please sign in to write a review.", tone: "info" });
-        router.push(`/account/login?return_to=${encodeURIComponent(redirect)}`);
+        redirectToLogin();
         return;
       }
 
-      if (invitationEligibility && !invitationEligibility.eligible) {
-        const reason = String(invitationEligibility.reason || "").toUpperCase();
-        if (reason === "ALREADY_REVIEWED") {
-          setNotice({ message: "You already reviewed this product.", tone: "info" });
-        }
+      const reason = String(invitationEligibility?.reason || "").toUpperCase();
+      const canUseExistingReview = reason === "ALREADY_REVIEWED" && invitationExistingReviewId != null;
+      if (invitationEligibility && !invitationEligibility.eligible && !canUseExistingReview) {
+        setNotice({
+          message:
+            reason === "ALREADY_REVIEWED"
+              ? "You already reviewed this product."
+              : "Only purchasers can write a review.",
+          tone: "info",
+        });
         return;
       }
-
-      if (!invitationProductIdForEligibility) {
+      if (canUseExistingReview && !hasMedia) {
+        setNotice({ message: "You already reviewed this product. Add photos to upload.", tone: "info" });
+        return;
+      }
+      if (!invitationProductIdForEligibility && !canUseExistingReview) {
         setNotice({ message: "Missing product context.", tone: "error" });
         return;
       }
 
       const canRate = invitationEligibility?.canRate ?? true;
       const ratingToSend = canRate ? rating : null;
-      if (!canRate && !title.trim() && !body.trim()) {
+      if (!canUseExistingReview && !canRate && !title.trim() && !body.trim()) {
         setNotice({ message: "Please write a short comment (ratings are for verified buyers).", tone: "info" });
         return;
       }
 
       setSubmitting(true);
       try {
-        const data = await createReviewFromUser({
-          productId: invitationProductIdForEligibility,
-          ...(invitationProductGroupIdForEligibility ? { productGroupId: invitationProductGroupIdForEligibility } : {}),
-          subject: {
-            merchant_id: activeSubject.merchant_id,
-            platform: activeSubject.platform,
-            platform_product_id: activeSubject.platform_product_id,
-            variant_id: activeSubject.variant_id || null,
-          },
-          rating: ratingToSend,
-          title: title.trim() || null,
-          body: body.trim() || null,
-        });
+        let targetReviewId = invitationExistingReviewId;
+        let createdReview = false;
 
-        const rid = Number((data as any)?.review_id);
-        if (Number.isFinite(rid)) setReviewId(rid);
-        setNotice({ message: "Review submitted.", tone: "info" });
+        if (!targetReviewId) {
+          const data = await createReviewFromUser({
+            productId: invitationProductIdForEligibility,
+            ...(invitationProductGroupIdForEligibility ? { productGroupId: invitationProductGroupIdForEligibility } : {}),
+            subject: {
+              merchant_id: activeSubject.merchant_id,
+              platform: activeSubject.platform,
+              platform_product_id: activeSubject.platform_product_id,
+              variant_id: activeSubject.variant_id || null,
+            },
+            rating: ratingToSend,
+            title: title.trim() || null,
+            body: body.trim() || null,
+          });
+
+          const rid = Number((data as any)?.review_id);
+          if (!Number.isFinite(rid) || rid <= 0) throw new Error("Missing review id.");
+          targetReviewId = Math.trunc(rid);
+          createdReview = true;
+        }
+
+        if (hasMedia) {
+          trackUploadEvent("ugc_upload_start", {
+            review_id: targetReviewId,
+            file_count: mediaCount,
+            created_review: createdReview,
+          });
+        }
+        const uploadSummary = await uploadSelectedMedia(targetReviewId);
+        setReviewId(targetReviewId);
+        setSelectedMediaFiles([]);
+        if (mediaInputRef.current) mediaInputRef.current.value = "";
+
+        if (hasMedia) {
+          if (uploadSummary.success === mediaCount) {
+            trackUploadEvent("ugc_upload_success", {
+              review_id: targetReviewId,
+              file_count: mediaCount,
+              success_count: uploadSummary.success,
+              failed_count: uploadSummary.failed,
+              created_review: createdReview,
+            });
+            setNotice({ message: createdReview ? "Review and photos submitted." : "Photos uploaded.", tone: "info" });
+          } else {
+            trackUploadEvent("ugc_upload_partial_fail", {
+              review_id: targetReviewId,
+              file_count: mediaCount,
+              success_count: uploadSummary.success,
+              failed_count: uploadSummary.failed,
+              created_review: createdReview,
+            });
+            if (uploadSummary.success > 0) {
+              setNotice({ message: `Uploaded ${uploadSummary.success} photo(s); ${uploadSummary.failed} failed.`, tone: "info" });
+            } else {
+              setNotice({ message: createdReview ? "Review submitted, but photo upload failed." : "Photo upload failed.", tone: "error" });
+            }
+          }
+        } else {
+          setNotice({ message: createdReview ? "Review submitted." : "Review updated.", tone: "info" });
+        }
       } catch (err: any) {
         if (err?.code === "NOT_AUTHENTICATED" || err?.code === "UNAUTHENTICATED" || err?.status === 401) {
-          const redirect = `${window.location.pathname}${window.location.search}`;
-          setNotice({ message: "Please sign in to write a review.", tone: "info" });
-          router.push(`/account/login?return_to=${encodeURIComponent(redirect)}`);
+          redirectToLogin();
         } else if (err?.code === "NOT_VERIFIED_FOR_RATING") {
           setNotice({ message: "Ratings are available for verified buyers. Please submit a comment without a rating.", tone: "info" });
         } else if (err?.code === "NOT_PURCHASER") {
@@ -551,101 +749,148 @@ export default function WriteReviewPage() {
     }
 
     if (mode !== "in_app" || !productIdParam || !inAppPdp?.payload) return;
-
-    if (authChecking) return;
-
     if (!accountsUser) {
-      const redirect = `${window.location.pathname}${window.location.search}`;
-      setNotice({ message: "Please sign in to write a review.", tone: "info" });
-      router.push(`/account/login?return_to=${encodeURIComponent(redirect)}`);
+      redirectToLogin();
       return;
     }
 
-    if (inAppEligibility && !inAppEligibility.eligible) {
-      const reason = String(inAppEligibility.reason || "").toUpperCase();
-      if (reason === "ALREADY_REVIEWED") {
-        setNotice({ message: "You already reviewed this product.", tone: "info" });
-      }
+    const reason = String(inAppEligibility?.reason || "").toUpperCase();
+    const canUseExistingReview = reason === "ALREADY_REVIEWED" && inAppExistingReviewId != null;
+    if (inAppEligibility && !inAppEligibility.eligible && !canUseExistingReview) {
+      setNotice({
+        message:
+          reason === "ALREADY_REVIEWED"
+            ? "You already reviewed this product."
+            : "Only purchasers can write a review.",
+        tone: "info",
+      });
+      return;
+    }
+    if (canUseExistingReview && !hasMedia) {
+      setNotice({ message: "You already reviewed this product. Add photos to upload.", tone: "info" });
       return;
     }
 
     const canRate = inAppEligibility?.canRate ?? true;
     const ratingToSend = canRate ? rating : null;
-    if (!canRate && !title.trim() && !body.trim()) {
+    if (!canUseExistingReview && !canRate && !title.trim() && !body.trim()) {
       setNotice({ message: "Please write a short comment (ratings are for verified buyers).", tone: "info" });
       return;
     }
 
     setSubmitting(true);
     try {
-      const canonicalRaw =
-        (inAppPdp.subject as any)?.canonical_product_ref ||
-        (inAppPdp.subject as any)?.canonicalProductRef ||
-        null;
+      let targetReviewId = inAppExistingReviewId;
+      let createdReview = false;
 
-      let resolvedMerchantId =
-        safeString(canonicalRaw?.merchant_id || canonicalRaw?.merchantId).trim() ||
-        safeString(merchantIdParam).trim() ||
-        safeString((inAppPdp.payload as any)?.product?.merchant_id).trim() ||
-        safeString((inAppPdp.payload as any)?.offers?.[0]?.merchant_id).trim();
+      if (!targetReviewId) {
+        const canonicalRaw =
+          (inAppPdp.subject as any)?.canonical_product_ref ||
+          (inAppPdp.subject as any)?.canonicalProductRef ||
+          null;
 
-      let resolvedPlatform =
-        safeString(canonicalRaw?.platform).trim().toLowerCase() ||
-        parsePlatformFromProductKey(
-          safeString((inAppPdp.subject as any)?.product_key || (inAppPdp.subject as any)?.productKey),
-        ) ||
-        "";
+        let resolvedMerchantId =
+          safeString(canonicalRaw?.merchant_id || canonicalRaw?.merchantId).trim() ||
+          safeString(merchantIdParam).trim() ||
+          safeString((inAppPdp.payload as any)?.product?.merchant_id).trim() ||
+          safeString((inAppPdp.payload as any)?.offers?.[0]?.merchant_id).trim();
 
-      let resolvedPlatformProductId =
-        safeString(
-          canonicalRaw?.platform_product_id ||
-            canonicalRaw?.platformProductId ||
-            canonicalRaw?.product_id ||
-            canonicalRaw?.productId,
-        ).trim() || productIdParam;
+        let resolvedPlatform =
+          safeString(canonicalRaw?.platform).trim().toLowerCase() ||
+          parsePlatformFromProductKey(
+            safeString((inAppPdp.subject as any)?.product_key || (inAppPdp.subject as any)?.productKey),
+          ) ||
+          "";
 
-      if ((!resolvedPlatform || !resolvedPlatformProductId) && resolvedMerchantId) {
-        const fromDetail = await fetchSubjectRefFromProductDetail({
-          merchantId: resolvedMerchantId,
-          productId: resolvedPlatformProductId || productIdParam,
-        });
-        if (fromDetail) {
-          if (!resolvedPlatform) resolvedPlatform = fromDetail.platform;
-          if (!resolvedPlatformProductId) resolvedPlatformProductId = fromDetail.platform_product_id;
+        let resolvedPlatformProductId =
+          safeString(
+            canonicalRaw?.platform_product_id ||
+              canonicalRaw?.platformProductId ||
+              canonicalRaw?.product_id ||
+              canonicalRaw?.productId,
+          ).trim() || productIdParam;
+
+        if ((!resolvedPlatform || !resolvedPlatformProductId) && resolvedMerchantId) {
+          const fromDetail = await fetchSubjectRefFromProductDetail({
+            merchantId: resolvedMerchantId,
+            productId: resolvedPlatformProductId || productIdParam,
+          });
+          if (fromDetail) {
+            if (!resolvedPlatform) resolvedPlatform = fromDetail.platform;
+            if (!resolvedPlatformProductId) resolvedPlatformProductId = fromDetail.platform_product_id;
+          }
         }
+
+        if (!resolvedPlatform) {
+          const inferred = inferPlatformFromProductId(resolvedPlatformProductId || productIdParam);
+          if (inferred) resolvedPlatform = inferred;
+        }
+
+        if (!resolvedMerchantId || !resolvedPlatform || !resolvedPlatformProductId) {
+          throw new Error("Missing canonical product reference.");
+        }
+
+        const data = await createReviewFromUser({
+          productId: productIdParam,
+          ...(inAppPdp.payload.product_group_id ? { productGroupId: inAppPdp.payload.product_group_id } : {}),
+          subject: {
+            merchant_id: resolvedMerchantId,
+            platform: resolvedPlatform,
+            platform_product_id: resolvedPlatformProductId,
+            variant_id: null,
+          },
+          rating: ratingToSend,
+          title: title.trim() || null,
+          body: body.trim() || null,
+        });
+        const rid = Number((data as any)?.review_id);
+        if (!Number.isFinite(rid) || rid <= 0) throw new Error("Missing review id.");
+        targetReviewId = Math.trunc(rid);
+        createdReview = true;
       }
 
-      if (!resolvedPlatform) {
-        const inferred = inferPlatformFromProductId(resolvedPlatformProductId || productIdParam);
-        if (inferred) resolvedPlatform = inferred;
+      if (hasMedia) {
+        trackUploadEvent("ugc_upload_start", {
+          review_id: targetReviewId,
+          file_count: mediaCount,
+          created_review: createdReview,
+        });
       }
+      const uploadSummary = await uploadSelectedMedia(targetReviewId);
+      setReviewId(targetReviewId);
+      setSelectedMediaFiles([]);
+      if (mediaInputRef.current) mediaInputRef.current.value = "";
 
-      if (!resolvedMerchantId || !resolvedPlatform || !resolvedPlatformProductId) {
-        setNotice({ message: "Missing canonical product reference.", tone: "error" });
-        return;
+      if (hasMedia) {
+        if (uploadSummary.success === mediaCount) {
+          trackUploadEvent("ugc_upload_success", {
+            review_id: targetReviewId,
+            file_count: mediaCount,
+            success_count: uploadSummary.success,
+            failed_count: uploadSummary.failed,
+            created_review: createdReview,
+          });
+          setNotice({ message: createdReview ? "Review and photos submitted." : "Photos uploaded.", tone: "info" });
+        } else {
+          trackUploadEvent("ugc_upload_partial_fail", {
+            review_id: targetReviewId,
+            file_count: mediaCount,
+            success_count: uploadSummary.success,
+            failed_count: uploadSummary.failed,
+            created_review: createdReview,
+          });
+          if (uploadSummary.success > 0) {
+            setNotice({ message: `Uploaded ${uploadSummary.success} photo(s); ${uploadSummary.failed} failed.`, tone: "info" });
+          } else {
+            setNotice({ message: createdReview ? "Review submitted, but photo upload failed." : "Photo upload failed.", tone: "error" });
+          }
+        }
+      } else {
+        setNotice({ message: createdReview ? "Review submitted." : "Review updated.", tone: "info" });
       }
-
-      const data = await createReviewFromUser({
-        productId: productIdParam,
-        ...(inAppPdp.payload.product_group_id ? { productGroupId: inAppPdp.payload.product_group_id } : {}),
-        subject: {
-          merchant_id: resolvedMerchantId,
-          platform: resolvedPlatform,
-          platform_product_id: resolvedPlatformProductId,
-          variant_id: null,
-        },
-        rating: ratingToSend,
-        title: title.trim() || null,
-        body: body.trim() || null,
-      });
-      const rid = Number((data as any)?.review_id);
-      if (Number.isFinite(rid)) setReviewId(rid);
-      setNotice({ message: "Review submitted.", tone: "info" });
     } catch (err: any) {
       if (err?.code === "NOT_AUTHENTICATED" || err?.status === 401) {
-        const redirect = `${window.location.pathname}${window.location.search}`;
-        setNotice({ message: "Please sign in to write a review.", tone: "info" });
-        router.push(`/account/login?return_to=${encodeURIComponent(redirect)}`);
+        redirectToLogin();
       } else if (err?.code === "NOT_VERIFIED_FOR_RATING") {
         setNotice({ message: "Ratings are available for verified buyers. Please submit a comment without a rating.", tone: "info" });
       } else if (err?.code === "NOT_PURCHASER") {
@@ -680,6 +925,15 @@ export default function WriteReviewPage() {
 
   const activeEligibility = mode === "invitation" ? invitationEligibility : inAppEligibility;
   const canRate = activeEligibility?.canRate ?? true;
+  const invitationBlocked =
+    Boolean(invitationEligibility && !invitationEligibility.eligible) &&
+    !(
+      String(invitationEligibility?.reason || "").toUpperCase() === "ALREADY_REVIEWED" &&
+      invitationExistingReviewId != null
+    );
+  const inAppBlocked =
+    Boolean(inAppEligibility && !inAppEligibility.eligible) &&
+    !(String(inAppEligibility?.reason || "").toUpperCase() === "ALREADY_REVIEWED" && inAppExistingReviewId != null);
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-[#f8fbff] via-[#eef3fb] to-[#e6ecf7] text-slate-900">
@@ -762,9 +1016,9 @@ export default function WriteReviewPage() {
               </div>
               <div className="min-w-0 flex-1">
                 <div className="font-semibold text-slate-900 line-clamp-1">{productTitle}</div>
-                {mode === "in_app" && inAppEligibility && !inAppEligibility.eligible ? (
+                {mode === "in_app" && inAppBlocked ? (
                   <div className="mt-1 text-xs text-rose-600">
-                    {String(inAppEligibility.reason || "").toUpperCase() === "ALREADY_REVIEWED"
+                    {String(inAppEligibility?.reason || "").toUpperCase() === "ALREADY_REVIEWED"
                       ? "You already reviewed this product."
                       : "Only purchasers can write a review."}
                   </div>
@@ -826,20 +1080,20 @@ export default function WriteReviewPage() {
                   </Button>
                 </div>
               </div>
-            ) : mode === "invitation" && invitationEligibility && !invitationEligibility.eligible ? (
+            ) : mode === "invitation" && invitationBlocked ? (
               <div className="rounded-2xl border border-slate-200 bg-white/70 p-4 text-sm text-slate-600">
                 <div className="font-semibold text-slate-900">Not eligible</div>
                 <div className="mt-1">
-                  {String(invitationEligibility.reason || "").toUpperCase() === "ALREADY_REVIEWED"
+                  {String(invitationEligibility?.reason || "").toUpperCase() === "ALREADY_REVIEWED"
                     ? "You already reviewed this product."
                     : "Not eligible."}
                 </div>
               </div>
-            ) : mode === "in_app" && inAppEligibility && !inAppEligibility.eligible ? (
+            ) : mode === "in_app" && inAppBlocked ? (
               <div className="rounded-2xl border border-slate-200 bg-white/70 p-4 text-sm text-slate-600">
                 <div className="font-semibold text-slate-900">Not eligible</div>
                 <div className="mt-1">
-                  {String(inAppEligibility.reason || "").toUpperCase() === "ALREADY_REVIEWED"
+                  {String(inAppEligibility?.reason || "").toUpperCase() === "ALREADY_REVIEWED"
                     ? "You already reviewed this product."
                     : "Not eligible."}
                 </div>
@@ -879,6 +1133,59 @@ export default function WriteReviewPage() {
                     className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none focus:border-slate-900"
                     placeholder="What did you like or dislike?"
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-slate-900">Photos (optional)</label>
+                    <span className="text-xs text-slate-500">
+                      {selectedMediaFiles.length}/{MAX_MEDIA_FILES}
+                    </span>
+                  </div>
+                  {entryParam === "ugc_upload" ? (
+                    <p className="text-xs text-slate-500">
+                      Add photos from your gallery. Successful uploads are kept even if some files fail.
+                    </p>
+                  ) : null}
+                  <input
+                    ref={mediaInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    multiple
+                    className="hidden"
+                    onChange={handleMediaInputChange}
+                  />
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={submitting || selectedMediaFiles.length >= MAX_MEDIA_FILES}
+                      onClick={() => mediaInputRef.current?.click()}
+                    >
+                      Add photos
+                    </Button>
+                    <span className="text-xs text-slate-500">Max 5 images, 10MB each.</span>
+                  </div>
+                  {selectedMediaFiles.length ? (
+                    <div className="space-y-2">
+                      {selectedMediaFiles.map((file, idx) => (
+                        <div
+                          key={`${file.name}-${file.size}-${idx}`}
+                          className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700"
+                        >
+                          <span className="truncate pr-2">{file.name}</span>
+                          <button
+                            type="button"
+                            disabled={submitting}
+                            onClick={() => removeMediaAt(idx)}
+                            className="text-slate-500 hover:text-slate-900"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="flex items-center justify-between gap-3">

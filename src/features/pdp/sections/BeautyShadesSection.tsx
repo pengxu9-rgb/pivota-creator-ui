@@ -38,7 +38,9 @@ export function BeautyShadesSection({
       <div className="px-4 pb-6 border-b border-border">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-semibold">Shade Matching</h3>
-          <button className="text-sm text-primary font-medium">Take the quiz →</button>
+          <span className="text-sm text-muted-foreground font-medium cursor-default select-none" aria-disabled="true">
+            Take the quiz
+          </span>
         </div>
 
         <div className="flex items-center gap-3 mb-3">
@@ -57,9 +59,12 @@ export function BeautyShadesSection({
           Explore shades curated to complement a wide range of skin tones and finishes.
         </p>
 
-        <button className="w-full mt-4 py-3 text-center text-sm font-medium border border-border rounded-xl hover:bg-muted/50">
+        <div
+          aria-disabled="true"
+          className="w-full mt-4 py-3 text-center text-sm font-medium border border-border rounded-xl text-muted-foreground cursor-default select-none"
+        >
           View shade guide <ChevronRight className="h-4 w-4 inline ml-1" />
-        </button>
+        </div>
       </div>
 
       {popularLooks.length || showEmpty ? (
