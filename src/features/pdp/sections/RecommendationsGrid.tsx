@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Star, ChevronRight } from 'lucide-react';
 import type { RecommendationsData } from '@/features/pdp/types';
@@ -13,24 +14,54 @@ function formatPrice(amount: number, currency: string) {
   }
 }
 
-export function RecommendationsGrid({ data }: { data: RecommendationsData }) {
-  if (!data.items.length) return null;
+export function RecommendationsGrid({
+  data,
+  onOpenAll,
+  onLoadMore,
+  onItemClick,
+}: {
+  data: RecommendationsData;
+  onOpenAll?: () => void;
+  onLoadMore?: () => void;
+  onItemClick?: (item: RecommendationsData['items'][number], index: number) => void;
+}) {
+  const PAGE_SIZE = 6;
+  const totalItems = data.items.length;
+  const [visibleCount, setVisibleCount] = useState(() => Math.min(PAGE_SIZE, totalItems));
+
+  useEffect(() => {
+    setVisibleCount(Math.min(PAGE_SIZE, totalItems));
+  }, [totalItems]);
+
+  if (!totalItems) return null;
+
+  const visibleItems = data.items.slice(0, visibleCount);
+  const hasMore = visibleCount < totalItems;
+
   return (
     <div className="py-6">
       <div className="px-4 flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold">You May Also Like</h3>
-        <button className="text-xs text-muted-foreground flex items-center gap-1 hover:text-foreground">
+        <button
+          type="button"
+          onClick={() => {
+            setVisibleCount(totalItems);
+            onOpenAll?.();
+          }}
+          className="text-xs text-muted-foreground flex items-center gap-1 hover:text-foreground"
+        >
           View all <ChevronRight className="h-4 w-4" />
         </button>
       </div>
       <div className="px-4 grid grid-cols-2 gap-3">
-        {data.items.slice(0, 6).map((p) => (
+        {visibleItems.map((p, idx) => (
           <Link
             key={p.product_id}
             href={`${encodeURIComponent(p.product_id)}${
               p.merchant_id ? `?merchant_id=${encodeURIComponent(p.merchant_id)}` : ''
             }`}
             className="rounded-xl bg-card border border-border overflow-hidden hover:shadow-md transition-shadow"
+            onClick={() => onItemClick?.(p, idx)}
           >
             <div className="relative aspect-square bg-muted">
               {p.image_url ? (
@@ -65,9 +96,18 @@ export function RecommendationsGrid({ data }: { data: RecommendationsData }) {
           </Link>
         ))}
       </div>
-      <button className="w-full mt-4 py-3 text-sm text-muted-foreground hover:text-foreground">
-        Load more recommendations
-      </button>
+      {hasMore ? (
+        <button
+          type="button"
+          onClick={() => {
+            setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, totalItems));
+            onLoadMore?.();
+          }}
+          className="w-full mt-4 py-3 text-sm text-muted-foreground hover:text-foreground"
+        >
+          Load more recommendations
+        </button>
+      ) : null}
     </div>
   );
 }

@@ -71,14 +71,15 @@ async function callAccountsBase(
 ) {
   const url = `${base}${path}`;
   const { skipJson, headers, method, body, ...rest } = options as any;
+  const requestHeaders = new Headers(headers as HeadersInit);
+  if (!(body instanceof FormData) && !requestHeaders.has("Content-Type")) {
+    requestHeaders.set("Content-Type", "application/json");
+  }
   const res = await fetch(url, {
     ...rest,
     method: method || "GET",
     credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...(headers || {}),
-    },
+    headers: requestHeaders,
     body,
   });
 
@@ -221,6 +222,21 @@ export async function createReviewFromUser(args: {
       title: args.title == null ? null : String(args.title),
       body: args.body == null ? null : String(args.body),
     }),
+  });
+}
+
+export async function attachReviewMediaFromUser(args: {
+  reviewId: number;
+  file: File;
+}) {
+  const rid = Number(args.reviewId);
+  if (!Number.isFinite(rid) || rid <= 0) return null;
+  const form = new FormData();
+  form.append("file", args.file);
+  return callUgc(`/buyer/reviews/v1/reviews/${Math.trunc(rid)}/media/from_user`, {
+    method: "POST",
+    cache: "no-store",
+    body: form,
   });
 }
 

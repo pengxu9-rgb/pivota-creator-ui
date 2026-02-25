@@ -270,6 +270,10 @@ export function PdpContainer({
       product_id: payload.product.product_id,
     });
     pdpTracking.track('pdp_view', { pdp_mode: resolvedMode });
+    pdpTracking.track('placeholder_cta_click_removed', {
+      pdp_mode: resolvedMode,
+      removed_ctas: ['take_quiz', 'view_shade_guide', 'ai_fit'],
+    });
   }, [payload, resolvedMode]);
 
   useEffect(() => {
@@ -681,7 +685,7 @@ export function PdpContainer({
       ? 'anonymous'
       : reviewReason === 'ALREADY_REVIEWED'
         ? 'already_reviewed'
-        : canUploadMedia
+        : canUploadMedia || canWriteReview
           ? 'purchaser'
           : 'non_purchaser';
 
@@ -713,7 +717,11 @@ export function PdpContainer({
       reason: uploadReason || null,
     });
     if (canUploadMedia) {
-      notify('Uploads are coming soon.', 'info');
+      const params = new URLSearchParams();
+      params.set('product_id', productId);
+      if (payload.product.merchant_id) params.set('merchant_id', payload.product.merchant_id);
+      params.set('entry', 'ugc_upload');
+      router.push(`/reviews/write?${params.toString()}`);
       return;
     }
     if (uploadReason === 'NOT_AUTHENTICATED') {
@@ -1400,7 +1408,27 @@ export function PdpContainer({
           >
             <div className="px-3 py-3">
               {recommendations?.items?.length ? (
-                <RecommendationsGrid data={recommendations} />
+                <RecommendationsGrid
+                  data={recommendations}
+                  onOpenAll={() => {
+                    pdpTracking.track('pdp_action_click', {
+                      action_type: 'open_similar_all',
+                    });
+                  }}
+                  onLoadMore={() => {
+                    pdpTracking.track('pdp_action_click', {
+                      action_type: 'load_more_similar',
+                    });
+                  }}
+                  onItemClick={(item, index) => {
+                    pdpTracking.track('pdp_action_click', {
+                      action_type: 'open_similar_item',
+                      index,
+                      product_id: item.product_id,
+                      merchant_id: item.merchant_id || null,
+                    });
+                  }}
+                />
               ) : isRecommendationsLoading ? (
                 <RecommendationsSkeleton />
               ) : (

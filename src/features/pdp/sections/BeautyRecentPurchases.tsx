@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 export function BeautyRecentPurchases({
   items,
@@ -23,20 +23,37 @@ export function BeautyRecentPurchases({
   }, []);
 
   const hasItems = items.length > 0;
+
+  const displayItemsRaw = hasItems ? items : mockData.list;
+  const DEFAULT_VISIBLE = 3;
+  const [expanded, setExpanded] = useState(false);
+  useEffect(() => {
+    setExpanded(false);
+  }, [displayItemsRaw.length]);
+
   if (!hasItems && !showEmpty) return null;
 
-  const displayItems = hasItems ? items : mockData.list;
+  const displayItems = expanded ? displayItemsRaw : displayItemsRaw.slice(0, DEFAULT_VISIBLE);
   const displayCount = hasItems ? items.length : mockData.count;
+  const canToggle = displayItemsRaw.length > DEFAULT_VISIBLE;
 
   return (
     <div className="mt-4 px-3">
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-semibold">Recent Purchases ({displayCount})</h3>
-        <button className="text-xs text-muted-foreground">View all →</button>
+        {canToggle ? (
+          <button
+            type="button"
+            onClick={() => setExpanded((prev) => !prev)}
+            className="text-xs text-muted-foreground hover:text-foreground"
+          >
+            {expanded ? 'Collapse' : 'View all →'}
+          </button>
+        ) : null}
       </div>
       {displayItems.length ? (
         <div className="space-y-1">
-          {displayItems.slice(0, 3).map((purchase, idx) => (
+          {displayItems.map((purchase, idx) => (
             <div key={`${purchase.user_label}-${idx}`} className="flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
                 <div className="h-5 w-5 rounded-full bg-gradient-to-br from-pink-400 to-rose-500" />
@@ -55,4 +72,3 @@ export function BeautyRecentPurchases({
     </div>
   );
 }
-
