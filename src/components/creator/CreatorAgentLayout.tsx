@@ -28,11 +28,14 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
     isLoading,
     products,
     chatRecommendations,
+    chatRecommendationsPaging,
     accountsUser,
     authChecking,
     handleSend,
+    loadMoreChatRecommendations,
     similarBaseProduct,
     similarItems,
+    similarPaging,
     isSimilarLoading,
     similarError,
     detailProduct,
@@ -40,6 +43,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
     closeSimilar,
     closeDetail,
     handleSeeSimilar,
+    loadMoreSimilar,
     handleViewDetails,
     lastRequest,
     lastResponse,
@@ -337,7 +341,7 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                 Recommended pieces based on this chat:
               </p>
               <div className="flex gap-2 overflow-x-auto pb-1">
-                {chatRecommendations.slice(0, 10).map((p) => (
+                {chatRecommendations.map((p) => (
                   <div
                     key={`chat-rec-${p.id}`}
                     className="w-[220px] flex-shrink-0"
@@ -354,6 +358,18 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                   </div>
                 ))}
               </div>
+              {chatRecommendationsPaging.hasMore ? (
+                <button
+                  type="button"
+                  onClick={() => void loadMoreChatRecommendations()}
+                  disabled={chatRecommendationsPaging.isLoadingMore}
+                  className="text-[11px] text-[#8b6e59] underline underline-offset-2 disabled:opacity-60"
+                >
+                  {chatRecommendationsPaging.isLoadingMore
+                    ? "Loading..."
+                    : "Load more recommendations"}
+                </button>
+              ) : null}
             </div>
           )}
           {isLoading && (
@@ -630,22 +646,36 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                 {!isSimilarLoading &&
                   !similarError &&
                   similarItems.length > 0 && (
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                      {similarItems.slice(0, 9).map((item) => (
-                        <ProductCard
-                          key={item.product.id}
-                          product={item.product}
-                          creatorName={creator.name}
-                          creatorId={creator.id}
-                          creatorSlug={creator.slug}
-                          onSeeSimilar={handleSeeSimilar}
-                          onViewDetails={(p) => {
-                            closeSimilar();
-                            handleViewDetails(p);
-                          }}
-                        />
-                      ))}
-                    </div>
+                    <>
+                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                        {similarItems.map((item) => (
+                          <ProductCard
+                            key={item.product.id}
+                            product={item.product}
+                            creatorName={creator.name}
+                            creatorId={creator.id}
+                            creatorSlug={creator.slug}
+                            onSeeSimilar={handleSeeSimilar}
+                            onViewDetails={(p) => {
+                              closeSimilar();
+                              handleViewDetails(p);
+                            }}
+                          />
+                        ))}
+                      </div>
+                      {similarPaging.hasMore ? (
+                        <button
+                          type="button"
+                          onClick={() => void loadMoreSimilar()}
+                          disabled={similarPaging.isLoadingMore}
+                          className="mt-2 text-[11px] text-[#8b6e59] underline underline-offset-2 disabled:opacity-60"
+                        >
+                          {similarPaging.isLoadingMore
+                            ? "Loading..."
+                            : "Load more similar items"}
+                        </button>
+                      ) : null}
+                    </>
                   )}
               </div>
             </div>

@@ -81,6 +81,27 @@ function nonEmptyText(value: unknown, fallback: string): string {
   return s ? s : fallback;
 }
 
+const RECOMMENDATION_PAGE_STEP = 12;
+const NO_GROWTH_STOP_THRESHOLD = 2;
+
+function buildRecommendationKey(item: { product_id?: string; merchant_id?: string }) {
+  return `${String(item?.merchant_id || '').trim()}::${String(item?.product_id || '').trim()}`;
+}
+
+function mergeUniqueRecommendations(
+  current: RecommendationsData['items'],
+  incoming: RecommendationsData['items'],
+) {
+  const map = new Map<string, RecommendationsData['items'][number]>();
+  current.forEach((item) => map.set(buildRecommendationKey(item), item));
+  const before = map.size;
+  incoming.forEach((item) => map.set(buildRecommendationKey(item), item));
+  return {
+    merged: Array.from(map.values()),
+    added: map.size - before,
+  };
+}
+
 export function PdpContainer({
   payload,
   initialQuantity = 1,
@@ -160,6 +181,11 @@ export function PdpContainer({
   const details = getModuleData<ProductDetailsData>(payload, 'product_details');
   const reviews = getModuleData<ReviewsPreviewData>(payload, 'reviews_preview');
   const recommendations = getModuleData<RecommendationsData>(payload, 'recommendations');
+  const [recommendationItems, setRecommendationItems] = useState<RecommendationsData['items']>([]);
+  const [recommendationsPage, setRecommendationsPage] = useState(1);
+  const [recommendationsHasMore, setRecommendationsHasMore] = useState(false);
+  const [recommendationsLoadingMore, setRecommendationsLoadingMore] = useState(false);
+  const recommendationNoGrowthRef = useRef(0);
 
   const offers = useMemo(() => payload.offers ?? [], [payload.offers]);
   const offerIdFromQuery = useMemo(() => {
@@ -335,11 +361,65 @@ export function PdpContainer({
   const scrollMarginTop = headerHeight + navRowHeight + 14;
 
   const hasReviews = !!reviews;
-  const hasRecommendations = !!recommendations?.items?.length;
+  const hasRecommendations = recommendationItems.length > 0;
   const recommendationsState = payload.x_recommendations_state;
   const isRecommendationsLoading = recommendationsState === 'loading';
   const showRecommendationsSection =
     hasRecommendations || recommendationsState === 'loading' || recommendationsState === 'ready';
+
+  useEffect(() => {
+    const nextItems = mergeUniqueRecommendations(
+      [],
+      Array.isArray(recommendations?.items) ? recommendations.items : [],
+    ).merged;
+    setRecommendationItems(nextItems);
+    setRecommendationsPage(1);
+    setRecommendationsHasMore(nextItems.length > 0);
+    setRecommendationsLoadingMore(false);
+    recommendationNoGrowthRef.current = 0;
+  }, [payload.product.product_id, payload.product.merchant_id, recommendations?.items]);
+
+  const handleLoadMoreRecommendations = async () => {
+    if (recommendationsLoadingMore || !recommendationsHasMore) return;
+    const productId = String(payload.product.product_id || '').trim();
+    const merchantId = String(payload.product.merchant_id || '').trim();
+    if (!productId || !merchantId) {
+      setRecommendationsHasMore(false);
+      return;
+    }
+    const nextPage = Math.max(1, recommendationsPage + 1);
+    const nextLimit = Math.max(RECOMMENDATION_PAGE_STEP, nextPage * RECOMMENDATION_PAGE_STEP);
+
+    setRecommendationsLoadingMore(true);
+    try {
+      const res = await fetch('/api/creator-agent/recommendations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          merchantId,
+          productId,
+          limit: nextLimit,
+        }),
+      });
+      if (!res.ok) throw new Error(`Failed with status ${res.status}`);
+      const data = (await res.json()) as { items?: RecommendationsData['items'] };
+      const incoming = Array.isArray(data.items) ? data.items : [];
+      const { merged, added } = mergeUniqueRecommendations(recommendationItems, incoming);
+      setRecommendationItems(merged);
+
+      const noGrowthCount = added === 0 ? recommendationNoGrowthRef.current + 1 : 0;
+      recommendationNoGrowthRef.current = noGrowthCount;
+      const hasMore = incoming.length >= nextLimit && noGrowthCount < NO_GROWTH_STOP_THRESHOLD;
+
+      setRecommendationsPage(nextPage);
+      setRecommendationsHasMore(hasMore);
+    } catch (error) {
+      console.error('loadMore recommendations error', error);
+      setRecommendationsHasMore(false);
+    } finally {
+      setRecommendationsLoadingMore(false);
+    }
+  };
   const showShades = resolvedMode === 'beauty' && variants.length > 1;
   const showSizeGuide = resolvedMode === 'generic' && !!payload.product.size_guide;
   const showSizeHelper = useMemo(() => {
@@ -1407,9 +1487,14 @@ export function PdpContainer({
             style={{ scrollMarginTop }}
           >
             <div className="px-3 py-3">
-              {recommendations?.items?.length ? (
+              {recommendationItems.length ? (
                 <RecommendationsGrid
-                  data={recommendations}
+                  data={{
+                    ...(recommendations || { strategy: 'find_similar_products', items: [] }),
+                    items: recommendationItems,
+                  }}
+                  canLoadMore={recommendationsHasMore}
+                  isLoadingMore={recommendationsLoadingMore}
                   onOpenAll={() => {
                     pdpTracking.track('pdp_action_click', {
                       action_type: 'open_similar_all',
@@ -1419,6 +1504,7 @@ export function PdpContainer({
                     pdpTracking.track('pdp_action_click', {
                       action_type: 'load_more_similar',
                     });
+                    void handleLoadMoreRecommendations();
                   }}
                   onItemClick={(item, index) => {
                     pdpTracking.track('pdp_action_click', {

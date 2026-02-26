@@ -481,7 +481,7 @@ export default function CreatorProductDetailPage() {
           body: JSON.stringify({
             merchantId: mid,
             productId: pid,
-            limit: 6,
+            limit: 12,
           }),
         });
 

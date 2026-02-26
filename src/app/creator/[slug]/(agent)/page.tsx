@@ -12,8 +12,8 @@ import type { Product } from "@/types/product";
 
 // How many products to show initially in the "Featured for you" grid.
 // With 4 columns on desktop this renders roughly 2–3 rows.
-const INITIAL_VISIBLE = 16;
-const BATCH_VISIBLE = 16;
+const INITIAL_VISIBLE = 24;
+const BATCH_VISIBLE = 24;
 const DEFAULT_CATEGORY_VIEW = "GLOBAL_FASHION";
 const FORCED_LOCALE = "en-US";
 const DEALS_SECTION_LIMIT = 12;
@@ -100,12 +100,14 @@ export default function CreatorAgentPage() {
   const {
     creator,
     products,
+    productsPaging,
     isLoading,
     isFeaturedLoading,
     userQueries,
     recentQueries,
     setInput,
     sendMessage,
+    loadMoreProducts,
     handleSeeSimilar,
     handleViewDetails,
     prefetchProductDetail,
@@ -201,6 +203,16 @@ export default function CreatorAgentPage() {
         setVisibleCount((current) => {
           const next = current + BATCH_VISIBLE;
           const upper = maxVisible || next;
+          if (
+            next >= upper &&
+            activeTab === "forYou" &&
+            productsPaging.hasMore &&
+            !productsPaging.isLoadingMore &&
+            !isLoading &&
+            !isFeaturedLoading
+          ) {
+            void loadMoreProducts();
+          }
           return Math.min(next, upper);
         });
       },
@@ -211,7 +223,15 @@ export default function CreatorAgentPage() {
     return () => {
       observer.disconnect();
     };
-  }, [filteredProducts.length]);
+  }, [
+    activeTab,
+    filteredProducts.length,
+    isFeaturedLoading,
+    isLoading,
+    loadMoreProducts,
+    productsPaging.hasMore,
+    productsPaging.isLoadingMore,
+  ]);
 
   // Prefetch product-detail for currently visible products so that
   // desktop detail modal can open with full Style/Size and images.
@@ -442,7 +462,7 @@ export default function CreatorAgentPage() {
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {products.slice(0, 8).map((p) => (
+                {products.slice(0, INITIAL_VISIBLE).map((p) => (
                   <ProductCard
                     key={`onboarding-${p.id}`}
                     product={p}
@@ -519,14 +539,19 @@ export default function CreatorAgentPage() {
             ) : (
               <>
                 {/*
-                  逐步展示最多 90 个商品；其余结果保留在内存中，不在首屏渲染。
-                  当用户切换 Creator picks / On sale 筛选时，只在前端
-                  基于已有结果做过滤，不额外打后端。
+                  首屏展示 24 个，滚动后每次 +24；
+                  当滚动到已加载数据末尾时，会继续请求下一页，不设业务总量上限。
                 */}
                 {(() => {
                   const maxVisible = filteredProducts.length;
                   const count = Math.min(visibleCount, maxVisible || visibleCount);
-                  const hasMore = maxVisible > 0 && count < maxVisible;
+                  const hasMoreLoaded = maxVisible > 0 && count < maxVisible;
+                  const hasMoreRemote =
+                    activeTab === "forYou" &&
+                    !isLoading &&
+                    !isFeaturedLoading &&
+                    productsPaging.hasMore;
+                  const hasMore = hasMoreLoaded || hasMoreRemote;
 
                   return (
                     <>
@@ -544,11 +569,18 @@ export default function CreatorAgentPage() {
                         ))}
                       </div>
                       {hasMore && (
-                        <div
-                          ref={loadMoreRef}
-                          className="mt-4 h-8 w-full"
-                          aria-hidden="true"
-                        />
+                        <div className="mt-4">
+                          <div
+                            ref={loadMoreRef}
+                            className="h-8 w-full"
+                            aria-hidden="true"
+                          />
+                          {productsPaging.isLoadingMore ? (
+                            <div className="py-2 text-center text-[11px] text-slate-500">
+                              Loading more products…
+                            </div>
+                          ) : null}
+                        </div>
                       )}
                     </>
                   );

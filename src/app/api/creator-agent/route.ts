@@ -30,12 +30,13 @@ function extractUpstreamStatusAndDetail(message: string): {
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { creatorId, messages, userId, recentQueries, traceId } = body as {
+  const { creatorId, messages, userId, recentQueries, traceId, search } = body as {
     creatorId: string;
     messages: { role: "user" | "assistant"; content: string }[];
     userId?: string | null;
     recentQueries?: string[];
     traceId?: string | null;
+    search?: { page?: number; limit?: number; query?: string | null };
   };
 
   const creator = getCreatorById(creatorId);
@@ -52,6 +53,7 @@ export async function POST(req: NextRequest) {
       userId: userId ?? undefined,
       recentQueries,
       traceId: traceId ?? undefined,
+      search: search ?? undefined,
     });
 
     const products = mapRawProducts(response.products);
@@ -60,6 +62,7 @@ export async function POST(req: NextRequest) {
       {
         reply: response.reply,
         products,
+        page_info: response.page_info ?? undefined,
         rawAgentResponse: response.raw,
         agentUrlUsed: response.agentUrlUsed,
       },

@@ -62,6 +62,60 @@ function buildInitialMessages(creator: CreatorAgentConfig): ChatMessage[] {
   ];
 }
 
+const GRID_PAGE_SIZE = 24;
+const RAIL_PAGE_SIZE = 12;
+const SIMILAR_PAGE_SIZE = 12;
+const NO_GROWTH_STOP_THRESHOLD = 2;
+
+type PagingState = {
+  query: string;
+  page: number;
+  limit: number;
+  hasMore: boolean;
+  isLoadingMore: boolean;
+  noGrowthCount: number;
+};
+
+type SimilarPagingState = {
+  baseProductId: string | null;
+  page: number;
+  limit: number;
+  hasMore: boolean;
+  isLoadingMore: boolean;
+  noGrowthCount: number;
+};
+
+function buildProductKey(product: Product): string {
+  return `${String(product?.merchantId || "").trim()}::${String(product?.id || "").trim()}`;
+}
+
+function mergeUniqueProducts(current: Product[], incoming: Product[]) {
+  const map = new Map<string, Product>();
+  current.forEach((item) => map.set(buildProductKey(item), item));
+  const before = map.size;
+  incoming.forEach((item) => map.set(buildProductKey(item), item));
+  return {
+    merged: Array.from(map.values()),
+    added: map.size - before,
+  };
+}
+
+function buildSimilarKey(item: SimilarProductItem): string {
+  const product = item?.product;
+  return `${String(product?.merchantId || "").trim()}::${String(product?.id || "").trim()}`;
+}
+
+function mergeUniqueSimilarItems(current: SimilarProductItem[], incoming: SimilarProductItem[]) {
+  const map = new Map<string, SimilarProductItem>();
+  current.forEach((item) => map.set(buildSimilarKey(item), item));
+  const before = map.size;
+  incoming.forEach((item) => map.set(buildSimilarKey(item), item));
+  return {
+    merged: Array.from(map.values()),
+    added: map.size - before,
+  };
+}
+
 interface CreatorAgentContextValue {
   creator: CreatorAgentConfig;
   messages: ChatMessage[];
@@ -69,7 +123,9 @@ interface CreatorAgentContextValue {
   setInput: (value: string) => void;
   isLoading: boolean;
   products: Product[];
+  productsPaging: PagingState;
   chatRecommendations: Product[];
+  chatRecommendationsPaging: PagingState;
   lastRequest: any;
   lastResponse: any;
   isFeaturedLoading: boolean;
@@ -87,6 +143,7 @@ interface CreatorAgentContextValue {
   markOnboardingSeen: () => void;
   similarBaseProduct: Product | null;
   similarItems: SimilarProductItem[];
+  similarPaging: SimilarPagingState;
   isSimilarLoading: boolean;
   similarError: string | null;
   detailProduct: Product | null;
@@ -97,7 +154,10 @@ interface CreatorAgentContextValue {
   closeSimilar: () => void;
   handleSend: () => Promise<void>;
   sendMessage: (text: string) => Promise<void>;
+  loadMoreProducts: () => Promise<void>;
+  loadMoreChatRecommendations: () => Promise<void>;
   handleSeeSimilar: (base: Product) => Promise<void>;
+  loadMoreSimilar: () => Promise<void>;
   handleViewDetails: (base: Product) => void;
   setPromptFromContext: (prompt: string) => void;
   setSimilarBaseProduct: (product: Product | null) => void;
@@ -156,7 +216,23 @@ export function CreatorAgentProvider({
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
+  const [productsPaging, setProductsPaging] = useState<PagingState>({
+    query: "",
+    page: 1,
+    limit: GRID_PAGE_SIZE,
+    hasMore: true,
+    isLoadingMore: false,
+    noGrowthCount: 0,
+  });
   const [chatRecommendations, setChatRecommendations] = useState<Product[]>([]);
+  const [chatRecommendationsPaging, setChatRecommendationsPaging] = useState<PagingState>({
+    query: "",
+    page: 1,
+    limit: RAIL_PAGE_SIZE,
+    hasMore: true,
+    isLoadingMore: false,
+    noGrowthCount: 0,
+  });
   const [lastRequest, setLastRequest] = useState<any>(null);
   const [lastResponse, setLastResponse] = useState<any>(null);
   const [isFeaturedLoading, setIsFeaturedLoading] = useState(true);
@@ -166,6 +242,14 @@ export function CreatorAgentProvider({
   const [similarBaseProduct, setSimilarBaseProduct] =
     useState<Product | null>(null);
   const [similarItems, setSimilarItems] = useState<SimilarProductItem[]>([]);
+  const [similarPaging, setSimilarPaging] = useState<SimilarPagingState>({
+    baseProductId: null,
+    page: 1,
+    limit: SIMILAR_PAGE_SIZE,
+    hasMore: true,
+    isLoadingMore: false,
+    noGrowthCount: 0,
+  });
   const [isSimilarLoading, setIsSimilarLoading] = useState(false);
   const [similarError, setSimilarError] = useState<string | null>(null);
   const [detailProduct, setDetailProduct] = useState<Product | null>(null);
@@ -421,6 +505,11 @@ export function CreatorAgentProvider({
           userId: accountsUser?.id || null,
           recentQueries: historyForBackend,
           traceId,
+          search: {
+            query: trimmed,
+            page: 1,
+            limit: GRID_PAGE_SIZE,
+          },
         }),
       });
 
@@ -433,7 +522,7 @@ export function CreatorAgentProvider({
         payload: {
           search: {
             query: trimmed,
-            limit: 8,
+            limit: GRID_PAGE_SIZE,
             in_stock_only: true,
             page: 1,
           },
@@ -463,6 +552,12 @@ export function CreatorAgentProvider({
       const data = (await res.json()) as {
         reply: string;
         products?: Product[];
+        page_info?: {
+          page?: number;
+          page_size?: number;
+          total?: number;
+          has_more?: boolean;
+        };
         rawAgentResponse?: any;
         agentUrlUsed?: string;
       };
@@ -473,6 +568,18 @@ export function CreatorAgentProvider({
       const withDeals = isMockMode
         ? attachMockDeals(normalizedProducts)
         : normalizedProducts;
+      const pageInfo = data.page_info || {};
+      const page = Number.isFinite(Number(pageInfo.page)) && Number(pageInfo.page) > 0
+        ? Math.floor(Number(pageInfo.page))
+        : 1;
+      const pageSize =
+        Number.isFinite(Number(pageInfo.page_size)) && Number(pageInfo.page_size) > 0
+          ? Math.floor(Number(pageInfo.page_size))
+          : GRID_PAGE_SIZE;
+      const hasMore =
+        typeof pageInfo.has_more === "boolean"
+          ? pageInfo.has_more
+          : withDeals.length >= pageSize;
 
       setMessages((prev) => [
         ...prev,
@@ -483,8 +590,34 @@ export function CreatorAgentProvider({
         },
       ]);
       setProducts(withDeals);
+      setProductsPaging({
+        query: trimmed,
+        page,
+        limit: pageSize,
+        hasMore,
+        isLoadingMore: false,
+        noGrowthCount: 0,
+      });
       if (withDeals.length > 0) {
-        setChatRecommendations(withDeals);
+        setChatRecommendations(withDeals.slice(0, RAIL_PAGE_SIZE));
+        setChatRecommendationsPaging({
+          query: trimmed,
+          page: 1,
+          limit: RAIL_PAGE_SIZE,
+          hasMore,
+          isLoadingMore: false,
+          noGrowthCount: 0,
+        });
+      } else {
+        setChatRecommendations([]);
+        setChatRecommendationsPaging({
+          query: trimmed,
+          page: 1,
+          limit: RAIL_PAGE_SIZE,
+          hasMore: false,
+          isLoadingMore: false,
+          noGrowthCount: 0,
+        });
       }
     } catch (error) {
       console.error(error);
@@ -509,11 +642,159 @@ export function CreatorAgentProvider({
     return sendMessage(input);
   };
 
+  const loadMoreProducts = useCallback(async () => {
+    if (productsPaging.isLoadingMore || !productsPaging.hasMore) return;
+    const nextPage = Math.max(1, productsPaging.page + 1);
+    const query = String(productsPaging.query || "").trim();
+    const historyForBackend = recentQueries
+      .slice(-5)
+      .map((q) => (q.length > 80 ? q.slice(0, 80) : q));
+
+    setProductsPaging((prev) => ({ ...prev, isLoadingMore: true }));
+    try {
+      const res = await fetch("/api/creator-agent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          creatorId: creator.id,
+          messages: messages.map((m) => ({ role: m.role, content: m.content })),
+          userId: accountsUser?.id || null,
+          recentQueries: historyForBackend,
+          traceId: buildTraceId("chat"),
+          search: {
+            query,
+            page: nextPage,
+            limit: Math.max(1, Number(productsPaging.limit || GRID_PAGE_SIZE)),
+          },
+        }),
+      });
+      if (!res.ok) throw new Error(`Failed with status ${res.status}`);
+
+      const data = (await res.json()) as {
+        products?: Product[];
+        page_info?: { has_more?: boolean; page?: number; page_size?: number; total?: number };
+      };
+      const incoming = isMockMode
+        ? attachMockDeals(data.products ?? [])
+        : (data.products ?? []);
+      const { merged, added } = mergeUniqueProducts(products, incoming);
+      setProducts(merged);
+
+      setProductsPaging((prev) => {
+        const noGrowthCount = added === 0 ? prev.noGrowthCount + 1 : 0;
+        const hasMoreFromResponse =
+          typeof data.page_info?.has_more === "boolean"
+            ? data.page_info.has_more
+            : incoming.length >= Math.max(1, Number(prev.limit || GRID_PAGE_SIZE));
+        return {
+          ...prev,
+          page: nextPage,
+          hasMore: Boolean(hasMoreFromResponse) && noGrowthCount < NO_GROWTH_STOP_THRESHOLD,
+          isLoadingMore: false,
+          noGrowthCount,
+        };
+      });
+    } catch (error) {
+      console.error("loadMoreProducts error", error);
+      setProductsPaging((prev) => ({ ...prev, isLoadingMore: false }));
+    }
+  }, [
+    accountsUser?.id,
+    buildTraceId,
+    creator.id,
+    isMockMode,
+    messages,
+    products,
+    productsPaging,
+    recentQueries,
+  ]);
+
+  const loadMoreChatRecommendations = useCallback(async () => {
+    if (
+      chatRecommendationsPaging.isLoadingMore ||
+      !chatRecommendationsPaging.hasMore ||
+      !chatRecommendationsPaging.query
+    ) {
+      return;
+    }
+
+    const nextPage = Math.max(1, chatRecommendationsPaging.page + 1);
+    const query = String(chatRecommendationsPaging.query || "").trim();
+    const historyForBackend = recentQueries
+      .slice(-5)
+      .map((q) => (q.length > 80 ? q.slice(0, 80) : q));
+
+    setChatRecommendationsPaging((prev) => ({ ...prev, isLoadingMore: true }));
+    try {
+      const res = await fetch("/api/creator-agent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          creatorId: creator.id,
+          messages: messages.map((m) => ({ role: m.role, content: m.content })),
+          userId: accountsUser?.id || null,
+          recentQueries: historyForBackend,
+          traceId: buildTraceId("chat"),
+          search: {
+            query,
+            page: nextPage,
+            limit: Math.max(1, Number(chatRecommendationsPaging.limit || RAIL_PAGE_SIZE)),
+          },
+        }),
+      });
+      if (!res.ok) throw new Error(`Failed with status ${res.status}`);
+      const data = (await res.json()) as {
+        products?: Product[];
+        page_info?: { has_more?: boolean };
+      };
+      const incoming = isMockMode
+        ? attachMockDeals(data.products ?? [])
+        : (data.products ?? []);
+      const { merged, added } = mergeUniqueProducts(chatRecommendations, incoming);
+      setChatRecommendations(merged);
+
+      setChatRecommendationsPaging((prev) => {
+        const noGrowthCount = added === 0 ? prev.noGrowthCount + 1 : 0;
+        const hasMoreFromResponse =
+          typeof data.page_info?.has_more === "boolean"
+            ? data.page_info.has_more
+            : incoming.length >= Math.max(1, Number(prev.limit || RAIL_PAGE_SIZE));
+        return {
+          ...prev,
+          page: nextPage,
+          hasMore: Boolean(hasMoreFromResponse) && noGrowthCount < NO_GROWTH_STOP_THRESHOLD,
+          isLoadingMore: false,
+          noGrowthCount,
+        };
+      });
+    } catch (error) {
+      console.error("loadMoreChatRecommendations error", error);
+      setChatRecommendationsPaging((prev) => ({ ...prev, isLoadingMore: false }));
+    }
+  }, [
+    accountsUser?.id,
+    buildTraceId,
+    chatRecommendations,
+    chatRecommendationsPaging,
+    creator.id,
+    isMockMode,
+    messages,
+    recentQueries,
+  ]);
+
   const handleSeeSimilar = async (base: Product) => {
     setSimilarBaseProduct(base);
     setIsSimilarLoading(true);
     setSimilarError(null);
     setSimilarItems([]);
+    setSimilarPaging({
+      baseProductId: base.id,
+      page: 1,
+      limit: SIMILAR_PAGE_SIZE,
+      hasMore: true,
+      isLoadingMore: false,
+      noGrowthCount: 0,
+    });
     try {
       const res = await fetch("/api/creator-agent/similar", {
         method: "POST",
@@ -521,7 +802,7 @@ export function CreatorAgentProvider({
         body: JSON.stringify({
           creatorSlug: creator.slug,
           productId: base.id,
-          limit: 9,
+          limit: SIMILAR_PAGE_SIZE,
         }),
       });
 
@@ -533,7 +814,13 @@ export function CreatorAgentProvider({
         baseProductId?: string;
         strategyUsed?: string;
       };
-      setSimilarItems(data.items ?? []);
+      const incoming = Array.isArray(data.items) ? data.items : [];
+      const merged = mergeUniqueSimilarItems([], incoming).merged;
+      setSimilarItems(merged);
+      setSimilarPaging((prev) => ({
+        ...prev,
+        hasMore: merged.length > 0,
+      }));
     } catch (error) {
       console.error("See similar error", error);
       setSimilarError("Failed to load similar items. Please try again.");
@@ -541,6 +828,55 @@ export function CreatorAgentProvider({
       setIsSimilarLoading(false);
     }
   };
+
+  const loadMoreSimilar = useCallback(async () => {
+    if (
+      similarPaging.isLoadingMore ||
+      !similarPaging.hasMore ||
+      !similarBaseProduct?.id
+    ) {
+      return;
+    }
+    const nextPage = Math.max(1, similarPaging.page + 1);
+    const nextLimit = Math.max(
+      SIMILAR_PAGE_SIZE,
+      nextPage * Math.max(1, Number(similarPaging.limit || SIMILAR_PAGE_SIZE)),
+    );
+
+    setSimilarPaging((prev) => ({ ...prev, isLoadingMore: true }));
+    try {
+      const res = await fetch("/api/creator-agent/similar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          creatorSlug: creator.slug,
+          productId: similarBaseProduct.id,
+          limit: nextLimit,
+        }),
+      });
+      if (!res.ok) throw new Error(`Failed with status ${res.status}`);
+      const data = (await res.json()) as { items?: SimilarProductItem[] };
+      const incoming = Array.isArray(data.items) ? data.items : [];
+      const { merged, added } = mergeUniqueSimilarItems(similarItems, incoming);
+      setSimilarItems(merged);
+
+      setSimilarPaging((prev) => {
+        const noGrowthCount = added === 0 ? prev.noGrowthCount + 1 : 0;
+        const hasMoreByFetch = incoming.length >= nextLimit;
+        return {
+          ...prev,
+          page: nextPage,
+          hasMore: hasMoreByFetch && noGrowthCount < NO_GROWTH_STOP_THRESHOLD,
+          isLoadingMore: false,
+          noGrowthCount,
+        };
+      });
+    } catch (error) {
+      console.error("loadMoreSimilar error", error);
+      setSimilarPaging((prev) => ({ ...prev, isLoadingMore: false }));
+      setSimilarError("Failed to load similar items. Please try again.");
+    }
+  }, [creator.slug, similarBaseProduct?.id, similarItems, similarPaging]);
 
   const handleViewDetails = (base: Product) => {
     // Always navigate to the full Product Detail page (mobile PDP) so the web PDP
@@ -787,6 +1123,11 @@ export function CreatorAgentProvider({
             userId: accountsUser?.id || null,
             recentQueries: historyForBackend,
             traceId: buildTraceId("featured"),
+            search: {
+              query: "",
+              page: 1,
+              limit: GRID_PAGE_SIZE,
+            },
           }),
         });
         if (!res.ok) return;
@@ -794,6 +1135,12 @@ export function CreatorAgentProvider({
         const data = (await res.json()) as {
           reply: string;
           products?: Product[];
+          page_info?: {
+            page?: number;
+            page_size?: number;
+            total?: number;
+            has_more?: boolean;
+          };
           rawAgentResponse?: any;
           agentUrlUsed?: string;
         };
@@ -804,6 +1151,26 @@ export function CreatorAgentProvider({
             ? attachMockDeals(data.products)
             : data.products;
           setProducts(withDeals);
+          const pageInfo = data.page_info || {};
+          const page = Number.isFinite(Number(pageInfo.page)) && Number(pageInfo.page) > 0
+            ? Math.floor(Number(pageInfo.page))
+            : 1;
+          const pageSize =
+            Number.isFinite(Number(pageInfo.page_size)) && Number(pageInfo.page_size) > 0
+              ? Math.floor(Number(pageInfo.page_size))
+              : GRID_PAGE_SIZE;
+          const hasMore =
+            typeof pageInfo.has_more === "boolean"
+              ? pageInfo.has_more
+              : withDeals.length >= pageSize;
+          setProductsPaging({
+            query: "",
+            page,
+            limit: pageSize,
+            hasMore,
+            isLoadingMore: false,
+            noGrowthCount: 0,
+          });
           // Do not overwrite chatRecommendations here; keep these for Featured section only.
 
           // Optimistically prefetch detail for the first batch of featured
@@ -820,13 +1187,13 @@ export function CreatorAgentProvider({
               creatorId: creator.id,
               messages: [],
               payload: {
-                search: {
-                  query: "Show popular items",
-                  in_stock_only: false,
-                  limit: 10,
+                  search: {
+                    query: "Show popular items",
+                    in_stock_only: false,
+                    limit: GRID_PAGE_SIZE,
+                  },
                 },
               },
-            },
           );
           setLastResponse((prev: any) => prev ?? data);
         }
@@ -901,6 +1268,14 @@ export function CreatorAgentProvider({
     setSimilarItems([]);
     setSimilarError(null);
     setIsSimilarLoading(false);
+    setSimilarPaging({
+      baseProductId: null,
+      page: 1,
+      limit: SIMILAR_PAGE_SIZE,
+      hasMore: true,
+      isLoadingMore: false,
+      noGrowthCount: 0,
+    });
   };
 
   const setPromptFromContext = (prompt: string) => {
@@ -989,7 +1364,33 @@ export function CreatorAgentProvider({
       sessionId: newSession.id,
       ui: {},
     });
+    setProducts([]);
+    setProductsPaging({
+      query: "",
+      page: 1,
+      limit: GRID_PAGE_SIZE,
+      hasMore: true,
+      isLoadingMore: false,
+      noGrowthCount: 0,
+    });
     setChatRecommendations([]);
+    setChatRecommendationsPaging({
+      query: "",
+      page: 1,
+      limit: RAIL_PAGE_SIZE,
+      hasMore: true,
+      isLoadingMore: false,
+      noGrowthCount: 0,
+    });
+    setSimilarItems([]);
+    setSimilarPaging({
+      baseProductId: null,
+      page: 1,
+      limit: SIMILAR_PAGE_SIZE,
+      hasMore: true,
+      isLoadingMore: false,
+      noGrowthCount: 0,
+    });
     setMessages(buildInitialMessages(creator));
     saveSessionIndex(sessionStorageKey, {
       sessions: nextSessions,
@@ -1004,7 +1405,9 @@ export function CreatorAgentProvider({
     setInput,
     isLoading,
     products,
+    productsPaging,
     chatRecommendations,
+    chatRecommendationsPaging,
     lastRequest,
     lastResponse,
     isFeaturedLoading,
@@ -1022,6 +1425,7 @@ export function CreatorAgentProvider({
     markOnboardingSeen,
     similarBaseProduct,
     similarItems,
+    similarPaging,
     isSimilarLoading,
     similarError,
     detailProduct,
@@ -1032,7 +1436,10 @@ export function CreatorAgentProvider({
     closeSimilar,
     handleSend,
     sendMessage,
+    loadMoreProducts,
+    loadMoreChatRecommendations,
     handleSeeSimilar,
+    loadMoreSimilar,
     handleViewDetails,
     setPromptFromContext,
     setSimilarBaseProduct,

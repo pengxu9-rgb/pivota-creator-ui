@@ -19,13 +19,17 @@ export function RecommendationsGrid({
   onOpenAll,
   onLoadMore,
   onItemClick,
+  canLoadMore = false,
+  isLoadingMore = false,
 }: {
   data: RecommendationsData;
   onOpenAll?: () => void;
   onLoadMore?: () => void;
   onItemClick?: (item: RecommendationsData['items'][number], index: number) => void;
+  canLoadMore?: boolean;
+  isLoadingMore?: boolean;
 }) {
-  const PAGE_SIZE = 6;
+  const PAGE_SIZE = 12;
   const totalItems = data.items.length;
   const [visibleCount, setVisibleCount] = useState(() => Math.min(PAGE_SIZE, totalItems));
 
@@ -36,7 +40,8 @@ export function RecommendationsGrid({
   if (!totalItems) return null;
 
   const visibleItems = data.items.slice(0, visibleCount);
-  const hasMore = visibleCount < totalItems;
+  const hasHiddenLoadedItems = visibleCount < totalItems;
+  const showLoadMore = hasHiddenLoadedItems || canLoadMore;
 
   return (
     <div className="py-6">
@@ -96,16 +101,22 @@ export function RecommendationsGrid({
           </Link>
         ))}
       </div>
-      {hasMore ? (
+      {showLoadMore ? (
         <button
           type="button"
+          disabled={isLoadingMore}
           onClick={() => {
-            setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, totalItems));
-            onLoadMore?.();
+            let shouldFetchMore = false;
+            setVisibleCount((prev) => {
+              const next = Math.min(prev + PAGE_SIZE, totalItems);
+              shouldFetchMore = next >= totalItems && canLoadMore;
+              return next;
+            });
+            if (shouldFetchMore && !isLoadingMore) onLoadMore?.();
           }}
-          className="w-full mt-4 py-3 text-sm text-muted-foreground hover:text-foreground"
+          className="w-full mt-4 py-3 text-sm text-muted-foreground hover:text-foreground disabled:opacity-60"
         >
-          Load more recommendations
+          {isLoadingMore ? "Loading more recommendations..." : "Load more recommendations"}
         </button>
       ) : null}
     </div>

@@ -109,7 +109,7 @@ export async function POST(req: Request) {
     }
 
     const invokeUrl = getInvokeUrl();
-    const resolvedLimit = typeof limit === "number" && Number.isFinite(limit) ? Math.max(1, Math.floor(limit)) : 6;
+    const resolvedLimit = typeof limit === "number" && Number.isFinite(limit) ? Math.max(1, Math.floor(limit)) : 12;
     const timeoutMs = isExternalProductRef({ merchantId, productId }) ? 8000 : 12000;
 
     const payload = {

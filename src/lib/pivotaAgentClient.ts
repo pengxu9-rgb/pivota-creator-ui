@@ -13,6 +13,12 @@ export type CreatorAgentMessage = {
 export type CreatorAgentResponse = {
   reply: string;
   products?: RawProduct[];
+  page_info?: {
+    page: number;
+    page_size: number;
+    total?: number;
+    has_more: boolean;
+  };
   // 原始后端响应，用于 debug 面板
   raw?: any;
   agentUrlUsed?: string;
@@ -159,6 +165,11 @@ export async function callPivotaCreatorAgent(params: {
   userId?: string | null;
   recentQueries?: string[];
   traceId?: string | null;
+  search?: {
+    page?: number;
+    limit?: number;
+    query?: string | null;
+  };
 }): Promise<CreatorAgentResponse> {
   const urlEnv = (process.env.PIVOTA_AGENT_URL || process.env.NEXT_PUBLIC_PIVOTA_AGENT_URL) as
     | string
@@ -200,6 +211,12 @@ export async function callPivotaCreatorAgent(params: {
           inventory_quantity: 18,
         },
       ],
+      page_info: {
+        page: 1,
+        page_size: 3,
+        total: 3,
+        has_more: false,
+      },
       agentUrlUsed: "mock",
     };
   }
@@ -208,8 +225,10 @@ export async function callPivotaCreatorAgent(params: {
   const lastUserMessage = [...params.messages].reverse().find((m) => m.role === "user");
   const userQueryRaw = lastUserMessage?.content ?? "";
   const hasUserQuery = userQueryRaw.trim().length > 0;
-  const query = normalizeQuery(userQueryRaw);
+  const query = normalizeQuery(params.search?.query ?? userQueryRaw);
   const recentQueries = params.recentQueries?.filter(Boolean).slice(-5);
+  const searchPage = Math.max(1, Math.floor(Number(params.search?.page || 1) || 1));
+  const searchLimit = Math.max(1, Math.floor(Number(params.search?.limit || 24) || 24));
 
   // 与 Shopping Agent 前端保持一致的调用协议：顶层只使用 operation + payload，
   // 额外信息放在 metadata，方便后端按 creatorId 做过滤/打标。
@@ -219,9 +238,9 @@ export async function callPivotaCreatorAgent(params: {
     payload: {
       search: {
         // page + limit 分页，不强制只看有库存。
-        page: 1,
-        // 多给一些结果，方便前端做「继续往下刷」展示。
-        limit: 90,
+        page: searchPage,
+        // 默认首屏 24，后续由前端增量加载。
+        limit: searchLimit,
         in_stock_only: false,
       },
       user: {
@@ -376,12 +395,44 @@ export async function callPivotaCreatorAgent(params: {
         });
       }
 
-      return { data, rawProducts, reply };
+      const pageRaw = Number(data?.page);
+      const pageSizeRaw = Number(data?.page_size ?? data?.pageSize);
+      const totalRaw = Number(data?.total);
+      const hasMoreRaw = data?.has_more;
+      const hasMoreAlt = data?.hasMore;
+
+      const page = Number.isFinite(pageRaw) && pageRaw > 0 ? Math.floor(pageRaw) : searchPage;
+      const pageSize =
+        Number.isFinite(pageSizeRaw) && pageSizeRaw > 0
+          ? Math.floor(pageSizeRaw)
+          : searchLimit;
+      const total =
+        Number.isFinite(totalRaw) && totalRaw >= 0 ? Math.floor(totalRaw) : undefined;
+      const hasMore =
+        typeof hasMoreRaw === "boolean"
+          ? hasMoreRaw
+          : typeof hasMoreAlt === "boolean"
+            ? hasMoreAlt
+            : typeof total === "number"
+              ? page * pageSize < total
+              : Array.isArray(rawProducts) && rawProducts.length >= pageSize;
+
+      return {
+        data,
+        rawProducts,
+        reply,
+        pageInfo: {
+          page,
+          page_size: pageSize,
+          ...(typeof total === "number" ? { total } : {}),
+          has_more: hasMore,
+        },
+      };
     }
 
     // 第一次：按用户 query 或默认 query 调用
     const primary = await runOnce(query);
-    let { data, rawProducts, reply } = primary;
+    let { data, rawProducts, reply, pageInfo } = primary;
 
     // 保护逻辑：当用户明确在问「山上/很冷/外套/大衣」这类冷天气穿着时，
     // 如果返回的主要是玩具 / 公仔 / Labubu 等明显不相关商品，则视为「无合适结果」。
@@ -409,13 +460,20 @@ export async function callPivotaCreatorAgent(params: {
       if (fallback.rawProducts && fallback.rawProducts.length > 0) {
         rawProducts = fallback.rawProducts;
         data = { primary: primary.data, fallback: fallback.data };
+        pageInfo = fallback.pageInfo;
         // 主查询 0 结果，但默认货盘有商品：明确说明是更宽泛的热门推荐。
         reply =
           "I couldn’t find strong matches for your original request, but here are some more general popular pieces you can browse.";
       }
     }
 
-    return { reply, products: rawProducts, raw: data, agentUrlUsed: url };
+    return {
+      reply,
+      products: rawProducts,
+      page_info: pageInfo,
+      raw: data,
+      agentUrlUsed: url,
+    };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     // 如果后端超时，返回友好提示（不再注入本地 mock 商品）
@@ -424,6 +482,11 @@ export async function callPivotaCreatorAgent(params: {
         reply:
           "The shopping backend timed out. Please try again in a moment or rephrase your request.",
         products: [],
+        page_info: {
+          page: searchPage,
+          page_size: searchLimit,
+          has_more: false,
+        },
         raw: { error: message },
         agentUrlUsed: url,
       };
@@ -538,7 +601,7 @@ export async function callPivotaFindSimilarProducts(params: {
     payload: {
       product_id: params.productId,
       creator_id: params.creatorId,
-      limit: params.limit ?? 9,
+      limit: params.limit ?? 12,
       strategy: params.strategy ?? "auto",
     },
     metadata: {
