@@ -242,6 +242,9 @@ export async function callPivotaCreatorAgent(params: {
         // 默认首屏 24，后续由前端增量加载。
         limit: searchLimit,
         in_stock_only: false,
+        allow_external_seed: true,
+        external_seed_strategy: "unified_relevance",
+        search_all_merchants: true,
       },
       user: {
         id: params.userId || undefined,
