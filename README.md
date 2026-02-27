@@ -27,6 +27,8 @@ npm ci --no-audit --no-fund
 PIVOTA_AGENT_URL=http://localhost:3000/agent/shop/v1/invoke npm run dev -- -p 3004
 ```
 
+Default production path is also `.../agent/shop/v1/invoke` (creator invoke remains backend alias only).
+
 3) Open a creator PDP:
 
 - With explicit seller:  
@@ -41,3 +43,8 @@ Optional:
 ## Environment variables
 
 See `.env.example`.
+
+Recommended minimum:
+- `PIVOTA_AGENT_URL` set to `/agent/shop/v1/invoke` endpoint.
+- `CREATOR_AGENT_API_KEY` set once; checkout automatically reuses it when `CREATOR_CHECKOUT_AGENT_API_KEY` is unset.
+- `NEXT_PUBLIC_REVIEWS_UPSTREAM_BASE` set to the public host that serves `/agent/shop/v1/review-media/*` when needed.

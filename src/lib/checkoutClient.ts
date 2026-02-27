@@ -1,17 +1,8 @@
 import type { CartItem } from "@/components/cart/CartProvider";
-
-const AGENT_URL =
-  process.env.PIVOTA_AGENT_URL ||
-  "https://pivota-agent-production.up.railway.app/agent/shop/v1/invoke";
-
-const BEARER_API_KEY =
-  process.env.PIVOTA_AGENT_API_KEY || process.env.PIVOTA_API_KEY || "";
-
-const X_AGENT_API_KEY =
-  process.env.NEXT_PUBLIC_AGENT_API_KEY ||
-  process.env.AGENT_API_KEY ||
-  process.env.SHOP_GATEWAY_AGENT_API_KEY ||
-  "";
+import {
+  getCreatorCheckoutAuthHeaders,
+  getCreatorCheckoutInvokeUrl,
+} from "@/lib/creatorAgentGateway";
 
 type CreateOrderPayload = {
   merchant_id: string;
@@ -176,12 +167,11 @@ export type SubmitPaymentResponse = {
 };
 
 async function callAgentGateway(body: { operation: string; payload: any }) {
-  const res = await fetch(AGENT_URL, {
+  const res = await fetch(getCreatorCheckoutInvokeUrl(), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      ...(BEARER_API_KEY ? { Authorization: `Bearer ${BEARER_API_KEY}` } : {}),
-      ...(X_AGENT_API_KEY ? { "X-Agent-API-Key": X_AGENT_API_KEY } : {}),
+      ...getCreatorCheckoutAuthHeaders(),
     },
     body: JSON.stringify(body),
   });

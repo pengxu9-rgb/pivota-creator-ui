@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCreatorById } from "@/config/creatorAgents";
+import { hasConfiguredCreatorInvokeUrl } from "@/lib/creatorAgentGateway";
 import { callPivotaCreatorAgent } from "@/lib/pivotaAgentClient";
 import { mapRawProducts } from "@/lib/productMapper";
 
@@ -83,7 +84,7 @@ export async function POST(req: NextRequest) {
         detail,
         upstreamStatus: upstreamStatus ?? null,
         traceId: traceId ?? null,
-        agentUrlConfigured: Boolean(process.env.PIVOTA_AGENT_URL),
+        agentUrlConfigured: hasConfiguredCreatorInvokeUrl(),
       },
       { status },
     );

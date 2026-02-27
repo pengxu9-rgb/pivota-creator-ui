@@ -1,30 +1,10 @@
 import { NextResponse } from "next/server";
+import {
+  getCreatorAgentAuthHeaders,
+  getCreatorInvokeUrl,
+} from "@/lib/creatorAgentGateway";
 
 export const runtime = "nodejs";
-
-function getInvokeUrl(): string {
-  const urlEnv = (process.env.PIVOTA_AGENT_URL ||
-    process.env.NEXT_PUBLIC_PIVOTA_AGENT_URL) as string | undefined;
-  if (!urlEnv) {
-    throw new Error("PIVOTA_AGENT_URL or NEXT_PUBLIC_PIVOTA_AGENT_URL is not configured");
-  }
-  return urlEnv;
-}
-
-function authHeaders(): Record<string, string> {
-  const bearer =
-    process.env.PIVOTA_AGENT_API_KEY || process.env.PIVOTA_API_KEY || "";
-  const xAgent =
-    process.env.NEXT_PUBLIC_AGENT_API_KEY ||
-    process.env.AGENT_API_KEY ||
-    process.env.SHOP_GATEWAY_AGENT_API_KEY ||
-    "";
-
-  return {
-    ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
-    ...(xAgent ? { "X-Agent-API-Key": xAgent } : {}),
-  };
-}
 
 export async function POST(req: Request) {
   try {
@@ -43,7 +23,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing productId" }, { status: 400 });
     }
 
-    const invokeUrl = getInvokeUrl();
+    const invokeUrl = getCreatorInvokeUrl();
+    const invokeAuthHeaders = getCreatorAgentAuthHeaders();
     const payload = {
       operation: "resolve_product_candidates",
       payload: {
@@ -64,7 +45,7 @@ export async function POST(req: Request) {
 
     const res = await fetch(invokeUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json", ...authHeaders() },
+      headers: { "Content-Type": "application/json", ...invokeAuthHeaders },
       body: JSON.stringify(payload),
     });
 
@@ -93,4 +74,3 @@ export async function POST(req: Request) {
     );
   }
 }
-

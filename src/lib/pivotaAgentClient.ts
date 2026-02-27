@@ -5,6 +5,10 @@ import type {
   Product,
 } from "@/types/product";
 import { mapRawProduct } from "@/lib/productMapper";
+import {
+  getCreatorAgentAuthHeaders,
+  getOptionalCreatorInvokeUrl,
+} from "@/lib/creatorAgentGateway";
 export type CreatorAgentMessage = {
   role: "user" | "assistant" | "system";
   content: string;
@@ -171,10 +175,8 @@ export async function callPivotaCreatorAgent(params: {
     query?: string | null;
   };
 }): Promise<CreatorAgentResponse> {
-  const urlEnv = (process.env.PIVOTA_AGENT_URL || process.env.NEXT_PUBLIC_PIVOTA_AGENT_URL) as
-    | string
-    | undefined;
-  if (!urlEnv) {
+  const url = getOptionalCreatorInvokeUrl();
+  if (!url) {
     // Mock mode: return a short reply + a few mock products for local UI dev.
     return {
       reply:
@@ -220,7 +222,6 @@ export async function callPivotaCreatorAgent(params: {
       agentUrlUsed: "mock",
     };
   }
-  const url = urlEnv;
 
   const lastUserMessage = [...params.messages].reverse().find((m) => m.role === "user");
   const userQueryRaw = lastUserMessage?.content ?? "";
@@ -264,16 +265,7 @@ export async function callPivotaCreatorAgent(params: {
   // TODO: 上面的 payload 字段名/结构可能需要根据 Pivota Agent 后端最终协议调整。
   // 当前先用一个清晰的草案，方便后续对齐。
 
-  // 后端推荐：读取 PIVOTA_AGENT_API_KEY 并使用 Bearer 头；
-  // 其他 key 名用于向后兼容现有配置。
-  const BEARER_API_KEY =
-    process.env.PIVOTA_AGENT_API_KEY || process.env.PIVOTA_API_KEY || "";
-
-  const X_AGENT_API_KEY =
-    process.env.NEXT_PUBLIC_AGENT_API_KEY ||
-    process.env.AGENT_API_KEY ||
-    process.env.SHOP_GATEWAY_AGENT_API_KEY ||
-    "";
+  const creatorAuthHeaders = getCreatorAgentAuthHeaders();
 
   try {
     function deriveTaskBaseFromUrl(invokeUrl: string): string {
@@ -302,8 +294,7 @@ export async function callPivotaCreatorAgent(params: {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            ...(BEARER_API_KEY ? { Authorization: `Bearer ${BEARER_API_KEY}` } : {}),
-            ...(X_AGENT_API_KEY ? { "X-Agent-API-Key": X_AGENT_API_KEY } : {}),
+            ...creatorAuthHeaders,
           },
         });
 
@@ -351,8 +342,7 @@ export async function callPivotaCreatorAgent(params: {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(BEARER_API_KEY ? { Authorization: `Bearer ${BEARER_API_KEY}` } : {}),
-          ...(X_AGENT_API_KEY ? { "X-Agent-API-Key": X_AGENT_API_KEY } : {}),
+          ...creatorAuthHeaders,
         },
         body: JSON.stringify(payload),
       });
@@ -502,24 +492,11 @@ export async function callPivotaGetProductDetail(params: {
   merchantId: string;
   productId: string;
 }): Promise<{ product: Product; raw: any }> {
-  const urlEnv = (process.env.PIVOTA_AGENT_URL || process.env.NEXT_PUBLIC_PIVOTA_AGENT_URL) as
-    | string
-    | undefined;
-
-  if (!urlEnv) {
+  const url = getOptionalCreatorInvokeUrl();
+  if (!url) {
     throw new Error("PIVOTA_AGENT_URL or NEXT_PUBLIC_PIVOTA_AGENT_URL is not configured");
   }
-
-  const url = urlEnv;
-
-  const BEARER_API_KEY =
-    process.env.PIVOTA_AGENT_API_KEY || process.env.PIVOTA_API_KEY || "";
-
-  const X_AGENT_API_KEY =
-    process.env.NEXT_PUBLIC_AGENT_API_KEY ||
-    process.env.AGENT_API_KEY ||
-    process.env.SHOP_GATEWAY_AGENT_API_KEY ||
-    "";
+  const creatorAuthHeaders = getCreatorAgentAuthHeaders();
 
   const payload = {
     operation: "get_product_detail",
@@ -538,8 +515,7 @@ export async function callPivotaGetProductDetail(params: {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      ...(BEARER_API_KEY ? { Authorization: `Bearer ${BEARER_API_KEY}` } : {}),
-      ...(X_AGENT_API_KEY ? { "X-Agent-API-Key": X_AGENT_API_KEY } : {}),
+      ...creatorAuthHeaders,
     },
     body: JSON.stringify(payload),
   });
@@ -575,29 +551,16 @@ export async function callPivotaFindSimilarProducts(params: {
   limit?: number;
   strategy?: "auto" | "content_embedding" | "co_view" | "same_merchant_first";
 }): Promise<FindSimilarProductsResponse> {
-  const urlEnv = (process.env.PIVOTA_AGENT_URL || process.env.NEXT_PUBLIC_PIVOTA_AGENT_URL) as
-    | string
-    | undefined;
-
+  const url = getOptionalCreatorInvokeUrl();
   // Mock mode: reuse a small slice of products as "similar" when backend is unavailable.
-  if (!urlEnv) {
+  if (!url) {
     return {
       base_product_id: params.productId,
       strategy_used: "auto",
       items: [],
     };
   }
-
-  const url = urlEnv;
-
-  const BEARER_API_KEY =
-    process.env.PIVOTA_AGENT_API_KEY || process.env.PIVOTA_API_KEY || "";
-
-  const X_AGENT_API_KEY =
-    process.env.NEXT_PUBLIC_AGENT_API_KEY ||
-    process.env.AGENT_API_KEY ||
-    process.env.SHOP_GATEWAY_AGENT_API_KEY ||
-    "";
+  const creatorAuthHeaders = getCreatorAgentAuthHeaders();
 
   const payload = {
     operation: "find_similar_products",
@@ -618,8 +581,7 @@ export async function callPivotaFindSimilarProducts(params: {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...(BEARER_API_KEY ? { Authorization: `Bearer ${BEARER_API_KEY}` } : {}),
-        ...(X_AGENT_API_KEY ? { "X-Agent-API-Key": X_AGENT_API_KEY } : {}),
+        ...creatorAuthHeaders,
       },
       body: JSON.stringify(payload),
     });

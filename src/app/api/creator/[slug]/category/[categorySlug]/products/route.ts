@@ -1,5 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import type { Product } from "@/types/product";
+import {
+  getCreatorAgentApiKey,
+  getOptionalCreatorAgentBaseUrl,
+} from "@/lib/creatorAgentGateway";
 import { mapRawProduct } from "@/lib/productMapper";
 
 interface BackendProduct {
@@ -70,11 +74,11 @@ function getMockCategoryProducts(
 export async function GET(req: NextRequest, { params }: any) {
   const creatorSlug = params.slug;
   const categorySlug = params.categorySlug;
-  let rawBase =
-    process.env.PIVOTA_AGENT_BASE_URL ||
-    process.env.PIVOTA_AGENT_URL ||
-    process.env.NEXT_PUBLIC_PIVOTA_AGENT_URL;
-  const apiKey = process.env.PIVOTA_AGENT_API_KEY;
+  const baseUrl = getOptionalCreatorAgentBaseUrl();
+  const apiKey = getCreatorAgentApiKey();
+  const upstreamHeaders = apiKey
+    ? { "X-Agent-API-Key": apiKey, "x-api-key": apiKey }
+    : undefined;
 
   const url = new URL(req.url);
   const page = url.searchParams.get("page") ?? "1";
@@ -84,7 +88,7 @@ export async function GET(req: NextRequest, { params }: any) {
 
   // In production, never silently fall back to mock:
   // if gateway URL is missing, surface an explicit error.
-  if (!rawBase && process.env.NODE_ENV === "production") {
+  if (!baseUrl && process.env.NODE_ENV === "production") {
     return NextResponse.json(
       {
         error: "PIVOTA_AGENT_URL not configured for creator category products",
@@ -94,7 +98,7 @@ export async function GET(req: NextRequest, { params }: any) {
   }
 
   // In development, allow local mock when backend URL is absent.
-  if (!rawBase) {
+  if (!baseUrl) {
     const mockProducts = getMockCategoryProducts(creatorSlug, categorySlug);
     return NextResponse.json<{
       products: Product[];
@@ -109,8 +113,6 @@ export async function GET(req: NextRequest, { params }: any) {
     });
   }
 
-  const baseUrl = rawBase.replace(/\/agent\/shop\/v1\/invoke\/?$/, "");
-
   try {
     const qsParams = new URLSearchParams({
       page: String(page),
@@ -121,7 +123,7 @@ export async function GET(req: NextRequest, { params }: any) {
     const res = await fetch(
       `${baseUrl}/creator/${creatorSlug}/categories/${categorySlug}/products?${qsParams}`,
       {
-        headers: apiKey ? { "x-api-key": apiKey } : undefined,
+        headers: upstreamHeaders,
         cache: "no-store",
       },
     );

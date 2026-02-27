@@ -1,5 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getMockCreatorCategoryTree } from "@/config/categoriesMock";
+import {
+  getCreatorAgentApiKey,
+  getOptionalCreatorAgentBaseUrl,
+} from "@/lib/creatorAgentGateway";
 import type { CreatorCategoryTreeResponse } from "@/types/category";
 
 function resolveLocale(req: NextRequest, explicit?: string | null): string | undefined {
@@ -13,11 +17,11 @@ function resolveLocale(req: NextRequest, explicit?: string | null): string | und
 
 export async function GET(req: NextRequest, { params }: any) {
   const creatorSlug = params.slug;
-  let rawBase =
-    process.env.PIVOTA_AGENT_BASE_URL ||
-    process.env.PIVOTA_AGENT_URL ||
-    process.env.NEXT_PUBLIC_PIVOTA_AGENT_URL;
-  const apiKey = process.env.PIVOTA_AGENT_API_KEY;
+  const baseUrl = getOptionalCreatorAgentBaseUrl();
+  const apiKey = getCreatorAgentApiKey();
+  const upstreamHeaders = apiKey
+    ? { "X-Agent-API-Key": apiKey, "x-api-key": apiKey }
+    : undefined;
 
   const url = new URL(req.url);
   const includeCounts =
@@ -29,7 +33,7 @@ export async function GET(req: NextRequest, { params }: any) {
 
   // In production, never silently fall back to mock:
   // if gateway URL is missing, surface an explicit error.
-  if (!rawBase && process.env.NODE_ENV === "production") {
+  if (!baseUrl && process.env.NODE_ENV === "production") {
     return NextResponse.json(
       {
         error: "PIVOTA_AGENT_URL not configured for creator categories",
@@ -39,12 +43,10 @@ export async function GET(req: NextRequest, { params }: any) {
   }
 
   // In development, allow local mock when backend URL is absent.
-  if (!rawBase) {
+  if (!baseUrl) {
     const mock = getMockCreatorCategoryTree(creatorSlug);
     return NextResponse.json<CreatorCategoryTreeResponse>(mock);
   }
-
-  const baseUrl = rawBase.replace(/\/agent\/shop\/v1\/invoke\/?$/, "");
 
   try {
     const qsParams = new URLSearchParams({
@@ -59,7 +61,7 @@ export async function GET(req: NextRequest, { params }: any) {
     const res = await fetch(
       `${baseUrl}/creator/${creatorSlug}/categories?${qs}`,
       {
-        headers: apiKey ? { "x-api-key": apiKey } : undefined,
+        headers: upstreamHeaders,
         cache: "no-store",
       },
     );

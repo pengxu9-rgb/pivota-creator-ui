@@ -1,15 +1,10 @@
 import { NextResponse } from "next/server";
+import {
+  getCreatorAgentAuthHeaders,
+  getCreatorInvokeUrl,
+} from "@/lib/creatorAgentGateway";
 
 export const runtime = "nodejs";
-
-function getInvokeUrl(): string {
-  const urlEnv = (process.env.PIVOTA_AGENT_URL ||
-    process.env.NEXT_PUBLIC_PIVOTA_AGENT_URL) as string | undefined;
-  if (!urlEnv) {
-    throw new Error("PIVOTA_AGENT_URL or NEXT_PUBLIC_PIVOTA_AGENT_URL is not configured");
-  }
-  return urlEnv;
-}
 
 function isExternalProductRef(args: { merchantId?: string; productId?: string }) {
   const mid = String(args.merchantId || "").trim().toLowerCase();
@@ -17,21 +12,6 @@ function isExternalProductRef(args: { merchantId?: string; productId?: string })
   if (mid === "external_seed") return true;
   if (pid.startsWith("ext_") || pid.startsWith("ext:")) return true;
   return false;
-}
-
-function authHeaders(): Record<string, string> {
-  const bearer =
-    process.env.PIVOTA_AGENT_API_KEY || process.env.PIVOTA_API_KEY || "";
-  const xAgent =
-    process.env.NEXT_PUBLIC_AGENT_API_KEY ||
-    process.env.AGENT_API_KEY ||
-    process.env.SHOP_GATEWAY_AGENT_API_KEY ||
-    "";
-
-  return {
-    ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
-    ...(xAgent ? { "X-Agent-API-Key": xAgent } : {}),
-  };
 }
 
 function extractProducts(raw: any): any[] {
@@ -108,7 +88,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const invokeUrl = getInvokeUrl();
+    const invokeUrl = getCreatorInvokeUrl();
+    const invokeAuthHeaders = getCreatorAgentAuthHeaders();
     const resolvedLimit = typeof limit === "number" && Number.isFinite(limit) ? Math.max(1, Math.floor(limit)) : 12;
     const timeoutMs = isExternalProductRef({ merchantId, productId }) ? 8000 : 12000;
 
@@ -138,7 +119,7 @@ export async function POST(req: Request) {
       try {
         res = await fetch(invokeUrl, {
           method: "POST",
-          headers: { "Content-Type": "application/json", ...authHeaders() },
+          headers: { "Content-Type": "application/json", ...invokeAuthHeaders },
           body: JSON.stringify(payload),
           signal: controller.signal,
         });
