@@ -40,6 +40,7 @@ const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "";
 const stripeConfigured = Boolean(publishableKey);
 const stripePromise = stripeConfigured ? loadStripe(publishableKey) : null;
 const PAYMENT_PREFETCH_AWAIT_TIMEOUT_MS = 3500;
+const STRIPE_CONFIRM_TIMEOUT_MS = 20000;
 
 function waitWithTimeout<T>(promise: Promise<T>, timeoutMs: number, timeoutMessage: string): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -1252,11 +1253,32 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
         }
 
         setCardError(null);
-        const result = await stripe.confirmCardPayment(clientSecret, {
-          payment_method: {
-            card: cardElement,
-          },
-        });
+        let result: any;
+        try {
+          result = await waitWithTimeout(
+            stripe.confirmCardPayment(clientSecret, {
+              payment_method: {
+                card: cardElement,
+              },
+            }),
+            STRIPE_CONFIRM_TIMEOUT_MS,
+            "STRIPE_CONFIRM_TIMEOUT",
+          );
+        } catch (confirmErr) {
+          const timeout =
+            confirmErr instanceof Error &&
+            confirmErr.message === "STRIPE_CONFIRM_TIMEOUT";
+          if (!timeout) {
+            throw confirmErr;
+          }
+          setPaymentStatus("payment_pending");
+          setCardError("Card confirmation is taking longer than expected.");
+          setError(
+            "Payment confirmation timed out. Please click Place order again.",
+          );
+          setStep("form");
+          return;
+        }
 
         if (result.error) {
           setCardError(result.error.message || "Payment failed");
