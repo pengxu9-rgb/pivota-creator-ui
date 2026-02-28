@@ -164,7 +164,7 @@ function extractIntentItemsFromInvokeBody(body: { operation: string; payload: an
     const merchantId = String(quote?.merchant_id || "").trim();
     const items = Array.isArray(quote?.items) ? quote.items : [];
     return items
-      .map((item) => {
+      .map((item: any) => {
         const productId = String(item?.product_id || "").trim();
         const merchant = String(item?.merchant_id || merchantId).trim();
         const variantId = String(item?.variant_id || "").trim();
@@ -188,7 +188,7 @@ function extractIntentItemsFromInvokeBody(body: { operation: string; payload: an
     const merchantId = String(order?.merchant_id || "").trim();
     const items = Array.isArray(order?.items) ? order.items : [];
     return items
-      .map((item) => {
+      .map((item: any) => {
         const productId = String(item?.product_id || "").trim();
         const merchant = String(item?.merchant_id || merchantId).trim();
         const variantId = String(item?.variant_id || "").trim();
