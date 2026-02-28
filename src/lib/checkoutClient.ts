@@ -1,8 +1,17 @@
 import type { CartItem } from "@/components/cart/CartProvider";
-import {
-  getCreatorCheckoutAuthHeaders,
-  getCreatorCheckoutInvokeUrl,
-} from "@/lib/creatorAgentGateway";
+
+const CHECKOUT_PROXY_URL = "/api/creator-agent/checkout/invoke";
+const CHECKOUT_SESSION_URL = "/api/creator-agent/checkout/session";
+const DIRECT_CHECKOUT_ENABLED =
+  String(process.env.NEXT_PUBLIC_ENABLE_DIRECT_CHECKOUT_INVOKE || "")
+    .trim()
+    .toLowerCase() === "true";
+const DIRECT_CHECKOUT_INVOKE_URL = String(
+  process.env.NEXT_PUBLIC_DIRECT_CHECKOUT_INVOKE_URL ||
+    "https://pivota-agent-production.up.railway.app/agent/shop/v1/invoke",
+).trim();
+const CHECKOUT_DIRECT_OPS = new Set(["preview_quote", "create_order", "submit_payment"]);
+const CHECKOUT_TOKEN_STORAGE_KEY = "pivota_checkout_token";
 
 type CreateOrderPayload = {
   merchant_id: string;
@@ -97,6 +106,171 @@ export function isRetryableQuoteError(code: string | null): boolean {
   return code === "QUOTE_EXPIRED" || code === "QUOTE_MISMATCH";
 }
 
+function readCheckoutTokenFromBrowser(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const params = new URLSearchParams(window.location.search || "");
+    const fromQuery =
+      String(params.get("checkout_token") || params.get("checkoutToken") || "").trim() ||
+      null;
+    if (fromQuery) {
+      window.sessionStorage.setItem(CHECKOUT_TOKEN_STORAGE_KEY, fromQuery);
+      window.localStorage.setItem(CHECKOUT_TOKEN_STORAGE_KEY, fromQuery);
+      return fromQuery;
+    }
+  } catch {
+    // ignore
+  }
+  try {
+    const fromSession = String(
+      window.sessionStorage.getItem(CHECKOUT_TOKEN_STORAGE_KEY) || "",
+    ).trim();
+    if (fromSession) return fromSession;
+  } catch {
+    // ignore
+  }
+  try {
+    const fromLocal = String(
+      window.localStorage.getItem(CHECKOUT_TOKEN_STORAGE_KEY) || "",
+    ).trim();
+    if (fromLocal) return fromLocal;
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+function persistCheckoutToken(token: string | null | undefined): string | null {
+  const normalized = String(token || "").trim();
+  if (!normalized || typeof window === "undefined") return normalized || null;
+  try {
+    window.sessionStorage.setItem(CHECKOUT_TOKEN_STORAGE_KEY, normalized);
+  } catch {
+    // ignore
+  }
+  try {
+    window.localStorage.setItem(CHECKOUT_TOKEN_STORAGE_KEY, normalized);
+  } catch {
+    // ignore
+  }
+  return normalized;
+}
+
+function extractIntentItemsFromInvokeBody(body: { operation: string; payload: any }): Array<Record<string, any>> {
+  const operation = String(body?.operation || "").trim().toLowerCase();
+  const payload = body?.payload || {};
+  if (operation === "preview_quote") {
+    const quote = payload?.quote || payload || {};
+    const merchantId = String(quote?.merchant_id || "").trim();
+    const items = Array.isArray(quote?.items) ? quote.items : [];
+    return items
+      .map((item) => {
+        const productId = String(item?.product_id || "").trim();
+        const merchant = String(item?.merchant_id || merchantId).trim();
+        const variantId = String(item?.variant_id || "").trim();
+        const sku = String(item?.sku || "").trim();
+        const quantityRaw = Number(item?.quantity);
+        const quantity =
+          Number.isFinite(quantityRaw) && quantityRaw > 0 ? Math.floor(quantityRaw) : 1;
+        if (!productId || !merchant) return null;
+        return {
+          product_id: productId,
+          merchant_id: merchant,
+          ...(variantId ? { variant_id: variantId } : {}),
+          ...(sku ? { sku } : {}),
+          quantity,
+        };
+      })
+      .filter(Boolean) as Array<Record<string, any>>;
+  }
+  if (operation === "create_order") {
+    const order = payload?.order || payload || {};
+    const merchantId = String(order?.merchant_id || "").trim();
+    const items = Array.isArray(order?.items) ? order.items : [];
+    return items
+      .map((item) => {
+        const productId = String(item?.product_id || "").trim();
+        const merchant = String(item?.merchant_id || merchantId).trim();
+        const variantId = String(item?.variant_id || "").trim();
+        const sku = String(item?.sku || "").trim();
+        const quantityRaw = Number(item?.quantity);
+        const quantity =
+          Number.isFinite(quantityRaw) && quantityRaw > 0 ? Math.floor(quantityRaw) : 1;
+        if (!productId || !merchant) return null;
+        return {
+          product_id: productId,
+          merchant_id: merchant,
+          ...(variantId ? { variant_id: variantId } : {}),
+          ...(sku ? { sku } : {}),
+          quantity,
+        };
+      })
+      .filter(Boolean) as Array<Record<string, any>>;
+  }
+  return [];
+}
+
+async function mintCheckoutSessionToken(body: { operation: string; payload: any }): Promise<string | null> {
+  const items = extractIntentItemsFromInvokeBody(body);
+  if (!items.length) return null;
+  try {
+    const res = await fetch(CHECKOUT_SESSION_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        items,
+        source: "creator-agent-ui",
+      }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json().catch(() => ({}));
+    return persistCheckoutToken(String(data?.checkout_token || "").trim());
+  } catch {
+    return null;
+  }
+}
+
+async function callDirectCheckoutInvoke(body: { operation: string; payload: any }, checkoutToken: string) {
+  try {
+    const res = await fetch(DIRECT_CHECKOUT_INVOKE_URL, {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Checkout-Token": checkoutToken,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      if (res.status === 401 || res.status === 403) {
+        return { fallbackToProxy: true };
+      }
+      let errorBody: any = undefined;
+      try {
+        errorBody = await res.json();
+      } catch {
+        errorBody = undefined;
+      }
+      const err = new AgentGatewayError(
+        `Direct checkout invoke failed with status ${res.status}`,
+        res.status,
+        errorBody,
+      );
+      return { fallbackToProxy: false, error: err };
+    }
+
+    return {
+      fallbackToProxy: false,
+      data: await res.json(),
+    };
+  } catch {
+    return { fallbackToProxy: true };
+  }
+}
+
 export type CheckoutOrderResponse = {
   order_id?: string;
   currency?: string;
@@ -167,11 +341,24 @@ export type SubmitPaymentResponse = {
 };
 
 async function callAgentGateway(body: { operation: string; payload: any }) {
-  const res = await fetch(getCreatorCheckoutInvokeUrl(), {
+  const operation = String(body?.operation || "").trim().toLowerCase();
+  const shouldTryDirect = DIRECT_CHECKOUT_ENABLED && CHECKOUT_DIRECT_OPS.has(operation);
+  let checkoutToken = readCheckoutTokenFromBrowser();
+  if (shouldTryDirect && !checkoutToken) {
+    checkoutToken = await mintCheckoutSessionToken(body);
+  }
+  if (shouldTryDirect && checkoutToken) {
+    const direct = await callDirectCheckoutInvoke(body, checkoutToken);
+    if (!direct.fallbackToProxy) {
+      if (direct.error) throw direct.error;
+      return direct.data;
+    }
+  }
+
+  const res = await fetch(CHECKOUT_PROXY_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      ...getCreatorCheckoutAuthHeaders(),
     },
     body: JSON.stringify(body),
   });

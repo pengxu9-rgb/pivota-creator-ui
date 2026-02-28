@@ -223,16 +223,9 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
   }, [orderIdForPayment, currency, amountToCharge]);
 
   useEffect(() => {
-    if (!stripeConfigured) return;
     if (!isPaymentStep) return;
     if (!paymentInitKey) return;
     if (!orderIdForPayment) return;
-
-    // Only prefetch for Stripe card flow. When the PSP is not known yet, we avoid
-    // calling submit_payment early because the backend may select a different PSP
-    // (e.g. Adyen), which can unexpectedly change the UI (Google Pay / wallets).
-    const isStripePsp = pspUsed === "stripe";
-    if (!isStripePsp) return;
 
     // For new orders, wait until we have server-side locked totals so we don't
     // accidentally create a payment intent with a stale amount.
@@ -247,6 +240,8 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
     setPaymentInitLoading(true);
     setPaymentInitError(null);
     setPrefetchedPaymentRes(null);
+    // Pre-warm Adyen SDK so session mount is faster when backend selects Adyen.
+    void import("@adyen/adyen-web").catch(() => null);
 
     const returnUrl =
       typeof window !== "undefined"
@@ -267,6 +262,17 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
     promise
       .then((res) => {
         setPrefetchedPaymentRes(res);
+        const prefetchedAction = res?.payment_action || res?.payment?.payment_action;
+        const prefetchedPsp =
+          (res as any)?.psp_used ||
+          (res as any)?.psp ||
+          res?.payment?.psp ||
+          (typeof prefetchedAction?.type === "string" && prefetchedAction.type === "adyen_session"
+            ? "adyen"
+            : null);
+        if (prefetchedPsp) {
+          setPspUsed(String(prefetchedPsp));
+        }
       })
       .catch((err) => {
         console.error("prefetch submit_payment error", err);
@@ -277,12 +283,10 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
         setPaymentInitLoading(false);
       });
   }, [
-    stripeConfigured,
     isPaymentStep,
     paymentInitKey,
     orderIdForPayment,
     existingOrderId,
-    pspUsed,
     amountToCharge,
     currency,
     prefetchedPaymentRes,
@@ -296,7 +300,96 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
     setPaymentInitLoading(false);
     setPaymentInitError(null);
     setPrefetchedPaymentRes(null);
+    setAdyenMounted(false);
+    if (adyenContainerRef.current) {
+      adyenContainerRef.current.innerHTML = "";
+    }
   }, [isPaymentStep]);
+
+  useEffect(() => {
+    if (!isPaymentStep) return;
+    if (step !== "form") return;
+    if (!prefetchedPaymentRes || adyenMounted) return;
+
+    const action =
+      prefetchedPaymentRes.payment_action ||
+      prefetchedPaymentRes.payment?.payment_action;
+    if (action?.type !== "adyen_session") return;
+    if (!adyenContainerRef.current) return;
+
+    const sessionData = action?.client_secret;
+    let sessionId =
+      (action as any)?.raw?.id ||
+      (prefetchedPaymentRes as any)?.payment_intent_id ||
+      prefetchedPaymentRes.payment?.payment_intent_id ||
+      "";
+    if (sessionId && sessionId.startsWith("adyen_session_")) {
+      sessionId = sessionId.replace("adyen_session_", "");
+    }
+
+    const clientKey =
+      (action as any)?.raw?.clientKey ||
+      process.env.NEXT_PUBLIC_ADYEN_CLIENT_KEY ||
+      "";
+    if (!sessionData || !clientKey) {
+      setPaymentInitError("Payment provider is missing configuration.");
+      return;
+    }
+
+    let cancelled = false;
+    setPspUsed("adyen");
+    (async () => {
+      try {
+        const { default: AdyenCheckout } = await import("@adyen/adyen-web");
+        if (cancelled || !adyenContainerRef.current) return;
+        const checkout = await AdyenCheckout({
+          clientKey,
+          environment: process.env.NEXT_PUBLIC_ADYEN_ENVIRONMENT || "test",
+          session: {
+            id: sessionId,
+            sessionData,
+          },
+          analytics: { enabled: false },
+          onPaymentCompleted: (result: any) => {
+            const code = result?.resultCode || result?.sessionResult;
+            if (code === "Authorised" || code === "Pending" || code === "Received") {
+              clear();
+              setPaymentStatus("succeeded");
+              setStep("success");
+            } else {
+              setPaymentStatus(code || "payment_refused");
+              setError(
+                "Your card was declined or the payment was not completed. You can try again with a different card.",
+              );
+              setStep("error");
+            }
+          },
+          onError: (err: any) => {
+            console.error("Adyen error:", err);
+            setError(
+              "Payment failed with Adyen. Please check your card details or try again.",
+            );
+            setStep("error");
+          },
+        });
+        if (cancelled || !adyenContainerRef.current) return;
+        adyenContainerRef.current.innerHTML = "";
+        checkout.create("dropin").mount(adyenContainerRef.current);
+        setAdyenMounted(true);
+        setError(null);
+      } catch (err: any) {
+        if (cancelled) return;
+        console.error("Adyen pre-mount failed:", err);
+        setPaymentInitError(
+          err?.message || "We couldn’t start the card payment form. Please try again in a moment.",
+        );
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [adyenMounted, clear, isPaymentStep, prefetchedPaymentRes, step]);
 
   const promotionDiscountFromLines = (lines: any[]) =>
     lines.reduce((sum, pl) => sum + Math.abs(toNumber(pl?.amount)), 0);
@@ -1838,6 +1931,9 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
                   if (step === "submitting") {
                     ctaLabel = isPaymentStep ? "Processing payment…" : "Preparing payment…";
                   } else if (isPaymentStep) {
+                    if (pspUsed === "adyen" && adyenMounted) {
+                      ctaLabel = "Complete payment in form";
+                    } else {
                     const lowerStatus = (paymentStatus || "").toLowerCase();
                     if (
                       lowerStatus === "payment_refused" ||
@@ -1848,6 +1944,7 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
                     } else {
                       ctaLabel = "Place order";
                     }
+                    }
                   }
 
                   return (
@@ -1855,6 +1952,7 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
                       type="submit"
                       disabled={
                         step === "submitting" ||
+                        (isPaymentStep && pspUsed === "adyen" && adyenMounted) ||
                         (!existingOrderId &&
                           !isPaymentStep &&
                           (!quote || quoteLoading || !!quoteError))
