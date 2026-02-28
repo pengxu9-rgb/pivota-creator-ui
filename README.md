@@ -48,3 +48,4 @@ Recommended minimum:
 - `PIVOTA_AGENT_URL` set to `/agent/shop/v1/invoke` endpoint.
 - `CREATOR_AGENT_API_KEY` set once; checkout automatically reuses it when `CREATOR_CHECKOUT_AGENT_API_KEY` is unset.
 - `NEXT_PUBLIC_REVIEWS_UPSTREAM_BASE` set to the public host that serves `/agent/shop/v1/review-media/*` when needed.
+- `CREATOR_STANDARD_PDP_BASE_URL=https://agent.pivota.cc` so `/creator/:slug/product/:id` acts as alias to standard PDP.
