@@ -39,6 +39,25 @@ type AuthMethod = "otp" | "password";
 const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "";
 const stripeConfigured = Boolean(publishableKey);
 const stripePromise = stripeConfigured ? loadStripe(publishableKey) : null;
+const PAYMENT_PREFETCH_AWAIT_TIMEOUT_MS = 3500;
+
+function waitWithTimeout<T>(promise: Promise<T>, timeoutMs: number, timeoutMessage: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(timeoutMessage));
+    }, timeoutMs);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
+}
 
 export default function CheckoutPage() {
   if (!stripeConfigured) {
@@ -1032,7 +1051,22 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
           if (prefetchedPaymentRes) {
             paymentRes = prefetchedPaymentRes;
           } else if (paymentInitPromiseRef.current) {
-            paymentRes = await paymentInitPromiseRef.current;
+            try {
+              paymentRes = await waitWithTimeout(
+                paymentInitPromiseRef.current,
+                PAYMENT_PREFETCH_AWAIT_TIMEOUT_MS,
+                "PAYMENT_PREFETCH_TIMEOUT",
+              );
+            } catch (prefetchErr) {
+              const timeout =
+                prefetchErr instanceof Error &&
+                prefetchErr.message === "PAYMENT_PREFETCH_TIMEOUT";
+              if (!timeout) {
+                throw prefetchErr;
+              }
+              // Warm-up is still pending; continue with a direct submit_payment call.
+              paymentRes = null;
+            }
           }
         }
 

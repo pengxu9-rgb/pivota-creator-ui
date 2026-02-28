@@ -13,6 +13,31 @@ const DIRECT_CHECKOUT_INVOKE_URL = String(
 const CHECKOUT_DIRECT_OPS = new Set(["preview_quote", "create_order", "submit_payment"]);
 const CHECKOUT_TOKEN_STORAGE_KEY = "pivota_checkout_token";
 
+function parseTimeoutMs(raw: string | undefined, fallbackMs: number, minMs: number, maxMs: number) {
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return fallbackMs;
+  return Math.max(minMs, Math.min(maxMs, Math.round(n)));
+}
+
+const CHECKOUT_PROXY_TIMEOUT_MS = parseTimeoutMs(
+  process.env.NEXT_PUBLIC_CHECKOUT_PROXY_TIMEOUT_MS,
+  25000,
+  3000,
+  90000,
+);
+const DIRECT_CHECKOUT_TIMEOUT_MS = parseTimeoutMs(
+  process.env.NEXT_PUBLIC_DIRECT_CHECKOUT_TIMEOUT_MS,
+  6000,
+  1500,
+  30000,
+);
+const CHECKOUT_SESSION_TIMEOUT_MS = parseTimeoutMs(
+  process.env.NEXT_PUBLIC_CHECKOUT_SESSION_TIMEOUT_MS,
+  5000,
+  1500,
+  20000,
+);
+
 type CreateOrderPayload = {
   merchant_id: string;
   offer_id?: string;
@@ -104,6 +129,36 @@ export function parseAgentGatewayError(err: unknown): {
 
 export function isRetryableQuoteError(code: string | null): boolean {
   return code === "QUOTE_EXPIRED" || code === "QUOTE_MISMATCH";
+}
+
+function isAbortError(err: unknown): boolean {
+  if (!err) return false;
+  if (typeof DOMException !== "undefined" && err instanceof DOMException) {
+    return err.name === "AbortError";
+  }
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "name" in err &&
+    String((err as any).name) === "AbortError"
+  );
+}
+
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit,
+  timeoutMs: number,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, {
+      ...init,
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function readCheckoutTokenFromBrowser(): string | null {
@@ -214,7 +269,7 @@ async function mintCheckoutSessionToken(body: { operation: string; payload: any 
   const items = extractIntentItemsFromInvokeBody(body);
   if (!items.length) return null;
   try {
-    const res = await fetch(CHECKOUT_SESSION_URL, {
+    const res = await fetchWithTimeout(CHECKOUT_SESSION_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -223,7 +278,7 @@ async function mintCheckoutSessionToken(body: { operation: string; payload: any 
         items,
         source: "creator-agent-ui",
       }),
-    });
+    }, CHECKOUT_SESSION_TIMEOUT_MS);
     if (!res.ok) return null;
     const data = await res.json().catch(() => ({}));
     return persistCheckoutToken(String(data?.checkout_token || "").trim());
@@ -234,7 +289,7 @@ async function mintCheckoutSessionToken(body: { operation: string; payload: any 
 
 async function callDirectCheckoutInvoke(body: { operation: string; payload: any }, checkoutToken: string) {
   try {
-    const res = await fetch(DIRECT_CHECKOUT_INVOKE_URL, {
+    const res = await fetchWithTimeout(DIRECT_CHECKOUT_INVOKE_URL, {
       method: "POST",
       mode: "cors",
       headers: {
@@ -242,7 +297,7 @@ async function callDirectCheckoutInvoke(body: { operation: string; payload: any 
         "X-Checkout-Token": checkoutToken,
       },
       body: JSON.stringify(body),
-    });
+    }, DIRECT_CHECKOUT_TIMEOUT_MS);
 
     if (!res.ok) {
       if (res.status === 401 || res.status === 403) {
@@ -266,7 +321,10 @@ async function callDirectCheckoutInvoke(body: { operation: string; payload: any 
       fallbackToProxy: false,
       data: await res.json(),
     };
-  } catch {
+  } catch (err) {
+    if (isAbortError(err)) {
+      return { fallbackToProxy: true };
+    }
     return { fallbackToProxy: true };
   }
 }
@@ -355,13 +413,33 @@ async function callAgentGateway(body: { operation: string; payload: any }) {
     }
   }
 
-  const res = await fetch(CHECKOUT_PROXY_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
+  let res: Response;
+  try {
+    res = await fetchWithTimeout(
+      CHECKOUT_PROXY_URL,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      },
+      CHECKOUT_PROXY_TIMEOUT_MS,
+    );
+  } catch (err) {
+    if (isAbortError(err)) {
+      throw new AgentGatewayError(
+        `Checkout request timed out after ${CHECKOUT_PROXY_TIMEOUT_MS}ms`,
+        504,
+        {
+          error: "TIMEOUT",
+          message: "Checkout request timed out",
+          timeout_ms: CHECKOUT_PROXY_TIMEOUT_MS,
+        },
+      );
+    }
+    throw err;
+  }
 
   if (!res.ok) {
     let errorBody: any = undefined;
