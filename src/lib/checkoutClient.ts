@@ -376,6 +376,10 @@ export type QuotePreviewResponse = {
 
 export type SubmitPaymentResponse = {
   payment_status?: string;
+  status?: string;
+  confirmation_owner?: "backend" | "client";
+  requires_client_confirmation?: boolean;
+  payment_status_raw?: string | null;
   redirect_url?: string;
   payment_action?: {
     type?: string;
@@ -385,6 +389,10 @@ export type SubmitPaymentResponse = {
   } | null;
   payment?: {
     payment_status?: string;
+    status?: string;
+    confirmation_owner?: "backend" | "client";
+    requires_client_confirmation?: boolean;
+    payment_status_raw?: string | null;
     redirect_url?: string;
     client_secret?: string | null;
     payment_action?: {
@@ -397,6 +405,147 @@ export type SubmitPaymentResponse = {
   } | null;
   [key: string]: unknown;
 };
+
+export type SubmitPaymentContract = {
+  paymentStatus: string;
+  confirmationOwner: "backend" | "client";
+  requiresClientConfirmation: boolean;
+  paymentStatusRaw: string | null;
+};
+
+const BACKEND_OWNED_PAYMENT_STATUSES = new Set([
+  "processing",
+  "paid",
+  "completed",
+  "succeeded",
+]);
+const CLIENT_OWNED_PAYMENT_STATUSES = new Set([
+  "requires_payment_method",
+  "requires_confirmation",
+  "requires_action",
+]);
+
+function readString(value: unknown): string | null {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed || null;
+  }
+  if (typeof value === "number" || typeof value === "boolean") {
+    const normalized = String(value).trim();
+    return normalized || null;
+  }
+  return null;
+}
+
+function normalizePaymentStatusToken(rawStatus: unknown): string {
+  const token = readString(rawStatus);
+  if (!token) return "unknown";
+  return token.toLowerCase();
+}
+
+function readBoolean(value: unknown): boolean | null {
+  return typeof value === "boolean" ? value : null;
+}
+
+export function isBackendSettledPaymentStatus(status: unknown): boolean {
+  const normalized = normalizePaymentStatusToken(status);
+  return BACKEND_OWNED_PAYMENT_STATUSES.has(normalized);
+}
+
+export function resolveSubmitPaymentContract(paymentRes: SubmitPaymentResponse): SubmitPaymentContract {
+  const top = paymentRes as Record<string, unknown>;
+  const nested =
+    paymentRes.payment && typeof paymentRes.payment === "object"
+      ? (paymentRes.payment as Record<string, unknown>)
+      : null;
+  const action =
+    paymentRes.payment_action ||
+    (nested?.payment_action as SubmitPaymentResponse["payment_action"]) ||
+    null;
+  const actionType = normalizePaymentStatusToken(action?.type || null);
+  const statusRaw =
+    readString(top.payment_status) ||
+    readString(top.status) ||
+    readString(nested?.payment_status) ||
+    readString(nested?.status);
+  const paymentStatus = normalizePaymentStatusToken(statusRaw);
+  const explicitRequires =
+    readBoolean(top.requires_client_confirmation) ??
+    readBoolean(nested?.requires_client_confirmation);
+  const explicitOwnerRaw =
+    readString(top.confirmation_owner) || readString(nested?.confirmation_owner);
+  const explicitOwner =
+    explicitOwnerRaw === "client"
+      ? "client"
+      : explicitOwnerRaw === "backend"
+        ? "backend"
+        : null;
+  const paymentStatusRaw = paymentStatus === "unknown" ? statusRaw : null;
+
+  if (explicitRequires != null) {
+    const owner = explicitOwner || (explicitRequires ? "client" : "backend");
+    return {
+      paymentStatus,
+      confirmationOwner: owner,
+      requiresClientConfirmation: explicitRequires,
+      paymentStatusRaw,
+    };
+  }
+  if (explicitOwner) {
+    return {
+      paymentStatus,
+      confirmationOwner: explicitOwner,
+      requiresClientConfirmation: explicitOwner === "client",
+      paymentStatusRaw,
+    };
+  }
+
+  // Compatibility: hosted actions still need client interaction even when
+  // legacy backends miss explicit owner flags.
+  if (actionType === "adyen_session" || actionType === "redirect_url") {
+    return {
+      paymentStatus,
+      confirmationOwner: "client",
+      requiresClientConfirmation: true,
+      paymentStatusRaw,
+    };
+  }
+
+  if (CLIENT_OWNED_PAYMENT_STATUSES.has(paymentStatus)) {
+    return {
+      paymentStatus,
+      confirmationOwner: "client",
+      requiresClientConfirmation: true,
+      paymentStatusRaw,
+    };
+  }
+  if (BACKEND_OWNED_PAYMENT_STATUSES.has(paymentStatus)) {
+    return {
+      paymentStatus,
+      confirmationOwner: "backend",
+      requiresClientConfirmation: false,
+      paymentStatusRaw,
+    };
+  }
+
+  // Legacy fallback: Stripe client secret without explicit flags still needs
+  // client-side confirmation for backwards compatibility.
+  if (actionType === "stripe_client_secret") {
+    return {
+      paymentStatus,
+      confirmationOwner: "client",
+      requiresClientConfirmation: true,
+      paymentStatusRaw,
+    };
+  }
+
+  return {
+    paymentStatus,
+    confirmationOwner: "backend",
+    requiresClientConfirmation: false,
+    paymentStatusRaw,
+  };
+}
 
 async function callAgentGateway(body: { operation: string; payload: any }) {
   const operation = String(body?.operation || "").trim().toLowerCase();

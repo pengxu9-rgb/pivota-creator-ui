@@ -706,7 +706,7 @@ export default function OrderDetailPage() {
     setRefundNote(null);
     setRefundSubmitted(false);
     setRefundOpen(false);
-  }, [order?.id]);
+  }, [order]);
 
   const handleRequireLogin = () => {
     const returnTo =

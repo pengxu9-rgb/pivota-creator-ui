@@ -8,9 +8,11 @@ import { useCart } from "@/components/cart/CartProvider";
 import {
   AgentGatewayError,
   createOrderWithQuote,
+  isBackendSettledPaymentStatus,
   isRetryableQuoteError,
   parseAgentGatewayError,
   previewQuoteFromCart,
+  resolveSubmitPaymentContract,
   submitPaymentForOrder,
   type SubmitPaymentResponse,
   type CheckoutOrderResponse,
@@ -58,6 +60,26 @@ function waitWithTimeout<T>(promise: Promise<T>, timeoutMs: number, timeoutMessa
       },
     );
   });
+}
+
+function emitCheckoutDebugEvent(event: string, payload: Record<string, unknown>) {
+  if (typeof window === "undefined") return;
+  const safePayload = {
+    event,
+    ts: Date.now(),
+    ...payload,
+  };
+  try {
+    window.dispatchEvent(
+      new CustomEvent("pivota_checkout_debug", {
+        detail: safePayload,
+      }),
+    );
+  } catch {
+    // ignore event dispatch failures in older/non-browser runtimes
+  }
+  // eslint-disable-next-line no-console
+  console.info("[checkout_debug]", safePayload);
 }
 
 export default function CheckoutPage() {
@@ -241,6 +263,14 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
     if (!cur || amountMinor == null) return null;
     return `${orderIdForPayment}:${cur}:${amountMinor}`;
   }, [orderIdForPayment, currency, amountToCharge]);
+
+  useEffect(() => {
+    emitCheckoutDebugEvent("checkout_stage_change", {
+      stage: step,
+      is_payment_step: isPaymentStep,
+      order_id: orderId || existingOrderId || null,
+    });
+  }, [existingOrderId, isPaymentStep, orderId, step]);
 
   useEffect(() => {
     if (!isPaymentStep) return;
@@ -1094,8 +1124,8 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
         return;
       }
 
-      const statusFromGateway =
-        paymentRes.payment_status || paymentRes.payment?.payment_status;
+      const paymentContract = resolveSubmitPaymentContract(paymentRes);
+      const statusFromGateway = paymentContract.paymentStatus;
       const action =
         paymentRes.payment_action || paymentRes.payment?.payment_action;
       const redirectUrl =
@@ -1103,6 +1133,14 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
         paymentRes.redirect_url ||
         paymentRes.payment?.redirect_url ||
         (paymentRes as any)?.next_action?.redirect_url;
+      emitCheckoutDebugEvent("submit_payment_received", {
+        order_id: currentOrderId,
+        payment_status: paymentContract.paymentStatus,
+        payment_status_raw: paymentContract.paymentStatusRaw,
+        confirmation_owner: paymentContract.confirmationOwner,
+        requires_client_confirmation: paymentContract.requiresClientConfirmation,
+        action_type: action?.type || null,
+      });
 
       setPaymentStatus(statusFromGateway);
 
@@ -1111,10 +1149,27 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
         (paymentRes as any).psp ||
         paymentRes.payment?.psp ||
         null;
-      if (pspFromGateway) {
-        setPspUsed(pspFromGateway);
+      const effectivePsp = pspFromGateway || pspUsed || null;
+      if (effectivePsp) {
+        setPspUsed(effectivePsp);
       }
 
+      // Backend-owner mode: do not run client confirmation even if legacy
+      // fields (client_secret/payment_action) are present.
+      if (!paymentContract.requiresClientConfirmation) {
+        if (isBackendSettledPaymentStatus(statusFromGateway)) {
+          clear();
+          setStep("success");
+          return;
+        }
+        setError(
+          "Your order was created, but the payment is not completed yet. Please check your email or Orders page for the latest status.",
+        );
+        setStep("error");
+        return;
+      }
+
+      // Client-owner mode: only here we run Stripe/Adyen confirmation flows.
       // Case 1: Adyen session – mount drop-in UI like Shopping Agent.
       if (action?.type === "adyen_session") {
         const sessionData = action?.client_secret;
@@ -1141,6 +1196,11 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
           return;
         }
 
+        emitCheckoutDebugEvent("confirm_started", {
+          provider: "adyen",
+          order_id: currentOrderId,
+          payment_status: statusFromGateway,
+        });
         try {
           const { default: AdyenCheckout } = await import("@adyen/adyen-web");
           // Clear any previous drop-in so a new Adyen session can be mounted
@@ -1164,10 +1224,22 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
                 code === "Pending" ||
                 code === "Received"
               ) {
+                emitCheckoutDebugEvent("confirm_finished", {
+                  provider: "adyen",
+                  order_id: currentOrderId,
+                  success: true,
+                  status: code || "Authorised",
+                });
                 clear();
                 setPaymentStatus("succeeded");
                 setStep("success");
               } else {
+                emitCheckoutDebugEvent("confirm_finished", {
+                  provider: "adyen",
+                  order_id: currentOrderId,
+                  success: false,
+                  status: code || "payment_refused",
+                });
                 // Payment was created but not authorised. Keep the order and
                 // allow the user to try again.
                 setPaymentStatus(code || "payment_refused");
@@ -1180,6 +1252,12 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
             onError: (err: any) => {
               // eslint-disable-next-line no-console
               console.error("Adyen error:", err);
+              emitCheckoutDebugEvent("confirm_finished", {
+                provider: "adyen",
+                order_id: currentOrderId,
+                success: false,
+                error: String(err?.message || err || "unknown"),
+              });
               setError(
                 "Payment failed with Adyen. Please check your card details or try again.",
               );
@@ -1214,6 +1292,17 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
       // Case 1: gateway asks us to redirect to a hosted payment page.
       if (action?.type === "redirect_url" && redirectUrl) {
         if (typeof window !== "undefined") {
+          emitCheckoutDebugEvent("confirm_started", {
+            provider: "redirect",
+            order_id: currentOrderId,
+            payment_status: statusFromGateway,
+          });
+          emitCheckoutDebugEvent("confirm_finished", {
+            provider: "redirect",
+            order_id: currentOrderId,
+            success: true,
+            status: "redirected",
+          });
           clear();
           window.location.href = redirectUrl;
           return;
@@ -1226,7 +1315,7 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
         (paymentRes as any).client_secret ||
         paymentRes.payment?.client_secret;
 
-      const isStripePsp = !pspUsed || pspUsed === "stripe";
+      const isStripePsp = !effectivePsp || effectivePsp === "stripe";
 
       if (clientSecret && isStripePsp && !stripeConfigured) {
         setError(
@@ -1254,6 +1343,11 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
 
         setCardError(null);
         let result: any;
+        emitCheckoutDebugEvent("confirm_started", {
+          provider: "stripe",
+          order_id: currentOrderId,
+          payment_status: statusFromGateway,
+        });
         try {
           result = await waitWithTimeout(
             stripe.confirmCardPayment(clientSecret, {
@@ -1271,6 +1365,12 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
           if (!timeout) {
             throw confirmErr;
           }
+          emitCheckoutDebugEvent("confirm_finished", {
+            provider: "stripe",
+            order_id: currentOrderId,
+            success: false,
+            timeout: true,
+          });
           setPaymentStatus("payment_pending");
           setCardError("Card confirmation is taking longer than expected.");
           setError(
@@ -1281,6 +1381,12 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
         }
 
         if (result.error) {
+          emitCheckoutDebugEvent("confirm_finished", {
+            provider: "stripe",
+            order_id: currentOrderId,
+            success: false,
+            error: String(result.error.message || "payment_failed"),
+          });
           setCardError(result.error.message || "Payment failed");
           setError(
             "Payment failed. Please check your card details or try again.",
@@ -1290,6 +1396,12 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
         }
 
         const intentStatus = result.paymentIntent?.status;
+        emitCheckoutDebugEvent("confirm_finished", {
+          provider: "stripe",
+          order_id: currentOrderId,
+          success: intentStatus === "succeeded" || intentStatus === "processing",
+          status: intentStatus || "unknown",
+        });
         if (intentStatus === "succeeded" || intentStatus === "processing") {
           clear();
           setPaymentStatus(intentStatus);
@@ -1312,25 +1424,8 @@ function CheckoutInner({ stripeConfigured, stripeReady, stripe, elements }: Chec
         return;
       }
 
-      // Case 3: payment already succeeded / is processing (e.g. 0-amount or
-      // off-session). Treat as successful.
-      const normalizedStatus = (statusFromGateway || "").toLowerCase();
-      const isPaid =
-        normalizedStatus === "succeeded" ||
-        normalizedStatus === "paid" ||
-        normalizedStatus === "completed" ||
-        normalizedStatus === "processing";
-
-      if (isPaid) {
-        clear();
-        setStep("success");
-        return;
-      }
-
-      // Otherwise we don't claim full success: mark as pending and let the
-      // user check their Orders page / email.
       setError(
-        "Your order was created, but the payment is not completed yet. Please check your email or Orders page for the latest status.",
+        "Payment confirmation requires additional steps, but no supported client action was provided.",
       );
       setStep("error");
     } catch (err) {
