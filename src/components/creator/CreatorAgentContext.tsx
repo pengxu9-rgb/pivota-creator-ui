@@ -1312,7 +1312,7 @@ export function CreatorAgentProvider({
     };
 
     if (!recentQueriesHydrated) return;
-    const featuredKey = `${creator.id}:${accountsUser?.id || `anon:${deviceId}`}:${featuredQueryCandidates.join("||") || "__no_history__"}`;
+    const featuredKey = `${creator.id}:${accountsUser?.id || `anon:${deviceId}`}:${currentSession?.id || "no_session"}:${featuredQueryCandidates.join("||") || "__no_history__"}`;
     if (featuredLoadedKeyRef.current === featuredKey) return;
     featuredLoadedKeyRef.current = featuredKey;
     loadFeatured();
@@ -1325,6 +1325,7 @@ export function CreatorAgentProvider({
     isDebug,
     isMockMode,
     accountsUser?.id,
+    currentSession?.id,
     recentQueries,
     deviceId,
     recentQueriesHydrated,
