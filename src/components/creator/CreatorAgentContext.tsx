@@ -116,6 +116,37 @@ function mergeUniqueSimilarItems(current: SimilarProductItem[], incoming: Simila
   };
 }
 
+function normalizeFeaturedHistoryQuery(raw: string | null | undefined): string {
+  const value = String(raw || "").trim().replace(/\s+/g, " ");
+  if (value.length < 2) return "";
+  return value.length > 80 ? value.slice(0, 80).trim() : value;
+}
+
+function buildFeaturedQueryCandidates(args: {
+  recentQueries: string[];
+  lastUserQuery?: string | null;
+}): string[] {
+  const candidates: string[] = [];
+  const seen = new Set<string>();
+
+  const pushCandidate = (raw: string | null | undefined) => {
+    const normalized = normalizeFeaturedHistoryQuery(raw);
+    if (!normalized) return;
+    const dedupeKey = normalized.toLowerCase();
+    if (seen.has(dedupeKey)) return;
+    seen.add(dedupeKey);
+    candidates.push(normalized);
+  };
+
+  pushCandidate(args.lastUserQuery);
+  for (let index = args.recentQueries.length - 1; index >= 0; index -= 1) {
+    pushCandidate(args.recentQueries[index]);
+    if (candidates.length >= 3) break;
+  }
+
+  return candidates;
+}
+
 interface CreatorAgentContextValue {
   creator: CreatorAgentConfig;
   messages: ChatMessage[];
@@ -419,6 +450,14 @@ export function CreatorAgentProvider({
   const [onboardingActive, setOnboardingActive] = useState(false);
   const [recentQueriesHydrated, setRecentQueriesHydrated] = useState(false);
   const featuredLoadedKeyRef = useRef<string | null>(null);
+  const featuredQueryCandidates = useMemo(
+    () =>
+      buildFeaturedQueryCandidates({
+        recentQueries,
+        lastUserQuery: currentSession?.lastUserQuery,
+      }),
+    [currentSession?.lastUserQuery, recentQueries],
+  );
 
   const buildTraceId = useCallback(
     (purpose: "chat" | "featured") => {
@@ -1105,47 +1144,103 @@ export function CreatorAgentProvider({
     let cancelled = false;
 
     const loadFeatured = async () => {
+      type FeaturedResponse = {
+        reply: string;
+        products?: Product[];
+        page_info?: {
+          page?: number;
+          page_size?: number;
+          total?: number;
+          has_more?: boolean;
+        };
+        rawAgentResponse?: any;
+        agentUrlUsed?: string;
+      };
+
       try {
         setIsFeaturedLoading(true);
         const historyForBackend = recentQueries
           .slice(-5)
           .map((q) => (q.length > 80 ? q.slice(0, 80) : q));
 
-        const res = await fetch("/api/creator-agent", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            creatorId: creator.id,
-            messages: [] as {
-              role: "user" | "assistant";
-              content: string;
-            }[],
-            userId: accountsUser?.id || null,
-            recentQueries: historyForBackend,
-            traceId: buildTraceId("featured"),
-            search: {
-              query: "",
-              page: 1,
-              limit: GRID_PAGE_SIZE,
-            },
-          }),
-        });
-        if (!res.ok) return;
+        if (featuredQueryCandidates.length === 0) {
+          setProducts([]);
+          setProductsPaging({
+            query: "",
+            page: 1,
+            limit: GRID_PAGE_SIZE,
+            hasMore: false,
+            isLoadingMore: false,
+            noGrowthCount: 0,
+          });
+          if (isDebug) {
+            setLastRequest({
+              creatorId: creator.id,
+              messages: [],
+              source: "featured-history",
+              featuredQueryCandidates: [],
+              payload: {
+                search: {
+                  query: null,
+                  limit: GRID_PAGE_SIZE,
+                },
+              },
+            });
+            setLastResponse({
+              reply: "Featured recommendations will populate after the first search.",
+              products: [],
+            });
+          }
+          return;
+        }
 
-        const data = (await res.json()) as {
-          reply: string;
-          products?: Product[];
-          page_info?: {
-            page?: number;
-            page_size?: number;
-            total?: number;
-            has_more?: boolean;
-          };
-          rawAgentResponse?: any;
-          agentUrlUsed?: string;
-        };
+        let selectedQuery = "";
+        let data: FeaturedResponse | null = null;
+
+        for (const candidateQuery of featuredQueryCandidates) {
+          selectedQuery = candidateQuery;
+          const res = await fetch("/api/creator-agent", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              creatorId: creator.id,
+              messages: [] as {
+                role: "user" | "assistant";
+                content: string;
+              }[],
+              userId: accountsUser?.id || null,
+              recentQueries: historyForBackend,
+              traceId: buildTraceId("featured"),
+              search: {
+                query: candidateQuery,
+                page: 1,
+                limit: GRID_PAGE_SIZE,
+              },
+            }),
+          });
+          if (!res.ok) continue;
+
+          data = (await res.json()) as FeaturedResponse;
+          if (cancelled) return;
+          if (Array.isArray(data.products) && data.products.length > 0) {
+            break;
+          }
+        }
 
         if (cancelled) return;
+        if (!data) {
+          setProducts([]);
+          setProductsPaging({
+            query: "",
+            page: 1,
+            limit: GRID_PAGE_SIZE,
+            hasMore: false,
+            isLoadingMore: false,
+            noGrowthCount: 0,
+          });
+          return;
+        }
+
         if (data.products && data.products.length > 0) {
           const withDeals = isMockMode
             ? attachMockDeals(data.products)
@@ -1164,7 +1259,7 @@ export function CreatorAgentProvider({
               ? pageInfo.has_more
               : withDeals.length >= pageSize;
           setProductsPaging({
-            query: "",
+            query: selectedQuery,
             page,
             limit: pageSize,
             hasMore,
@@ -1179,23 +1274,33 @@ export function CreatorAgentProvider({
           withDeals.slice(0, 6).forEach((p) => {
             void prefetchProductDetail(p);
           });
+        } else {
+          setProducts([]);
+          setProductsPaging({
+            query: selectedQuery,
+            page: 1,
+            limit: GRID_PAGE_SIZE,
+            hasMore: false,
+            isLoadingMore: false,
+            noGrowthCount: 0,
+          });
         }
 
         if (isDebug) {
-          setLastRequest((prev: any) =>
-            prev ?? {
-              creatorId: creator.id,
-              messages: [],
-              payload: {
-                  search: {
-                    query: "Show popular items",
-                    in_stock_only: false,
-                    limit: GRID_PAGE_SIZE,
-                  },
-                },
+          setLastRequest({
+            creatorId: creator.id,
+            messages: [],
+            source: "featured-history",
+            featuredQueryCandidates,
+            payload: {
+              search: {
+                query: selectedQuery || null,
+                in_stock_only: false,
+                limit: GRID_PAGE_SIZE,
               },
-          );
-          setLastResponse((prev: any) => prev ?? data);
+            },
+          });
+          setLastResponse(data);
         }
       } catch (error) {
         console.error("loadFeatured error", error);
@@ -1207,7 +1312,7 @@ export function CreatorAgentProvider({
     };
 
     if (!recentQueriesHydrated) return;
-    const featuredKey = `${creator.id}:${accountsUser?.id || `anon:${deviceId}`}`;
+    const featuredKey = `${creator.id}:${accountsUser?.id || `anon:${deviceId}`}:${featuredQueryCandidates.join("||") || "__no_history__"}`;
     if (featuredLoadedKeyRef.current === featuredKey) return;
     featuredLoadedKeyRef.current = featuredKey;
     loadFeatured();
@@ -1225,6 +1330,7 @@ export function CreatorAgentProvider({
     recentQueriesHydrated,
     buildTraceId,
     prefetchProductDetail,
+    featuredQueryCandidates,
   ]);
 
   useEffect(() => {
