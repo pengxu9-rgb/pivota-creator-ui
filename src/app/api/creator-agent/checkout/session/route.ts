@@ -12,11 +12,43 @@ const BACKEND_BASE =
   process.env.NEXT_PUBLIC_PIVOTA_BACKEND_BASE_URL ||
   "https://web-production-fedb.up.railway.app";
 
-function normalizeCheckoutSessionResponse(raw: any) {
+function decorateCheckoutUrl(
+  rawUrl: any,
+  args?: {
+    returnUrl?: string;
+    source?: string;
+  },
+) {
+  const checkoutUrl = String(rawUrl || "").trim();
+  if (!checkoutUrl) return null;
+  try {
+    const url = new URL(checkoutUrl);
+    if (!url.searchParams.get("entry")) {
+      url.searchParams.set("entry", "creator_agent");
+    }
+    if (!url.searchParams.get("source")) {
+      url.searchParams.set("source", String(args?.source || "").trim() || "creator_agent");
+    }
+    const returnUrl = String(args?.returnUrl || "").trim();
+    if (returnUrl && !url.searchParams.get("return")) {
+      url.searchParams.set("return", returnUrl);
+    }
+    return url.toString();
+  } catch {
+    return checkoutUrl;
+  }
+}
+
+function normalizeCheckoutSessionResponse(
+  raw: any,
+  args?: {
+    returnUrl?: string;
+    source?: string;
+  },
+) {
   if (!raw || typeof raw !== "object") return raw;
 
-  const checkoutUrl =
-    String(raw.checkout_url || raw.checkoutUrl || "").trim() || null;
+  const checkoutUrl = decorateCheckoutUrl(raw.checkout_url || raw.checkoutUrl, args);
   const checkoutToken =
     String(raw.checkout_token || raw.checkoutToken || "").trim() || null;
   const checkoutSessionId =
@@ -32,6 +64,44 @@ function normalizeCheckoutSessionResponse(raw: any) {
       ? { checkout_session_id: checkoutSessionId, checkoutSessionId }
       : {}),
     ...(expiresAtRaw ? { expires_at: expiresAtRaw, expiresAt: expiresAtRaw } : {}),
+  };
+}
+
+function hasCheckoutSessionPayload(raw: any): boolean {
+  if (!raw || typeof raw !== "object") return false;
+  return Boolean(
+    String(raw.checkout_url || raw.checkoutUrl || "").trim() ||
+      String(raw.checkout_token || raw.checkoutToken || "").trim(),
+  );
+}
+
+async function postCheckoutSessionUpstream(args: {
+  url: string;
+  headers: Record<string, string>;
+  body: Record<string, any>;
+  returnUrl?: string;
+  source?: string;
+}) {
+  const upstream = await fetch(args.url, {
+    method: "POST",
+    headers: args.headers,
+    body: JSON.stringify(args.body),
+  });
+
+  const upstreamText = await upstream.text();
+  let upstreamBody: any = {};
+  try {
+    upstreamBody = upstreamText ? JSON.parse(upstreamText) : {};
+  } catch {
+    upstreamBody = { error: "INVALID_UPSTREAM_RESPONSE", detail: upstreamText };
+  }
+
+  return {
+    status: upstream.status,
+    body: normalizeCheckoutSessionResponse(upstreamBody, {
+      returnUrl: args.returnUrl,
+      source: args.source,
+    }),
   };
 }
 
@@ -92,48 +162,61 @@ export async function POST(req: Request) {
     const buyerRef = String(body?.buyer_ref || body?.buyerRef || "").trim();
     const jobId = String(body?.job_id || body?.jobId || "").trim();
     const creatorAgentBaseUrl = getOptionalCreatorAgentBaseUrl();
-    const useCreatorCheckoutCompat = Boolean(creatorAgentBaseUrl);
-    const upstreamUrl = useCreatorCheckoutCompat
-      ? `${creatorAgentBaseUrl}/creator-agent/checkout-sessions`
-      : `${BACKEND_BASE}/agent/v1/checkout/intents`;
+    const requestBody = {
+      items,
+      ...(returnUrl ? { return_url: returnUrl } : {}),
+      ...(source ? { source } : {}),
+      ...(market ? { market } : {}),
+      ...(locale ? { locale } : {}),
+      ...(buyerRef ? { buyer_ref: buyerRef } : {}),
+      ...(jobId ? { job_id: jobId } : {}),
+    };
 
-    const upstream = await fetch(upstreamUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(useCreatorCheckoutCompat
-          ? {
-              Authorization: `Bearer ${apiKey}`,
-              "X-API-Key": apiKey,
-              "x-api-key": apiKey,
-            }
-          : {
-              "X-Agent-API-Key": apiKey,
-              Authorization: `Bearer ${apiKey}`,
-            }),
-      },
-      body: JSON.stringify({
-        items,
-        ...(returnUrl ? { return_url: returnUrl } : {}),
-        ...(source ? { source } : {}),
-        ...(market ? { market } : {}),
-        ...(locale ? { locale } : {}),
-        ...(buyerRef ? { buyer_ref: buyerRef } : {}),
-        ...(jobId ? { job_id: jobId } : {}),
-      }),
-    });
+    let upstreamResult:
+      | {
+          status: number;
+          body: any;
+        }
+      | null = null;
 
-    const upstreamText = await upstream.text();
-    let upstreamBody: any = {};
-    try {
-      upstreamBody = upstreamText ? JSON.parse(upstreamText) : {};
-    } catch {
-      upstreamBody = { error: "INVALID_UPSTREAM_RESPONSE", detail: upstreamText };
+    if (creatorAgentBaseUrl) {
+      upstreamResult = await postCheckoutSessionUpstream({
+        url: `${creatorAgentBaseUrl}/creator-agent/checkout-sessions`,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+          "X-API-Key": apiKey,
+          "x-api-key": apiKey,
+        },
+        body: requestBody,
+        returnUrl,
+        source,
+      });
     }
-    const normalizedBody = normalizeCheckoutSessionResponse(upstreamBody);
 
-    return NextResponse.json(normalizedBody, {
-      status: upstream.status,
+    const shouldFallbackToDirect =
+      !upstreamResult ||
+      upstreamResult.status === 401 ||
+      upstreamResult.status === 403 ||
+      upstreamResult.status >= 500 ||
+      !hasCheckoutSessionPayload(upstreamResult.body);
+
+    if (shouldFallbackToDirect) {
+      upstreamResult = await postCheckoutSessionUpstream({
+        url: `${BACKEND_BASE}/agent/v1/checkout/intents`,
+        headers: {
+          "Content-Type": "application/json",
+          "X-Agent-API-Key": apiKey,
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: requestBody,
+        returnUrl,
+        source,
+      });
+    }
+
+    return NextResponse.json(upstreamResult.body, {
+      status: upstreamResult.status,
       headers: {
         "Server-Timing": `gateway;dur=${Math.max(0, Date.now() - startedAt)}`,
       },
