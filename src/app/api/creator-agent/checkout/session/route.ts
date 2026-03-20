@@ -215,6 +215,21 @@ export async function POST(req: Request) {
       });
     }
 
+    if (!upstreamResult) {
+      return NextResponse.json(
+        {
+          error: "CREATOR_CHECKOUT_SESSION_UNAVAILABLE",
+          message: "Unable to create creator checkout session",
+        },
+        {
+          status: 502,
+          headers: {
+            "Server-Timing": `gateway;dur=${Math.max(0, Date.now() - startedAt)}`,
+          },
+        },
+      );
+    }
+
     return NextResponse.json(upstreamResult.body, {
       status: upstreamResult.status,
       headers: {
