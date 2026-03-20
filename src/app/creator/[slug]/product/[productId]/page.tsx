@@ -49,6 +49,9 @@ export default async function CreatorProductAliasPage({
   if (!target.searchParams.has("creator_slug") && slug) {
     target.searchParams.set("creator_slug", slug);
   }
+  if (!target.searchParams.has("entry")) {
+    target.searchParams.set("entry", "creator_agent");
+  }
   if (!target.searchParams.has("entry_point")) {
     target.searchParams.set("entry_point", "creator_pdp_alias");
   }

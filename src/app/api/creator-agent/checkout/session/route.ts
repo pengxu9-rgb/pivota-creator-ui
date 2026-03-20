@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { getCreatorCheckoutAgentApiKey } from "@/lib/creatorAgentGateway";
+import {
+  getCreatorCheckoutAgentApiKey,
+  getOptionalCreatorAgentBaseUrl,
+} from "@/lib/creatorAgentGateway";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -8,6 +11,29 @@ const BACKEND_BASE =
   process.env.PIVOTA_BACKEND_BASE_URL ||
   process.env.NEXT_PUBLIC_PIVOTA_BACKEND_BASE_URL ||
   "https://web-production-fedb.up.railway.app";
+
+function normalizeCheckoutSessionResponse(raw: any) {
+  if (!raw || typeof raw !== "object") return raw;
+
+  const checkoutUrl =
+    String(raw.checkout_url || raw.checkoutUrl || "").trim() || null;
+  const checkoutToken =
+    String(raw.checkout_token || raw.checkoutToken || "").trim() || null;
+  const checkoutSessionId =
+    String(raw.checkout_session_id || raw.checkoutSessionId || "").trim() || null;
+  const expiresAtRaw =
+    Number(raw.expires_at ?? raw.expiresAt ?? 0) || null;
+
+  return {
+    ...raw,
+    ...(checkoutUrl ? { checkout_url: checkoutUrl, checkoutUrl } : {}),
+    ...(checkoutToken ? { checkout_token: checkoutToken, checkoutToken } : {}),
+    ...(checkoutSessionId
+      ? { checkout_session_id: checkoutSessionId, checkoutSessionId }
+      : {}),
+    ...(expiresAtRaw ? { expires_at: expiresAtRaw, expiresAt: expiresAtRaw } : {}),
+  };
+}
 
 function normalizeIntentItems(rawItems: any[]): any[] {
   return rawItems
@@ -65,13 +91,26 @@ export async function POST(req: Request) {
     const locale = String(body?.locale || "").trim();
     const buyerRef = String(body?.buyer_ref || body?.buyerRef || "").trim();
     const jobId = String(body?.job_id || body?.jobId || "").trim();
+    const creatorAgentBaseUrl = getOptionalCreatorAgentBaseUrl();
+    const useCreatorCheckoutCompat = Boolean(creatorAgentBaseUrl);
+    const upstreamUrl = useCreatorCheckoutCompat
+      ? `${creatorAgentBaseUrl}/creator-agent/checkout-sessions`
+      : `${BACKEND_BASE}/agent/v1/checkout/intents`;
 
-    const upstream = await fetch(`${BACKEND_BASE}/agent/v1/checkout/intents`, {
+    const upstream = await fetch(upstreamUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-Agent-API-Key": apiKey,
-        Authorization: `Bearer ${apiKey}`,
+        ...(useCreatorCheckoutCompat
+          ? {
+              Authorization: `Bearer ${apiKey}`,
+              "X-API-Key": apiKey,
+              "x-api-key": apiKey,
+            }
+          : {
+              "X-Agent-API-Key": apiKey,
+              Authorization: `Bearer ${apiKey}`,
+            }),
       },
       body: JSON.stringify({
         items,
@@ -91,8 +130,9 @@ export async function POST(req: Request) {
     } catch {
       upstreamBody = { error: "INVALID_UPSTREAM_RESPONSE", detail: upstreamText };
     }
+    const normalizedBody = normalizeCheckoutSessionResponse(upstreamBody);
 
-    return NextResponse.json(upstreamBody, {
+    return NextResponse.json(normalizedBody, {
       status: upstream.status,
       headers: {
         "Server-Timing": `gateway;dur=${Math.max(0, Date.now() - startedAt)}`,
