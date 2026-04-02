@@ -1,7 +1,7 @@
 'use client';
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCart } from "@/components/cart/CartProvider";
 import { getOrderDetail } from "@/lib/accountsClient";
@@ -40,6 +40,14 @@ function inferOrderAmountMinor(detail: Awaited<ReturnType<typeof getOrderDetail>
 }
 
 export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<LegacyCheckoutShell message="Redirecting to the hosted checkout..." />}>
+      <CheckoutPageContent />
+    </Suspense>
+  );
+}
+
+function CheckoutPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { items } = useCart();
@@ -153,6 +161,20 @@ export default function CheckoutPage() {
     };
   }, [cartDestination, orderId, queryAmountMinor, queryCurrency, router]);
 
+  return <LegacyCheckoutShell state={state} orderId={orderId} message={message} cartDestination={cartDestination} />;
+}
+
+function LegacyCheckoutShell({
+  state = "redirecting",
+  orderId = "",
+  message,
+  cartDestination = "/",
+}: {
+  state?: LegacyCheckoutState;
+  orderId?: string;
+  message: string;
+  cartDestination?: string;
+}) {
   return (
     <main className="min-h-screen bg-[#f7f0e8] px-6 py-16 text-[#3f3125]">
       <div className="mx-auto flex max-w-xl flex-col gap-6 rounded-[28px] border border-[#ead8c7] bg-white/90 p-8 shadow-[0_20px_60px_rgba(63,49,37,0.08)]">
