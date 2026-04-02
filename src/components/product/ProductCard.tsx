@@ -5,6 +5,11 @@ import { useCart } from "@/components/cart/CartProvider";
 import { Search, ShoppingCart } from "lucide-react";
 import { useRef } from "react";
 import { useRouter } from "next/navigation";
+import {
+  describeCreatorPrice,
+  formatCreatorPriceAmount,
+  hasNumericPrice,
+} from "@/lib/productPrice";
 
 type Props = {
   product: Product;
@@ -123,16 +128,18 @@ export function ProductCard({
     handleCardClick();
   };
 
-  const safePrice =
-    typeof product.price === "number" && !Number.isNaN(product.price)
-      ? product.price
-      : 0;
+  const safePrice = hasNumericPrice(product.price) ? product.price : null;
 
   const safeFlashPrice =
     typeof product.bestDeal?.flashPrice === "number" &&
     !Number.isNaN(product.bestDeal.flashPrice)
       ? product.bestDeal.flashPrice
       : null;
+  const priceDisplay = describeCreatorPrice({
+    amount: product.price,
+    currency: product.currency,
+    label: product.priceLabel,
+  });
 
   const dealsLabel = (() => {
     if (!product.bestDeal) return null;
@@ -250,9 +257,11 @@ export function ProductCard({
             <div className="flex items-baseline gap-2">
               {hasFlashPrice && safeFlashPrice != null ? (
                 <>
-                  <span className="text-[11px] text-[#b29a84] line-through">
-                    {product.currency} {safePrice.toFixed(2)}
-                  </span>
+                  {safePrice != null ? (
+                    <span className="text-[11px] text-[#b29a84] line-through">
+                      {formatCreatorPriceAmount(safePrice, product.currency)}
+                    </span>
+                  ) : null}
                   <span
                     className={
                       isCompact
@@ -260,18 +269,18 @@ export function ProductCard({
                         : "text-sm font-semibold text-[#3f3125]"
                     }
                   >
-                    {product.currency} {safeFlashPrice.toFixed(2)}
+                    {formatCreatorPriceAmount(safeFlashPrice, product.currency)}
                   </span>
                 </>
               ) : (
                 <span
                   className={
                     isCompact
-                      ? "text-[13px] font-semibold text-[#3f3125]"
-                      : "text-sm font-semibold text-[#3f3125]"
+                      ? `text-[13px] font-semibold ${priceDisplay.kind === "amount" ? "text-[#3f3125]" : "text-[#7b6550]"}`
+                      : `text-sm font-semibold ${priceDisplay.kind === "amount" ? "text-[#3f3125]" : "text-[#7b6550]"}`
                   }
                 >
-                  {product.currency} {safePrice.toFixed(2)}
+                  {priceDisplay.text}
                 </span>
               )}
             </div>
@@ -351,6 +360,7 @@ export function ProductCard({
                   merchantId: product.merchantId,
                   title: product.title,
                   price: resolvedPrice,
+                  priceLabel: hookup.priceLabel || product.priceLabel,
                   imageUrl: hookup.imageUrl || product.imageUrl,
                   quantity: 1,
                   currency: product.currency,

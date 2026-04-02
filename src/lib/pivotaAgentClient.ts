@@ -32,6 +32,11 @@ export type CreatorAgentResponse = {
 // 默认关闭：宁可不推不相关商品，也不强行填满列表。
 const ENABLE_POPULAR_FALLBACK =
   process.env.NEXT_PUBLIC_CREATOR_AGENT_ALLOW_POPULAR_FALLBACK === "1";
+const CREATOR_AGENT_REQUEST_TIMEOUT_MS = 20_000;
+const CREATOR_AGENT_TASK_TOTAL_TIMEOUT_MS = 20_000;
+const CREATOR_AGENT_TASK_REQUEST_TIMEOUT_MS = 4_000;
+const CREATOR_AGENT_UPSTREAM_TIMEOUT_ERROR = "CREATOR_AGENT_UPSTREAM_TIMEOUT";
+const CREATOR_AGENT_TASK_TIMEOUT_ERROR = "CREATOR_AGENT_TASK_TIMEOUT";
 
 function normalizeQuery(raw: string | undefined | null): string {
   if (!raw) return "";
@@ -161,6 +166,29 @@ function buildNoResultReply(options: {
   ].join("\n");
 }
 
+async function fetchWithTimeout(
+  input: string,
+  init: RequestInit,
+  timeoutMs: number,
+  timeoutError: string,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(input, {
+      ...init,
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error(timeoutError);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export async function callPivotaCreatorAgent(params: {
   creatorId: string;
   creatorName: string;
@@ -257,7 +285,7 @@ export async function callPivotaCreatorAgent(params: {
       creator_name: params.creatorName,
       // 目前后端不会使用 persona，只作为元信息占位，方便未来在网关/Agent 层接入。
       persona: params.personaPrompt,
-      source: "creator-agent-ui",
+      source: "creator_agent",
       ...(params.traceId ? { trace_id: params.traceId } : {}),
     },
   };
@@ -286,17 +314,27 @@ export async function callPivotaCreatorAgent(params: {
 
       const maxAttempts = 10;
       const delayMs = 500;
+      const deadline = Date.now() + CREATOR_AGENT_TASK_TOTAL_TIMEOUT_MS;
 
       for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        const remainingMs = deadline - Date.now();
+        if (remainingMs <= 0) {
+          throw new Error(CREATOR_AGENT_TASK_TIMEOUT_ERROR);
+        }
         await new Promise((resolve) => setTimeout(resolve, delayMs));
 
-        const res = await fetch(statusUrl, {
+        const res = await fetchWithTimeout(
+          statusUrl,
+          {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
             ...creatorAuthHeaders,
           },
-        });
+          },
+          Math.min(CREATOR_AGENT_TASK_REQUEST_TIMEOUT_MS, remainingMs),
+          CREATOR_AGENT_TASK_TIMEOUT_ERROR,
+        );
 
         if (!res.ok) {
           let bodyText: string | undefined;
@@ -323,7 +361,7 @@ export async function callPivotaCreatorAgent(params: {
         }
       }
 
-      throw new Error("Creator task did not complete in time");
+      throw new Error(CREATOR_AGENT_TASK_TIMEOUT_ERROR);
     }
 
     async function runOnce(searchQuery: string) {
@@ -338,14 +376,19 @@ export async function callPivotaCreatorAgent(params: {
         },
       };
 
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...creatorAuthHeaders,
+      const res = await fetchWithTimeout(
+        url,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...creatorAuthHeaders,
+          },
+          body: JSON.stringify(payload),
         },
-        body: JSON.stringify(payload),
-      });
+        CREATOR_AGENT_REQUEST_TIMEOUT_MS,
+        CREATOR_AGENT_UPSTREAM_TIMEOUT_ERROR,
+      );
 
       if (!res.ok) {
         let errorBody: string | undefined;
@@ -470,7 +513,12 @@ export async function callPivotaCreatorAgent(params: {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     // 如果后端超时，返回友好提示（不再注入本地 mock 商品）
-    if (message.includes("UPSTREAM_TIMEOUT") || message.includes("status 504")) {
+    if (
+      message.includes("UPSTREAM_TIMEOUT") ||
+      message.includes("status 504") ||
+      message.includes(CREATOR_AGENT_UPSTREAM_TIMEOUT_ERROR) ||
+      message.includes(CREATOR_AGENT_TASK_TIMEOUT_ERROR)
+    ) {
       return {
         reply:
           "The shopping backend timed out. Please try again in a moment or rephrase your request.",
@@ -507,7 +555,7 @@ export async function callPivotaGetProductDetail(params: {
       },
     },
     metadata: {
-      source: "creator-agent-ui",
+      source: "creator_agent",
     },
   };
 
@@ -571,7 +619,7 @@ export async function callPivotaFindSimilarProducts(params: {
       strategy: params.strategy ?? "auto",
     },
     metadata: {
-      source: "creator-agent-ui",
+      source: "creator_agent",
       creator_id: params.creatorId,
     },
   };

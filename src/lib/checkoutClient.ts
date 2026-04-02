@@ -11,7 +11,11 @@ const DIRECT_CHECKOUT_INVOKE_URL = String(
     "https://pivota-agent-production.up.railway.app/agent/shop/v1/invoke",
 ).trim();
 const CHECKOUT_DIRECT_OPS = new Set(["preview_quote", "create_order", "submit_payment"]);
+const CHECKOUT_CONTEXTUAL_OPS = new Set(["preview_quote", "create_order", "submit_payment"]);
 const CHECKOUT_TOKEN_STORAGE_KEY = "pivota_checkout_token";
+const CHECKOUT_SOURCE_STORAGE_KEY = "pivota_checkout_source";
+const CANONICAL_CREATOR_CHECKOUT_SOURCE = "creator_agent";
+const CREATOR_UI_SOURCE = CANONICAL_CREATOR_CHECKOUT_SOURCE;
 
 function parseTimeoutMs(raw: string | undefined, fallbackMs: number, minMs: number, maxMs: number) {
   const n = Number(raw);
@@ -50,8 +54,11 @@ type CreateOrderPayload = {
     product_id: string;
     product_title: string;
     quantity: number;
-    unit_price: number;
-    subtotal: number;
+    unit_price?: number;
+    subtotal?: number;
+    variant_id?: string;
+    sku?: string;
+    selected_options?: Record<string, string>;
   }>;
   shipping_address: {
     name: string;
@@ -67,10 +74,16 @@ type CreateOrderPayload = {
   preferred_psp?: string;
   metadata?: {
     source?: string;
+    ui_source?: string;
     creator_id?: string;
     creator_slug?: string;
     creator_name?: string;
   };
+};
+
+type CheckoutContext = {
+  token: string | null;
+  source: string | null;
 };
 
 export class AgentGatewayError extends Error {
@@ -161,54 +174,131 @@ async function fetchWithTimeout(
   }
 }
 
-function readCheckoutTokenFromBrowser(): string | null {
-  if (typeof window === "undefined") return null;
+function normalizeCheckoutSource(raw: unknown): string | null {
+  const normalized = String(raw || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[-\s]+/g, "_");
+  if (!normalized) return null;
+  if (
+    normalized === "creator" ||
+    normalized === "creator_agent" ||
+    normalized === "creator_agent_ui"
+  ) {
+    return CANONICAL_CREATOR_CHECKOUT_SOURCE;
+  }
+  return normalized;
+}
+
+function readStoredString(key: string, storage: Storage): string | null {
+  const value = String(storage.getItem(key) || "").trim();
+  return value || null;
+}
+
+function persistCheckoutContext(context: {
+  token?: string | null;
+  source?: string | null;
+}): CheckoutContext {
+  const token = String(context.token || "").trim() || null;
+  const source =
+    normalizeCheckoutSource(context.source) ||
+    (token ? CANONICAL_CREATOR_CHECKOUT_SOURCE : null);
+  if (typeof window === "undefined") {
+    return { token, source };
+  }
   try {
-    const params = new URLSearchParams(window.location.search || "");
-    const fromQuery =
-      String(params.get("checkout_token") || params.get("checkoutToken") || "").trim() ||
-      null;
-    if (fromQuery) {
-      window.sessionStorage.setItem(CHECKOUT_TOKEN_STORAGE_KEY, fromQuery);
-      window.localStorage.setItem(CHECKOUT_TOKEN_STORAGE_KEY, fromQuery);
-      return fromQuery;
+    if (token) {
+      window.sessionStorage.setItem(CHECKOUT_TOKEN_STORAGE_KEY, token);
+      window.localStorage.setItem(CHECKOUT_TOKEN_STORAGE_KEY, token);
+    } else {
+      window.sessionStorage.removeItem(CHECKOUT_TOKEN_STORAGE_KEY);
+      window.localStorage.removeItem(CHECKOUT_TOKEN_STORAGE_KEY);
     }
   } catch {
     // ignore
   }
   try {
-    const fromSession = String(
-      window.sessionStorage.getItem(CHECKOUT_TOKEN_STORAGE_KEY) || "",
-    ).trim();
-    if (fromSession) return fromSession;
+    if (source) {
+      window.sessionStorage.setItem(CHECKOUT_SOURCE_STORAGE_KEY, source);
+      window.localStorage.setItem(CHECKOUT_SOURCE_STORAGE_KEY, source);
+    } else {
+      window.sessionStorage.removeItem(CHECKOUT_SOURCE_STORAGE_KEY);
+      window.localStorage.removeItem(CHECKOUT_SOURCE_STORAGE_KEY);
+    }
   } catch {
     // ignore
   }
-  try {
-    const fromLocal = String(
-      window.localStorage.getItem(CHECKOUT_TOKEN_STORAGE_KEY) || "",
-    ).trim();
-    if (fromLocal) return fromLocal;
-  } catch {
-    // ignore
-  }
-  return null;
+  return { token, source };
 }
 
-function persistCheckoutToken(token: string | null | undefined): string | null {
-  const normalized = String(token || "").trim();
-  if (!normalized || typeof window === "undefined") return normalized || null;
+function readCheckoutSourceFromParams(params: URLSearchParams): string | null {
+  const explicitSource =
+    params.get("source") || params.get("src") || params.get("checkout_source");
+  if (explicitSource) {
+    return normalizeCheckoutSource(explicitSource);
+  }
+  const entrySource = normalizeCheckoutSource(params.get("entry"));
+  return entrySource === CANONICAL_CREATOR_CHECKOUT_SOURCE ? entrySource : null;
+}
+
+function readCheckoutContextFromBrowser(): CheckoutContext {
+  if (typeof window === "undefined") return { token: null, source: null };
   try {
-    window.sessionStorage.setItem(CHECKOUT_TOKEN_STORAGE_KEY, normalized);
+    const params = new URLSearchParams(window.location.search || "");
+    const fromQuery =
+      String(params.get("checkout_token") || params.get("checkoutToken") || "").trim() ||
+      null;
+    const sourceFromQuery = readCheckoutSourceFromParams(params);
+    if (fromQuery) {
+      return persistCheckoutContext({
+        token: fromQuery,
+        source: sourceFromQuery || CANONICAL_CREATOR_CHECKOUT_SOURCE,
+      });
+    }
+    if (sourceFromQuery) {
+      const existingToken =
+        readStoredString(CHECKOUT_TOKEN_STORAGE_KEY, window.sessionStorage) ||
+        readStoredString(CHECKOUT_TOKEN_STORAGE_KEY, window.localStorage);
+      return persistCheckoutContext({
+        token: existingToken,
+        source: sourceFromQuery,
+      });
+    }
   } catch {
     // ignore
   }
   try {
-    window.localStorage.setItem(CHECKOUT_TOKEN_STORAGE_KEY, normalized);
+    const fromSessionToken = readStoredString(
+      CHECKOUT_TOKEN_STORAGE_KEY,
+      window.sessionStorage,
+    );
+    const fromSessionSource = normalizeCheckoutSource(
+      readStoredString(CHECKOUT_SOURCE_STORAGE_KEY, window.sessionStorage),
+    );
+    if (fromSessionToken || fromSessionSource) {
+      return persistCheckoutContext({
+        token: fromSessionToken,
+        source: fromSessionSource || CANONICAL_CREATOR_CHECKOUT_SOURCE,
+      });
+    }
   } catch {
     // ignore
   }
-  return normalized;
+  try {
+    const fromLocalToken = readStoredString(CHECKOUT_TOKEN_STORAGE_KEY, window.localStorage);
+    const fromLocalSource = normalizeCheckoutSource(
+      readStoredString(CHECKOUT_SOURCE_STORAGE_KEY, window.localStorage),
+    );
+    if (fromLocalToken || fromLocalSource) {
+      return persistCheckoutContext({
+        token: fromLocalToken,
+        source: fromLocalSource || CANONICAL_CREATOR_CHECKOUT_SOURCE,
+      });
+    }
+  } catch {
+    // ignore
+  }
+  return { token: null, source: null };
 }
 
 function extractIntentItemsFromInvokeBody(body: { operation: string; payload: any }): Array<Record<string, any>> {
@@ -228,11 +318,17 @@ function extractIntentItemsFromInvokeBody(body: { operation: string; payload: an
         const quantity =
           Number.isFinite(quantityRaw) && quantityRaw > 0 ? Math.floor(quantityRaw) : 1;
         if (!productId || !merchant) return null;
+        const normalizedItemId = variantId || sku || productId;
         return {
           product_id: productId,
+          productId,
           merchant_id: merchant,
+          merchantId: merchant,
           ...(variantId ? { variant_id: variantId } : {}),
+          ...(variantId ? { variantId } : {}),
+          ...(normalizedItemId ? { id: normalizedItemId } : {}),
           ...(sku ? { sku } : {}),
+          ...(sku ? { skuId: sku } : {}),
           quantity,
         };
       })
@@ -252,11 +348,17 @@ function extractIntentItemsFromInvokeBody(body: { operation: string; payload: an
         const quantity =
           Number.isFinite(quantityRaw) && quantityRaw > 0 ? Math.floor(quantityRaw) : 1;
         if (!productId || !merchant) return null;
+        const normalizedItemId = variantId || sku || productId;
         return {
           product_id: productId,
+          productId,
           merchant_id: merchant,
+          merchantId: merchant,
           ...(variantId ? { variant_id: variantId } : {}),
+          ...(variantId ? { variantId } : {}),
+          ...(normalizedItemId ? { id: normalizedItemId } : {}),
           ...(sku ? { sku } : {}),
+          ...(sku ? { skuId: sku } : {}),
           quantity,
         };
       })
@@ -265,7 +367,63 @@ function extractIntentItemsFromInvokeBody(body: { operation: string; payload: an
   return [];
 }
 
-async function mintCheckoutSessionToken(body: { operation: string; payload: any }): Promise<string | null> {
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function readQuotedUnitPrice(lineItem: any): number | null {
+  const value =
+    lineItem?.unit_price_effective ??
+    lineItem?.unit_price_original ??
+    lineItem?.unit_price ??
+    lineItem?.price ??
+    null;
+  return isFiniteNumber(value) ? value : null;
+}
+
+function findQuoteLineItem(quoteLineItems: any[] | undefined, item: CartItem): any | null {
+  if (!Array.isArray(quoteLineItems) || quoteLineItems.length === 0) return null;
+  const variantId = String(item.variantId || "").trim();
+  const productId = String(item.productId || item.id || "").trim();
+  return (
+    quoteLineItems.find((line) => String(line?.variant_id || "").trim() === variantId) ||
+    quoteLineItems.find((line) => String(line?.product_id || "").trim() === productId) ||
+    null
+  );
+}
+
+function buildCreateOrderLineItems(params: {
+  items: CartItem[];
+  merchantId: string;
+  quoteLineItems?: any[];
+}) {
+  return params.items.map((item) => {
+    const quotedLineItem = findQuoteLineItem(params.quoteLineItems, item);
+    const quotedUnitPrice = readQuotedUnitPrice(quotedLineItem);
+    const unitPrice = quotedUnitPrice ?? (isFiniteNumber(item.price) ? item.price : null);
+    return {
+      merchant_id: item.merchantId || params.merchantId,
+      product_id: item.productId || item.id,
+      product_title: item.title,
+      quantity: item.quantity,
+      ...(unitPrice != null
+        ? {
+            unit_price: unitPrice,
+            subtotal: unitPrice * item.quantity,
+          }
+        : {}),
+      variant_id: item.variantId,
+      ...(item.variantSku ? { sku: item.variantSku } : {}),
+      ...(item.selectedOptions ? { selected_options: item.selectedOptions } : {}),
+    };
+  });
+}
+
+async function mintCheckoutSessionToken(body: {
+  operation: string;
+  payload: any;
+  metadata?: Record<string, any>;
+}): Promise<string | null> {
   const items = extractIntentItemsFromInvokeBody(body);
   if (!items.length) return null;
   try {
@@ -276,18 +434,24 @@ async function mintCheckoutSessionToken(body: { operation: string; payload: any 
       },
       body: JSON.stringify({
         items,
-        source: "creator-agent-ui",
+        source: CANONICAL_CREATOR_CHECKOUT_SOURCE,
       }),
     }, CHECKOUT_SESSION_TIMEOUT_MS);
     if (!res.ok) return null;
     const data = await res.json().catch(() => ({}));
-    return persistCheckoutToken(String(data?.checkout_token || "").trim());
+    return persistCheckoutContext({
+      token: String(data?.checkout_token || "").trim(),
+      source: CANONICAL_CREATOR_CHECKOUT_SOURCE,
+    }).token;
   } catch {
     return null;
   }
 }
 
-async function callDirectCheckoutInvoke(body: { operation: string; payload: any }, checkoutToken: string) {
+async function callDirectCheckoutInvoke(
+  body: { operation: string; payload: any; metadata?: Record<string, any> },
+  checkoutToken: string,
+) {
   try {
     const res = await fetchWithTimeout(DIRECT_CHECKOUT_INVOKE_URL, {
       method: "POST",
@@ -547,15 +711,43 @@ export function resolveSubmitPaymentContract(paymentRes: SubmitPaymentResponse):
   };
 }
 
-async function callAgentGateway(body: { operation: string; payload: any }) {
+async function callAgentGateway(body: {
+  operation: string;
+  payload: any;
+  metadata?: Record<string, any>;
+}) {
   const operation = String(body?.operation || "").trim().toLowerCase();
-  const shouldTryDirect = DIRECT_CHECKOUT_ENABLED && CHECKOUT_DIRECT_OPS.has(operation);
-  let checkoutToken = readCheckoutTokenFromBrowser();
-  if (shouldTryDirect && !checkoutToken) {
-    checkoutToken = await mintCheckoutSessionToken(body);
+  const isCheckoutOperation = CHECKOUT_DIRECT_OPS.has(operation);
+  const shouldTryDirect = DIRECT_CHECKOUT_ENABLED && isCheckoutOperation;
+  const checkoutContext = readCheckoutContextFromBrowser();
+  const checkoutSource =
+    normalizeCheckoutSource(checkoutContext.source) || CANONICAL_CREATOR_CHECKOUT_SOURCE;
+  const requestBody = CHECKOUT_CONTEXTUAL_OPS.has(operation)
+    ? {
+        ...body,
+        metadata: {
+          ...(body?.metadata && typeof body.metadata === "object" ? body.metadata : {}),
+          source: checkoutSource,
+          ui_source: CREATOR_UI_SOURCE,
+        },
+      }
+    : body;
+  let checkoutToken = checkoutContext.token;
+  if (isCheckoutOperation && !checkoutToken) {
+    checkoutToken = await mintCheckoutSessionToken(requestBody);
+  }
+  if (isCheckoutOperation && checkoutSource === CANONICAL_CREATOR_CHECKOUT_SOURCE && !checkoutToken) {
+    throw new AgentGatewayError(
+      "Hosted checkout token is required before running checkout operations",
+      502,
+      {
+        error: "CHECKOUT_TOKEN_REQUIRED",
+        message: "Unable to mint hosted checkout token",
+      },
+    );
   }
   if (shouldTryDirect && checkoutToken) {
-    const direct = await callDirectCheckoutInvoke(body, checkoutToken);
+    const direct = await callDirectCheckoutInvoke(requestBody, checkoutToken);
     if (!direct.fallbackToProxy) {
       if (direct.error) throw direct.error;
       return direct.data;
@@ -570,8 +762,9 @@ async function callAgentGateway(body: { operation: string; payload: any }) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(checkoutToken ? { "X-Checkout-Token": checkoutToken } : {}),
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify(requestBody),
       },
       CHECKOUT_PROXY_TIMEOUT_MS,
     );
@@ -699,6 +892,7 @@ export async function previewQuoteFromCart(params: {
 export async function createOrderWithQuote(params: {
   quoteId: string;
   items: CartItem[];
+  quoteLineItems?: any[];
   discountCodes?: string[];
   email: string;
   name: string;
@@ -748,17 +942,11 @@ export async function createOrderWithQuote(params: {
   const creatorSlug = params.items[0].creatorSlug;
   const creatorName = params.items[0].creatorName;
 
-  const items = params.items.map((item) => ({
-    merchant_id: item.merchantId || merchantId,
-    product_id: item.productId || item.id,
-    product_title: item.title,
-    quantity: item.quantity,
-    unit_price: item.price,
-    subtotal: item.price * item.quantity,
-    variant_id: item.variantId,
-    ...(item.variantSku ? { sku: item.variantSku } : {}),
-    ...(item.selectedOptions ? { selected_options: item.selectedOptions } : {}),
-  }));
+  const items = buildCreateOrderLineItems({
+    items: params.items,
+    merchantId,
+    quoteLineItems: params.quoteLineItems,
+  });
 
   const orderPayload: CreateOrderPayload = {
     merchant_id: merchantId,
@@ -779,7 +967,8 @@ export async function createOrderWithQuote(params: {
     },
     customer_notes: params.notes,
     metadata: {
-      source: "creator-agent-ui",
+      source: CANONICAL_CREATOR_CHECKOUT_SOURCE,
+      ui_source: CREATOR_UI_SOURCE,
       ...(creatorId ? { creator_id: creatorId } : {}),
       ...(creatorSlug ? { creator_slug: creatorSlug } : {}),
       ...(creatorName ? { creator_name: creatorName } : {}),
@@ -826,25 +1015,6 @@ export async function createOrderFromCart(params: {
     );
   }
 
-  // Use first item's merchant as the order-level merchant; fall back to a demo id.
-  const merchantId = params.items[0].merchantId || "demo_merchant";
-
-  const creatorId = params.items[0].creatorId;
-  const creatorSlug = params.items[0].creatorSlug;
-  const creatorName = params.items[0].creatorName;
-
-  const items = params.items.map((item) => ({
-    merchant_id: item.merchantId || merchantId,
-    product_id: item.productId || item.id,
-    product_title: item.title,
-    quantity: item.quantity,
-    unit_price: item.price,
-    subtotal: item.price * item.quantity,
-    variant_id: item.variantId,
-    ...(item.variantSku ? { sku: item.variantSku } : {}),
-    ...(item.selectedOptions ? { selected_options: item.selectedOptions } : {}),
-  }));
-
   const quote = await previewQuoteFromCart({
     items: params.items,
     discountCodes: params.discountCodes,
@@ -862,6 +1032,7 @@ export async function createOrderFromCart(params: {
   const data = await createOrderWithQuote({
     quoteId: quote.quote_id,
     items: params.items,
+    quoteLineItems: quote.line_items,
     discountCodes: params.discountCodes,
     email: params.email,
     name: params.name,
@@ -892,6 +1063,7 @@ export async function submitPaymentForOrder(params: {
         order_id: params.orderId,
         expected_amount: params.amount,
         currency: params.currency,
+        source: CANONICAL_CREATOR_CHECKOUT_SOURCE,
         payment_method_hint: params.paymentMethodHint || "card",
         ...(params.returnUrl ? { return_url: params.returnUrl } : {}),
       },

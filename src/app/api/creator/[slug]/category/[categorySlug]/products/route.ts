@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import type { Product } from "@/types/product";
+import type { Product, RawProductPrice } from "@/types/product";
 import {
   getCreatorAgentApiKey,
   getOptionalCreatorAgentBaseUrl,
@@ -10,8 +10,11 @@ interface BackendProduct {
   id: string;
   title: string;
   description: string;
-  price: number;
-  currency: string;
+  price?: RawProductPrice;
+  currency?: string;
+  price_amount?: number | string;
+  price_currency?: string;
+  price_label?: string;
   image_url?: string;
   inventory_quantity: number;
   merchant_id?: string;

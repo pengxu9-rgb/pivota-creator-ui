@@ -7,6 +7,7 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { ProductCard } from "@/components/product/ProductCard";
 import { useCreatorAgent } from "@/components/creator/CreatorAgentContext";
 import { useCart } from "@/components/cart/CartProvider";
+import { startHostedCreatorCheckout } from "@/lib/hostedCreatorCheckout";
 import { useCreatorCategories } from "@/lib/useCreatorCategories";
 import type { Product } from "@/types/product";
 
@@ -118,6 +119,8 @@ export default function CreatorAgentPage() {
   const router = useRouter();
   const pathname = usePathname();
   const { items: cartItems } = useCart();
+  const [checkoutPending, setCheckoutPending] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const activeTab: "forYou" | "deals" = useMemo(() => {
     const tab = searchParams?.get("tab");
@@ -382,6 +385,19 @@ export default function CreatorAgentPage() {
     setDealsSort("recommended");
   };
 
+  const handleHostedCheckout = async () => {
+    if (!cartItems.length || checkoutPending) return;
+    setCheckoutError(null);
+    setCheckoutPending(true);
+    try {
+      await startHostedCreatorCheckout(cartItems);
+    } catch (error) {
+      setCheckoutError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setCheckoutPending(false);
+    }
+  };
+
   return (
     <>
       {activeTab === "forYou" && showOnboarding && (
@@ -447,7 +463,7 @@ export default function CreatorAgentPage() {
               {creator.name}&apos;s Picks
               </div>
 
-            {isFeaturedLoading ? (
+            {isFeaturedLoading && products.length === 0 ? (
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {Array.from({ length: 4 }).map((_, idx) => (
                   <div
@@ -523,7 +539,7 @@ export default function CreatorAgentPage() {
                 </button>
               </div>
             </div>
-            {isFeaturedLoading || (isLoading && products.length === 0) ? (
+            {(isFeaturedLoading && products.length === 0) || (isLoading && products.length === 0) ? (
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {Array.from({ length: 3 }).map((_, idx) => (
                   <div
@@ -610,13 +626,21 @@ export default function CreatorAgentPage() {
               </div>
 
               {cartItems.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => router.push("/checkout")}
-                  className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-[11px] font-medium text-slate-50 hover:bg-slate-800"
-                >
-                  Go to checkout ({cartItems.length})
-                </button>
+                <div className="flex flex-col items-start gap-2 sm:items-end">
+                  <button
+                    type="button"
+                    onClick={handleHostedCheckout}
+                    disabled={checkoutPending}
+                    className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-[11px] font-medium text-slate-50 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {checkoutPending
+                      ? "Starting checkout..."
+                      : `Go to checkout (${cartItems.length})`}
+                  </button>
+                  {checkoutError && (
+                    <div className="text-[11px] text-rose-600">{checkoutError}</div>
+                  )}
+                </div>
               )}
             </div>
           </div>

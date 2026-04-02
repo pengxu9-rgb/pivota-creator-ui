@@ -28,6 +28,7 @@ import {
   saveSessionIndex,
   updateSessionOnMessages,
 } from "@/lib/chatSessions";
+import { startHostedCreatorCheckout } from "@/lib/hostedCreatorCheckout";
 import type {
   SessionMeta,
   EntryContext as SessionEntryContext,
@@ -35,6 +36,7 @@ import type {
   TaskState,
 } from "@/lib/chatSessions";
 import type { ChatMessage } from "@/types/chat";
+import type { CartItem } from "@/components/cart/CartProvider";
 
 function getOrCreateDeviceId(): string {
   if (typeof window === "undefined") return "unknown";
@@ -66,6 +68,7 @@ const GRID_PAGE_SIZE = 24;
 const RAIL_PAGE_SIZE = 12;
 const SIMILAR_PAGE_SIZE = 12;
 const NO_GROWTH_STOP_THRESHOLD = 2;
+const FEATURED_PRODUCTS_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 
 type PagingState = {
   query: string;
@@ -83,6 +86,13 @@ type SimilarPagingState = {
   hasMore: boolean;
   isLoadingMore: boolean;
   noGrowthCount: number;
+};
+
+type PersistedFeaturedProductsCache = {
+  query: string;
+  products: Product[];
+  paging: PagingState;
+  updatedAt: number;
 };
 
 function buildProductKey(product: Product): string {
@@ -145,6 +155,51 @@ function buildFeaturedQueryCandidates(args: {
   }
 
   return candidates;
+}
+
+function buildQuickAddCartItem(args: {
+  product: Product;
+  creator: CreatorAgentConfig;
+}): CartItem | null {
+  const { product, creator } = args;
+  const variants = product.variants || [];
+  const safeSingleVariantFallback =
+    product.variantsComplete === false &&
+    (!product.options || product.options.length === 0) &&
+    variants.length === 1 &&
+    (variants[0]?.title === "Default" || variants[0]?.title === "Default Title");
+  const canQuickAdd =
+    variants.length === 1 &&
+    variants[0]?.id &&
+    (product.variantsComplete === true || safeSingleVariantFallback);
+  if (!canQuickAdd) return null;
+
+  const variant = variants[0];
+  const variantKey = variant.id;
+  const resolvedPrice =
+    typeof variant.price === "number" && !Number.isNaN(variant.price)
+      ? variant.price
+      : product.price;
+
+  return {
+    id: `${product.id}:${variantKey}`,
+    productId: product.id,
+    merchantId: product.merchantId,
+    title: product.title,
+    price: resolvedPrice,
+    priceLabel: variant.priceLabel || product.priceLabel,
+    imageUrl: variant.imageUrl || product.imageUrl,
+    quantity: 1,
+    currency: product.currency,
+    creatorId: creator.id,
+    creatorSlug: creator.slug,
+    creatorName: creator.name,
+    variantId: variantKey,
+    variantSku: variant.sku,
+    selectedOptions: variant.options || undefined,
+    bestDeal: product.bestDeal ?? null,
+    allDeals: product.allDeals ?? null,
+  };
 }
 
 interface CreatorAgentContextValue {
@@ -442,6 +497,10 @@ export function CreatorAgentProvider({
 
   const sessionMessagesStorageKey = useMemo(
     () => `pivota_creator_session_messages_${creator.slug}`,
+    [creator.slug],
+  );
+  const featuredProductsCacheStorageKey = useMemo(
+    () => `pivota_creator_featured_products_cache_v1_${creator.slug}`,
     [creator.slug],
   );
 
@@ -1090,6 +1149,62 @@ export function CreatorAgentProvider({
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (!recentQueriesHydrated) return;
+    if (products.length > 0) return;
+    if (featuredQueryCandidates.length === 0) return;
+
+    try {
+      const raw = window.localStorage.getItem(featuredProductsCacheStorageKey);
+      if (!raw) return;
+
+      const parsed = JSON.parse(raw) as Partial<PersistedFeaturedProductsCache>;
+      if (!Array.isArray(parsed.products) || parsed.products.length === 0) return;
+
+      const updatedAt = Number(parsed.updatedAt);
+      if (!Number.isFinite(updatedAt) || Date.now() - updatedAt > FEATURED_PRODUCTS_CACHE_TTL_MS) {
+        return;
+      }
+
+      const cachedQuery = normalizeFeaturedHistoryQuery(
+        typeof parsed.query === "string" ? parsed.query : "",
+      );
+      if (!cachedQuery) return;
+
+      const candidateSet = new Set(
+        featuredQueryCandidates
+          .map((candidate) => normalizeFeaturedHistoryQuery(candidate).toLowerCase())
+          .filter(Boolean),
+      );
+      if (!candidateSet.has(cachedQuery.toLowerCase())) return;
+
+      const paging = parsed.paging as PagingState | undefined;
+      setProducts(parsed.products);
+      setProductsPaging({
+        query: cachedQuery,
+        page:
+          Number.isFinite(Number(paging?.page)) && Number(paging?.page) > 0
+            ? Math.floor(Number(paging?.page))
+            : 1,
+        limit:
+          Number.isFinite(Number(paging?.limit)) && Number(paging?.limit) > 0
+            ? Math.floor(Number(paging?.limit))
+            : GRID_PAGE_SIZE,
+        hasMore: Boolean(paging?.hasMore),
+        isLoadingMore: false,
+        noGrowthCount: 0,
+      });
+    } catch (err) {
+      console.error("Failed to hydrate featured products cache", err);
+    }
+  }, [
+    featuredProductsCacheStorageKey,
+    featuredQueryCandidates,
+    products.length,
+    recentQueriesHydrated,
+  ]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
     const seen = window.localStorage.getItem(onboardingStorageKey) === "1";
     const hasUserMessage = messages.some((m) => m.role === "user");
     const hasHistory =
@@ -1139,6 +1254,38 @@ export function CreatorAgentProvider({
       console.error("Failed to persist session messages", err);
     }
   }, [messages, currentSession, sessionMessagesStorageKey]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (products.length === 0) return;
+
+    const query = normalizeFeaturedHistoryQuery(productsPaging.query);
+    if (!query) return;
+
+    try {
+      const payload: PersistedFeaturedProductsCache = {
+        query,
+        products,
+        paging: {
+          ...productsPaging,
+          query,
+          isLoadingMore: false,
+          noGrowthCount: 0,
+        },
+        updatedAt: Date.now(),
+      };
+      window.localStorage.setItem(
+        featuredProductsCacheStorageKey,
+        JSON.stringify(payload),
+      );
+    } catch (err) {
+      console.error("Failed to persist featured products cache", err);
+    }
+  }, [
+    featuredProductsCacheStorageKey,
+    products,
+    productsPaging,
+  ]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1390,52 +1537,31 @@ export function CreatorAgentProvider({
   };
 
   const addToCart = (product: Product) => {
-    const variants = product.variants || [];
-    const safeSingleVariantFallback =
-      product.variantsComplete === false &&
-      (!product.options || product.options.length === 0) &&
-      variants.length === 1 &&
-      (variants[0]?.title === "Default" || variants[0]?.title === "Default Title");
-    const canQuickAdd =
-      variants.length === 1 &&
-      variants[0]?.id &&
-      (product.variantsComplete === true || safeSingleVariantFallback);
-    if (!canQuickAdd) {
+    const item = buildQuickAddCartItem({ product, creator });
+    if (!item) {
       // Need variant selection for checkout; open detail modal so the user can pick size/color.
       openDetail(product);
       return;
     }
-    const v = variants[0];
-    const variantKey = v.id;
-    const resolvedPrice =
-      typeof v.price === "number" && !Number.isNaN(v.price)
-        ? v.price
-        : product.price;
-    addItem({
-      id: `${product.id}:${variantKey}`,
-      productId: product.id,
-      merchantId: product.merchantId,
-      title: product.title,
-      price: resolvedPrice,
-      imageUrl: v.imageUrl || product.imageUrl,
-      quantity: 1,
-      currency: product.currency,
-      creatorId: creator.id,
-      creatorSlug: creator.slug,
-      creatorName: creator.name,
-      variantId: variantKey,
-      variantSku: v.sku,
-      selectedOptions: v.options || undefined,
-      bestDeal: product.bestDeal ?? null,
-      allDeals: product.allDeals ?? null,
-    });
+    addItem(item);
   };
 
-  const buyNow = (product: Product) => {
+  const buyNow = async (product: Product) => {
+    const item = buildQuickAddCartItem({ product, creator });
+    if (!item) {
+      openDetail(product);
+      return;
+    }
     clear();
-    addToCart(product);
+    addItem(item);
     close();
-    router.push("/checkout");
+    try {
+      await startHostedCreatorCheckout([item]);
+    } catch (error) {
+      if (typeof window !== "undefined") {
+        window.alert(error instanceof Error ? error.message : String(error));
+      }
+    }
   };
 
   const startNewSession = () => {

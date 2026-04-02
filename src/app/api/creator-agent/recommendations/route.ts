@@ -3,6 +3,7 @@ import {
   getCreatorAgentAuthHeaders,
   getCreatorInvokeUrl,
 } from "@/lib/creatorAgentGateway";
+import { normalizeCreatorPrice } from "@/lib/productPrice";
 
 export const runtime = "nodejs";
 
@@ -36,17 +37,9 @@ function toRecommendationItem(p: any) {
   const title = String(p?.title ?? p?.name ?? "").trim() || product_id || "Untitled";
   const image_url = String(p?.image_url ?? p?.imageUrl ?? p?.image ?? "").trim() || undefined;
   const merchant_id = String(p?.merchant_id ?? p?.merchantId ?? "").trim() || undefined;
-
-  let amount: number | undefined;
-  let currency: string | undefined;
-  const rawPrice = p?.price;
-  if (rawPrice && typeof rawPrice === "object") {
-    if (typeof rawPrice.amount === "number") amount = rawPrice.amount;
-    if (typeof rawPrice.currency === "string") currency = rawPrice.currency;
-  } else if (typeof rawPrice === "number") {
-    amount = rawPrice;
-  }
-  if (!currency && typeof p?.currency === "string") currency = p.currency;
+  const normalizedPrice = normalizeCreatorPrice(p);
+  const amount = normalizedPrice.amount;
+  const currency = normalizedPrice.currency;
 
   const rating = typeof p?.rating === "number" ? p.rating : undefined;
   const review_count =
@@ -109,7 +102,7 @@ export async function POST(req: Request) {
         ...(debug ? { debug: true } : {}),
         ...(cacheBypass ? { cache_bypass: true } : {}),
       },
-      metadata: { source: "creator-agent-ui" },
+      metadata: { source: "creator_agent" },
     };
 
     let res: Response;

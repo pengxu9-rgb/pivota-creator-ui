@@ -34,6 +34,10 @@ export function attachMockDeals(products: Product[]): Product[] {
       };
     }
     if (idx % 3 === 0) {
+      const flashPrice =
+        typeof p.price === "number" && Number.isFinite(p.price)
+          ? Math.max(5, p.price * 0.8)
+          : undefined;
       return {
         ...p,
         bestDeal: {
@@ -41,7 +45,7 @@ export function attachMockDeals(products: Product[]): Product[] {
           type: "FLASH_SALE",
           label: "Flash deal",
           discountPercent: 15,
-          flashPrice: Math.max(5, p.price * 0.8),
+          ...(flashPrice != null ? { flashPrice } : {}),
           endAt: new Date(Date.now() + 1000 * 60 * 60 * 12).toISOString(),
           urgencyLevel: "HIGH",
         },

@@ -9,6 +9,7 @@ import {
   cancelOrder,
 } from "@/lib/accountsClient";
 import { getCreatorBySlug } from "@/config/creatorAgents";
+import { continueHostedCreatorCheckout } from "@/lib/hostedCreatorCheckout";
 
 export default function OrdersPage() {
   const router = useRouter();
@@ -396,17 +397,22 @@ export default function OrdersPage() {
                         {canContinuePayment && (
                           <button
                             type="button"
-                            onClick={(event) => {
+                            onClick={async (event) => {
                               event.stopPropagation();
-                              router.push(
-                                `/checkout?orderId=${encodeURIComponent(
-                                  order.order_id,
-                                )}&amount_minor=${
-                                  order.total_amount_minor
-                                }&currency=${order.currency}&items_summary=${encodeURIComponent(
-                                  order.items_summary || "",
-                                )}`,
-                              );
+                              try {
+                                await continueHostedCreatorCheckout({
+                                  orderId: order.order_id,
+                                  amountMinor: order.total_amount_minor,
+                                  currency: order.currency,
+                                });
+                              } catch (err) {
+                                console.error(err);
+                                alert(
+                                  err instanceof Error
+                                    ? err.message
+                                    : "We couldn’t continue this payment right now.",
+                                );
+                              }
                             }}
                             className="rounded-full bg-[#3f3125] px-2.5 py-0.5 text-[10px] font-medium text-white shadow-sm hover:bg-black"
                           >

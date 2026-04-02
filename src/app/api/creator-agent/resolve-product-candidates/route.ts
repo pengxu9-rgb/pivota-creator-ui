@@ -40,7 +40,7 @@ export async function POST(req: Request) {
           ...(cacheBypass ? { cache_bypass: true } : {}),
         },
       },
-      metadata: { source: "creator-agent-ui" },
+      metadata: { source: "creator_agent" },
     };
 
     const res = await fetch(invokeUrl, {

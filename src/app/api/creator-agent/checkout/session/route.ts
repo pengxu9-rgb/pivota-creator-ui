@@ -7,6 +7,14 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const CANONICAL_CREATOR_CHECKOUT_SOURCE = "creator_agent";
+const LEGACY_CREATOR_CHECKOUT_SOURCES = new Set([
+  "creator",
+  "creator_agent",
+  "creator_agent_ui",
+]);
+const CHECKOUT_SESSION_UPSTREAM_TIMEOUT_MS = 8000;
+
 const BACKEND_BASE =
   process.env.PIVOTA_BACKEND_BASE_URL ||
   process.env.NEXT_PUBLIC_PIVOTA_BACKEND_BASE_URL ||
@@ -24,10 +32,13 @@ function decorateCheckoutUrl(
   try {
     const url = new URL(checkoutUrl);
     if (!url.searchParams.get("entry")) {
-      url.searchParams.set("entry", "creator_agent");
+      url.searchParams.set("entry", CANONICAL_CREATOR_CHECKOUT_SOURCE);
     }
     if (!url.searchParams.get("source")) {
-      url.searchParams.set("source", String(args?.source || "").trim() || "creator_agent");
+      url.searchParams.set(
+        "source",
+        normalizeCheckoutSource(args?.source) || CANONICAL_CREATOR_CHECKOUT_SOURCE,
+      );
     }
     const returnUrl = String(args?.returnUrl || "").trim();
     if (returnUrl && !url.searchParams.get("return")) {
@@ -37,6 +48,18 @@ function decorateCheckoutUrl(
   } catch {
     return checkoutUrl;
   }
+}
+
+function normalizeCheckoutSource(raw: unknown): string | null {
+  const normalized = String(raw || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[-\s]+/g, "_");
+  if (!normalized) return null;
+  if (LEGACY_CREATOR_CHECKOUT_SOURCES.has(normalized)) {
+    return CANONICAL_CREATOR_CHECKOUT_SOURCE;
+  }
+  return normalized;
 }
 
 function normalizeCheckoutSessionResponse(
@@ -75,6 +98,15 @@ function hasCheckoutSessionPayload(raw: any): boolean {
   );
 }
 
+function hasResolvedCheckoutItems(items: Record<string, any>[]): boolean {
+  return items.every((item) => {
+    const productId = String(item?.product_id || item?.productId || "").trim();
+    const merchantId = String(item?.merchant_id || item?.merchantId || "").trim();
+    const variantId = String(item?.variant_id || item?.variantId || "").trim();
+    return Boolean(productId && merchantId && variantId);
+  });
+}
+
 async function postCheckoutSessionUpstream(args: {
   url: string;
   headers: Record<string, string>;
@@ -82,27 +114,46 @@ async function postCheckoutSessionUpstream(args: {
   returnUrl?: string;
   source?: string;
 }) {
-  const upstream = await fetch(args.url, {
-    method: "POST",
-    headers: args.headers,
-    body: JSON.stringify(args.body),
-  });
-
-  const upstreamText = await upstream.text();
-  let upstreamBody: any = {};
+  const controller = new AbortController();
+  const timeout = setTimeout(
+    () => controller.abort("checkout_session_timeout"),
+    CHECKOUT_SESSION_UPSTREAM_TIMEOUT_MS,
+  );
   try {
-    upstreamBody = upstreamText ? JSON.parse(upstreamText) : {};
-  } catch {
-    upstreamBody = { error: "INVALID_UPSTREAM_RESPONSE", detail: upstreamText };
-  }
+    const upstream = await fetch(args.url, {
+      method: "POST",
+      headers: args.headers,
+      body: JSON.stringify(args.body),
+      signal: controller.signal,
+    });
 
-  return {
-    status: upstream.status,
-    body: normalizeCheckoutSessionResponse(upstreamBody, {
-      returnUrl: args.returnUrl,
-      source: args.source,
-    }),
-  };
+    const upstreamText = await upstream.text();
+    let upstreamBody: any = {};
+    try {
+      upstreamBody = upstreamText ? JSON.parse(upstreamText) : {};
+    } catch {
+      upstreamBody = { error: "INVALID_UPSTREAM_RESPONSE", detail: upstreamText };
+    }
+
+    return {
+      status: upstream.status,
+      body: normalizeCheckoutSessionResponse(upstreamBody, {
+        returnUrl: args.returnUrl,
+        source: args.source,
+      }),
+    };
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    return {
+      status: 504,
+      body: {
+        error: "UPSTREAM_TIMEOUT",
+        detail,
+      },
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 function normalizeIntentItems(rawItems: any[]): any[] {
@@ -111,18 +162,25 @@ function normalizeIntentItems(rawItems: any[]): any[] {
       const productId = String(raw?.product_id || raw?.productId || "").trim();
       const merchantId = String(raw?.merchant_id || raw?.merchantId || "").trim();
       const variantId = String(raw?.variant_id || raw?.variantId || "").trim();
-      const sku = String(raw?.sku || "").trim();
+      const itemId = String(raw?.id || "").trim();
+      const sku = String(raw?.sku || raw?.sku_id || raw?.skuId || "").trim();
       const quantityRaw = Number(raw?.quantity);
       const quantity =
         Number.isFinite(quantityRaw) && quantityRaw > 0
           ? Math.floor(quantityRaw)
           : 1;
       if (!productId || !merchantId) return null;
+      const normalizedItemId = variantId || itemId || sku || productId;
       return {
         product_id: productId,
+        productId,
         merchant_id: merchantId,
+        merchantId,
         ...(variantId ? { variant_id: variantId } : {}),
+        ...(variantId ? { variantId } : {}),
+        ...(normalizedItemId ? { id: normalizedItemId } : {}),
         ...(sku ? { sku } : {}),
+        ...(sku ? { skuId: sku } : {}),
         quantity,
       };
     })
@@ -156,7 +214,8 @@ export async function POST(req: Request) {
     }
 
     const returnUrl = String(body?.return_url || body?.returnUrl || "").trim();
-    const source = String(body?.source || "").trim() || "creator-agent-ui";
+    const source =
+      normalizeCheckoutSource(body?.source) || CANONICAL_CREATOR_CHECKOUT_SOURCE;
     const market = String(body?.market || "").trim().toUpperCase();
     const locale = String(body?.locale || "").trim();
     const buyerRef = String(body?.buyer_ref || body?.buyerRef || "").trim();
@@ -179,7 +238,23 @@ export async function POST(req: Request) {
         }
       | null = null;
 
-    if (creatorAgentBaseUrl) {
+    const shouldTryDirectFirst = hasResolvedCheckoutItems(items);
+
+    if (shouldTryDirectFirst) {
+      upstreamResult = await postCheckoutSessionUpstream({
+        url: `${BACKEND_BASE}/agent/v1/checkout/intents`,
+        headers: {
+          "Content-Type": "application/json",
+          "X-Agent-API-Key": apiKey,
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: requestBody,
+        returnUrl,
+        source,
+      });
+    }
+
+    if (!upstreamResult && creatorAgentBaseUrl) {
       upstreamResult = await postCheckoutSessionUpstream({
         url: `${creatorAgentBaseUrl}/creator-agent/checkout-sessions`,
         headers: {
@@ -201,7 +276,7 @@ export async function POST(req: Request) {
       upstreamResult.status >= 500 ||
       !hasCheckoutSessionPayload(upstreamResult.body);
 
-    if (shouldFallbackToDirect) {
+    if (shouldFallbackToDirect && !shouldTryDirectFirst) {
       upstreamResult = await postCheckoutSessionUpstream({
         url: `${BACKEND_BASE}/agent/v1/checkout/intents`,
         headers: {
