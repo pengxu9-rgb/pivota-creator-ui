@@ -7,6 +7,11 @@ import {
 } from "@/lib/creatorAgentGateway";
 import type { CreatorCategoryTreeResponse, CategoryNode } from "@/types/category";
 
+const EXACT_RESOLUTION_TIMEOUT_MS = 2500;
+const CATEGORY_FALLBACK_BUDGET_MS = 3500;
+const CATEGORY_REQUEST_TIMEOUT_MS = 1200;
+const CATEGORY_SCAN_LIMIT = 8;
+
 function sanitizeBaseUrl(raw: string | undefined): string {
   const value = String(raw || "")
     .replace(/\r/g, "")
@@ -36,7 +41,7 @@ async function resolveMerchantId(productId: string): Promise<string | null> {
   const invokeUrl = getCreatorInvokeUrl();
   const invokeAuthHeaders = getCreatorAgentAuthHeaders();
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8000);
+  const timeout = setTimeout(() => controller.abort(), EXACT_RESOLUTION_TIMEOUT_MS);
   try {
     const res = await fetch(invokeUrl, {
       method: "POST",
@@ -66,6 +71,25 @@ async function resolveMerchantId(productId: string): Promise<string | null> {
     return candidateMerchantId;
   } catch {
     return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function fetchJsonWithTimeout<T>(
+  url: string,
+  init: RequestInit,
+  timeoutMs: number,
+): Promise<T | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      ...init,
+      signal: controller.signal,
+    }).catch(() => null);
+    if (!res?.ok) return null;
+    return (await res.json().catch(() => null)) as T | null;
   } finally {
     clearTimeout(timeout);
   }
@@ -108,6 +132,7 @@ async function resolveMerchantIdFromCreatorCategories(args: {
   const headers = apiKey
     ? { "X-Agent-API-Key": apiKey, "x-api-key": apiKey }
     : undefined;
+  const startedAt = Date.now();
   const categoryQs = new URLSearchParams({
     includeCounts: "false",
     includeEmpty: "false",
@@ -116,38 +141,40 @@ async function resolveMerchantIdFromCreatorCategories(args: {
     ...(args.locale ? { locale: args.locale } : {}),
   });
 
-  const categoriesRes = await fetch(
+  const categoryTree = await fetchJsonWithTimeout<CreatorCategoryTreeResponse>(
     `${baseUrl}/creator/${encodeURIComponent(args.creatorSlug)}/categories?${categoryQs.toString()}`,
     {
       headers,
       cache: "no-store",
     },
-  ).catch(() => null);
-  if (!categoriesRes?.ok) return null;
-
-  const categoryTree = (await categoriesRes.json().catch(() => null)) as CreatorCategoryTreeResponse | null;
-  const categorySlugs = collectCategorySlugs(categoryTree?.roots);
+    Math.min(CATEGORY_REQUEST_TIMEOUT_MS, CATEGORY_FALLBACK_BUDGET_MS),
+  );
+  const categorySlugs = collectCategorySlugs(categoryTree?.roots).slice(0, CATEGORY_SCAN_LIMIT);
   if (!categorySlugs.length) return null;
 
   for (const categorySlug of categorySlugs) {
+    const elapsedMs = Date.now() - startedAt;
+    if (elapsedMs >= CATEGORY_FALLBACK_BUDGET_MS) break;
     const productsQs = new URLSearchParams({
       page: "1",
       limit: "500",
       ...(args.view ? { view: args.view } : {}),
       ...(args.locale ? { locale: args.locale } : {}),
     });
-    const productsRes = await fetch(
+    const payload = await fetchJsonWithTimeout<{
+      products?: Array<{ id?: string | number; merchant_id?: string; merchantId?: string }>;
+    }>(
       `${baseUrl}/creator/${encodeURIComponent(args.creatorSlug)}/categories/${encodeURIComponent(categorySlug)}/products?${productsQs.toString()}`,
       {
         headers,
         cache: "no-store",
       },
-    ).catch(() => null);
-    if (!productsRes?.ok) continue;
-
-    const payload = (await productsRes.json().catch(() => null)) as
-      | { products?: Array<{ id?: string | number; merchant_id?: string; merchantId?: string }> }
-      | null;
+      Math.max(
+        400,
+        Math.min(CATEGORY_REQUEST_TIMEOUT_MS, CATEGORY_FALLBACK_BUDGET_MS - elapsedMs),
+      ),
+    );
+    if (!payload) continue;
     const match = (payload?.products || []).find(
       (product) => String(product?.id || "").trim() === args.productId,
     );
