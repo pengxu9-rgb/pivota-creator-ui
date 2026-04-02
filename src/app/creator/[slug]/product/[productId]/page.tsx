@@ -1,4 +1,8 @@
 import { redirect } from "next/navigation";
+import {
+  getCreatorAgentAuthHeaders,
+  getCreatorInvokeUrl,
+} from "@/lib/creatorAgentGateway";
 
 function sanitizeBaseUrl(raw: string | undefined): string {
   const value = String(raw || "")
@@ -25,6 +29,45 @@ function appendSearchParam(target: URL, key: string, value: string | string[] | 
   }
 }
 
+async function resolveMerchantId(productId: string): Promise<string | null> {
+  const invokeUrl = getCreatorInvokeUrl();
+  const invokeAuthHeaders = getCreatorAgentAuthHeaders();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const res = await fetch(invokeUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...invokeAuthHeaders },
+      body: JSON.stringify({
+        operation: "resolve_product_candidates",
+        payload: {
+          product_ref: { product_id: productId },
+          options: {
+            limit: 1,
+            include_offers: true,
+          },
+        },
+        metadata: { source: "creator_agent" },
+      }),
+      cache: "no-store",
+      signal: controller.signal,
+    });
+
+    if (!res.ok) return null;
+
+    const raw = await res.json().catch(() => null);
+    const candidateMerchantId =
+      String(raw?.canonical_product_ref?.merchant_id || "").trim() ||
+      String(raw?.offers?.[0]?.merchant_id || "").trim() ||
+      null;
+    return candidateMerchantId;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export default async function CreatorProductAliasPage({
   params,
   searchParams,
@@ -44,6 +87,13 @@ export default async function CreatorProductAliasPage({
 
   for (const [key, value] of Object.entries(query)) {
     appendSearchParam(target, key, value);
+  }
+
+  if (!target.searchParams.has("merchant_id")) {
+    const resolvedMerchantId = await resolveMerchantId(productId);
+    if (resolvedMerchantId) {
+      target.searchParams.set("merchant_id", resolvedMerchantId);
+    }
   }
 
   if (!target.searchParams.has("creator_slug") && slug) {
