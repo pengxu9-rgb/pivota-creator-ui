@@ -22,6 +22,26 @@ function normalizeCurrency(raw: string | null | undefined): string | null {
   return value || null;
 }
 
+function reportLegacyCheckoutHit(payload: Record<string, unknown>) {
+  if (typeof window === "undefined") return;
+  const body = JSON.stringify({
+    ...payload,
+    pathname: window.location.pathname,
+    search: window.location.search,
+  });
+  if (typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function") {
+    const blob = new Blob([body], { type: "application/json" });
+    navigator.sendBeacon("/api/creator-agent/checkout/legacy-hit", blob);
+    return;
+  }
+  void fetch("/api/creator-agent/checkout/legacy-hit", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body,
+    keepalive: true,
+  }).catch(() => undefined);
+}
+
 function inferOrderAmountMinor(detail: Awaited<ReturnType<typeof getOrderDetail>>): number | null {
   const order = detail?.order;
   if (!order) return null;
@@ -109,6 +129,13 @@ function CheckoutPageContent() {
     const run = async () => {
       try {
         if (orderId) {
+          reportLegacyCheckoutHit({
+            event: "legacy_checkout_order_redirect",
+            orderId,
+            creatorSlug,
+            cartDestination,
+            state: "redirecting",
+          });
           setMessage("Redirecting your existing order to the hosted checkout...");
 
           let amountMinor = queryAmountMinor;
@@ -134,6 +161,13 @@ function CheckoutPageContent() {
         }
 
         if (cancelled) return;
+        reportLegacyCheckoutHit({
+          event: "legacy_checkout_cart_redirect",
+          orderId,
+          creatorSlug,
+          cartDestination,
+          state: "migrated",
+        });
         setState("migrated");
         setMessage("Checkout moved back to the creator cart. Redirecting you now...");
         timeoutRef.current = window.setTimeout(() => {
@@ -141,6 +175,14 @@ function CheckoutPageContent() {
         }, 1200);
       } catch (error) {
         if (cancelled) return;
+        reportLegacyCheckoutHit({
+          event: "legacy_checkout_error",
+          orderId,
+          creatorSlug,
+          cartDestination,
+          state: "error",
+          message: error instanceof Error ? error.message : "unknown_error",
+        });
         setState("error");
         setMessage(
           error instanceof Error
@@ -159,7 +201,7 @@ function CheckoutPageContent() {
         timeoutRef.current = null;
       }
     };
-  }, [cartDestination, orderId, queryAmountMinor, queryCurrency, router]);
+  }, [cartDestination, creatorSlug, orderId, queryAmountMinor, queryCurrency, router]);
 
   return <LegacyCheckoutShell state={state} orderId={orderId} message={message} cartDestination={cartDestination} />;
 }
