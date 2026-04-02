@@ -22,6 +22,7 @@ import {
   type ShippingAddress,
 } from "@/lib/accountsClient";
 import { getCreatorBySlug } from "@/config/creatorAgents";
+import { continueHostedCreatorCheckout } from "@/lib/hostedCreatorCheckout";
 
 type NormalizedItem = {
   id?: string | null;
@@ -1444,11 +1445,22 @@ export default function OrderDetailPage() {
               {order.permissions?.can_pay && (
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={async () => {
                     const amountMinor = Math.round(order.totals.total * 100);
-                    router.push(
-                      `/checkout?orderId=${encodeURIComponent(order.id)}&amount_minor=${amountMinor}&currency=${order.totals.currency}`,
-                    );
+                    try {
+                      await continueHostedCreatorCheckout({
+                        orderId: order.id,
+                        amountMinor,
+                        currency: order.totals.currency,
+                      });
+                    } catch (err) {
+                      console.error(err);
+                      alert(
+                        err instanceof Error
+                          ? err.message
+                          : "We couldn’t continue this payment right now.",
+                      );
+                    }
                   }}
                   className="rounded-full bg-[#3f3125] px-4 py-2 text-xs font-medium text-white shadow-sm hover:bg-black"
                 >

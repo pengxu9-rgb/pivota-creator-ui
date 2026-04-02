@@ -18,6 +18,7 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { ProductCard } from "@/components/product/ProductCard";
 import { ProductDescription } from "@/components/product/ProductDescription";
 import { useCart } from "@/components/cart/CartProvider";
+import { describeCreatorPrice, hasNumericPrice } from "@/lib/productPrice";
 
 export function CreatorAgentLayout({ children }: { children: ReactNode }) {
   const {
@@ -51,7 +52,6 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
     isDebug,
     openCart,
     cartItemsCount,
-    addToCart,
     prefetchProductDetail,
     currentSession,
     sessionDecision,
@@ -95,6 +95,21 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
       // ignore
     }
   }, [isMobile, onboardingVisible, pathname, router, searchParams]);
+
+  useEffect(() => {
+    const shouldOpenCart = searchParams?.get("openCart") === "1";
+    if (!shouldOpenCart) return;
+    openCart();
+
+    try {
+      const next = new URLSearchParams(searchParams?.toString());
+      next.delete("openCart");
+      const qs = next.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname);
+    } catch {
+      // ignore
+    }
+  }, [openCart, pathname, router, searchParams]);
 
   // Local state for desktop detail modal (style / size selection and gallery)
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(
@@ -181,8 +196,17 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
     return detailProduct.imageUrl ? [detailProduct.imageUrl] : [];
   }, [detailProduct]);
 
-  const displayPrice =
-    (selectedVariant && selectedVariant.price) ?? detailProduct?.price ?? 0;
+  const displayPriceAmount = hasNumericPrice(selectedVariant?.price)
+    ? selectedVariant.price
+    : detailProduct?.price;
+  const displayPriceLabel =
+    selectedVariant?.priceLabel || detailProduct?.priceLabel;
+  const detailPriceDisplay = describeCreatorPrice({
+    amount: displayPriceAmount,
+    currency: detailProduct?.currency,
+    label: displayPriceLabel,
+    fallbackLabel: "Calculated at checkout",
+  });
   const displayInventory =
     (selectedVariant && selectedVariant.inventoryQuantity) ??
     detailProduct?.inventoryQuantity ??
@@ -858,14 +882,12 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                   <div className="text-[11px] font-medium uppercase tracking-wide text-[#a38b78]">
                     Price
                   </div>
-                  <div className="text-lg font-semibold text-[#3f3125]">
-                    {detailProduct.currency}{" "}
-                    {(
-                      typeof displayPrice === "number" &&
-                      !Number.isNaN(displayPrice)
-                        ? displayPrice
-                        : 0
-                    ).toFixed(2)}
+                  <div
+                    className={`text-lg font-semibold ${
+                      detailPriceDisplay.kind === "amount" ? "text-[#3f3125]" : "text-[#7b6550]"
+                    }`}
+                  >
+                    {detailPriceDisplay.text}
                   </div>
                   {detailProduct.bestDeal?.label && (
                     <div className="text-[12px] font-medium text-[#f28b7a]">
@@ -964,7 +986,8 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                           productId: product.id,
                           merchantId: product.merchantId,
                           title: product.title,
-                          price: displayPrice,
+                          price: displayPriceAmount,
+                          priceLabel: displayPriceLabel,
                           imageUrl:
                             (variant && variant.imageUrl) ||
                             images[0] ||

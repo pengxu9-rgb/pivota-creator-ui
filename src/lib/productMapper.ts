@@ -6,6 +6,10 @@ import type {
   RawProduct,
 } from "@/types/product";
 import { formatDescriptionText, hasHtmlTags } from "@/lib/formatDescriptionText";
+import {
+  mergeNormalizedPrices,
+  normalizeCreatorPrice,
+} from "@/lib/productPrice";
 
 function normalizeDeal(raw: any, productId: string): ProductBestDeal {
   if (!raw) {
@@ -137,7 +141,7 @@ function normalizeVariants(raw: any): ProductVariant[] | undefined {
     const id = refVariantId != null ? String(refVariantId).trim() : "";
     if (!id) return undefined;
 
-    const priceValue = typeof raw?.price === "number" ? raw.price : 0;
+    const normalizedPrice = normalizeCreatorPrice(raw);
     const inventoryQuantity =
       typeof raw?.inventory_quantity === "number" ? raw.inventory_quantity : undefined;
     const title = "Default";
@@ -149,7 +153,8 @@ function normalizeVariants(raw: any): ProductVariant[] | undefined {
       {
         id,
         title,
-        price: priceValue,
+        price: normalizedPrice.amount,
+        priceLabel: normalizedPrice.label,
         sku,
         inventoryQuantity,
         options: undefined,
@@ -165,12 +170,10 @@ function normalizeVariants(raw: any): ProductVariant[] | undefined {
     const title = String(v.title || "").trim();
     if (!id) continue;
 
-    const priceValue =
-      typeof v.price === "number"
-        ? v.price
-        : typeof raw.price === "number"
-        ? raw.price
-        : 0;
+    const priceValue = mergeNormalizedPrices(
+      normalizeCreatorPrice(v),
+      normalizeCreatorPrice(raw),
+    );
 
     const inventoryQuantity =
       typeof v.inventory_quantity === "number"
@@ -196,7 +199,8 @@ function normalizeVariants(raw: any): ProductVariant[] | undefined {
     variants.push({
       id,
       title,
-      price: priceValue,
+      price: priceValue.amount,
+      priceLabel: priceValue.label,
       sku: v.sku ? String(v.sku) : undefined,
       inventoryQuantity,
       options,
@@ -224,6 +228,7 @@ export function mapRawProduct(raw: RawProduct): Product {
 
   const descriptionRaw = typeof raw.description === "string" ? raw.description : "";
   const descriptionText = formatDescriptionText(descriptionRaw);
+  const normalizedPrice = normalizeCreatorPrice(raw);
 
   return {
     id: raw.id,
@@ -231,8 +236,10 @@ export function mapRawProduct(raw: RawProduct): Product {
     description: descriptionText,
     descriptionHtml:
       hasHtmlTags(descriptionRaw) && descriptionRaw.trim().length > 0 ? descriptionRaw : undefined,
-    price: raw.price,
-    currency: raw.currency || (raw as any).currency_code,
+    price: normalizedPrice.amount,
+    priceLabel: normalizedPrice.label,
+    currency:
+      normalizedPrice.currency || raw.currency || (raw as any).currency_code || "USD",
     imageUrl: raw.image_url,
     inventoryQuantity: raw.inventory_quantity,
     merchantId: raw.merchant_id,

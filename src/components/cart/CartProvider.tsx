@@ -6,7 +6,8 @@ import type { ProductBestDeal } from "@/types/product";
 export type CartItem = {
   id: string;
   title: string;
-  price: number;
+  price?: number;
+  priceLabel?: string;
   imageUrl?: string;
   quantity: number;
   currency?: string;
@@ -41,6 +42,10 @@ type CartContextValue = {
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
 
+function sanitizeNumericPrice(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -54,10 +59,24 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const existing = prev.find((i) => i.id === item.id);
       if (existing) {
         return prev.map((i) =>
-          i.id === item.id ? { ...i, quantity: i.quantity + item.quantity } : i,
+          i.id === item.id
+            ? {
+                ...i,
+                ...item,
+                price: sanitizeNumericPrice(item.price) ?? sanitizeNumericPrice(i.price),
+                priceLabel: item.priceLabel || i.priceLabel,
+                quantity: i.quantity + item.quantity,
+              }
+            : i,
         );
       }
-      return [...prev, item];
+      return [
+        ...prev,
+        {
+          ...item,
+          price: sanitizeNumericPrice(item.price),
+        },
+      ];
     });
     setIsOpen(true);
   };
@@ -79,10 +98,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const subtotal = useMemo(
     () =>
       items.reduce((sum, item) => {
-        const price =
-          typeof item.price === "number" && !Number.isNaN(item.price)
-            ? item.price
-            : 0;
+        const price = sanitizeNumericPrice(item.price) ?? 0;
         return sum + price * item.quantity;
       }, 0),
     [items],
@@ -110,18 +126,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         const parsed = JSON.parse(stored) as CartItem[] | unknown;
         if (Array.isArray(parsed)) {
           const normalized = parsed
-            .map((raw) => {
+            .map((raw): CartItem | null => {
               if (!raw || typeof raw !== "object") return null;
               const item = raw as CartItem;
-              const price =
-                typeof item.price === "number" && !Number.isNaN(item.price)
-                  ? item.price
-                  : 0;
               const quantity =
                 typeof item.quantity === "number" && item.quantity > 0
                   ? item.quantity
                   : 1;
-              return { ...item, price, quantity };
+              return {
+                ...item,
+                price: sanitizeNumericPrice(item.price),
+                quantity,
+              };
             })
             .filter((i): i is CartItem => i !== null);
 

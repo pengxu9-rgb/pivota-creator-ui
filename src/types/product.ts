@@ -22,10 +22,23 @@ export interface ProductOption {
   values: string[];
 }
 
+export type RawProductPrice =
+  | number
+  | string
+  | {
+      amount?: number | string;
+      currency?: string;
+      currency_code?: string;
+      label?: string;
+    }
+  | null
+  | undefined;
+
 export interface ProductVariant {
   id: string;
   title: string;
-  price: number;
+  price?: number;
+  priceLabel?: string;
   sku?: string;
   inventoryQuantity?: number;
   options?: Record<string, string>;
@@ -36,10 +49,13 @@ export interface RawProduct {
   id: string;
   title: string;
   description: string;
-  price: number;
-  currency: string;
+  price?: RawProductPrice;
+  currency?: string;
   // Some backends send currency as currency_code.
   currency_code?: string;
+  price_amount?: number | string;
+  price_currency?: string;
+  price_label?: string;
   image_url: string;
   inventory_quantity: number;
   // Some unified catalog backends include a product_ref carrying variant_id / sku_id.
@@ -85,7 +101,8 @@ export interface Product {
    * 仅在详情页使用，用于保留表格等排版。
    */
   descriptionHtml?: string;
-  price: number;
+  price?: number;
+  priceLabel?: string;
   currency: string;
   imageUrl: string;
   inventoryQuantity: number;

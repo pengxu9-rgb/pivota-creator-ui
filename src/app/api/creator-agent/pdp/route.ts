@@ -156,7 +156,7 @@ export async function POST(req: Request) {
           ...(debug ? { debug: true } : {}),
         },
       },
-      metadata: { source: "creator-agent-ui" },
+      metadata: { source: "creator_agent" },
     };
 
     const fallbackRequest = {
@@ -165,7 +165,7 @@ export async function POST(req: Request) {
         product,
         ...(debug ? { debug: true } : {}),
       },
-      metadata: { source: "creator-agent-ui" },
+      metadata: { source: "creator_agent" },
     };
 
     let res = await fetch(invokeUrl, {

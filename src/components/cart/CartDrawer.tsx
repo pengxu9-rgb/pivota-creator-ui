@@ -1,17 +1,33 @@
 'use client';
 
-import React from "react";
+import React, { useState } from "react";
 import { X, Minus, Plus, ShoppingCart } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useCart } from "./CartProvider";
+import { startHostedCreatorCheckout } from "@/lib/hostedCreatorCheckout";
+import { describeCreatorPrice, hasNumericPrice } from "@/lib/productPrice";
 
 export function CartDrawer() {
   const { items, isOpen, close, updateQuantity, removeItem, subtotal, clear } = useCart();
-  const router = useRouter();
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [checkoutPending, setCheckoutPending] = useState(false);
 
   if (!isOpen) return null;
 
   const currency = items[0]?.currency || "USD";
+  const hasUnknownPrices = items.some((item) => !hasNumericPrice(item.price));
+
+  const handleCheckout = async () => {
+    if (!items.length || checkoutPending) return;
+    setCheckoutError(null);
+    setCheckoutPending(true);
+    try {
+      await startHostedCreatorCheckout(items);
+    } catch (error) {
+      setCheckoutError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setCheckoutPending(false);
+    }
+  };
 
   return (
     <>
@@ -73,15 +89,23 @@ export function CartDrawer() {
                             SKU: {item.variantSku}
                           </p>
                         )}
-                        <p className="mt-1 text-xs text-slate-600">
-                          {currency}{" "}
-                          {(
-                            typeof item.price === "number" &&
-                            !Number.isNaN(item.price)
-                              ? item.price
-                              : 0
-                          ).toFixed(2)}
-                        </p>
+                        {(() => {
+                          const unitPrice = describeCreatorPrice({
+                            amount: item.price,
+                            currency: item.currency || currency,
+                            label: item.priceLabel,
+                            fallbackLabel: "Calculated at checkout",
+                          });
+                          const lineTotal = hasNumericPrice(item.price)
+                            ? `${item.currency || currency} ${(item.price * item.quantity).toFixed(2)}`
+                            : "Calculated at checkout";
+                          return (
+                            <div className="mt-1 flex items-center justify-between gap-3 text-xs">
+                              <p className="text-slate-600">{unitPrice.text}</p>
+                              <p className="font-semibold text-slate-900">{lineTotal}</p>
+                            </div>
+                          );
+                        })()}
                       </div>
                       <button
                         type="button"
@@ -121,24 +145,21 @@ export function CartDrawer() {
           <div className="flex items-center justify-between text-sm">
             <span className="text-slate-600">Subtotal</span>
             <span className="font-semibold text-slate-900">
-              {currency} {subtotal.toFixed(2)}
+              {hasUnknownPrices ? "Calculated at checkout" : `${currency} ${subtotal.toFixed(2)}`}
             </span>
           </div>
+          {checkoutError && (
+            <p className="mt-3 text-xs text-rose-600">{checkoutError}</p>
+          )}
           <div className="mt-3 flex gap-2">
-            <a
-              aria-disabled={items.length === 0}
-              href={items.length === 0 ? undefined : "/checkout"}
-              onClick={(e) => {
-                if (items.length === 0) {
-                  e.preventDefault();
-                  return;
-                }
-                close();
-              }}
+            <button
+              type="button"
+              disabled={items.length === 0 || checkoutPending}
+              onClick={handleCheckout}
               className="flex-1 rounded-full bg-slate-900 px-4 py-2 text-center text-xs font-medium text-white shadow-sm hover:bg-slate-800 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
             >
-              Checkout
-            </a>
+              {checkoutPending ? "Starting checkout..." : "Checkout"}
+            </button>
             {items.length > 0 && (
               <button
                 type="button"
