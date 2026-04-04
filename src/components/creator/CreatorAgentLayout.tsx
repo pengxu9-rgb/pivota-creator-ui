@@ -33,6 +33,34 @@ function getDiscoveryMetadata(value: unknown): DiscoveryFeedMetadata | null {
   return candidate as DiscoveryFeedMetadata;
 }
 
+function getDiscoveryRecallSummary(value: DiscoveryFeedMetadata | null) {
+  const raw = value?.rank_debug?.recall_summary;
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((step) => step && typeof step === "object")
+    .map((step) => ({
+      label: typeof step.label === "string" ? step.label : "unknown",
+      status:
+        typeof step.status === "number" && Number.isFinite(step.status)
+          ? step.status
+          : null,
+      returned:
+        typeof step.returned === "number" && Number.isFinite(step.returned)
+          ? step.returned
+          : null,
+      latencyMs:
+        typeof step.latency_ms === "number" && Number.isFinite(step.latency_ms)
+          ? step.latency_ms
+          : null,
+      cacheHit: step.cache_hit === true,
+      query:
+        typeof step.query === "string" && step.query.trim().length > 0
+          ? step.query.trim()
+          : null,
+      truncatedByBudget: step.truncated_by_budget === true,
+    }));
+}
+
 export function CreatorAgentLayout({ children }: { children: ReactNode }) {
   const {
     creator,
@@ -104,6 +132,10 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
     typeof discoveryMetadata.candidate_counts === "object"
       ? discoveryMetadata.candidate_counts
       : null;
+  const discoveryRecallSummary = useMemo(
+    () => getDiscoveryRecallSummary(discoveryMetadata),
+    [discoveryMetadata],
+  );
   const debugTraceId =
     typeof lastResponse?.traceId === "string" && lastResponse.traceId
       ? lastResponse.traceId
@@ -1094,6 +1126,10 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                     {typeof discoveryMetadata?.anchor_count === "number" ? (
                       <p>anchors: {discoveryMetadata.anchor_count}</p>
                     ) : null}
+                    {typeof discoveryMetadata?.dominant_domain === "string" &&
+                    discoveryMetadata.dominant_domain ? (
+                      <p>dominantDomain: {discoveryMetadata.dominant_domain}</p>
+                    ) : null}
                     {discoveryMetadata?.candidate_source ? (
                       <p>candidateSource: {discoveryMetadata.candidate_source}</p>
                     ) : null}
@@ -1127,16 +1163,33 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                   )}
                 </div>
                 <div className="rounded-lg bg-black/40 p-3">
-                  <h3 className="mb-2 text-xs font-semibold text-white">
-                    rankDebug
-                  </h3>
-                  {discoveryRankDebug ? (
-                    <pre className="max-h-48 overflow-auto rounded-lg bg-black/50 p-2 font-mono text-[10px] leading-relaxed">
-                      {safeStringify(discoveryRankDebug)}
-                    </pre>
-                  ) : (
-                    <p className="text-[10px] text-slate-400">
-                      No rank debug attached. Add <code>?debug=1</code> and use a live backend that
+	                  <h3 className="mb-2 text-xs font-semibold text-white">
+	                    rankDebug
+	                  </h3>
+	                  {discoveryRankDebug ? (
+	                    <div className="space-y-2">
+	                      {discoveryRecallSummary.length > 0 ? (
+	                        <div className="space-y-1 rounded-lg bg-black/50 p-2 text-[10px] text-slate-100">
+	                          {discoveryRecallSummary.map((step, index) => (
+	                            <p key={`${step.label}-${index}`}>
+	                              {step.label}
+	                              {step.status != null ? ` · ${step.status}` : ""}
+	                              {step.cacheHit ? " · cache" : ""}
+	                              {step.latencyMs != null ? ` · ${step.latencyMs}ms` : ""}
+	                              {step.returned != null ? ` · returned ${step.returned}` : ""}
+	                              {step.truncatedByBudget ? " · budget-stop" : ""}
+	                              {step.query ? ` · q=${step.query}` : ""}
+	                            </p>
+	                          ))}
+	                        </div>
+	                      ) : null}
+	                      <pre className="max-h-48 overflow-auto rounded-lg bg-black/50 p-2 font-mono text-[10px] leading-relaxed">
+	                        {safeStringify(discoveryRankDebug)}
+	                      </pre>
+	                    </div>
+	                  ) : (
+	                    <p className="text-[10px] text-slate-400">
+	                      No rank debug attached. Add <code>?debug=1</code> and use a live backend that
                       returns discovery rank metadata.
                     </p>
                   )}

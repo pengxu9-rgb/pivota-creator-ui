@@ -48,11 +48,38 @@ export type CreatorDiscoveryResponse = {
 // 默认关闭：宁可不推不相关商品，也不强行填满列表。
 const ENABLE_POPULAR_FALLBACK =
   process.env.NEXT_PUBLIC_CREATOR_AGENT_ALLOW_POPULAR_FALLBACK === "1";
-const CREATOR_AGENT_REQUEST_TIMEOUT_MS = 20_000;
-const CREATOR_AGENT_TASK_TOTAL_TIMEOUT_MS = 20_000;
-const CREATOR_AGENT_TASK_REQUEST_TIMEOUT_MS = 4_000;
 const CREATOR_AGENT_UPSTREAM_TIMEOUT_ERROR = "CREATOR_AGENT_UPSTREAM_TIMEOUT";
 const CREATOR_AGENT_TASK_TIMEOUT_ERROR = "CREATOR_AGENT_TASK_TIMEOUT";
+
+function resolveTimeoutMs(
+  rawValue: string | undefined,
+  fallback: number,
+  min: number,
+  max: number,
+): number {
+  const parsed = Number(rawValue);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.max(min, Math.min(max, Math.floor(parsed)));
+}
+
+const CREATOR_AGENT_REQUEST_TIMEOUT_MS = resolveTimeoutMs(
+  process.env.NEXT_PUBLIC_CREATOR_AGENT_REQUEST_TIMEOUT_MS,
+  20_000,
+  5_000,
+  60_000,
+);
+const CREATOR_AGENT_TASK_TOTAL_TIMEOUT_MS = resolveTimeoutMs(
+  process.env.NEXT_PUBLIC_CREATOR_AGENT_TASK_TOTAL_TIMEOUT_MS,
+  20_000,
+  5_000,
+  60_000,
+);
+const CREATOR_AGENT_TASK_REQUEST_TIMEOUT_MS = resolveTimeoutMs(
+  process.env.NEXT_PUBLIC_CREATOR_AGENT_TASK_REQUEST_TIMEOUT_MS,
+  4_000,
+  1_000,
+  10_000,
+);
 
 function normalizeQuery(raw: string | undefined | null): string {
   if (!raw) return "";
