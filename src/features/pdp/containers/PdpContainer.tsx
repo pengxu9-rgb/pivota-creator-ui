@@ -144,9 +144,6 @@ export function PdpContainer({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const allowMockRecentPurchases =
-    (payload.product.merchant_id || '') !== 'external_seed';
-
   const variants = useMemo(() => payload.product.variants ?? [], [payload.product.variants]);
 
   const selectedVariant = useMemo(() => {
@@ -1297,7 +1294,6 @@ export function PdpContainer({
             <>
               <BeautyRecentPurchases
                 items={payload.product.recent_purchases || []}
-                showEmpty={allowMockRecentPurchases}
               />
               <BeautyUgcGallery
                 items={ugcItems}
@@ -1311,7 +1307,6 @@ export function PdpContainer({
             <>
               <GenericRecentPurchases
                 items={payload.product.recent_purchases || []}
-                showEmpty={allowMockRecentPurchases}
               />
               <GenericStyleGallery
                 items={ugcItems}

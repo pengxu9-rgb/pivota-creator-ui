@@ -19,6 +19,19 @@ import { ProductCard } from "@/components/product/ProductCard";
 import { ProductDescription } from "@/components/product/ProductDescription";
 import { useCart } from "@/components/cart/CartProvider";
 import { describeCreatorPrice, hasNumericPrice } from "@/lib/productPrice";
+import type { DiscoveryFeedMetadata } from "@/types/product";
+
+function getDiscoveryMetadata(value: unknown): DiscoveryFeedMetadata | null {
+  if (!value || typeof value !== "object") return null;
+  const candidate = value as Partial<DiscoveryFeedMetadata>;
+  if (
+    typeof candidate.discovery_strategy !== "string" ||
+    typeof candidate.personalization_source !== "string"
+  ) {
+    return null;
+  }
+  return candidate as DiscoveryFeedMetadata;
+}
 
 export function CreatorAgentLayout({ children }: { children: ReactNode }) {
   const {
@@ -77,6 +90,32 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
   const [resumeDismissed, setResumeDismissed] = useState(false);
   const forcedOnboarding = searchParams?.get("onboarding") === "1";
   const onboardingVisible = forcedOnboarding || onboardingActive;
+  const discoveryMetadata = useMemo(
+    () => getDiscoveryMetadata(lastResponse?.metadata),
+    [lastResponse],
+  );
+  const discoveryRankDebug =
+    discoveryMetadata?.rank_debug &&
+    typeof discoveryMetadata.rank_debug === "object"
+      ? discoveryMetadata.rank_debug
+      : null;
+  const discoveryCandidateCounts =
+    discoveryMetadata?.candidate_counts &&
+    typeof discoveryMetadata.candidate_counts === "object"
+      ? discoveryMetadata.candidate_counts
+      : null;
+  const debugTraceId =
+    typeof lastResponse?.traceId === "string" && lastResponse.traceId
+      ? lastResponse.traceId
+      : typeof lastRequest?.traceId === "string" && lastRequest.traceId
+        ? lastRequest.traceId
+        : null;
+  const hasDiscoveryDebugSummary = Boolean(
+    discoveryMetadata ||
+      debugTraceId ||
+      lastRequest?.payload?.surface ||
+      lastResponse?.detail,
+  );
 
   // Allow deep links (and onboarding) to open the chat panel on mobile.
   useEffect(() => {
@@ -1031,6 +1070,80 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
 
         {isDebug && (
           <div className="border-t border-slate-200 bg-slate-950/90 px-4 py-4 text-[11px] leading-relaxed text-white md:px-6 lg:px-10">
+            {hasDiscoveryDebugSummary && (
+              <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div className="rounded-lg bg-black/40 p-3">
+                  <h3 className="mb-2 text-xs font-semibold text-white">
+                    discoverySummary
+                  </h3>
+                  <div className="space-y-1 text-[10px] text-slate-100">
+                    {debugTraceId ? <p>traceId: {debugTraceId}</p> : null}
+                    {lastRequest?.source ? <p>requestSource: {lastRequest.source}</p> : null}
+                    {lastRequest?.payload?.surface ? (
+                      <p>surface: {String(lastRequest.payload.surface)}</p>
+                    ) : null}
+                    {discoveryMetadata?.discovery_strategy ? (
+                      <p>strategy: {discoveryMetadata.discovery_strategy}</p>
+                    ) : null}
+                    {discoveryMetadata?.personalization_source ? (
+                      <p>personalization: {discoveryMetadata.personalization_source}</p>
+                    ) : null}
+                    {typeof discoveryMetadata?.history_items_used === "number" ? (
+                      <p>historyItemsUsed: {discoveryMetadata.history_items_used}</p>
+                    ) : null}
+                    {typeof discoveryMetadata?.anchor_count === "number" ? (
+                      <p>anchors: {discoveryMetadata.anchor_count}</p>
+                    ) : null}
+                    {discoveryMetadata?.candidate_source ? (
+                      <p>candidateSource: {discoveryMetadata.candidate_source}</p>
+                    ) : null}
+                    {typeof discoveryMetadata?.request_latency_ms === "number" ? (
+                      <p>latencyMs: {discoveryMetadata.request_latency_ms}</p>
+                    ) : null}
+                    {discoveryMetadata?.scoring_version ? (
+                      <p>scoringVersion: {discoveryMetadata.scoring_version}</p>
+                    ) : null}
+                    {lastResponse?.detail ? (
+                      <p className="text-amber-200">detail: {String(lastResponse.detail)}</p>
+                    ) : null}
+                  </div>
+                </div>
+                <div className="rounded-lg bg-black/40 p-3">
+                  <h3 className="mb-2 text-xs font-semibold text-white">
+                    candidateCounts
+                  </h3>
+                  {discoveryCandidateCounts ? (
+                    <div className="space-y-1 text-[10px] text-slate-100">
+                      <p>raw: {discoveryCandidateCounts.raw}</p>
+                      <p>normalized: {discoveryCandidateCounts.normalized}</p>
+                      <p>scored: {discoveryCandidateCounts.scored}</p>
+                      <p>eligiblePool: {discoveryCandidateCounts.eligible_pool}</p>
+                      <p>returned: {discoveryCandidateCounts.returned}</p>
+                    </div>
+                  ) : (
+                    <p className="text-[10px] text-slate-400">
+                      No candidate counts available for this response.
+                    </p>
+                  )}
+                </div>
+                <div className="rounded-lg bg-black/40 p-3">
+                  <h3 className="mb-2 text-xs font-semibold text-white">
+                    rankDebug
+                  </h3>
+                  {discoveryRankDebug ? (
+                    <pre className="max-h-48 overflow-auto rounded-lg bg-black/50 p-2 font-mono text-[10px] leading-relaxed">
+                      {safeStringify(discoveryRankDebug)}
+                    </pre>
+                  ) : (
+                    <p className="text-[10px] text-slate-400">
+                      No rank debug attached. Add <code>?debug=1</code> and use a live backend that
+                      returns discovery rank metadata.
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div className="md:col-span-1">
                 <h3 className="mb-2 text-xs font-semibold text-white">

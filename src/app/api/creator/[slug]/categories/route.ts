@@ -1,5 +1,4 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getMockCreatorCategoryTree } from "@/config/categoriesMock";
 import {
   getCreatorAgentApiKey,
   getOptionalCreatorAgentBaseUrl,
@@ -15,8 +14,73 @@ function resolveLocale(req: NextRequest, explicit?: string | null): string | und
   return "en-US";
 }
 
-export async function GET(req: NextRequest, { params }: any) {
-  const creatorSlug = params.slug;
+async function readUpstreamErrorDetail(res: Response): Promise<string> {
+  try {
+    const bodyText = await res.text();
+    if (!bodyText) return "";
+    try {
+      const parsed = JSON.parse(bodyText);
+      if (parsed && typeof parsed === "object") {
+        const detail =
+          typeof parsed.detail === "string"
+            ? parsed.detail
+            : typeof parsed.message === "string"
+              ? parsed.message
+              : typeof parsed.error === "string"
+                ? parsed.error
+                : "";
+        return detail || bodyText;
+      }
+    } catch {
+      return bodyText;
+    }
+    return bodyText;
+  } catch {
+    return "";
+  }
+}
+
+function normalizeCategoryImageUrl(imageUrl: string | undefined): string | undefined {
+  if (!imageUrl) return imageUrl;
+  return imageUrl.replace("/mock-categories/", "/category-fallbacks/");
+}
+
+function normalizeCategoryTreeResponse(
+  data: CreatorCategoryTreeResponse,
+  creatorSlug: string,
+  locale?: string,
+  view?: string,
+): CreatorCategoryTreeResponse {
+  return {
+    creatorId: data.creatorId ?? creatorSlug,
+    taxonomyVersion: data.taxonomyVersion,
+    market: data.market,
+    locale: data.locale ?? locale,
+    viewId: data.viewId ?? view,
+    source: data.source,
+    roots: (data.roots ?? []).map((node) => ({
+      ...node,
+      category: {
+        ...node.category,
+        imageUrl: normalizeCategoryImageUrl(node.category.imageUrl),
+      },
+      children: (node.children ?? []).map((child) => ({
+        ...child,
+        category: {
+          ...child.category,
+          imageUrl: normalizeCategoryImageUrl(child.category.imageUrl),
+        },
+      })),
+    })),
+    hotDeals: data.hotDeals ?? [],
+  };
+}
+
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ slug: string }> },
+) {
+  const { slug: creatorSlug } = await params;
   const baseUrl = getOptionalCreatorAgentBaseUrl();
   const apiKey = getCreatorAgentApiKey();
   const upstreamHeaders = apiKey
@@ -31,21 +95,13 @@ export async function GET(req: NextRequest, { params }: any) {
   const view = url.searchParams.get("view") ?? undefined;
   const locale = resolveLocale(req, url.searchParams.get("locale"));
 
-  // In production, never silently fall back to mock:
-  // if gateway URL is missing, surface an explicit error.
-  if (!baseUrl && process.env.NODE_ENV === "production") {
+  if (!baseUrl) {
     return NextResponse.json(
       {
         error: "PIVOTA_AGENT_URL not configured for creator categories",
       },
-      { status: 500 },
+      { status: 503 },
     );
-  }
-
-  // In development, allow local mock when backend URL is absent.
-  if (!baseUrl) {
-    const mock = getMockCreatorCategoryTree(creatorSlug);
-    return NextResponse.json<CreatorCategoryTreeResponse>(mock);
   }
 
   try {
@@ -67,40 +123,32 @@ export async function GET(req: NextRequest, { params }: any) {
     );
 
     if (!res.ok) {
-      console.error("Failed to fetch creator categories", res.status);
-      if (process.env.NODE_ENV === "production") {
-        return NextResponse.json(
-          { error: "Upstream error for creator categories" },
-          { status: res.status },
-        );
-      }
-      const fallback = getMockCreatorCategoryTree(creatorSlug);
-      return NextResponse.json<CreatorCategoryTreeResponse>(fallback);
+      const detail = await readUpstreamErrorDetail(res);
+      console.error("Failed to fetch creator categories", res.status, detail);
+      return NextResponse.json(
+        {
+          error: "Upstream error for creator categories",
+          detail: detail || undefined,
+        },
+        { status: res.status },
+      );
     }
 
     const data = (await res.json()) as CreatorCategoryTreeResponse;
 
-    const normalized: CreatorCategoryTreeResponse = {
-      creatorId: data.creatorId ?? creatorSlug,
-      taxonomyVersion: data.taxonomyVersion,
-      market: data.market,
-      locale: data.locale ?? locale,
-      viewId: data.viewId ?? view,
-      source: data.source,
-      roots: data.roots ?? [],
-      hotDeals: data.hotDeals ?? [],
-    };
+    const normalized = normalizeCategoryTreeResponse(
+      data,
+      creatorSlug,
+      locale,
+      view,
+    );
 
     return NextResponse.json<CreatorCategoryTreeResponse>(normalized);
   } catch (error) {
     console.error("Error fetching creator categories", error);
-    if (process.env.NODE_ENV === "production") {
-      return NextResponse.json(
-        { error: "Internal error fetching creator categories" },
-        { status: 500 },
-      );
-    }
-    const fallback = getMockCreatorCategoryTree(creatorSlug);
-    return NextResponse.json<CreatorCategoryTreeResponse>(fallback);
+    return NextResponse.json(
+      { error: "Internal error fetching creator categories" },
+      { status: 500 },
+    );
   }
 }

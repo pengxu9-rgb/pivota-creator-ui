@@ -220,11 +220,21 @@ export function mapRawProduct(raw: RawProduct): Product {
   const images = normalizeImages(raw);
   const variants = normalizeVariants(raw);
   const variantsComplete =
-    (raw as any)?.attributes?.variants && Array.isArray((raw as any).attributes.variants)
-      ? true
-      : Array.isArray((raw as any)?.variants)
-      ? true
-      : false;
+    typeof (raw as any)?.variants_complete === "boolean"
+      ? Boolean((raw as any).variants_complete)
+      : typeof (raw as any)?.variantsComplete === "boolean"
+        ? Boolean((raw as any).variantsComplete)
+        : (raw as any)?.attributes?.variants && Array.isArray((raw as any).attributes.variants)
+          ? true
+          : Array.isArray((raw as any)?.variants)
+            ? true
+            : false;
+  const variantContract =
+    (raw as any)?.variant_contract && typeof (raw as any).variant_contract === "object"
+      ? ((raw as any).variant_contract as Record<string, unknown>)
+      : (raw as any)?.variantContract && typeof (raw as any).variantContract === "object"
+        ? ((raw as any).variantContract as Record<string, unknown>)
+        : undefined;
 
   const descriptionRaw = typeof raw.description === "string" ? raw.description : "";
   const descriptionText = formatDescriptionText(descriptionRaw);
@@ -244,6 +254,9 @@ export function mapRawProduct(raw: RawProduct): Product {
     inventoryQuantity: raw.inventory_quantity,
     merchantId: raw.merchant_id,
     merchantName: raw.merchant_name,
+    brand: raw.brand,
+    category: raw.category,
+    productType: raw.product_type,
     isCreatorPick: Boolean((raw as any).creator_pick),
     creatorPickRank:
       typeof (raw as any).creator_pick_rank === "number"
@@ -258,6 +271,7 @@ export function mapRawProduct(raw: RawProduct): Product {
     images,
     variants,
     variantsComplete,
+    variantContract,
   };
 }
 

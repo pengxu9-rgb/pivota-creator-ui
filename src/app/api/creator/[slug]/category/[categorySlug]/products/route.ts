@@ -46,37 +46,39 @@ function resolveLocale(req: NextRequest, explicit?: string | null): string | und
   return "en-US";
 }
 
-function getMockCategoryProducts(
-  _creatorSlug: string,
-  categorySlug: string,
-): Product[] {
-  const base: BackendProduct[] = [
-    {
-      id: `${categorySlug}-p1`,
-      title: `Sample ${categorySlug} pick #1`,
-      description: "Mock product for local browsing without backend.",
-      price: 39,
-      currency: "USD",
-      image_url: "https://images.pexels.com/photos/3738084/pexels-photo-3738084.jpeg?auto=compress&cs=tinysrgb&w=800",
-      inventory_quantity: 12,
-    },
-    {
-      id: `${categorySlug}-p2`,
-      title: `Sample ${categorySlug} pick #2`,
-      description: "Another mock item curated for this category.",
-      price: 59,
-      currency: "USD",
-      image_url: "https://images.pexels.com/photos/3738090/pexels-photo-3738090.jpeg?auto=compress&cs=tinysrgb&w=800",
-      inventory_quantity: 5,
-    },
-  ];
-
-  return base.map((p) => mapRawProduct(p as any));
+async function readUpstreamErrorDetail(res: Response): Promise<string> {
+  try {
+    const bodyText = await res.text();
+    if (!bodyText) return "";
+    try {
+      const parsed = JSON.parse(bodyText);
+      if (parsed && typeof parsed === "object") {
+        const detail =
+          typeof parsed.detail === "string"
+            ? parsed.detail
+            : typeof parsed.message === "string"
+              ? parsed.message
+              : typeof parsed.error === "string"
+                ? parsed.error
+                : "";
+        return detail || bodyText;
+      }
+    } catch {
+      return bodyText;
+    }
+    return bodyText;
+  } catch {
+    return "";
+  }
 }
 
-export async function GET(req: NextRequest, { params }: any) {
-  const creatorSlug = params.slug;
-  const categorySlug = params.categorySlug;
+export async function GET(
+  req: NextRequest,
+  {
+    params,
+  }: { params: Promise<{ slug: string; categorySlug: string }> },
+) {
+  const { slug: creatorSlug, categorySlug } = await params;
   const baseUrl = getOptionalCreatorAgentBaseUrl();
   const apiKey = getCreatorAgentApiKey();
   const upstreamHeaders = apiKey
@@ -89,31 +91,13 @@ export async function GET(req: NextRequest, { params }: any) {
   const view = url.searchParams.get("view") ?? undefined;
   const locale = resolveLocale(req, url.searchParams.get("locale"));
 
-  // In production, never silently fall back to mock:
-  // if gateway URL is missing, surface an explicit error.
-  if (!baseUrl && process.env.NODE_ENV === "production") {
+  if (!baseUrl) {
     return NextResponse.json(
       {
         error: "PIVOTA_AGENT_URL not configured for creator category products",
       },
-      { status: 500 },
+      { status: 503 },
     );
-  }
-
-  // In development, allow local mock when backend URL is absent.
-  if (!baseUrl) {
-    const mockProducts = getMockCategoryProducts(creatorSlug, categorySlug);
-    return NextResponse.json<{
-      products: Product[];
-      pagination: { page: number; limit: number; total: number };
-    }>({
-      products: mockProducts,
-      pagination: {
-        page: Number(page) || 1,
-        limit: Number(limit) || mockProducts.length,
-        total: mockProducts.length,
-      },
-    });
   }
 
   try {
@@ -132,30 +116,21 @@ export async function GET(req: NextRequest, { params }: any) {
     );
 
     if (!res.ok) {
+      const detail = await readUpstreamErrorDetail(res);
       console.error(
         "Failed to fetch category products",
         res.status,
+        detail,
         creatorSlug,
         categorySlug,
       );
-      if (process.env.NODE_ENV === "production") {
-        return NextResponse.json(
-          { error: "Upstream error for creator category products" },
-          { status: res.status },
-        );
-      }
-      const mockProducts = getMockCategoryProducts(creatorSlug, categorySlug);
-      return NextResponse.json<{
-        products: Product[];
-        pagination: { page: number; limit: number; total: number };
-      }>({
-        products: mockProducts,
-        pagination: {
-          page: Number(page) || 1,
-          limit: Number(limit) || mockProducts.length,
-          total: mockProducts.length,
+      return NextResponse.json(
+        {
+          error: "Upstream error for creator category products",
+          detail: detail || undefined,
         },
-      });
+        { status: res.status },
+      );
     }
 
     const data = (await res.json()) as CreatorCategoryProductsResponse;
@@ -179,23 +154,9 @@ export async function GET(req: NextRequest, { params }: any) {
       creatorSlug,
       categorySlug,
     );
-    if (process.env.NODE_ENV === "production") {
-      return NextResponse.json(
-        { error: "Internal error fetching creator category products" },
-        { status: 500 },
-      );
-    }
-    const mockProducts = getMockCategoryProducts(creatorSlug, categorySlug);
-    return NextResponse.json<{
-      products: Product[];
-      pagination: { page: number; limit: number; total: number };
-    }>({
-      products: mockProducts,
-      pagination: {
-        page: Number(page) || 1,
-        limit: Number(limit) || mockProducts.length,
-        total: mockProducts.length,
-      },
-    });
+    return NextResponse.json(
+      { error: "Internal error fetching creator category products" },
+      { status: 500 },
+    );
   }
 }

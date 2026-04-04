@@ -43,12 +43,26 @@ export interface Product {
   size_guide?: SizeGuide;
   default_variant_id: string;
   variants: Variant[];
+  variants_complete?: boolean;
+  variant_contract?: VariantContract;
   price?: VariantPrice;
   availability?: { in_stock: boolean; available_quantity?: number };
   shipping?: { eta_days_range?: number[] };
   returns?: { return_window_days?: number; free_returns?: boolean };
   description?: string;
   merchant_id?: string;
+}
+
+export interface VariantContract {
+  version?: string;
+  status?: string | null;
+  is_complete?: boolean | null;
+  root_cause_category?: string | null;
+  anomaly_types?: string[];
+  source_variant_count?: number | null;
+  final_variant_count?: number | null;
+  unique_option_combo_count?: number | null;
+  synthetic_default_variant?: boolean;
 }
 
 export interface SizeGuide {

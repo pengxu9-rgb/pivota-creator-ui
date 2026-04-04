@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export function BeautyRecentPurchases({
   items,
@@ -9,22 +9,8 @@ export function BeautyRecentPurchases({
   items: Array<{ user_label: string; variant_label?: string; time_label?: string }>;
   showEmpty?: boolean;
 }) {
-  const mockData = useMemo(() => {
-    const names = ['Ava', 'Mia', 'Luna', 'Chloe', 'Sofia', 'Zoe', 'Nora'];
-    const variants = ['Rose', 'Nude', 'Honey', 'Coral', 'Mocha', 'Peach'];
-    const times = ['Just now', '5m ago', '12m ago', '1h ago', '3h ago', 'Yesterday'];
-    const count = Math.floor(Math.random() * 20) + 1;
-    const list = Array.from({ length: Math.min(3, count) }).map((_, idx) => ({
-      user_label: `${names[idx % names.length]} •••`,
-      variant_label: variants[idx % variants.length],
-      time_label: times[idx % times.length],
-    }));
-    return { count, list };
-  }, []);
-
   const hasItems = items.length > 0;
-
-  const displayItemsRaw = hasItems ? items : mockData.list;
+  const displayItemsRaw = items;
   const DEFAULT_VISIBLE = 3;
   const [expanded, setExpanded] = useState(false);
   useEffect(() => {
@@ -34,7 +20,7 @@ export function BeautyRecentPurchases({
   if (!hasItems && !showEmpty) return null;
 
   const displayItems = expanded ? displayItemsRaw : displayItemsRaw.slice(0, DEFAULT_VISIBLE);
-  const displayCount = hasItems ? items.length : mockData.count;
+  const displayCount = items.length;
   const canToggle = displayItemsRaw.length > DEFAULT_VISIBLE;
 
   return (

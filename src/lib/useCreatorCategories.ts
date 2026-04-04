@@ -25,6 +25,26 @@ interface UseCreatorCategoriesResult {
   error: string | null;
 }
 
+function formatCategoriesError(status: number | null, detail?: string): string {
+  const normalized = String(detail || "").trim().toLowerCase();
+  if (
+    status === 401 ||
+    status === 403 ||
+    normalized.includes("missing or invalid api key") ||
+    normalized.includes("unauthorized")
+  ) {
+    return "Category discovery is configured, but this environment is missing a valid agent API key.";
+  }
+  if (
+    status === 503 ||
+    normalized.includes("not configured") ||
+    normalized.includes("unavailable")
+  ) {
+    return "Category discovery isn't configured or available right now.";
+  }
+  return "Failed to load categories.";
+}
+
 export function useCreatorCategories(
   slug: string | undefined,
   options?: UseCreatorCategoriesOptions,
@@ -72,7 +92,20 @@ export function useCreatorCategories(
 
         const res = await fetch(url);
         if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
+          const body = await res.json().catch(() => null);
+          const detail =
+            body && typeof body === "object"
+              ? String(
+                  (body as { detail?: unknown; error?: unknown }).detail ||
+                    (body as { detail?: unknown; error?: unknown }).error ||
+                    "",
+                ).trim()
+              : "";
+          const error = new Error(detail || `HTTP ${res.status}`) as Error & {
+            status?: number;
+          };
+          error.status = res.status;
+          throw error;
         }
         const data: CreatorCategoryTreeResponse = await res.json();
         if (cancelled) return;
@@ -86,9 +119,18 @@ export function useCreatorCategories(
           source: data.source,
         });
       } catch (err) {
-        console.error("Failed to load creator categories", err);
+        const status =
+          typeof (err as { status?: unknown })?.status === "number"
+            ? Number((err as { status?: unknown }).status)
+            : null;
+        const detail = err instanceof Error ? err.message : String(err);
+        const shouldLog =
+          status == null || ![401, 503].includes(status);
+        if (shouldLog) {
+          console.error("Failed to load creator categories", err);
+        }
         if (!cancelled) {
-          setError("Failed to load categories");
+          setError(formatCategoriesError(status, detail));
         }
       } finally {
         if (!cancelled) {

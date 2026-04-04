@@ -29,6 +29,41 @@ interface CategoryProductsResponse {
   };
 }
 
+function formatCategoryProductsError(status: number | null, detail?: string): string {
+  const normalized = String(detail || "").trim().toLowerCase();
+  if (
+    status === 401 ||
+    status === 403 ||
+    normalized.includes("missing or invalid api key") ||
+    normalized.includes("unauthorized")
+  ) {
+    return "Category products are configured, but this environment is missing a valid agent API key.";
+  }
+  if (
+    status === 503 ||
+    normalized.includes("not configured") ||
+    normalized.includes("unavailable")
+  ) {
+    return "Category products aren't available in this environment yet.";
+  }
+  return "Failed to load products for this category.";
+}
+
+function renderCategoryProductsDevHint(message: string) {
+  if (message.toLowerCase().includes("api key")) {
+    return (
+      <>
+        Local dev hint: set <code>CREATOR_AGENT_API_KEY</code> to authorize live category products.
+      </>
+    );
+  }
+  return (
+    <>
+      Local dev hint: set <code>PIVOTA_AGENT_URL</code> to load live category products.
+    </>
+  );
+}
+
 export default function CreatorCategoryProductsPage() {
   const params = useParams<{ slug: string; categorySlug: string }>();
   const slugParam = params?.slug;
@@ -92,14 +127,31 @@ export default function CreatorCategoryProductsPage() {
           { signal: controller.signal },
         );
         if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
+          const body = await res.json().catch(() => null);
+          const detail =
+            body && typeof body === "object"
+              ? String(
+                  (body as { detail?: unknown; error?: unknown }).detail ||
+                    (body as { detail?: unknown; error?: unknown }).error ||
+                    "",
+                ).trim()
+              : "";
+          const error = new Error(detail || `HTTP ${res.status}`) as Error & {
+            status?: number;
+          };
+          error.status = res.status;
+          throw error;
         }
         const data = (await res.json()) as CategoryProductsResponse;
         setProducts(data.products || []);
       } catch (err: any) {
         if (err?.name === "AbortError") return;
-        console.error("Failed to load category products", err);
-        setError("Failed to load products for this category.");
+        const status =
+          typeof err?.status === "number" ? Number(err.status) : null;
+        if (status == null || ![401, 503].includes(status)) {
+          console.error("Failed to load category products", err);
+        }
+        setError(formatCategoryProductsError(status, err?.message));
       } finally {
         setIsLoading(false);
       }
@@ -163,7 +215,12 @@ export default function CreatorCategoryProductsPage() {
 
       {error && (
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] text-rose-700">
-          {error}
+          <p>{error}</p>
+          {process.env.NODE_ENV !== "production" ? (
+            <p className="mt-1 text-[10px] text-rose-700/80">
+              {renderCategoryProductsDevHint(error)}
+            </p>
+          ) : null}
         </div>
       )}
 

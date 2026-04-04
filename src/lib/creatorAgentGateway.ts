@@ -25,17 +25,24 @@ function firstNonEmpty(values: Array<string | undefined>): string {
 function toShopInvokeUrl(rawUrl: string): string {
   const value = sanitizeEnvValue(rawUrl);
   if (!value) return "";
+  const hasScheme = /^https?:\/\//i.test(value);
+  const withScheme = hasScheme ? value : `https://${value}`;
   if (value.includes("/agent/shop/v1/invoke")) return value;
   if (value.includes("/agent/creator/v1/invoke")) {
     return value.replace("/agent/creator/v1/invoke", "/agent/shop/v1/invoke");
   }
-  return value;
+  const normalized = withScheme.replace(/\/$/, "");
+  return `${normalized}/agent/shop/v1/invoke`;
 }
 
 function stripInvokeSuffix(rawUrl: string): string {
   const value = sanitizeEnvValue(rawUrl);
   if (!value) return "";
-  return value.replace(/\/agent\/(shop|creator)\/v1\/invoke\/?$/, "").replace(/\/$/, "");
+  const hasScheme = /^https?:\/\//i.test(value);
+  const withScheme = hasScheme ? value : `https://${value}`;
+  return withScheme
+    .replace(/\/agent\/(shop|creator)\/v1\/invoke\/?$/, "")
+    .replace(/\/$/, "");
 }
 
 function isProductionEnv(): boolean {

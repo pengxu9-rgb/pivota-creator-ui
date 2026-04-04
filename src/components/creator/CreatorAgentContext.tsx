@@ -13,8 +13,13 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCart } from "@/components/cart/CartProvider";
 import { accountsMe, type AccountsUser } from "@/lib/accountsClient";
-import { attachMockDeals, MOCK_DEALS } from "@/config/dealsMock";
+import {
+  readBrowseHistory,
+  recordBrowseHistoryView,
+} from "@/lib/browseHistoryStorage";
 import type {
+  DiscoveryRecentView,
+  DiscoverySurface,
   Product,
   SimilarProductItem,
   ProductBestDeal,
@@ -69,6 +74,7 @@ const RAIL_PAGE_SIZE = 12;
 const SIMILAR_PAGE_SIZE = 12;
 const NO_GROWTH_STOP_THRESHOLD = 2;
 const FEATURED_PRODUCTS_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+const FEATURED_DISCOVERY_CACHE_QUERY = "__discovery_browse_products__";
 
 type PagingState = {
   query: string;
@@ -77,6 +83,8 @@ type PagingState = {
   hasMore: boolean;
   isLoadingMore: boolean;
   noGrowthCount: number;
+  source?: "search" | "discovery";
+  surface?: DiscoverySurface;
 };
 
 type SimilarPagingState = {
@@ -202,6 +210,46 @@ function buildQuickAddCartItem(args: {
   };
 }
 
+function formatFeaturedDiscoveryErrorMessage(error: unknown): string {
+  const message =
+    error instanceof Error ? error.message : String(error || "").trim();
+  const normalized = message.toLowerCase();
+  if (
+    normalized.includes("invalid option") ||
+    normalized.includes("get_discovery_feed") ||
+    normalized.includes("invalid_request")
+  ) {
+    return "Shopping discovery isn't supported by the configured backend yet.";
+  }
+  if (
+    normalized.includes("401") ||
+    normalized.includes("403") ||
+    normalized.includes("missing or invalid api key") ||
+    normalized.includes("unauthorized")
+  ) {
+    return "Shopping discovery is configured, but this environment is missing a valid agent API key.";
+  }
+  if (
+    normalized.includes("not configured") ||
+    normalized.includes("unconfigured")
+  ) {
+    return "Shopping discovery isn't configured in this environment yet.";
+  }
+  if (
+    normalized.includes("503") ||
+    normalized.includes("unavailable") ||
+    normalized.includes("catalog")
+  ) {
+    return "Featured products are temporarily unavailable right now.";
+  }
+  return "Featured products couldn't be loaded right now. Try again in a moment.";
+}
+
+type ResponseErrorWithPayload = Error & {
+  status?: number;
+  payload?: unknown;
+};
+
 interface CreatorAgentContextValue {
   creator: CreatorAgentConfig;
   messages: ChatMessage[];
@@ -215,8 +263,8 @@ interface CreatorAgentContextValue {
   lastRequest: any;
   lastResponse: any;
   isFeaturedLoading: boolean;
+  featuredError: string | null;
   isDebug: boolean;
-  isMockMode: boolean;
   userQueries: ChatMessage[];
   recentQueries: string[];
   creatorDeals: ProductBestDeal[];
@@ -322,6 +370,7 @@ export function CreatorAgentProvider({
   const [lastRequest, setLastRequest] = useState<any>(null);
   const [lastResponse, setLastResponse] = useState<any>(null);
   const [isFeaturedLoading, setIsFeaturedLoading] = useState(true);
+  const [featuredError, setFeaturedError] = useState<string | null>(null);
   const [accountsUser, setAccountsUser] = useState<AccountsUser | null>(null);
   const [authChecking, setAuthChecking] = useState(true);
   const [recentQueries, setRecentQueries] = useState<string[]>([]);
@@ -476,10 +525,6 @@ export function CreatorAgentProvider({
     [drainDetailPrefetchQueue],
   );
 
-  const isMockMode =
-    process.env.NODE_ENV !== "production" &&
-    !process.env.NEXT_PUBLIC_PIVOTA_AGENT_URL;
-
   const recentQueriesStorageKey = useMemo(
     () => `pivota_creator_recent_queries_${creator.slug}`,
     [creator.slug],
@@ -505,9 +550,15 @@ export function CreatorAgentProvider({
   );
 
   const deviceId = useMemo(() => getOrCreateDeviceId(), []);
+  const browseHistoryScopeKey = useMemo(
+    () =>
+      `creator:${creator.slug}:${accountsUser?.id || `anon:${deviceId}`}`,
+    [accountsUser?.id, creator.slug, deviceId],
+  );
 
   const [onboardingActive, setOnboardingActive] = useState(false);
   const [recentQueriesHydrated, setRecentQueriesHydrated] = useState(false);
+  const [recentViews, setRecentViews] = useState<DiscoveryRecentView[]>([]);
   const featuredLoadedKeyRef = useRef<string | null>(null);
   const featuredQueryCandidates = useMemo(
     () =>
@@ -549,6 +600,17 @@ export function CreatorAgentProvider({
       return "<<unable to stringify debug data>>";
     }
   };
+
+  useEffect(() => {
+    setRecentViews(readBrowseHistory(browseHistoryScopeKey));
+  }, [browseHistoryScopeKey]);
+
+  const recordDiscoveryView = useCallback(
+    (product: Product) => {
+      setRecentViews(recordBrowseHistoryView(browseHistoryScopeKey, product));
+    },
+    [browseHistoryScopeKey],
+  );
 
   const sendMessage = async (text: string) => {
     const trimmed = text.trim();
@@ -613,6 +675,7 @@ export function CreatorAgentProvider({
 
       setLastRequest({
         creatorId: creator.id,
+        traceId,
         messages: [...messages, userMsg].map((m) => ({
           role: m.role,
           content: m.content,
@@ -663,9 +726,7 @@ export function CreatorAgentProvider({
       setLastResponse(data);
 
       const normalizedProducts = data.products ?? [];
-      const withDeals = isMockMode
-        ? attachMockDeals(normalizedProducts)
-        : normalizedProducts;
+      const withDeals = normalizedProducts;
       const pageInfo = data.page_info || {};
       const page = Number.isFinite(Number(pageInfo.page)) && Number(pageInfo.page) > 0
         ? Math.floor(Number(pageInfo.page))
@@ -695,6 +756,7 @@ export function CreatorAgentProvider({
         hasMore,
         isLoadingMore: false,
         noGrowthCount: 0,
+        source: "search",
       });
       if (withDeals.length > 0) {
         setChatRecommendations(withDeals.slice(0, RAIL_PAGE_SIZE));
@@ -705,6 +767,7 @@ export function CreatorAgentProvider({
           hasMore,
           isLoadingMore: false,
           noGrowthCount: 0,
+          source: "search",
         });
       } else {
         setChatRecommendations([]);
@@ -715,6 +778,7 @@ export function CreatorAgentProvider({
           hasMore: false,
           isLoadingMore: false,
           noGrowthCount: 0,
+          source: "search",
         });
       }
     } catch (error) {
@@ -750,33 +814,104 @@ export function CreatorAgentProvider({
 
     setProductsPaging((prev) => ({ ...prev, isLoadingMore: true }));
     try {
-      const res = await fetch("/api/creator-agent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          creatorId: creator.id,
-          messages: messages.map((m) => ({ role: m.role, content: m.content })),
-          userId: accountsUser?.id || null,
-          recentQueries: historyForBackend,
-          traceId: buildTraceId("chat"),
-          search: {
-            query,
-            page: nextPage,
-            limit: Math.max(1, Number(productsPaging.limit || GRID_PAGE_SIZE)),
-          },
-        }),
-      });
-      if (!res.ok) throw new Error(`Failed with status ${res.status}`);
+      const isDiscoveryPaging =
+        productsPaging.source === "discovery" &&
+        productsPaging.surface === "browse_products";
+      const traceId = buildTraceId(isDiscoveryPaging ? "featured" : "chat");
+      const res = await fetch(
+        isDiscoveryPaging ? "/api/creator-agent/discovery" : "/api/creator-agent",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(
+            isDiscoveryPaging
+              ? {
+                  creatorId: creator.id,
+                  userId: accountsUser?.id || null,
+                  recentQueries: historyForBackend,
+                  recentViews,
+                  traceId,
+                  surface: "browse_products",
+                  page: nextPage,
+                  limit: Math.max(1, Number(productsPaging.limit || GRID_PAGE_SIZE)),
+                  ...(isDebug ? { debug: true } : {}),
+                }
+              : {
+                  creatorId: creator.id,
+                  messages: messages.map((m) => ({ role: m.role, content: m.content })),
+                  userId: accountsUser?.id || null,
+                  recentQueries: historyForBackend,
+                  traceId,
+                  search: {
+                    query,
+                    page: nextPage,
+                    limit: Math.max(1, Number(productsPaging.limit || GRID_PAGE_SIZE)),
+                  },
+                },
+          ),
+        },
+      );
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => null);
+        const detail =
+          errBody && typeof errBody === "object"
+            ? String(
+                (errBody as { detail?: unknown; error?: unknown }).detail ||
+                  (errBody as { detail?: unknown; error?: unknown }).error ||
+                  "",
+              ).trim()
+            : "";
+        const error = new Error(
+          detail || `Failed with status ${res.status}`,
+        ) as ResponseErrorWithPayload;
+        error.status = res.status;
+        error.payload = errBody;
+        throw error;
+      }
 
       const data = (await res.json()) as {
         products?: Product[];
         page_info?: { has_more?: boolean; page?: number; page_size?: number; total?: number };
+        metadata?: Record<string, unknown>;
+        rawAgentResponse?: unknown;
+        agentUrlUsed?: string;
       };
-      const incoming = isMockMode
-        ? attachMockDeals(data.products ?? [])
-        : (data.products ?? []);
+      const incoming = data.products ?? [];
       const { merged, added } = mergeUniqueProducts(products, incoming);
       setProducts(merged);
+
+      if (isDebug) {
+        setLastRequest(
+          isDiscoveryPaging
+            ? {
+                creatorId: creator.id,
+                source: "browse-products-discovery-page",
+                traceId,
+                recentQueries: historyForBackend,
+                recentViewsCount: recentViews.length,
+                payload: {
+                  surface: "browse_products",
+                  page: nextPage,
+                  limit: Math.max(1, Number(productsPaging.limit || GRID_PAGE_SIZE)),
+                  debug: true,
+                },
+              }
+            : {
+                creatorId: creator.id,
+                source: "search-products-page",
+                traceId,
+                recentQueries: historyForBackend,
+                payload: {
+                  search: {
+                    query,
+                    page: nextPage,
+                    limit: Math.max(1, Number(productsPaging.limit || GRID_PAGE_SIZE)),
+                  },
+                },
+              },
+        );
+        setLastResponse(data);
+      }
 
       setProductsPaging((prev) => {
         const noGrowthCount = added === 0 ? prev.noGrowthCount + 1 : 0;
@@ -790,20 +925,38 @@ export function CreatorAgentProvider({
           hasMore: Boolean(hasMoreFromResponse) && noGrowthCount < NO_GROWTH_STOP_THRESHOLD,
           isLoadingMore: false,
           noGrowthCount,
+          source: isDiscoveryPaging ? "discovery" : prev.source,
+          surface: isDiscoveryPaging ? "browse_products" : prev.surface,
         };
       });
     } catch (error) {
       console.error("loadMoreProducts error", error);
+      if (isDebug) {
+        const typedError = error as ResponseErrorWithPayload;
+        const payload =
+          typedError?.payload && typeof typedError.payload === "object"
+            ? typedError.payload
+            : null;
+        setLastResponse({
+          error: "load_more_products_failed",
+          detail:
+            error instanceof Error ? error.message : String(error || ""),
+          status:
+            typeof typedError?.status === "number" ? typedError.status : null,
+          ...(payload ? payload : {}),
+        });
+      }
       setProductsPaging((prev) => ({ ...prev, isLoadingMore: false }));
     }
   }, [
     accountsUser?.id,
     buildTraceId,
     creator.id,
-    isMockMode,
+    isDebug,
     messages,
     products,
     productsPaging,
+    recentViews,
     recentQueries,
   ]);
 
@@ -844,12 +997,29 @@ export function CreatorAgentProvider({
       const data = (await res.json()) as {
         products?: Product[];
         page_info?: { has_more?: boolean };
+        rawAgentResponse?: unknown;
+        agentUrlUsed?: string;
       };
-      const incoming = isMockMode
-        ? attachMockDeals(data.products ?? [])
-        : (data.products ?? []);
+      const incoming = data.products ?? [];
       const { merged, added } = mergeUniqueProducts(chatRecommendations, incoming);
       setChatRecommendations(merged);
+
+      if (isDebug) {
+        setLastRequest({
+          creatorId: creator.id,
+          source: "chat-recommendations-page",
+          traceId: buildTraceId("chat"),
+          recentQueries: historyForBackend,
+          payload: {
+            search: {
+              query,
+              page: nextPage,
+              limit: Math.max(1, Number(chatRecommendationsPaging.limit || RAIL_PAGE_SIZE)),
+            },
+          },
+        });
+        setLastResponse(data);
+      }
 
       setChatRecommendationsPaging((prev) => {
         const noGrowthCount = added === 0 ? prev.noGrowthCount + 1 : 0;
@@ -875,7 +1045,7 @@ export function CreatorAgentProvider({
     chatRecommendations,
     chatRecommendationsPaging,
     creator.id,
-    isMockMode,
+    isDebug,
     messages,
     recentQueries,
   ]);
@@ -977,6 +1147,7 @@ export function CreatorAgentProvider({
   }, [creator.slug, similarBaseProduct?.id, similarItems, similarPaging]);
 
   const handleViewDetails = (base: Product) => {
+    recordDiscoveryView(base);
     // Always navigate to the full Product Detail page (mobile PDP) so the web PDP
     // reuses the same renderer and stays consistent across devices.
     const effectiveMerchantId =
@@ -1017,8 +1188,8 @@ export function CreatorAgentProvider({
     });
     const deals = Array.from(unique.values());
     if (deals.length > 0) return deals.slice(0, 3);
-    return isMockMode ? MOCK_DEALS.slice(0, 3) : [];
-  }, [isMockMode, products]);
+    return [];
+  }, [products]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1151,7 +1322,6 @@ export function CreatorAgentProvider({
     if (typeof window === "undefined") return;
     if (!recentQueriesHydrated) return;
     if (products.length > 0) return;
-    if (featuredQueryCandidates.length === 0) return;
 
     try {
       const raw = window.localStorage.getItem(featuredProductsCacheStorageKey);
@@ -1170,12 +1340,15 @@ export function CreatorAgentProvider({
       );
       if (!cachedQuery) return;
 
-      const candidateSet = new Set(
-        featuredQueryCandidates
-          .map((candidate) => normalizeFeaturedHistoryQuery(candidate).toLowerCase())
-          .filter(Boolean),
-      );
-      if (!candidateSet.has(cachedQuery.toLowerCase())) return;
+      if (cachedQuery !== FEATURED_DISCOVERY_CACHE_QUERY) {
+        if (featuredQueryCandidates.length === 0) return;
+        const candidateSet = new Set(
+          featuredQueryCandidates
+            .map((candidate) => normalizeFeaturedHistoryQuery(candidate).toLowerCase())
+            .filter(Boolean),
+        );
+        if (!candidateSet.has(cachedQuery.toLowerCase())) return;
+      }
 
       const paging = parsed.paging as PagingState | undefined;
       setProducts(parsed.products);
@@ -1192,6 +1365,14 @@ export function CreatorAgentProvider({
         hasMore: Boolean(paging?.hasMore),
         isLoadingMore: false,
         noGrowthCount: 0,
+        source:
+          cachedQuery === FEATURED_DISCOVERY_CACHE_QUERY
+            ? "discovery"
+            : paging?.source,
+        surface:
+          cachedQuery === FEATURED_DISCOVERY_CACHE_QUERY
+            ? "browse_products"
+            : paging?.surface,
       });
     } catch (err) {
       console.error("Failed to hydrate featured products cache", err);
@@ -1222,19 +1403,39 @@ export function CreatorAgentProvider({
 
   // 根据消息更新当前会话摘要/时间戳。
   useEffect(() => {
-    if (!currentSession) return;
+    const sessionId = currentSession?.id;
+    if (!sessionId) return;
     const now = new Date();
-    const updated = updateSessionOnMessages(currentSession, messages, now);
-    setCurrentSession(updated);
+
+    setCurrentSession((prev) => {
+      if (!prev || prev.id !== sessionId) return prev;
+      const updated = updateSessionOnMessages(prev, messages, now);
+      const didChange =
+        updated.messageCount !== prev.messageCount ||
+        updated.lastUserQuery !== prev.lastUserQuery;
+      return didChange ? updated : prev;
+    });
+
     setSessions((prev) => {
-      const next = prev.map((s) => (s.id === updated.id ? updated : s));
+      let didChange = false;
+      const next = prev.map((session) => {
+        if (session.id !== sessionId) return session;
+        const updated = updateSessionOnMessages(session, messages, now);
+        const sessionChanged =
+          updated.messageCount !== session.messageCount ||
+          updated.lastUserQuery !== session.lastUserQuery;
+        if (!sessionChanged) return session;
+        didChange = true;
+        return updated;
+      });
+      if (!didChange) return prev;
       saveSessionIndex(sessionStorageKey, {
         sessions: next,
-        currentSessionId: updated.id,
+        currentSessionId: sessionId,
       });
       return next;
     });
-  }, [messages, currentSession, sessionStorageKey]);
+  }, [messages, currentSession?.id, sessionStorageKey]);
 
   // 按会话持久化消息，便于从 Profile/历史记录恢复时还原上下文。
   useEffect(() => {
@@ -1292,7 +1493,6 @@ export function CreatorAgentProvider({
 
     const loadFeatured = async () => {
       type FeaturedResponse = {
-        reply: string;
         products?: Product[];
         page_info?: {
           page?: number;
@@ -1300,157 +1500,155 @@ export function CreatorAgentProvider({
           total?: number;
           has_more?: boolean;
         };
+        metadata?: Record<string, unknown>;
         rawAgentResponse?: any;
         agentUrlUsed?: string;
       };
 
       try {
         setIsFeaturedLoading(true);
+        setFeaturedError(null);
         const historyForBackend = recentQueries
-          .slice(-5)
+          .slice(-8)
           .map((q) => (q.length > 80 ? q.slice(0, 80) : q));
-
-        if (featuredQueryCandidates.length === 0) {
-          setProducts([]);
-          setProductsPaging({
-            query: "",
-            page: 1,
-            limit: GRID_PAGE_SIZE,
-            hasMore: false,
-            isLoadingMore: false,
-            noGrowthCount: 0,
-          });
-          if (isDebug) {
-            setLastRequest({
-              creatorId: creator.id,
-              messages: [],
-              source: "featured-history",
-              featuredQueryCandidates: [],
-              payload: {
-                search: {
-                  query: null,
-                  limit: GRID_PAGE_SIZE,
-                },
-              },
-            });
-            setLastResponse({
-              reply: "Featured recommendations will populate after the first search.",
-              products: [],
-            });
-          }
-          return;
-        }
-
-        let selectedQuery = "";
-        let data: FeaturedResponse | null = null;
-
-        for (const candidateQuery of featuredQueryCandidates) {
-          selectedQuery = candidateQuery;
-          const res = await fetch("/api/creator-agent", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              creatorId: creator.id,
-              messages: [] as {
-                role: "user" | "assistant";
-                content: string;
-              }[],
-              userId: accountsUser?.id || null,
-              recentQueries: historyForBackend,
-              traceId: buildTraceId("featured"),
-              search: {
-                query: candidateQuery,
-                page: 1,
-                limit: GRID_PAGE_SIZE,
-              },
-            }),
-          });
-          if (!res.ok) continue;
-
-          data = (await res.json()) as FeaturedResponse;
-          if (cancelled) return;
-          if (Array.isArray(data.products) && data.products.length > 0) {
-            break;
-          }
-        }
-
-        if (cancelled) return;
-        if (!data) {
-          setProducts([]);
-          setProductsPaging({
-            query: "",
-            page: 1,
-            limit: GRID_PAGE_SIZE,
-            hasMore: false,
-            isLoadingMore: false,
-            noGrowthCount: 0,
-          });
-          return;
-        }
-
-        if (data.products && data.products.length > 0) {
-          const withDeals = isMockMode
-            ? attachMockDeals(data.products)
-            : data.products;
-          setProducts(withDeals);
-          const pageInfo = data.page_info || {};
-          const page = Number.isFinite(Number(pageInfo.page)) && Number(pageInfo.page) > 0
-            ? Math.floor(Number(pageInfo.page))
-            : 1;
-          const pageSize =
-            Number.isFinite(Number(pageInfo.page_size)) && Number(pageInfo.page_size) > 0
-              ? Math.floor(Number(pageInfo.page_size))
-              : GRID_PAGE_SIZE;
-          const hasMore =
-            typeof pageInfo.has_more === "boolean"
-              ? pageInfo.has_more
-              : withDeals.length >= pageSize;
-          setProductsPaging({
-            query: selectedQuery,
-            page,
-            limit: pageSize,
-            hasMore,
-            isLoadingMore: false,
-            noGrowthCount: 0,
-          });
-          // Do not overwrite chatRecommendations here; keep these for Featured section only.
-
-          // Optimistically prefetch detail for the first batch of featured
-          // products so desktop detail modals can open with Style/Size and
-          // images immediately.
-          withDeals.slice(0, 6).forEach((p) => {
-            void prefetchProductDetail(p);
-          });
-        } else {
-          setProducts([]);
-          setProductsPaging({
-            query: selectedQuery,
-            page: 1,
-            limit: GRID_PAGE_SIZE,
-            hasMore: false,
-            isLoadingMore: false,
-            noGrowthCount: 0,
-          });
-        }
-
+        const recentViewsForBackend = recentViews.slice(0, 50);
+        const traceId = buildTraceId("featured");
         if (isDebug) {
           setLastRequest({
             creatorId: creator.id,
-            messages: [],
-            source: "featured-history",
-            featuredQueryCandidates,
+            source: "featured-discovery",
+            traceId,
+            recentQueries: historyForBackend,
+            recentViewsCount: recentViewsForBackend.length,
             payload: {
-              search: {
-                query: selectedQuery || null,
-                in_stock_only: false,
-                limit: GRID_PAGE_SIZE,
-              },
+              surface: "browse_products",
+              page: 1,
+              limit: GRID_PAGE_SIZE,
+              debug: true,
             },
           });
+        }
+        const res = await fetch("/api/creator-agent/discovery", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            creatorId: creator.id,
+            userId: accountsUser?.id || null,
+            recentQueries: historyForBackend,
+            recentViews: recentViewsForBackend,
+            traceId,
+            surface: "browse_products",
+            page: 1,
+            limit: GRID_PAGE_SIZE,
+            ...(isDebug ? { debug: true } : {}),
+          }),
+        });
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => null);
+          const detail =
+            errBody && typeof errBody === "object"
+              ? String(
+                  (errBody as { detail?: unknown; error?: unknown }).detail ||
+                    (errBody as { detail?: unknown; error?: unknown }).error ||
+                    "",
+                ).trim()
+              : "";
+          const error = new Error(
+            detail || `Featured discovery failed with status ${res.status}`,
+          ) as ResponseErrorWithPayload;
+          error.status = res.status;
+          error.payload = errBody;
+          throw error;
+        }
+
+        const data = (await res.json()) as FeaturedResponse;
+        if (cancelled) return;
+
+        const withDeals = data.products ?? [];
+        setFeaturedError(null);
+        setProducts(withDeals);
+        const pageInfo = data.page_info || {};
+        const page = Number.isFinite(Number(pageInfo.page)) && Number(pageInfo.page) > 0
+          ? Math.floor(Number(pageInfo.page))
+          : 1;
+        const pageSize =
+          Number.isFinite(Number(pageInfo.page_size)) && Number(pageInfo.page_size) > 0
+            ? Math.floor(Number(pageInfo.page_size))
+            : GRID_PAGE_SIZE;
+        const hasMore =
+          typeof pageInfo.has_more === "boolean"
+            ? pageInfo.has_more
+            : withDeals.length >= pageSize;
+        setProductsPaging({
+          query: FEATURED_DISCOVERY_CACHE_QUERY,
+          page,
+          limit: pageSize,
+          hasMore,
+          isLoadingMore: false,
+          noGrowthCount: 0,
+          source: "discovery",
+          surface: "browse_products",
+        });
+
+        withDeals.slice(0, 6).forEach((p) => {
+          void prefetchProductDetail(p);
+        });
+
+        if (isDebug) {
           setLastResponse(data);
         }
       } catch (error) {
-        console.error("loadFeatured error", error);
+        const rawMessage =
+          error instanceof Error ? error.message : String(error || "").trim();
+        const shouldLogError = !(
+          rawMessage.toLowerCase().includes("401") ||
+          rawMessage.toLowerCase().includes("403") ||
+          rawMessage.toLowerCase().includes("missing or invalid api key") ||
+          rawMessage.toLowerCase().includes("unauthorized") ||
+          rawMessage.toLowerCase().includes("not configured") ||
+          rawMessage.toLowerCase().includes("status 503")
+        );
+        if (shouldLogError) {
+          console.error("loadFeatured error", error);
+        }
+        if (!cancelled) {
+          const message = formatFeaturedDiscoveryErrorMessage(error);
+          setFeaturedError(message);
+          setProducts([]);
+          setProductsPaging({
+            query: FEATURED_DISCOVERY_CACHE_QUERY,
+            page: 1,
+            limit: GRID_PAGE_SIZE,
+            hasMore: false,
+            isLoadingMore: false,
+            noGrowthCount: 0,
+            source: "discovery",
+            surface: "browse_products",
+          });
+          if (isDebug) {
+            const typedError = error as ResponseErrorWithPayload;
+            const payload =
+              typedError?.payload && typeof typedError.payload === "object"
+                ? typedError.payload
+                : null;
+            setLastResponse({
+              error: "featured_discovery_failed",
+              detail:
+                error instanceof Error ? error.message : String(error),
+              status:
+                typeof typedError?.status === "number"
+                  ? typedError.status
+                  : null,
+              ...(payload ? payload : {}),
+              agentUrlUsed:
+                payload &&
+                typeof payload === "object" &&
+                typeof (payload as { agentUrlUsed?: unknown }).agentUrlUsed === "string"
+                  ? String((payload as { agentUrlUsed?: unknown }).agentUrlUsed)
+                  : "unconfigured",
+            });
+          }
+        }
       } finally {
         if (!cancelled) {
           setIsFeaturedLoading(false);
@@ -1459,7 +1657,12 @@ export function CreatorAgentProvider({
     };
 
     if (!recentQueriesHydrated) return;
-    const featuredKey = `${creator.id}:${accountsUser?.id || `anon:${deviceId}`}:${currentSession?.id || "no_session"}:${featuredQueryCandidates.join("||") || "__no_history__"}`;
+    const recentViewKey =
+      recentViews
+        .slice(0, 5)
+        .map((view) => `${view.merchant_id}:${view.product_id}`)
+        .join("||") || "__no_views__";
+    const featuredKey = `${creator.id}:${accountsUser?.id || `anon:${deviceId}`}:${currentSession?.id || "no_session"}:${recentQueries.slice(-5).join("||") || "__no_queries__"}:${recentViewKey}`;
     if (featuredLoadedKeyRef.current === featuredKey) return;
     featuredLoadedKeyRef.current = featuredKey;
     loadFeatured();
@@ -1470,15 +1673,14 @@ export function CreatorAgentProvider({
   }, [
     creator.id,
     isDebug,
-    isMockMode,
     accountsUser?.id,
     currentSession?.id,
     recentQueries,
+    recentViews,
     deviceId,
     recentQueriesHydrated,
     buildTraceId,
     prefetchProductDetail,
-    featuredQueryCandidates,
   ]);
 
   useEffect(() => {
@@ -1501,6 +1703,7 @@ export function CreatorAgentProvider({
   );
 
   const openDetail = (product: Product) => {
+    recordDiscoveryView(product);
     // Prefer cached enriched detail if available, otherwise fall back to
     // the base product and start a prefetch in the background.
     const cachedKey = makeCacheKey(product);
@@ -1598,14 +1801,16 @@ export function CreatorAgentProvider({
       ui: {},
     });
     setProducts([]);
-    setProductsPaging({
-      query: "",
-      page: 1,
-      limit: GRID_PAGE_SIZE,
-      hasMore: true,
-      isLoadingMore: false,
-      noGrowthCount: 0,
-    });
+      setProductsPaging({
+        query: "",
+        page: 1,
+        limit: GRID_PAGE_SIZE,
+        hasMore: true,
+        isLoadingMore: false,
+        noGrowthCount: 0,
+        source: "discovery",
+        surface: "browse_products",
+      });
     setChatRecommendations([]);
     setChatRecommendationsPaging({
       query: "",
@@ -1644,8 +1849,8 @@ export function CreatorAgentProvider({
     lastRequest,
     lastResponse,
     isFeaturedLoading,
+    featuredError,
     isDebug,
-    isMockMode,
     userQueries,
     recentQueries,
     creatorDeals,

@@ -1,4 +1,11 @@
 export type DealType = "MULTI_BUY_DISCOUNT" | "FLASH_SALE" | "FREE_SHIPPING";
+export type DiscoverySurface = "home_hot_deals" | "browse_products";
+export type DiscoveryStrategy = "personalized_interest" | "cold_start_curated";
+export type PersonalizationSource =
+  | "account_history"
+  | "session_history"
+  | "merged"
+  | "none";
 
 export interface ProductBestDeal {
   dealId: string;
@@ -72,6 +79,9 @@ export interface RawProduct {
   // Optional merchant metadata (populated by real backend)
   merchant_id?: string;
   merchant_name?: string;
+  brand?: string;
+  category?: string;
+  product_type?: string;
   // Whether this item is an explicit creator pick (from creator_picks table
   // or equivalent backend signal).
   creator_pick?: boolean;
@@ -109,6 +119,9 @@ export interface Product {
   // Merchant metadata for checkout / analytics
   merchantId?: string;
   merchantName?: string;
+  brand?: string;
+  category?: string;
+  productType?: string;
   // UI 友好字段
   isCreatorPick?: boolean;
   creatorPickRank?: number;
@@ -130,6 +143,39 @@ export interface Product {
    * used for silent SKU selection.
    */
   variantsComplete?: boolean;
+  variantContract?: Record<string, unknown>;
+}
+
+export interface DiscoveryRecentView {
+  merchant_id: string;
+  product_id: string;
+  title: string;
+  description: string;
+  brand?: string;
+  category?: string;
+  product_type?: string;
+  viewed_at: string;
+  history_source?: "session" | "account";
+}
+
+export interface DiscoveryFeedMetadata {
+  discovery_strategy: DiscoveryStrategy;
+  personalization_source: PersonalizationSource;
+  history_items_used: number;
+  anchor_count: number;
+  scoring_version: string;
+  surface: DiscoverySurface;
+  locale: string;
+  candidate_source?: "override" | "products_cache" | "mock_catalog" | "unknown";
+  candidate_counts?: {
+    raw: number;
+    normalized: number;
+    scored: number;
+    eligible_pool: number;
+    returned: number;
+  };
+  request_latency_ms?: number;
+  rank_debug?: Record<string, unknown>;
 }
 
 // Treat ProductBestDeal as a reusable offer type for similarity responses.

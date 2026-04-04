@@ -1,7 +1,5 @@
 'use client';
 
-import { useMemo } from 'react';
-
 function getInitial(label: string) {
   if (!label) return '?';
   return `${label.trim().charAt(0).toUpperCase()}*`;
@@ -27,25 +25,11 @@ export function GenericRecentPurchases({
   }>;
   showEmpty?: boolean;
 }) {
-  const mockData = useMemo(() => {
-    const names = ['Liam', 'Noah', 'Eli', 'Maya', 'Aria', 'Leo', 'Nina'];
-    const variants = ['Black', 'Stone', 'Olive', 'Navy', 'Sand', 'Charcoal'];
-    const times = ['2m ago', '15m ago', '45m ago', '2h ago', 'Today'];
-    const count = Math.floor(Math.random() * 20) + 1;
-    const list = Array.from({ length: Math.min(3, count) }).map((_, idx) => ({
-      user_label: `${names[idx % names.length]}*`,
-      variant_label: variants[idx % variants.length],
-      time_label: times[idx % times.length],
-      price_label: `$${24 + idx * 6}`,
-    }));
-    return { count, list };
-  }, []);
-
   const hasItems = items.length > 0;
   if (!hasItems && !showEmpty) return null;
 
-  const displayItems = hasItems ? items : mockData.list;
-  const displayCount = hasItems ? items.length : mockData.count;
+  const displayItems = items;
+  const displayCount = items.length;
 
   const prices = displayItems
     .map((item) => parsePrice(item.price_label))
@@ -81,4 +65,3 @@ export function GenericRecentPurchases({
     </div>
   );
 }
-
