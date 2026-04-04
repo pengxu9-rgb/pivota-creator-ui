@@ -129,7 +129,7 @@ export interface Product {
   creatorMentions?: number;
   fromCreatorDirectly?: boolean;
   detailUrl?: string;
-  // Deal info (do not invent client-side; map from backend or attach mock in mock mode only)
+  // Deal info comes from backend contracts only; do not invent client-side values.
   bestDeal?: ProductBestDeal;
   allDeals?: ProductBestDeal[];
   // Structured options/specs mapped from backend product detail.
@@ -166,7 +166,7 @@ export interface DiscoveryFeedMetadata {
   scoring_version: string;
   surface: DiscoverySurface;
   locale: string;
-  candidate_source?: "override" | "products_cache" | "mock_catalog" | "unknown";
+  candidate_source?: "override" | "products_search" | "unknown";
   candidate_counts?: {
     raw: number;
     normalized: number;
