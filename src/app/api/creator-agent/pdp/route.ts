@@ -3,16 +3,12 @@ import {
   getCreatorAgentAuthHeaders,
   getCreatorInvokeUrl,
 } from "@/lib/creatorAgentGateway";
+import { evaluateExternalSeedPdpVariantContract } from "@/lib/pdpVariantContract";
 
 export const runtime = "nodejs";
 
 function isRecord(value: unknown): value is Record<string, any> {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
-}
-
-function pickPdpPayload(raw: any) {
-  if (!raw || typeof raw !== "object") return null;
-  return raw.pdp_payload ?? raw.output?.pdp_payload ?? raw.data?.pdp_payload ?? null;
 }
 
 function pickPdpV2Payload(raw: any) {
@@ -115,6 +111,56 @@ function isExternalProductRef(args: { merchantId?: string; productId?: string })
   return false;
 }
 
+async function invokeCreatorGateway(args: {
+  invokeUrl: string;
+  invokeAuthHeaders: Record<string, string>;
+  requestBody: unknown;
+}) {
+  const response = await fetch(args.invokeUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...args.invokeAuthHeaders },
+    body: JSON.stringify(args.requestBody),
+  });
+
+  if (!response.ok) {
+    return {
+      ok: false as const,
+      status: response.status,
+      detailText: await response.text().catch(() => ""),
+      raw: null,
+      pdp_payload: null,
+      subject: null,
+    };
+  }
+
+  const raw = await response.json();
+  return {
+    ok: true as const,
+    status: response.status,
+    detailText: "",
+    raw,
+    pdp_payload: pickPdpV2Payload(raw),
+    subject: isRecord((raw as any)?.subject) ? ((raw as any).subject as any) : null,
+  };
+}
+
+function buildVariantContractDegradedResponse(args: {
+  includeRaw: boolean;
+  contract: ReturnType<typeof evaluateExternalSeedPdpVariantContract>;
+  raw?: unknown;
+  detail?: string;
+}) {
+  const body: Record<string, unknown> = {
+    error: "PDP_VARIANT_CONTRACT_DEGRADED",
+    contract: args.contract,
+    ...(args.detail ? { detail: args.detail } : {}),
+  };
+  if (args.includeRaw) {
+    body.raw = args.raw ?? null;
+  }
+  return NextResponse.json(body, { status: 502 });
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -143,7 +189,6 @@ export async function POST(req: Request) {
     const invokeAuthHeaders = getCreatorAgentAuthHeaders();
     const merchantIdNormalized = merchantId ? String(merchantId).trim() : "";
     const isExternal = isExternalProductRef({ merchantId: merchantIdNormalized, productId });
-    const product = { merchant_id: merchantIdNormalized, product_id: productId, variant_id: productId };
     const baseRequest = {
       operation: "get_pdp_v2",
       payload: {
@@ -159,71 +204,47 @@ export async function POST(req: Request) {
       metadata: { source: "creator_agent" },
     };
 
-    const fallbackRequest = {
-      operation: "get_pdp",
-      payload: {
-        product,
-        ...(debug ? { debug: true } : {}),
-      },
-      metadata: { source: "creator_agent" },
-    };
-
-    let res = await fetch(invokeUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...invokeAuthHeaders },
-      body: JSON.stringify(baseRequest),
+    const primary = await invokeCreatorGateway({
+      invokeUrl,
+      invokeAuthHeaders,
+      requestBody: baseRequest,
     });
-
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-
-      // Fallback: if get_pdp_v2 fails (unsupported upstream, etc), retry via legacy get_pdp
-      // when we have a concrete merchant_id.
-      if (merchantIdNormalized && !isExternal) {
-        const retry = await fetch(invokeUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", ...invokeAuthHeaders },
-          body: JSON.stringify(fallbackRequest),
-        });
-
-        if (retry.ok) {
-          res = retry;
-        } else {
-          const retryText = await retry.text().catch(() => "");
-          return NextResponse.json(
-            {
-              error: "Failed to fetch pdp payload",
-              detail: `get_pdp failed with status ${retry.status}${retryText ? ` body: ${retryText}` : ""}`,
-            },
-            { status: 500 },
-          );
-        }
-      } else {
-        return NextResponse.json(
-          {
-            error: "Failed to fetch pdp payload",
-            detail: `get_pdp_v2 failed with status ${res.status}${text ? ` body: ${text}` : ""}`,
-          },
-          { status: 500 },
-        );
-      }
+    const primaryContract =
+      isExternal && primary.ok && primary.pdp_payload
+        ? evaluateExternalSeedPdpVariantContract({ pdpPayload: primary.pdp_payload, raw: primary.raw })
+        : null;
+    if (!primary.ok) {
+      return NextResponse.json(
+        {
+          error: "Failed to fetch pdp payload",
+          detail: `get_pdp_v2 failed with status ${primary.status}${primary.detailText ? ` body: ${primary.detailText}` : ""}`,
+        },
+        { status: 500 },
+      );
     }
 
-    const raw = await res.json();
-    const pdp_payload = pickPdpV2Payload(raw) || pickPdpPayload(raw);
-    const subject = isRecord((raw as any)?.subject) ? ((raw as any).subject as any) : null;
-
-    if (!pdp_payload) {
+    if (!primary.pdp_payload) {
       return NextResponse.json(
         includeRaw
-          ? { error: "PDP payload missing from gateway response", raw }
+          ? { error: "PDP payload missing from gateway response", raw: primary.raw }
           : { error: "PDP payload missing from gateway response" },
         { status: 502 },
       );
     }
 
+    if (isExternal && primaryContract?.isComplete === false) {
+      return buildVariantContractDegradedResponse({
+        includeRaw,
+        contract: primaryContract,
+        raw: primary.raw,
+        detail: "External-seed PDP is missing a complete variant contract on the get_pdp_v2 mainline.",
+      });
+    }
+
     return NextResponse.json(
-      includeRaw ? { pdp_payload, subject, raw } : { pdp_payload, subject },
+      includeRaw
+        ? { pdp_payload: primary.pdp_payload, subject: primary.subject, raw: primary.raw }
+        : { pdp_payload: primary.pdp_payload, subject: primary.subject },
       { status: 200 },
     );
   } catch (error) {

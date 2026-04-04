@@ -1,4 +1,7 @@
 import type {
+  DiscoveryFeedMetadata,
+  DiscoveryRecentView,
+  DiscoverySurface,
   RawProduct,
   FindSimilarProductsResponse,
   SimilarProductItem,
@@ -24,6 +27,19 @@ export type CreatorAgentResponse = {
     has_more: boolean;
   };
   // 原始后端响应，用于 debug 面板
+  raw?: any;
+  agentUrlUsed?: string;
+};
+
+export type CreatorDiscoveryResponse = {
+  products?: RawProduct[];
+  page_info?: {
+    page: number;
+    page_size: number;
+    total?: number;
+    has_more: boolean;
+  };
+  metadata?: DiscoveryFeedMetadata;
   raw?: any;
   agentUrlUsed?: string;
 };
@@ -203,54 +219,6 @@ export async function callPivotaCreatorAgent(params: {
     query?: string | null;
   };
 }): Promise<CreatorAgentResponse> {
-  const url = getOptionalCreatorInvokeUrl();
-  if (!url) {
-    // Mock mode: return a short reply + a few mock products for local UI dev.
-    return {
-      reply:
-        "Here are some mock picks while the backend is not configured. Connect PIVOTA_AGENT_URL to see real items.",
-      products: [
-        {
-          id: "mock-1",
-          title: "Mock CloudFit Hoodie",
-          description: "A cozy hoodie for mock mode demos.",
-          price: 59,
-          currency: "USD",
-          image_url:
-            "https://images.pexels.com/photos/7671166/pexels-photo-7671166.jpeg?auto=compress&cs=tinysrgb&w=800",
-          inventory_quantity: 12,
-        },
-        {
-          id: "mock-2",
-          title: "Mock Everyday Bottle",
-          description: "Lightweight stainless bottle for desk or commute.",
-          price: 22,
-          currency: "USD",
-          image_url:
-            "https://images.pexels.com/photos/3735551/pexels-photo-3735551.jpeg?auto=compress&cs=tinysrgb&w=800",
-          inventory_quantity: 33,
-        },
-        {
-          id: "mock-3",
-          title: "Mock Urban Runner",
-          description: "Lightweight commuter sneakers with breathable mesh.",
-          price: 109,
-          currency: "USD",
-          image_url:
-            "https://images.pexels.com/photos/1124466/pexels-photo-1124466.jpeg?auto=compress&cs=tinysrgb&w=800",
-          inventory_quantity: 18,
-        },
-      ],
-      page_info: {
-        page: 1,
-        page_size: 3,
-        total: 3,
-        has_more: false,
-      },
-      agentUrlUsed: "mock",
-    };
-  }
-
   const lastUserMessage = [...params.messages].reverse().find((m) => m.role === "user");
   const userQueryRaw = lastUserMessage?.content ?? "";
   const hasUserQuery = userQueryRaw.trim().length > 0;
@@ -258,6 +226,22 @@ export async function callPivotaCreatorAgent(params: {
   const recentQueries = params.recentQueries?.filter(Boolean).slice(-5);
   const searchPage = Math.max(1, Math.floor(Number(params.search?.page || 1) || 1));
   const searchLimit = Math.max(1, Math.floor(Number(params.search?.limit || 24) || 24));
+  const url = getOptionalCreatorInvokeUrl();
+
+  if (!url) {
+    return {
+      reply:
+        "The shopping backend is not configured in this environment, so I can't load live products right now.",
+      products: [],
+      page_info: {
+        page: searchPage,
+        page_size: searchLimit,
+        has_more: false,
+      },
+      raw: { error: "PIVOTA_AGENT_URL is not configured" },
+      agentUrlUsed: "unconfigured",
+    };
+  }
 
   // 与 Shopping Agent 前端保持一致的调用协议：顶层只使用 operation + payload，
   // 额外信息放在 metadata，方便后端按 creatorId 做过滤/打标。
@@ -536,6 +520,134 @@ export async function callPivotaCreatorAgent(params: {
   }
 }
 
+export async function callPivotaDiscoveryFeed(params: {
+  creatorId: string;
+  creatorName: string;
+  userId?: string | null;
+  recentQueries?: string[];
+  recentViews?: DiscoveryRecentView[];
+  traceId?: string | null;
+  surface: DiscoverySurface;
+  page?: number;
+  limit?: number;
+  locale?: string;
+  debug?: boolean;
+}): Promise<CreatorDiscoveryResponse> {
+  const url = getOptionalCreatorInvokeUrl();
+  const page = Math.max(1, Math.floor(Number(params.page || 1) || 1));
+  const limit = Math.max(1, Math.floor(Number(params.limit || 24) || 24));
+
+  if (!url) {
+    return {
+      products: [],
+      page_info: {
+        page,
+        page_size: limit,
+        has_more: false,
+      },
+      metadata: {
+        discovery_strategy: "cold_start_curated",
+        personalization_source: "none",
+        history_items_used: 0,
+        anchor_count: 0,
+        scoring_version: "unconfigured",
+        surface: params.surface,
+        locale: params.locale || "en-US",
+        candidate_source: "unknown",
+      },
+      raw: { error: "PIVOTA_AGENT_URL is not configured" },
+      agentUrlUsed: "unconfigured",
+    };
+  }
+
+  const creatorAuthHeaders = getCreatorAgentAuthHeaders();
+  const response = await fetchWithTimeout(
+    url,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...creatorAuthHeaders,
+      },
+      body: JSON.stringify({
+        operation: "get_discovery_feed",
+        payload: {
+          surface: params.surface,
+          page,
+          limit,
+          ...(params.debug ? { debug: true } : {}),
+          context: {
+            recent_views: (params.recentViews || []).slice(0, 50),
+            recent_queries: (params.recentQueries || []).filter(Boolean).slice(-8),
+            auth_state: params.userId ? "authenticated" : "anonymous",
+            locale: params.locale || "en-US",
+          },
+        },
+        metadata: {
+          creator_id: params.creatorId,
+          creator_name: params.creatorName,
+          source: "creator_agent_discovery",
+          ...(params.traceId ? { trace_id: params.traceId } : {}),
+        },
+      }),
+    },
+    CREATOR_AGENT_REQUEST_TIMEOUT_MS,
+    CREATOR_AGENT_UPSTREAM_TIMEOUT_ERROR,
+  );
+
+  if (!response.ok) {
+    let errorBody: string | undefined;
+    try {
+      errorBody = await response.text();
+    } catch {
+      errorBody = undefined;
+    }
+    throw new Error(
+      `Discovery feed request failed with status ${response.status}${
+        errorBody ? ` body: ${errorBody}` : ""
+      }`,
+    );
+  }
+
+  const data = await response.json();
+  const rawProducts: RawProduct[] =
+    data.products ??
+    data.output?.products ??
+    data.items ??
+    data.output?.items ??
+    [];
+  const pageRaw = Number(data?.page);
+  const pageSizeRaw = Number(data?.page_size ?? data?.pageSize);
+  const totalRaw = Number(data?.total);
+  const hasMore =
+    typeof data?.has_more === "boolean"
+      ? data.has_more
+      : Number.isFinite(totalRaw) && totalRaw >= 0
+        ? page * limit < Math.floor(totalRaw)
+        : rawProducts.length >= limit;
+
+  return {
+    products: rawProducts,
+    page_info: {
+      page: Number.isFinite(pageRaw) && pageRaw > 0 ? Math.floor(pageRaw) : page,
+      page_size:
+        Number.isFinite(pageSizeRaw) && pageSizeRaw > 0
+          ? Math.floor(pageSizeRaw)
+          : limit,
+      ...(Number.isFinite(totalRaw) && totalRaw >= 0
+        ? { total: Math.floor(totalRaw) }
+        : {}),
+      has_more: hasMore,
+    },
+    metadata:
+      data.metadata && typeof data.metadata === "object"
+        ? (data.metadata as DiscoveryFeedMetadata)
+        : undefined,
+    raw: data,
+    agentUrlUsed: url,
+  };
+}
+
 export async function callPivotaGetProductDetail(params: {
   merchantId: string;
   productId: string;
@@ -600,7 +712,7 @@ export async function callPivotaFindSimilarProducts(params: {
   strategy?: "auto" | "content_embedding" | "co_view" | "same_merchant_first";
 }): Promise<FindSimilarProductsResponse> {
   const url = getOptionalCreatorInvokeUrl();
-  // Mock mode: reuse a small slice of products as "similar" when backend is unavailable.
+  // Keep the main path explicit: no backend means no similar results.
   if (!url) {
     return {
       base_product_id: params.productId,

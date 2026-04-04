@@ -31,6 +31,36 @@ function includesLoose(haystack: string | undefined, needle: string): boolean {
   return haystack.toLowerCase().includes(needle);
 }
 
+function renderLocalDevHint(message: string, mode: "discovery" | "categories") {
+  const normalized = message.toLowerCase();
+  if (
+    normalized.includes("supported by the configured backend") ||
+    normalized.includes("get_discovery_feed") ||
+    normalized.includes("invalid option")
+  ) {
+    return (
+      <>
+        Local dev hint: this backend does not expose <code>get_discovery_feed</code>. Point{" "}
+        <code>PIVOTA_AGENT_URL</code> at a backend with discovery deployed.
+      </>
+    );
+  }
+  if (normalized.includes("api key")) {
+    return (
+      <>
+        Local dev hint: set <code>CREATOR_AGENT_API_KEY</code> to authorize live{" "}
+        {mode === "discovery" ? "discovery" : "category"} requests.
+      </>
+    );
+  }
+  return (
+    <>
+      Local dev hint: set <code>PIVOTA_AGENT_URL</code> to enable live{" "}
+      {mode === "discovery" ? "discovery" : "categories"}.
+    </>
+  );
+}
+
 function DealsGrid({
   items,
   keyPrefix,
@@ -104,6 +134,7 @@ export default function CreatorAgentPage() {
     productsPaging,
     isLoading,
     isFeaturedLoading,
+    featuredError,
     userQueries,
     recentQueries,
     setInput,
@@ -119,6 +150,7 @@ export default function CreatorAgentPage() {
   const router = useRouter();
   const pathname = usePathname();
   const { items: cartItems } = useCart();
+  const isLocalDev = process.env.NODE_ENV !== "production";
   const [checkoutPending, setCheckoutPending] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const searchParams = useSearchParams();
@@ -135,12 +167,15 @@ export default function CreatorAgentPage() {
   );
 
   const categoryView = searchParams?.get("view") || DEFAULT_CATEGORY_VIEW;
-  const { hotDeals } = useCreatorCategories(activeTab === "deals" ? creator.slug : undefined, {
-    dealsOnly: true,
-    view: categoryView,
-    locale: FORCED_LOCALE,
-    includeEmpty: true,
-  });
+  const { hotDeals, error: categoriesError } = useCreatorCategories(
+    activeTab === "deals" ? creator.slug : undefined,
+    {
+      dealsOnly: true,
+      view: categoryView,
+      locale: FORCED_LOCALE,
+      includeEmpty: true,
+    },
+  );
 
   const forcedOnboarding = searchParams?.get("onboarding") === "1";
   const [onboardingDraft, setOnboardingDraft] = useState("");
@@ -168,6 +203,38 @@ export default function CreatorAgentPage() {
     ],
     [],
   );
+
+  const featuredEmptyState = featuredError ? (
+    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-center text-[12px] text-amber-900">
+      <p>{featuredError}</p>
+      <p className="mt-2 text-[11px] text-amber-800/80">
+        Refresh later or try another route once the shopping backend is available.
+      </p>
+      {isLocalDev ? (
+        <p className="mt-2 text-[11px] text-amber-800/70">
+          {renderLocalDevHint(featuredError, "discovery")}
+        </p>
+      ) : null}
+    </div>
+  ) : (
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 text-center text-[12px] text-slate-600">
+      Browse categories or ask a question to get personalized picks.
+    </div>
+  );
+
+  const dealsUnavailableState = featuredError ? (
+    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center text-[12px] text-amber-900">
+      <div>{featuredError}</div>
+      <div className="mt-2 text-[11px] text-amber-800/80">
+        Deals rely on the same shopping discovery backend and will appear once it is available.
+      </div>
+      {isLocalDev ? (
+        <div className="mt-2 text-[11px] text-amber-800/70">
+          {renderLocalDevHint(featuredError, "discovery")}
+        </div>
+      ) : null}
+    </div>
+  ) : null;
 
   // Reset visible items when products or tab changes.
   useEffect(() => {
@@ -473,9 +540,7 @@ export default function CreatorAgentPage() {
                 ))}
               </div>
             ) : products.length === 0 ? (
-              <div className="rounded-2xl border border-slate-200 bg-white p-4 text-center text-[12px] text-slate-600">
-                Browse categories or ask a question to get personalized picks.
-              </div>
+              featuredEmptyState
             ) : (
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {products.slice(0, INITIAL_VISIBLE).map((p) => (
@@ -549,8 +614,26 @@ export default function CreatorAgentPage() {
                 ))}
               </div>
             ) : products.length === 0 ? (
-              <div className="flex flex-1 items-center justify-center text-[12px] text-slate-500">
-                No candidates yet. Tell me what you need on the left.
+              <div className="flex flex-1 items-center justify-center">
+                <div className="w-full max-w-xl">
+                  {featuredError ? (
+                    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-center text-[12px] text-amber-900">
+                      <p>{featuredError}</p>
+                      <p className="mt-2 text-[11px] text-amber-800/80">
+                        Refresh later or try again after the shopping backend is available.
+                      </p>
+                      {isLocalDev ? (
+                        <p className="mt-2 text-[11px] text-amber-800/70">
+                          {renderLocalDevHint(featuredError, "discovery")}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <div className="text-[12px] text-slate-500">
+                      No candidates yet. Tell me what you need on the left.
+                    </div>
+                  )}
+                </div>
               </div>
             ) : (
               <>
@@ -758,7 +841,16 @@ export default function CreatorAgentPage() {
               </button>
             </div>
 
-            {hotDeals.length > 0 ? (
+            {categoriesError ? (
+              <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-900">
+                <div>{categoriesError}</div>
+                {isLocalDev ? (
+                  <div className="mt-1 text-[10px] text-amber-800/80">
+                    {renderLocalDevHint(categoriesError, "categories")}
+                  </div>
+                ) : null}
+              </div>
+            ) : hotDeals.length > 0 ? (
               <div className="mt-2 flex flex-wrap gap-2">
                 {hotDeals.map((deal) => {
                   const target = deal.categoryIds?.[0];
@@ -801,31 +893,35 @@ export default function CreatorAgentPage() {
 
           {dealsProducts.length === 0 ? (
             <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center text-[12px] text-slate-600">
-              <div>No deals available right now.</div>
-              <div className="mt-3 flex flex-col items-center justify-center gap-2 sm:flex-row">
-                <button
-                  type="button"
-                  onClick={() => router.push(`/creator/${encodeURIComponent(creator.slug)}`)}
-                  className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-[11px] font-medium text-slate-50 hover:bg-slate-800"
-                >
-                  Browse For You
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    router.push(
-                      `/creator/${encodeURIComponent(
-                        creator.slug,
-                      )}/categories?view=${encodeURIComponent(categoryView)}&locale=${encodeURIComponent(
-                        FORCED_LOCALE,
-                      )}`,
-                    )
-                  }
-                  className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-[11px] font-medium text-slate-700 hover:bg-slate-50"
-                >
-                  View categories
-                </button>
-              </div>
+              {dealsUnavailableState ?? (
+                <>
+                  <div>No deals available right now.</div>
+                  <div className="mt-3 flex flex-col items-center justify-center gap-2 sm:flex-row">
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/creator/${encodeURIComponent(creator.slug)}`)}
+                      className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-[11px] font-medium text-slate-50 hover:bg-slate-800"
+                    >
+                      Browse For You
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        router.push(
+                          `/creator/${encodeURIComponent(
+                            creator.slug,
+                          )}/categories?view=${encodeURIComponent(categoryView)}&locale=${encodeURIComponent(
+                            FORCED_LOCALE,
+                          )}`,
+                        )
+                      }
+                      className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-[11px] font-medium text-slate-700 hover:bg-slate-50"
+                    >
+                      View categories
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           ) : sortedDealsProducts.length === 0 ? (
             <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center text-[12px] text-slate-600">

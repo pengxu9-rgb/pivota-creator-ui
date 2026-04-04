@@ -21,28 +21,43 @@ const FORCED_LOCALE = "en-US";
 const TOP_CATEGORY_SLUGS = ["sportswear", "lingerie-set", "toys"] as const;
 
 const CATEGORY_IMAGE_FALLBACK: Record<string, string> = {
-  sportswear: "/mock-categories/sportswear.jpg",
-  "lingerie-set": "/mock-categories/lingerie-set.jpg",
-  toys: "/mock-categories/toys.jpg",
-  "womens-loungewear": "/mock-categories/womens-loungewear.jpg",
-  "designer-toys": "/mock-categories/toys.jpg",
-  "outdoor-clothing": "/mock-categories/outdoor-clothing.jpg",
-  "womens-dress": "/mock-categories/womens-dress.jpg",
-  makeup: "/mock-categories/makeup.jpg",
-  "facial-care": "/mock-categories/facial-care.jpg",
-  "skin-care": "/mock-categories/skin-care.jpg",
-  "nail-polish": "/mock-categories/nail-polish.jpg",
-  "press-on-nails": "/mock-categories/press-on-nails.jpg",
-  eyelashes: "/mock-categories/eyelashes.jpg",
-  haircare: "/mock-categories/haircare.jpg",
-  "beauty-tools": "/mock-categories/beauty-tools.jpg",
-  "beauty-devices": "/mock-categories/beauty-devices.jpg",
-  "contact-lens": "/mock-categories/contact-lens.jpg",
-  "camping-gear": "/mock-categories/camping-gear.jpg",
-  "hunting-accessories": "/mock-categories/hunting-accessories.jpg",
-  "pet-toys": "/mock-categories/pet-toys.jpg",
-  "pet-apparel": "/mock-categories/pet-toys.jpg",
+  sportswear: "/category-fallbacks/sportswear.jpg",
+  "lingerie-set": "/category-fallbacks/lingerie-set.jpg",
+  toys: "/category-fallbacks/toys.jpg",
+  "womens-loungewear": "/category-fallbacks/womens-loungewear.jpg",
+  "designer-toys": "/category-fallbacks/toys.jpg",
+  "outdoor-clothing": "/category-fallbacks/outdoor-clothing.jpg",
+  "womens-dress": "/category-fallbacks/womens-dress.jpg",
+  makeup: "/category-fallbacks/makeup.jpg",
+  "facial-care": "/category-fallbacks/facial-care.jpg",
+  "skin-care": "/category-fallbacks/skin-care.jpg",
+  "nail-polish": "/category-fallbacks/nail-polish.jpg",
+  "press-on-nails": "/category-fallbacks/press-on-nails.jpg",
+  eyelashes: "/category-fallbacks/eyelashes.jpg",
+  haircare: "/category-fallbacks/haircare.jpg",
+  "beauty-tools": "/category-fallbacks/beauty-tools.jpg",
+  "beauty-devices": "/category-fallbacks/beauty-devices.jpg",
+  "contact-lens": "/category-fallbacks/contact-lens.jpg",
+  "camping-gear": "/category-fallbacks/camping-gear.jpg",
+  "hunting-accessories": "/category-fallbacks/hunting-accessories.jpg",
+  "pet-toys": "/category-fallbacks/pet-toys.jpg",
+  "pet-apparel": "/category-fallbacks/pet-toys.jpg",
 };
+
+function renderCategoriesDevHint(message: string) {
+  if (message.toLowerCase().includes("api key")) {
+    return (
+      <>
+        Local dev hint: set <code>CREATOR_AGENT_API_KEY</code> to authorize live categories.
+      </>
+    );
+  }
+  return (
+    <>
+      Local dev hint: set <code>PIVOTA_AGENT_URL</code> to load live categories.
+    </>
+  );
+}
 
 export default function CreatorCategoriesPage() {
   const params = useParams<{ slug: string }>();
@@ -226,7 +241,12 @@ export default function CreatorCategoriesPage() {
 
       {error && (
         <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
-          {error}
+          <p>{error}</p>
+          {process.env.NODE_ENV !== "production" ? (
+            <p className="mt-1 text-[10px] text-rose-700/80">
+              {renderCategoriesDevHint(error)}
+            </p>
+          ) : null}
         </div>
       )}
 

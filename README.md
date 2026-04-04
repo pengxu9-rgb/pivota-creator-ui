@@ -11,12 +11,12 @@ The creator product detail page renders the **standardized PDP** by calling the 
 
 ### Local dev
 
-1) Start gateway (mock is fine):
+1) Start gateway:
 
 ```bash
-cd ../_prod_repos/PIVOTA-Agent
+cd ../Pivota-cursor-create-project-directory-structure-8344/pivota-agent-backend
 npm ci --no-audit --no-fund
-USE_MOCK=true PORT=3000 npm run dev
+PORT=3000 npm run dev
 ```
 
 2) Start creator UI:
@@ -30,7 +30,7 @@ CREATOR_CHECKOUT_AGENT_URL=http://localhost:3000/agent/shop/v1/invoke \
 npm run dev -- -p 3004
 ```
 
-Default production path is also `.../agent/shop/v1/invoke` (creator invoke remains backend alias only).
+Default production path is also `.../agent/shop/v1/invoke` (creator invoke remains backend alias only). Shopping runtime mock mode has been removed; local dev should point at a live backend.
 
 3) Open a creator PDP:
 
