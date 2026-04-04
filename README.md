@@ -52,6 +52,7 @@ Recommended minimum:
 - `CREATOR_AGENT_API_KEY` set once; checkout automatically reuses it when `CREATOR_CHECKOUT_AGENT_API_KEY` is unset.
 - `NEXT_PUBLIC_REVIEWS_UPSTREAM_BASE` set to the public host that serves `/agent/shop/v1/review-media/*` when needed.
 - `CREATOR_STANDARD_PDP_BASE_URL=https://agent.pivota.cc` so `/creator/:slug/product/:id` acts as alias to standard PDP.
+- Keep `NEXT_PUBLIC_CREATOR_AGENT_REQUEST_TIMEOUT_MS` unset unless you are explicitly debugging rollout latency; default client timeout remains `20000ms`.
 
 Checkout note:
 - Creator chat/PDP APIs use creator route + `CREATOR_AGENT_API_KEY`.

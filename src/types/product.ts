@@ -167,6 +167,7 @@ export interface DiscoveryFeedMetadata {
   surface: DiscoverySurface;
   locale: string;
   candidate_source?: "override" | "products_search" | "unknown";
+  dominant_domain?: string | null;
   candidate_counts?: {
     raw: number;
     normalized: number;
@@ -175,7 +176,26 @@ export interface DiscoveryFeedMetadata {
     returned: number;
   };
   request_latency_ms?: number;
-  rank_debug?: Record<string, unknown>;
+  rank_debug?: {
+    recall_summary?: Array<{
+      label?: string;
+      query?: string | null;
+      offset?: number;
+      limit?: number;
+      status?: number | null;
+      returned?: number;
+      latency_ms?: number;
+      cache_hit?: boolean;
+      cache_age_ms?: number;
+      truncated_by_budget?: boolean;
+    }>;
+    profile_summary?: {
+      dominant_domain?: string | null;
+      dominant_domain_score?: number;
+      [key: string]: unknown;
+    };
+    [key: string]: unknown;
+  };
 }
 
 // Treat ProductBestDeal as a reusable offer type for similarity responses.
