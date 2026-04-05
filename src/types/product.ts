@@ -166,18 +166,30 @@ export interface DiscoveryFeedMetadata {
   scoring_version: string;
   surface: DiscoverySurface;
   locale: string;
-  candidate_source?: "override" | "products_search" | "unknown";
+  candidate_source?: string;
   dominant_domain?: string | null;
+  provider_breakdown?: Array<{
+    provider: string;
+    attempted: boolean;
+    successful: boolean;
+    returned: number;
+    steps: number;
+    skipped?: boolean;
+  }>;
   candidate_counts?: {
     raw: number;
     normalized: number;
     scored: number;
     eligible_pool: number;
     returned: number;
+    same_domain?: number;
+    semantic_deduped?: number;
   };
+  filter_counts?: Record<string, number>;
   request_latency_ms?: number;
   rank_debug?: {
     recall_summary?: Array<{
+      provider?: string | null;
       label?: string;
       query?: string | null;
       offset?: number;
@@ -188,7 +200,18 @@ export interface DiscoveryFeedMetadata {
       cache_hit?: boolean;
       cache_age_ms?: number;
       truncated_by_budget?: boolean;
+      skipped?: boolean;
+      skip_reason?: string;
     }>;
+    provider_breakdown?: Array<{
+      provider: string;
+      attempted: boolean;
+      successful: boolean;
+      returned: number;
+      steps: number;
+      skipped?: boolean;
+    }>;
+    filter_counts?: Record<string, number>;
     profile_summary?: {
       dominant_domain?: string | null;
       dominant_domain_score?: number;

@@ -39,6 +39,10 @@ function getDiscoveryRecallSummary(value: DiscoveryFeedMetadata | null) {
   return raw
     .filter((step) => step && typeof step === "object")
     .map((step) => ({
+      provider:
+        typeof step.provider === "string" && step.provider.trim().length > 0
+          ? step.provider.trim()
+          : null,
       label: typeof step.label === "string" ? step.label : "unknown",
       status:
         typeof step.status === "number" && Number.isFinite(step.status)
@@ -58,6 +62,11 @@ function getDiscoveryRecallSummary(value: DiscoveryFeedMetadata | null) {
           ? step.query.trim()
           : null,
       truncatedByBudget: step.truncated_by_budget === true,
+      skipped: step.skipped === true,
+      skipReason:
+        typeof step.skip_reason === "string" && step.skip_reason.trim().length > 0
+          ? step.skip_reason.trim()
+          : null,
     }));
 }
 
@@ -136,6 +145,19 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
     () => getDiscoveryRecallSummary(discoveryMetadata),
     [discoveryMetadata],
   );
+  const discoveryProviderBreakdown = Array.isArray(discoveryMetadata?.provider_breakdown)
+    ? discoveryMetadata.provider_breakdown
+    : Array.isArray(discoveryRankDebug?.provider_breakdown)
+      ? discoveryRankDebug.provider_breakdown
+      : [];
+  const discoveryFilterCounts =
+    discoveryMetadata?.filter_counts &&
+    typeof discoveryMetadata.filter_counts === "object"
+      ? discoveryMetadata.filter_counts
+      : discoveryRankDebug?.filter_counts &&
+          typeof discoveryRankDebug.filter_counts === "object"
+        ? discoveryRankDebug.filter_counts
+        : null;
   const debugTraceId =
     typeof lastResponse?.traceId === "string" && lastResponse.traceId
       ? lastResponse.traceId
@@ -1133,6 +1155,9 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                     {discoveryMetadata?.candidate_source ? (
                       <p>candidateSource: {discoveryMetadata.candidate_source}</p>
                     ) : null}
+                    {discoveryProviderBreakdown.length > 0 ? (
+                      <p>providers: {discoveryProviderBreakdown.map((entry) => entry.provider).join(", ")}</p>
+                    ) : null}
                     {typeof discoveryMetadata?.request_latency_ms === "number" ? (
                       <p>latencyMs: {discoveryMetadata.request_latency_ms}</p>
                     ) : null}
@@ -1155,6 +1180,20 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
                       <p>scored: {discoveryCandidateCounts.scored}</p>
                       <p>eligiblePool: {discoveryCandidateCounts.eligible_pool}</p>
                       <p>returned: {discoveryCandidateCounts.returned}</p>
+                      {typeof discoveryCandidateCounts.same_domain === "number" ? (
+                        <p>sameDomain: {discoveryCandidateCounts.same_domain}</p>
+                      ) : null}
+                      {typeof discoveryCandidateCounts.semantic_deduped === "number" ? (
+                        <p>semanticDeduped: {discoveryCandidateCounts.semantic_deduped}</p>
+                      ) : null}
+                      {discoveryFilterCounts ? (
+                        <p>
+                          recentViewSuppressed:{" "}
+                          {typeof discoveryFilterCounts.filtered_recent_view === "number"
+                            ? discoveryFilterCounts.filtered_recent_view
+                            : 0}
+                        </p>
+                      ) : null}
                     </div>
                   ) : (
                     <p className="text-[10px] text-slate-400">
@@ -1172,8 +1211,11 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
 	                        <div className="space-y-1 rounded-lg bg-black/50 p-2 text-[10px] text-slate-100">
 	                          {discoveryRecallSummary.map((step, index) => (
 	                            <p key={`${step.label}-${index}`}>
+                                  {step.provider ? `${step.provider} · ` : ""}
 	                              {step.label}
 	                              {step.status != null ? ` · ${step.status}` : ""}
+	                              {step.skipped ? " · skipped" : ""}
+	                              {step.skipReason ? ` · ${step.skipReason}` : ""}
 	                              {step.cacheHit ? " · cache" : ""}
 	                              {step.latencyMs != null ? ` · ${step.latencyMs}ms` : ""}
 	                              {step.returned != null ? ` · returned ${step.returned}` : ""}
@@ -1183,6 +1225,27 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
 	                          ))}
 	                        </div>
 	                      ) : null}
+                        {discoveryProviderBreakdown.length > 0 ? (
+                          <div className="space-y-1 rounded-lg bg-black/50 p-2 text-[10px] text-slate-100">
+                            {discoveryProviderBreakdown.map((entry) => (
+                              <p key={entry.provider}>
+                                {entry.provider}
+                                {entry.successful ? " · success" : " · not-ready"}
+                                {entry.skipped ? " · skipped" : ""}
+                                {typeof entry.returned === "number" ? ` · returned ${entry.returned}` : ""}
+                                {typeof entry.steps === "number" ? ` · steps ${entry.steps}` : ""}
+                              </p>
+                            ))}
+                          </div>
+                        ) : null}
+                        {discoveryFilterCounts ? (
+                          <div className="rounded-lg bg-black/50 p-2 text-[10px] text-slate-100">
+                            <p>filterCounts:</p>
+                            <pre className="mt-1 whitespace-pre-wrap">
+                              {safeStringify(discoveryFilterCounts)}
+                            </pre>
+                          </div>
+                        ) : null}
 	                      <pre className="max-h-48 overflow-auto rounded-lg bg-black/50 p-2 font-mono text-[10px] leading-relaxed">
 	                        {safeStringify(discoveryRankDebug)}
 	                      </pre>
