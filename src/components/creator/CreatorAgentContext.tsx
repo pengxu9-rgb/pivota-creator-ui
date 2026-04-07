@@ -1340,6 +1340,11 @@ export function CreatorAgentProvider({
       );
       if (!cachedQuery) return;
 
+      if (cachedQuery === FEATURED_DISCOVERY_CACHE_QUERY) {
+        window.localStorage.removeItem(featuredProductsCacheStorageKey);
+        return;
+      }
+
       if (cachedQuery !== FEATURED_DISCOVERY_CACHE_QUERY) {
         if (featuredQueryCandidates.length === 0) return;
         const candidateSet = new Set(
@@ -1464,6 +1469,10 @@ export function CreatorAgentProvider({
     if (!query) return;
 
     try {
+      if (query === FEATURED_DISCOVERY_CACHE_QUERY) {
+        window.localStorage.removeItem(featuredProductsCacheStorageKey);
+        return;
+      }
       const payload: PersistedFeaturedProductsCache = {
         query,
         products,
