@@ -73,6 +73,7 @@ const GRID_PAGE_SIZE = 24;
 const RAIL_PAGE_SIZE = 12;
 const SIMILAR_PAGE_SIZE = 12;
 const NO_GROWTH_STOP_THRESHOLD = 2;
+const RECENT_QUERY_TTL_MS = 24 * 60 * 60 * 1000;
 const FEATURED_PRODUCTS_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 const FEATURED_DISCOVERY_CACHE_QUERY = "__discovery_browse_products__";
 
@@ -100,6 +101,11 @@ type PersistedFeaturedProductsCache = {
   query: string;
   products: Product[];
   paging: PagingState;
+  updatedAt: number;
+};
+
+type PersistedRecentQuery = {
+  query: string;
   updatedAt: number;
 };
 
@@ -138,6 +144,57 @@ function normalizeFeaturedHistoryQuery(raw: string | null | undefined): string {
   const value = String(raw || "").trim().replace(/\s+/g, " ");
   if (value.length < 2) return "";
   return value.length > 80 ? value.slice(0, 80).trim() : value;
+}
+
+function normalizePersistedRecentQueryEntry(entry: unknown): PersistedRecentQuery | null {
+  if (!entry || typeof entry !== "object") return null;
+  const query = normalizeFeaturedHistoryQuery((entry as { query?: string }).query);
+  const updatedAt = Number((entry as { updatedAt?: number }).updatedAt);
+  if (!query || !Number.isFinite(updatedAt)) return null;
+  if (Date.now() - updatedAt > RECENT_QUERY_TTL_MS) return null;
+  return { query, updatedAt };
+}
+
+function readFreshRecentQueries(storageKey: string): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(storageKey);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    const freshEntries = parsed
+      .map((entry) => normalizePersistedRecentQueryEntry(entry))
+      .filter((entry): entry is PersistedRecentQuery => Boolean(entry))
+      .slice(-5);
+    if (freshEntries.length > 0) {
+      window.localStorage.setItem(storageKey, JSON.stringify(freshEntries));
+    } else {
+      window.localStorage.removeItem(storageKey);
+    }
+    return freshEntries.map((entry) => entry.query);
+  } catch (err) {
+    console.error("Failed to load recent queries", err);
+    return [];
+  }
+}
+
+function persistRecentQueries(storageKey: string, queries: string[]) {
+  if (typeof window === "undefined") return;
+  const now = Date.now();
+  const payload = queries
+    .map((query) => normalizeFeaturedHistoryQuery(query))
+    .filter(Boolean)
+    .slice(-5)
+    .map((query) => ({ query, updatedAt: now }));
+  try {
+    if (payload.length > 0) {
+      window.localStorage.setItem(storageKey, JSON.stringify(payload));
+    } else {
+      window.localStorage.removeItem(storageKey);
+    }
+  } catch (err) {
+    console.error("Failed to persist recent queries", err);
+  }
 }
 
 function buildFeaturedQueryCandidates(args: {
@@ -630,16 +687,7 @@ export function CreatorAgentProvider({
     setRecentQueries((prev) => {
       const withoutDuplicate = prev.filter((q) => q !== trimmed);
       const updated = [...withoutDuplicate, trimmed].slice(-5);
-      if (typeof window !== "undefined") {
-        try {
-          window.localStorage.setItem(
-            recentQueriesStorageKey,
-            JSON.stringify(updated),
-          );
-        } catch (err) {
-          console.error("Failed to persist recent queries", err);
-        }
-      }
+      persistRecentQueries(recentQueriesStorageKey, updated);
       return updated;
     });
 
@@ -1304,13 +1352,7 @@ export function CreatorAgentProvider({
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
-      const raw = window.localStorage.getItem(recentQueriesStorageKey);
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        const cleaned = parsed.filter((q) => typeof q === "string").slice(-5);
-        setRecentQueries(cleaned);
-      }
+      setRecentQueries(readFreshRecentQueries(recentQueriesStorageKey));
     } catch (err) {
       console.error("Failed to load recent queries", err);
     } finally {

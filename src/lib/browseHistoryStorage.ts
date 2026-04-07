@@ -2,6 +2,7 @@ import type { DiscoveryRecentView, Product } from "@/types/product";
 
 const MAX_RECENT_VIEWS = 50;
 const VIEW_DEDUPE_WINDOW_MS = 15_000;
+const RECENT_VIEW_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 function canUseStorage(): boolean {
   return typeof window !== "undefined" && !!window.localStorage;
@@ -21,6 +22,12 @@ function parseViewedAt(value: string | undefined): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function isFreshViewedAt(value: string | undefined): boolean {
+  const parsed = parseViewedAt(value);
+  if (parsed == null) return false;
+  return Date.now() - parsed <= RECENT_VIEW_MAX_AGE_MS;
+}
+
 function isRecentView(
   entry: DiscoveryRecentView | null,
 ): entry is DiscoveryRecentView {
@@ -30,7 +37,8 @@ function isRecentView(
 export function readBrowseHistory(scopeKey: string): DiscoveryRecentView[] {
   if (!canUseStorage()) return [];
   try {
-    const raw = window.localStorage.getItem(getStorageKey(scopeKey));
+    const storageKey = getStorageKey(scopeKey);
+    const raw = window.localStorage.getItem(storageKey);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
@@ -53,7 +61,20 @@ export function readBrowseHistory(scopeKey: string): DiscoveryRecentView[] {
         } satisfies DiscoveryRecentView;
       });
 
-    return entries.filter(isRecentView).slice(0, MAX_RECENT_VIEWS);
+    const freshEntries = entries
+      .filter(isRecentView)
+      .filter((entry) => isFreshViewedAt(entry.viewed_at))
+      .slice(0, MAX_RECENT_VIEWS);
+
+    if (freshEntries.length !== parsed.length) {
+      if (freshEntries.length > 0) {
+        window.localStorage.setItem(storageKey, JSON.stringify(freshEntries));
+      } else {
+        window.localStorage.removeItem(storageKey);
+      }
+    }
+
+    return freshEntries;
   } catch (error) {
     console.error("Failed to read browse history", error);
     return [];
