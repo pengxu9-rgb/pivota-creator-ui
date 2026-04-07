@@ -582,9 +582,15 @@ export function CreatorAgentProvider({
     [drainDetailPrefetchQueue],
   );
 
+  const deviceId = useMemo(() => getOrCreateDeviceId(), []);
+  const userBehaviorScopeKey = useMemo(
+    () =>
+      `creator:${creator.slug}:${accountsUser?.id || `anon:${deviceId}`}`,
+    [accountsUser?.id, creator.slug, deviceId],
+  );
   const recentQueriesStorageKey = useMemo(
-    () => `pivota_creator_recent_queries_${creator.slug}`,
-    [creator.slug],
+    () => `pivota_creator_recent_queries_${userBehaviorScopeKey}`,
+    [userBehaviorScopeKey],
   );
 
   const onboardingStorageKey = useMemo(
@@ -606,12 +612,7 @@ export function CreatorAgentProvider({
     [creator.slug],
   );
 
-  const deviceId = useMemo(() => getOrCreateDeviceId(), []);
-  const browseHistoryScopeKey = useMemo(
-    () =>
-      `creator:${creator.slug}:${accountsUser?.id || `anon:${deviceId}`}`,
-    [accountsUser?.id, creator.slug, deviceId],
-  );
+  const browseHistoryScopeKey = userBehaviorScopeKey;
 
   const [onboardingActive, setOnboardingActive] = useState(false);
   const [recentQueriesHydrated, setRecentQueriesHydrated] = useState(false);
