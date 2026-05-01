@@ -137,10 +137,41 @@ function hasErrorCard(value: unknown): boolean {
   });
 }
 
+function normalizePhotoQcToken(value: unknown): string {
+  const raw = String(value || "").trim().toLowerCase();
+  const token = raw.includes(":") ? raw.split(":").pop() || raw : raw;
+  if (["pass", "passed", "ok", "success", "succeeded"].includes(token)) return "passed";
+  if (["degraded", "warn", "warning", "low"].includes(token)) return "degraded";
+  if (["fail", "failed", "reject", "rejected", "bad"].includes(token)) return "failed";
+  return token;
+}
+
+function collectPhotoQcTokens(value: unknown, seen = new WeakSet<object>()): string[] {
+  if (!value || typeof value !== "object") return [];
+  if (seen.has(value)) return [];
+  seen.add(value);
+  if (Array.isArray(value)) return value.flatMap((item) => collectPhotoQcTokens(item, seen));
+
+  const record = value as Record<string, any>;
+  const out: string[] = [];
+  for (const key of ["qc_status", "qcStatus", "photo_qc", "photoQc"]) {
+    const raw = record[key];
+    const values = Array.isArray(raw) ? raw : raw == null ? [] : [raw];
+    for (const item of values) {
+      const token = normalizePhotoQcToken(item);
+      if (token) out.push(token);
+    }
+  }
+  for (const item of Object.values(record)) out.push(...collectPhotoQcTokens(item, seen));
+  return out;
+}
+
 export function isSkinPhotoAnalysisSuccess(value: unknown): boolean {
   const statuses = collectStatusTokens(value);
   const hasSuccessStatus = statuses.some((status) => status === "success" || status === "succeeded");
-  return hasSuccessStatus && hasUsedPhotos(value) && !hasErrorCard(value);
+  const qcTokens = collectPhotoQcTokens(value);
+  const qcPasses = qcTokens.length === 0 || qcTokens.every((token) => token === "passed");
+  return hasSuccessStatus && hasUsedPhotos(value) && qcPasses && !hasErrorCard(value);
 }
 
 function normalizeList(value: unknown): string[] {
@@ -260,7 +291,7 @@ export async function analyzeSkinPhotoFile(
   }
 
   const normalizedQc = String(qcStatus || "").trim().toLowerCase();
-  if (normalizedQc && !["pass", "passed", "degraded", "ok"].includes(normalizedQc)) {
+  if (normalizedQc && normalizePhotoQcToken(normalizedQc) !== "passed") {
     return {
       status: "failed",
       assistantText: failureMessage(language, `qc_status=${qcStatus}`),
