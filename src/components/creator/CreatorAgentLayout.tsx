@@ -1,11 +1,12 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import type { ReactNode } from "react";
+import type { ChangeEvent, ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Home,
+  ImagePlus,
   MessageCircle,
   Percent,
   Send,
@@ -19,6 +20,11 @@ import { ProductCard } from "@/components/product/ProductCard";
 import { ProductDescription } from "@/components/product/ProductDescription";
 import { useCart } from "@/components/cart/CartProvider";
 import { describeCreatorPrice, hasNumericPrice } from "@/lib/productPrice";
+import {
+  isCreatorSkinPhotoUploadBetaEnabled,
+  resolvePhotoAnalysisLanguage,
+  SKIN_PHOTO_ACCEPTED_TYPES,
+} from "@/lib/photoAnalysis";
 import type { DiscoveryFeedMetadata } from "@/types/product";
 
 function getDiscoveryMetadata(value: unknown): DiscoveryFeedMetadata | null {
@@ -77,12 +83,14 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
     input,
     setInput,
     isLoading,
+    isPhotoAnalyzing,
     products,
     chatRecommendations,
     chatRecommendationsPaging,
     accountsUser,
     authChecking,
     handleSend,
+    analyzeSkinPhotoUpload,
     loadMoreChatRecommendations,
     similarBaseProduct,
     similarItems,
@@ -125,8 +133,11 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
 
   const [isMobileChatOpen, setIsMobileChatOpen] = useState(false);
   const [resumeDismissed, setResumeDismissed] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const forcedOnboarding = searchParams?.get("onboarding") === "1";
   const onboardingVisible = forcedOnboarding || onboardingActive;
+  const photoUploadEnabled = isCreatorSkinPhotoUploadBetaEnabled();
+  const composerBusy = isLoading || isPhotoAnalyzing;
   const discoveryMetadata = useMemo(
     () => getDiscoveryMetadata(lastResponse?.metadata),
     [lastResponse],
@@ -337,6 +348,29 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
     setResumeDismissed(true);
   };
 
+  const handleSkinPhotoUploadClick = () => {
+    if (!photoUploadEnabled || composerBusy) return;
+    const languageHint =
+      input ||
+      [...messages].reverse().find((message) => message.role === "user")?.content ||
+      "";
+    const language = resolvePhotoAnalysisLanguage(languageHint);
+    const confirmed = window.confirm(
+      language === "CN"
+        ? "照片上传 Beta 目前只用于面部/皮肤照片分析，不支持商品瓶身或 PDP 截图识别。继续上传吗？"
+        : "Photo upload beta is for face/skin analysis only. Product bottles or PDP screenshots are not supported. Continue?",
+    );
+    if (!confirmed) return;
+    photoInputRef.current?.click();
+  };
+
+  const handleSkinPhotoSelected = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] || null;
+    event.target.value = "";
+    if (!file || composerBusy) return;
+    void analyzeSkinPhotoUpload(file);
+  };
+
   // Prevent background scroll when mobile chat sheet is open
   useEffect(() => {
     if (typeof window === "undefined" || typeof document === "undefined") return;
@@ -489,15 +523,15 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
               ) : null}
             </div>
           )}
-          {isLoading && (
+          {composerBusy && (
             <div className="flex items-center gap-2 text-[11px] text-[#a38b78]">
               <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#f6b59b]" />
-              Finding options for you…
+              {isPhotoAnalyzing ? "Analyzing photo…" : "Finding options for you…"}
             </div>
           )}
         </div>
 
-        {isLoading && (
+        {composerBusy && (
           <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-[#f4e2d4]">
             <div className="h-full w-1/2 animate-[pulse_1.2s_ease-in-out_infinite] bg-gradient-to-r from-[#f6b59b] via-[#f4a58c] to-[#f8c3a2]" />
           </div>
@@ -513,16 +547,38 @@ export function CreatorAgentLayout({ children }: { children: ReactNode }) {
             >
               <MessageCircle className="h-3.5 w-3.5" />
             </button>
+            {photoUploadEnabled ? (
+              <>
+                <input
+                  ref={photoInputRef}
+                  type="file"
+                  accept={SKIN_PHOTO_ACCEPTED_TYPES.join(",")}
+                  className="hidden"
+                  onChange={handleSkinPhotoSelected}
+                />
+                <button
+                  type="button"
+                  onClick={handleSkinPhotoUploadClick}
+                  disabled={composerBusy}
+                  className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-[#f0e2d6] bg-white text-[#8c715c] shadow-sm hover:bg-[#fff0e3] disabled:opacity-60"
+                  aria-label="Upload skin photo"
+                  title="Upload skin photo"
+                >
+                  <ImagePlus className="h-3.5 w-3.5" />
+                </button>
+              </>
+            ) : null}
             <input
               className="flex-1 bg-transparent px-1 text-[13px] text-[#4a3727] placeholder:text-[#b29a84] focus:outline-none"
               placeholder="e.g., commuter jacket under $120, clean and minimal…"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              disabled={composerBusy}
             />
             <button
               onClick={handleSend}
-              disabled={isLoading}
+              disabled={composerBusy}
               className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#f6b59b] via-[#f4a58c] to-[#f8c3a2] text-[11px] text-white shadow-lg transition hover:brightness-110 disabled:opacity-60"
             >
               <Send className="h-3.5 w-3.5" />

@@ -34,6 +34,10 @@ import {
   updateSessionOnMessages,
 } from "@/lib/chatSessions";
 import { startHostedCreatorCheckout } from "@/lib/hostedCreatorCheckout";
+import {
+  analyzeSkinPhotoFile,
+  resolvePhotoAnalysisLanguage,
+} from "@/lib/photoAnalysis";
 import type {
   SessionMeta,
   EntryContext as SessionEntryContext,
@@ -313,6 +317,7 @@ interface CreatorAgentContextValue {
   input: string;
   setInput: (value: string) => void;
   isLoading: boolean;
+  isPhotoAnalyzing: boolean;
   products: Product[];
   productsPaging: PagingState;
   chatRecommendations: Product[];
@@ -345,6 +350,7 @@ interface CreatorAgentContextValue {
   closeSimilar: () => void;
   handleSend: () => Promise<void>;
   sendMessage: (text: string) => Promise<void>;
+  analyzeSkinPhotoUpload: (file: File) => Promise<void>;
   loadMoreProducts: () => Promise<void>;
   loadMoreChatRecommendations: () => Promise<void>;
   handleSeeSimilar: (base: Product) => Promise<void>;
@@ -406,6 +412,7 @@ export function CreatorAgentProvider({
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isPhotoAnalyzing, setIsPhotoAnalyzing] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [productsPaging, setProductsPaging] = useState<PagingState>({
     query: "",
@@ -672,7 +679,7 @@ export function CreatorAgentProvider({
 
   const sendMessage = async (text: string) => {
     const trimmed = text.trim();
-    if (!trimmed || isLoading) return;
+    if (!trimmed || isLoading || isPhotoAnalyzing) return;
     markOnboardingSeen();
 
     const userMsg: ChatMessage = {
@@ -851,6 +858,82 @@ export function CreatorAgentProvider({
 
   const handleSend = async () => {
     return sendMessage(input);
+  };
+
+  const analyzeSkinPhotoUpload = async (file: File) => {
+    if (!file || isLoading || isPhotoAnalyzing) return;
+    markOnboardingSeen();
+    const languageHint =
+      input ||
+      [...messages].reverse().find((message) => message.role === "user")?.content ||
+      "";
+    const language = resolvePhotoAnalysisLanguage(languageHint);
+    const userMsg: ChatMessage = {
+      id: `photo-u-${Date.now()}`,
+      role: "user",
+      content:
+        language === "CN"
+          ? `已上传皮肤照片：${file.name}`
+          : `Uploaded skin photo: ${file.name}`,
+    };
+
+    setMessages((prev) => [...prev, userMsg]);
+    setInput("");
+    setIsPhotoAnalyzing(true);
+    setLastRequest({
+      creatorId: creator.id,
+      operation: "skin_photo_analysis",
+      source: "creator-agent-ui",
+      file: {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+      },
+    });
+
+    try {
+      const result = await analyzeSkinPhotoFile(file, {
+        languageHint,
+        userId: accountsUser?.id || null,
+        sourceAgent: "creator_agent",
+        creatorId: creator.id,
+      });
+      setLastResponse({
+        status: result.status,
+        requestId: result.requestId,
+        photoId: result.photoId,
+        qcStatus: result.qcStatus,
+        failureClass: result.failureClass,
+        rawAnalysis: result.rawAnalysis,
+      });
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `photo-a-${Date.now()}`,
+          role: "assistant",
+          content: result.assistantText,
+        },
+      ]);
+    } catch (error) {
+      console.error(error);
+      setLastResponse({
+        status: "failed",
+        detail: error instanceof Error ? error.message : String(error),
+      });
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `photo-a-error-${Date.now()}`,
+          role: "assistant",
+          content:
+            language === "CN"
+              ? "照片分析暂时不可用。请稍后重试，或直接用文字描述肤况。"
+              : "Photo analysis is temporarily unavailable. Try again later or describe your skin in text.",
+        },
+      ]);
+    } finally {
+      setIsPhotoAnalyzing(false);
+    }
   };
 
   const loadMoreProducts = useCallback(async () => {
@@ -1894,6 +1977,7 @@ export function CreatorAgentProvider({
     input,
     setInput,
     isLoading,
+    isPhotoAnalyzing,
     products,
     productsPaging,
     chatRecommendations,
@@ -1926,6 +2010,7 @@ export function CreatorAgentProvider({
     closeSimilar,
     handleSend,
     sendMessage,
+    analyzeSkinPhotoUpload,
     loadMoreProducts,
     loadMoreChatRecommendations,
     handleSeeSimilar,
