@@ -21,13 +21,15 @@ type AnalyzeSkinPhotoOptions = {
   creatorId?: string | null;
 };
 
-function flagEnabled(value: string | undefined): boolean {
+function flagEnabled(value: string | undefined, defaultEnabled = false): boolean {
   const normalized = String(value || "").trim().toLowerCase();
+  if (!normalized) return defaultEnabled;
+  if (normalized === "0" || normalized === "false" || normalized === "no" || normalized === "off") return false;
   return normalized === "1" || normalized === "true" || normalized === "yes" || normalized === "on";
 }
 
 export function isCreatorSkinPhotoUploadBetaEnabled(): boolean {
-  return flagEnabled(process.env.NEXT_PUBLIC_CREATOR_AGENT_PHOTO_UPLOAD_BETA);
+  return flagEnabled(process.env.NEXT_PUBLIC_CREATOR_AGENT_PHOTO_UPLOAD_BETA, true);
 }
 
 function isLikelyChinese(text: string): boolean {

@@ -53,7 +53,7 @@ Recommended minimum:
 - `NEXT_PUBLIC_REVIEWS_UPSTREAM_BASE` set to the public host that serves `/agent/shop/v1/review-media/*` when needed.
 - `CREATOR_STANDARD_PDP_BASE_URL=https://agent.pivota.cc` so `/creator/:slug/product/:id` acts as alias to standard PDP.
 - Keep `NEXT_PUBLIC_CREATOR_AGENT_REQUEST_TIMEOUT_MS` unset unless you are explicitly debugging rollout latency; default client timeout remains `20000ms`.
-- Keep `NEXT_PUBLIC_CREATOR_AGENT_PHOTO_UPLOAD_BETA` unset/false until the backend curated skin-photo accuracy benchmark passes. When enabled, it only exposes skin photo analysis; product bottle/PDP images are unsupported and should be described with text, product name, URL, or ingredients.
+- `NEXT_PUBLIC_CREATOR_AGENT_PHOTO_UPLOAD_BETA` is enabled by default after the production photo contract canary passed. Set it to `false`/`0`/`off` only as an emergency kill switch. It only exposes skin photo analysis; product bottle/PDP images are unsupported and should be described with text, product name, URL, or ingredients.
 
 Checkout note:
 - Creator chat/PDP APIs use creator route + `CREATOR_AGENT_API_KEY`.
