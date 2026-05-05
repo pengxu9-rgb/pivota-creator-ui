@@ -1,9 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
+import { warnIfHardcodedFallbackUsed } from "@/lib/upstreamFallback";
 
 export const runtime = "nodejs";
 export const preferredRegion = "home";
 
 const DEFAULT_AGENT_BASE = "https://pivota-agent-production.up.railway.app";
+const _PHOTO_UPLOAD_AGENT_ENVS = [
+  "PIVOTA_AGENT_BASE_URL",
+  "PIVOTA_AGENT_URL",
+  "NEXT_PUBLIC_PIVOTA_AGENT_URL",
+];
+if (!_PHOTO_UPLOAD_AGENT_ENVS.some((name) => process.env[name])) {
+  warnIfHardcodedFallbackUsed({
+    routeLabel: "api/photo-analysis/upload",
+    envVarsTried: _PHOTO_UPLOAD_AGENT_ENVS,
+    fallback: DEFAULT_AGENT_BASE,
+  });
+}
 
 function sanitizeEnvValue(raw: string | undefined): string {
   return String(raw || "")
