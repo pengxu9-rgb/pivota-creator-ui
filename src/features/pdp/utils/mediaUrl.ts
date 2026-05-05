@@ -1,4 +1,18 @@
+import { warnIfHardcodedFallbackUsed } from "@/lib/upstreamFallback";
+
 const DEFAULT_REVIEWS_MEDIA_BASE = "https://web-production-fedb.up.railway.app";
+const _MEDIA_REVIEWS_ENVS = [
+  "NEXT_PUBLIC_REVIEWS_UPSTREAM_BASE",
+  "NEXT_PUBLIC_REVIEWS_BASE",
+  "NEXT_PUBLIC_PIVOTA_AGENT_URL",
+];
+if (!_MEDIA_REVIEWS_ENVS.some((name) => process.env[name])) {
+  warnIfHardcodedFallbackUsed({
+    routeLabel: "features/pdp/mediaUrl",
+    envVarsTried: _MEDIA_REVIEWS_ENVS,
+    fallback: DEFAULT_REVIEWS_MEDIA_BASE,
+  });
+}
 
 function sanitizeBase(raw: string | undefined): string {
   const value = String(raw || "");

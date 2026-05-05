@@ -1,7 +1,40 @@
+import { warnIfHardcodedFallbackUsed } from "@/lib/upstreamFallback";
+
 const DEFAULT_SHOP_INVOKE_URL =
   "https://pivota-agent-production.up.railway.app/agent/shop/v1/invoke";
 const DEFAULT_REVIEWS_UPSTREAM_BASE =
   "https://web-production-fedb.up.railway.app";
+
+// `getCreatorInvokeUrl()` already throws when the env is missing in
+// production, but the laxer `getCreatorInvokeUrlForClientFallback()`
+// silently uses DEFAULT_SHOP_INVOKE_URL — same hidden-prod-leak risk
+// as the proxy routes. Surface it the same way.
+if (
+  !process.env.PIVOTA_AGENT_URL &&
+  !process.env.NEXT_PUBLIC_PIVOTA_AGENT_URL
+) {
+  warnIfHardcodedFallbackUsed({
+    routeLabel: "lib/creatorAgentGateway:invoke",
+    envVarsTried: ["PIVOTA_AGENT_URL", "NEXT_PUBLIC_PIVOTA_AGENT_URL"],
+    fallback: DEFAULT_SHOP_INVOKE_URL,
+  });
+}
+
+if (
+  !process.env.NEXT_PUBLIC_REVIEWS_UPSTREAM_BASE &&
+  !process.env.NEXT_PUBLIC_REVIEWS_BASE &&
+  !process.env.REVIEWS_UPSTREAM_BASE
+) {
+  warnIfHardcodedFallbackUsed({
+    routeLabel: "lib/creatorAgentGateway:reviews",
+    envVarsTried: [
+      "NEXT_PUBLIC_REVIEWS_UPSTREAM_BASE",
+      "NEXT_PUBLIC_REVIEWS_BASE",
+      "REVIEWS_UPSTREAM_BASE",
+    ],
+    fallback: DEFAULT_REVIEWS_UPSTREAM_BASE,
+  });
+}
 
 function sanitizeEnvValue(raw: string | undefined): string {
   const value = String(raw || "");

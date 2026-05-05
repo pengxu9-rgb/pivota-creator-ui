@@ -1,9 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { warnIfHardcodedFallbackUsed } from '@/lib/upstreamFallback';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const DEFAULT_ACCOUNTS_BASE = 'https://web-production-fedb.up.railway.app/accounts';
+
+if (!process.env.ACCOUNTS_UPSTREAM_BASE && !process.env.NEXT_PUBLIC_ACCOUNTS_BASE) {
+  warnIfHardcodedFallbackUsed({
+    routeLabel: 'api/accounts',
+    envVarsTried: ['ACCOUNTS_UPSTREAM_BASE', 'NEXT_PUBLIC_ACCOUNTS_BASE'],
+    fallback: DEFAULT_ACCOUNTS_BASE,
+  });
+}
 
 function getUpstreamAccountsBase(): string {
   const explicit =

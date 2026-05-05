@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
+import { warnIfHardcodedFallbackUsed } from "@/lib/upstreamFallback";
 
 const DEFAULT_ACCOUNTS_BASE = "https://web-production-fedb.up.railway.app/accounts";
+const _REVIEWS_BUYER_CREATE_ENVS = [
+  "REVIEWS_UPSTREAM_BASE",
+  "NEXT_PUBLIC_REVIEWS_UPSTREAM_BASE",
+  "NEXT_PUBLIC_REVIEWS_BASE",
+  "NEXT_PUBLIC_ACCOUNTS_BASE",
+];
+if (!_REVIEWS_BUYER_CREATE_ENVS.some((name) => process.env[name])) {
+  warnIfHardcodedFallbackUsed({
+    routeLabel: "api/reviews/buyer/create",
+    envVarsTried: _REVIEWS_BUYER_CREATE_ENVS,
+    fallback: DEFAULT_ACCOUNTS_BASE,
+  });
+}
 
 function getReviewsUpstreamBase(): string {
   const explicit = (

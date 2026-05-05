@@ -3,6 +3,7 @@ import {
   getCreatorCheckoutAgentApiKey,
   getOptionalCreatorAgentBaseUrl,
 } from "@/lib/creatorAgentGateway";
+import { warnIfHardcodedFallbackUsed } from "@/lib/upstreamFallback";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,10 +16,22 @@ const LEGACY_CREATOR_CHECKOUT_SOURCES = new Set([
 ]);
 const CHECKOUT_SESSION_UPSTREAM_TIMEOUT_MS = 8000;
 
+const BACKEND_BASE_FALLBACK = "https://web-production-fedb.up.railway.app";
 const BACKEND_BASE =
   process.env.PIVOTA_BACKEND_BASE_URL ||
   process.env.NEXT_PUBLIC_PIVOTA_BACKEND_BASE_URL ||
-  "https://web-production-fedb.up.railway.app";
+  BACKEND_BASE_FALLBACK;
+
+if (
+  !process.env.PIVOTA_BACKEND_BASE_URL &&
+  !process.env.NEXT_PUBLIC_PIVOTA_BACKEND_BASE_URL
+) {
+  warnIfHardcodedFallbackUsed({
+    routeLabel: "api/creator-agent/checkout/session",
+    envVarsTried: ["PIVOTA_BACKEND_BASE_URL", "NEXT_PUBLIC_PIVOTA_BACKEND_BASE_URL"],
+    fallback: BACKEND_BASE_FALLBACK,
+  });
+}
 
 function decorateCheckoutUrl(
   rawUrl: any,
