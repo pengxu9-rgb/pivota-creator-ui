@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pivota — Brand Kit v2.0</title>
+<link rel="stylesheet" href="pivota-brand.css">
+<link rel="icon" type="image/svg+xml" href="svg/favicon.svg">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--pv-paper); color: var(--pv-ink); font-family: var(--pv-font-sans); font-size: 14px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+  body { padding: 56px 0 120px; }
+  .page { max-width: 1240px; margin: 0 auto; padding: 0 56px; }
+
+  /* Masthead */
+  .masthead { display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 14px; border-bottom: 1px solid var(--pv-border); margin-bottom: 48px; }
+  .masthead .runner { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--pv-ink-60); font-weight: 600; }
+  .masthead .runner span { color: var(--pv-ink); }
+  .masthead .date { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--pv-ink-60); font-weight: 500; }
+
+  /* Title */
+  .title-block { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: end; margin-bottom: 56px; }
+  .eyebrow { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--pv-ink-60); font-weight: 600; margin-bottom: 24px; }
+  h1.display {
+    font-family: var(--pv-font-serif);
+    font-weight: 500;
+    font-size: 84px;
+    line-height: 0.95;
+    letter-spacing: -0.025em;
+    color: var(--pv-ink);
+  }
+  h1.display em { font-style: italic; color: var(--pv-primary); font-weight: 500; }
+  .deck { font-size: 15px; line-height: 1.55; color: var(--pv-ink-85); max-width: 44ch; }
+  .deck p + p { margin-top: 12px; }
+  .deck strong { color: var(--pv-ink); font-weight: 600; }
+
+  /* Section */
+  section { margin-bottom: 72px; }
+  .sec-head { display: grid; grid-template-columns: 120px 1fr 1fr; gap: 32px; align-items: baseline; padding-bottom: 16px; border-bottom: 1px solid var(--pv-border); margin-bottom: 32px; }
+  .sec-num { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--pv-ink-60); font-weight: 600; padding-top: 6px; }
+  h2 { font-family: var(--pv-font-serif); font-weight: 500; font-size: 32px; line-height: 1.05; letter-spacing: -0.02em; color: var(--pv-ink); }
+  h2 em { font-style: italic; color: var(--pv-primary); }
+  .sec-head .note { font-size: 13px; color: var(--pv-ink-85); max-width: 48ch; padding-top: 6px; }
+
+  /* HERO — the canonical logo on every world. */
+  .hero-grid { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap: 16px; }
+  .hero-cell { aspect-ratio: 1; border-radius: var(--pv-radius-lg); border: 1px solid var(--pv-border); overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; }
+  .hero-cell .pv-logo { box-shadow: none; border: none; }
+  .hero-cell .pv-logo--paper { border: 0.5px solid var(--pv-border); }
+  .hero-cell .label { position: absolute; left: 14px; bottom: 12px; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; }
+  .hero-cell.gradient { background: var(--pv-gradient-primary); }
+  .hero-cell.purple   { background: var(--pv-primary); }
+  .hero-cell.ink      { background: var(--pv-ink); }
+  .hero-cell.paper    { background: var(--pv-paper); }
+  .hero-cell.gradient .label, .hero-cell.purple .label, .hero-cell.ink .label { color: rgba(255,255,255,0.8); }
+  .hero-cell.paper .label { color: var(--pv-ink-60); }
+  .hero-cell .pv-logo--hero { --pv-logo-size: 220px; }
+  /* hero cells already paint the background; show only the mark within. */
+  .hero-cell.gradient .pv-logo--gradient { --pv-logo-src: url("icons/mark-white-1024.png"); }
+  .hero-cell.purple   .pv-logo--purple   { --pv-logo-src: url("icons/mark-white-1024.png"); }
+  .hero-cell.ink      .pv-logo--ink      { --pv-logo-src: url("icons/mark-white-1024.png"); }
+  .hero-cell.paper    .pv-logo--paper    { --pv-logo-src: url("icons/mark-ink-1024.png"); }
+
+  /* LOGO LIBRARY — cards per asset */
+  .lib { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .asset {
+    background: var(--pv-surface);
+    border: 1px solid var(--pv-border);
+    border-radius: var(--pv-radius-lg);
+    overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .asset .stage {
+    flex: 1;
+    min-height: 180px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 32px;
+    position: relative;
+  }
+  .asset .stage.gradient { background: var(--pv-gradient-primary); }
+  .asset .stage.purple   { background: var(--pv-primary); }
+  .asset .stage.paper    { background: var(--pv-paper); }
+  .asset .stage.ink      { background: var(--pv-ink); }
+  .asset .meta {
+    padding: 14px 16px;
+    border-top: 1px solid var(--pv-border);
+    display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: baseline;
+  }
+  .asset .name { font-size: 13px; font-weight: 600; color: var(--pv-ink); }
+  .asset .tag  { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700; color: var(--pv-ink-60); }
+  .asset .desc { grid-column: 1 / -1; font-size: 11px; color: var(--pv-ink-85); line-height: 1.45; }
+  .asset .download { grid-column: 1 / -1; margin-top: 6px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .asset .download a { font-size: 10px; letter-spacing: 0.06em; padding: 3px 8px; border: 1px solid var(--pv-border-strong); border-radius: 999px; text-decoration: none; color: var(--pv-ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .asset .download a:hover { background: var(--pv-primary-50); border-color: var(--pv-primary); color: var(--pv-primary); }
+
+  .span-2 { grid-column: span 2; }
+  .span-3 { grid-column: span 3; }
+
+  /* Color */
+  .colors { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
+  .swatch { border-radius: var(--pv-radius-lg); border: 1px solid var(--pv-border); overflow: hidden; background: var(--pv-surface); }
+  .swatch .chip { height: 100px; }
+  .swatch .info { padding: 12px 14px; }
+  .swatch .role { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--pv-ink-60); font-weight: 700; margin-bottom: 2px; }
+  .swatch .name { font-size: 13px; font-weight: 600; color: var(--pv-ink); }
+  .swatch .hex { font-family: var(--pv-font-mono); font-size: 11px; color: var(--pv-ink-85); margin-top: 2px; }
+
+  /* Type */
+  .type-stack { display: grid; grid-template-columns: 1fr; gap: 0; }
+  .type-row { display: grid; grid-template-columns: 120px 1fr 280px; gap: 24px; padding: 24px 0; border-bottom: 1px solid var(--pv-border); align-items: baseline; }
+  .type-row:last-child { border-bottom: none; }
+  .type-row .role { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--pv-ink-60); font-weight: 700; padding-top: 8px; }
+  .type-row .sample { line-height: 1.0; }
+  .type-row .spec { font-family: var(--pv-font-mono); font-size: 11px; color: var(--pv-ink-85); line-height: 1.7; padding-top: 8px; }
+
+  /* Code blocks */
+  pre {
+    background: var(--pv-ink);
+    color: #E6E6E0;
+    padding: 20px 24px;
+    border-radius: var(--pv-radius-lg);
+    font-family: var(--pv-font-mono);
+    font-size: 12px;
+    line-height: 1.55;
+    overflow-x: auto;
+    margin: 16px 0;
+  }
+  pre code .com { color: rgba(230,230,224,0.5); }
+  pre code .tag { color: #B2A6FF; }
+  pre code .atr { color: #FFB28A; }
+  pre code .val { color: #9CE0BC; }
+
+  /* Usage examples — actual rendered components */
+  .usage-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .use {
+    background: var(--pv-surface);
+    border: 1px solid var(--pv-border);
+    border-radius: var(--pv-radius-lg);
+    padding: 32px;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .use .ex-label { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--pv-ink-60); font-weight: 700; }
+  .use .ex { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border: 1px dashed var(--pv-border-strong); border-radius: var(--pv-radius-md); background: var(--pv-paper); }
+  .use code.inline { font-family: var(--pv-font-mono); font-size: 11px; color: var(--pv-ink-85); background: var(--pv-paper-muted); padding: 2px 6px; border-radius: 4px; }
+
+  /* Footer */
+  .colophon {
+    margin-top: 64px;
+    padding-top: 32px;
+    border-top: 1px solid var(--pv-border);
+    display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 32px;
+    font-size: 12px; color: var(--pv-ink-85);
+  }
+  .colophon b { color: var(--pv-ink); font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em; display: block; margin-bottom: 8px; font-size: 10px; }
+
+  /* Reset Don't-grid for v2 */
+  .donts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .dont { border: 1px solid var(--pv-border); border-radius: var(--pv-radius-lg); overflow: hidden; background: var(--pv-surface); }
+  .dont .stage { background: var(--pv-paper); aspect-ratio: 1.1; display: flex; align-items: center; justify-content: center; padding: 24px; position: relative; }
+  .dont .stage::after { content: ""; position: absolute; inset: 0; background: linear-gradient(135deg, transparent calc(50% - 0.5px), rgba(192,40,40,0.55) 50%, transparent calc(50% + 0.5px)); }
+  .dont .label { padding: 12px 16px; border-top: 1px solid var(--pv-border); }
+  .dont .tag { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #C02828; font-weight: 700; margin-bottom: 2px; }
+  .dont .desc { font-size: 12px; color: var(--pv-ink); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- MASTHEAD -->
+  <header class="masthead">
+    <div class="runner"><span>Pivota</span> &nbsp;·&nbsp; Brand kit &nbsp;·&nbsp; v2.0 production</div>
+    <div class="date">May 19 2026</div>
+  </header>
+
+  <!-- TITLE -->
+  <div class="title-block">
+    <div>
+      <div class="eyebrow">The Pivota brand</div>
+      <h1 class="display">One letter, <em>one stop</em>, one&nbsp;system.</h1>
+    </div>
+    <div class="deck">
+      <p>Pivota's identity is a lowercase <em>p</em> set in Fredoka SemiBold, closed with a clean circular period. The bowl is warm and geometric; the dot is the moment of stop. Together they read as a complete thought.</p>
+      <p>This kit is the production brand standard — <strong>everything you need to ship Pivota into any surface</strong>. Drop <code style="font-family:var(--pv-font-mono); font-size:12px;">pivota-brand.css</code> into a page, link the SVG or PNG, and you're consistent with the rest of the system.</p>
+    </div>
+  </div>
+
+  <!-- 01 — THE MARK -->
+  <section id="hero">
+    <div class="sec-head">
+      <div class="sec-num">01 / The mark</div>
+      <h2>Four worlds. <em>One letter.</em></h2>
+      <div class="note">The mark lives in one of four background worlds — gradient, purple, ink, paper. The first three render the glyph white; paper renders it ink. There is no other approved background.</div>
+    </div>
+
+    <div class="hero-grid">
+      <div class="hero-cell gradient">
+        <span class="pv-logo pv-logo--gradient pv-logo--hero"></span>
+        <span class="label">Gradient · primary</span>
+      </div>
+      <div class="hero-cell purple">
+        <span class="pv-logo pv-logo--purple" style="--pv-logo-size: 120px;"></span>
+        <span class="label">Purple</span>
+      </div>
+      <div class="hero-cell ink">
+        <span class="pv-logo pv-logo--ink" style="--pv-logo-size: 120px;"></span>
+        <span class="label">Ink</span>
+      </div>
+      <div class="hero-cell paper">
+        <span class="pv-logo pv-logo--paper" style="--pv-logo-size: 120px;"></span>
+        <span class="label">Paper</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 — DOWNLOADS -->
+  <section id="downloads">
+    <div class="sec-head">
+      <div class="sec-num">02 / Download</div>
+      <h2>SVG, PNG, every size. <em>Take what you need.</em></h2>
+      <div class="note">Right-click to save individual files. SVG is preferred for the web; PNG for native apps, email, and any context where a font isn't reliably available.</div>
+    </div>
+
+    <h3 style="font-family: var(--pv-font-sans); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--pv-ink-60); font-weight: 700; margin-bottom: 16px;">App icons · PNG</h3>
+    <div class="lib" style="margin-bottom: 32px;">
+
+      <div class="asset">
+        <div class="stage gradient"><img src="icons/icon-gradient-512.png" alt="" style="width:128px; height:128px; border-radius:28px;"></div>
+        <div class="meta">
+          <span class="name">Gradient</span>
+          <span class="tag">primary</span>
+          <span class="desc">App icon canonical · splash · iOS · Android · web.</span>
+          <span class="download">
+            <a href="icons/icon-gradient-1024.png" download>1024</a>
+            <a href="icons/icon-gradient-512.png" download>512</a>
+            <a href="icons/icon-gradient-256.png" download>256</a>
+            <a href="icons/icon-gradient-192.png" download>192</a>
+            <a href="icons/icon-gradient-180.png" download>180</a>
+            <a href="icons/icon-gradient-128.png" download>128</a>
+          </span>
+        </div>
+      </div>
+
+      <div class="asset">
+        <div class="stage purple"><img src="icons/icon-purple-512.png" alt="" style="width:128px; height:128px; border-radius:28px;"></div>
+        <div class="meta">
+          <span class="name">Purple</span>
+          <span class="tag">flat</span>
+          <span class="desc">Default flat-surface icon · favicons · small UI.</span>
+          <span class="download">
+            <a href="icons/icon-purple-1024.png" download>1024</a>
+            <a href="icons/icon-purple-512.png" download>512</a>
+            <a href="icons/icon-purple-256.png" download>256</a>
+            <a href="icons/icon-purple-128.png" download>128</a>
+          </span>
+        </div>
+      </div>
+
+      <div class="asset">
+        <div class="stage ink"><img src="icons/icon-ink-512.png" alt="" style="width:128px; height:128px; border-radius:28px;"></div>
+        <div class="meta">
+          <span class="name">Ink</span>
+          <span class="tag">press · dark</span>
+          <span class="desc">Dark-surface icon · press · mono prints.</span>
+          <span class="download">
+            <a href="icons/icon-ink-512.png" download>512</a>
+            <a href="icons/icon-ink-256.png" download>256</a>
+            <a href="icons/icon-ink-128.png" download>128</a>
+          </span>
+        </div>
+      </div>
+
+      <div class="asset">
+        <div class="stage paper"><img src="icons/icon-paper-512.png" alt="" style="width:128px; height:128px; border-radius:28px; border: 0.5px solid var(--pv-border);"></div>
+        <div class="meta">
+          <span class="name">Paper</span>
+          <span class="tag">inverse</span>
+          <span class="desc">Light-surface icon · use with hairline border.</span>
+          <span class="download">
+            <a href="icons/icon-paper-512.png" download>512</a>
+            <a href="icons/icon-paper-256.png" download>256</a>
+            <a href="icons/icon-paper-128.png" download>128</a>
+          </span>
+        </div>
+      </div>
+
+    </div>
+
+    <h3 style="font-family: var(--pv-font-sans); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--pv-ink-60); font-weight: 700; margin-bottom: 16px;">Special purpose · PNG</h3>
+    <div class="lib" style="margin-bottom: 32px;">
+
+      <div class="asset">
+        <div class="stage gradient"><img src="icons/icon-maskable-512.png" alt="" style="width:128px; height:128px;"></div>
+        <div class="meta">
+          <span class="name">PWA maskable</span>
+          <span class="tag">pwa</span>
+          <span class="desc">12% safe-area padding for adaptive icons.</span>
+          <span class="download">
+            <a href="icons/icon-maskable-1024.png" download>1024</a>
+            <a href="icons/icon-maskable-512.png" download>512</a>
+          </span>
+        </div>
+      </div>
+
+      <div class="asset">
+        <div class="stage gradient"><img src="icons/apple-touch-icon.png" alt="" style="width:90px; height:90px; border-radius:20px;"></div>
+        <div class="meta">
+          <span class="name">apple-touch-icon</span>
+          <span class="tag">ios</span>
+          <span class="desc">180×180 PNG for iOS home-screen install.</span>
+          <span class="download">
+            <a href="icons/apple-touch-icon.png" download>180</a>
+          </span>
+        </div>
+      </div>
+
+      <div class="asset">
+        <div class="stage purple"><img src="icons/favicon-32.png" alt="" style="width:64px; height:64px; image-rendering: pixelated;"></div>
+        <div class="meta">
+          <span class="name">Favicon</span>
+          <span class="tag">browser tab</span>
+          <span class="desc">Purple background reads better than gradient at &le;32px.</span>
+          <span class="download">
+            <a href="icons/favicon-32.png" download>32</a>
+            <a href="icons/favicon-16.png" download>16</a>
+          </span>
+        </div>
+      </div>
+
+      <div class="asset">
+        <div class="stage paper">
+          <img src="icons/mark-ink-1024.png" alt="" style="width:120px; height:120px;">
+        </div>
+        <div class="meta">
+          <span class="name">Mark only</span>
+          <span class="tag">photography</span>
+          <span class="desc">Transparent PNG · drop onto photos or non-brand colors.</span>
+          <span class="download">
+            <a href="icons/mark-ink-1024.png" download>ink</a>
+            <a href="icons/mark-white-1024.png" download>white</a>
+          </span>
+        </div>
+      </div>
+
+    </div>
+
+    <h3 style="font-family: var(--pv-font-sans); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--pv-ink-60); font-weight: 700; margin-bottom: 16px;">Vector · SVG</h3>
+    <div class="lib">
+
+      <div class="asset">
+        <div class="stage gradient"><img src="svg/pivota-mark-on-gradient.svg" alt="" style="width:128px; height:128px;" onerror="this.src='icons/icon-gradient-256.png'"></div>
+        <div class="meta">
+          <span class="name">Mark · gradient</span>
+          <span class="tag">svg</span>
+          <span class="desc">Production SVG — requires Fredoka loaded in the host page (or use the PNG above).</span>
+          <span class="download"><a href="svg/pivota-mark-on-gradient.svg" download>pivota-mark-on-gradient.svg</a></span>
+        </div>
+      </div>
+
+      <div class="asset">
+        <div class="stage paper"><img src="icons/mark-ink-1024.png" alt="" style="width:128px; height:128px;"></div>
+        <div class="meta">
+          <span class="name">Mark · transparent</span>
+          <span class="tag">png/svg</span>
+          <span class="desc">Drop onto photography or any non-brand surface. PNG renders identically without Fredoka.</span>
+          <span class="download"><a href="svg/pivota-mark.svg" download>pivota-mark.svg</a></span>
+        </div>
+      </div>
+
+      <div class="asset span-2">
+        <div class="stage paper" style="padding: 0 40px;">
+          <span class="pv-wordmark pv-wordmark--xl">Pivota</span>
+        </div>
+        <div class="meta">
+          <span class="name">Wordmark</span>
+          <span class="tag">svg</span>
+          <span class="desc">"Pivota." in Fredoka 600, with brand-purple period.</span>
+          <span class="download"><a href="svg/pivota-wordmark.svg" download>pivota-wordmark.svg</a></span>
+        </div>
+      </div>
+
+      <div class="asset span-2">
+        <div class="stage paper" style="padding: 0 40px;">
+          <span class="pv-lockup">
+            <span class="pv-logo pv-logo--gradient" style="--pv-logo-size: 88px;"></span>
+            <span class="pv-wordmark pv-wordmark--lg">Pivota</span>
+          </span>
+        </div>
+        <div class="meta">
+          <span class="name">Lockup · horizontal</span>
+          <span class="tag">svg</span>
+          <span class="desc">Icon + wordmark, 480×140 viewBox.</span>
+          <span class="download"><a href="svg/pivota-lockup-horizontal.svg" download>pivota-lockup-horizontal.svg</a></span>
+        </div>
+      </div>
+
+      <div class="asset span-2">
+        <div class="stage paper"><span class="pv-logo pv-logo--purple" style="--pv-logo-size: 64px;"></span></div>
+        <div class="meta">
+          <span class="name">Favicon · SVG</span>
+          <span class="tag">single-file favicon</span>
+          <span class="desc">One SVG that works at every size; scales without aliasing.</span>
+          <span class="download"><a href="svg/favicon.svg" download>favicon.svg</a></span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 03 — COLOR -->
+  <section id="color">
+    <div class="sec-head">
+      <div class="sec-num">03 / Color</div>
+      <h2>Brand palette. <em>No surprises.</em></h2>
+      <div class="note">Purple is the primary brand color. Coral, teal, gold, and tip are functional accents — never primary. Pink and cyan-purple gradients from prior deliveries are <strong>retired</strong>.</div>
+    </div>
+
+    <div class="colors">
+      <div class="swatch">
+        <div class="chip" style="background: var(--pv-primary);"></div>
+        <div class="info"><div class="role">Primary</div><div class="name">Pivota purple</div><div class="hex">#534AB7</div></div>
+      </div>
+      <div class="swatch">
+        <div class="chip" style="background: var(--pv-primary-50);"></div>
+        <div class="info"><div class="role">Primary · tint</div><div class="name">Soft purple</div><div class="hex">#EEEDFE</div></div>
+      </div>
+      <div class="swatch">
+        <div class="chip" style="background: var(--pv-coral);"></div>
+        <div class="info"><div class="role">Alert · cart</div><div class="name">Coral</div><div class="hex">#D85A30</div></div>
+      </div>
+      <div class="swatch">
+        <div class="chip" style="background: var(--pv-teal);"></div>
+        <div class="info"><div class="role">Success · PDP</div><div class="name">Teal</div><div class="hex">#1D9E75</div></div>
+      </div>
+      <div class="swatch">
+        <div class="chip" style="background: var(--pv-gold);"></div>
+        <div class="info"><div class="role">Star · rating</div><div class="name">Gold</div><div class="hex">#EF9F27</div></div>
+      </div>
+      <div class="swatch">
+        <div class="chip" style="background: var(--pv-ink);"></div>
+        <div class="info"><div class="role">Body text</div><div class="name">Ink</div><div class="hex">#2C2C2A</div></div>
+      </div>
+      <div class="swatch">
+        <div class="chip" style="background: var(--pv-paper); border: 0.5px solid var(--pv-border);"></div>
+        <div class="info"><div class="role">Page bg</div><div class="name">Paper</div><div class="hex">#FAFAF8</div></div>
+      </div>
+      <div class="swatch" style="grid-column: span 2;">
+        <div class="chip" style="background: var(--pv-gradient-primary);"></div>
+        <div class="info"><div class="role">Hero · primary gradient</div><div class="name">Brand gradient</div><div class="hex">#534AB7 → #7B6FD4 → #1D9E75</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 04 — TYPE -->
+  <section id="type">
+    <div class="sec-head">
+      <div class="sec-num">04 / Type</div>
+      <h2>Three families. <em>Three jobs.</em></h2>
+      <div class="note">Fredoka for the logo. Inter for the product. Cormorant for the editorial moments. Don't mix the jobs.</div>
+    </div>
+
+    <div class="type-stack">
+
+      <div class="type-row">
+        <div class="role">Brand</div>
+        <div class="sample" style="font-family: var(--pv-font-brand); font-weight: 600; font-size: 88px; letter-spacing: -0.02em; color: var(--pv-ink);">Pivota<span style="color: var(--pv-primary);">.</span></div>
+        <div class="spec">
+          font-family: Fredoka<br>
+          weight: 600 (SemiBold)<br>
+          tracking: −0.02em<br>
+          role: <strong style="color: var(--pv-ink);">logo + wordmark only</strong><br>
+          never: body, UI, headlines
+        </div>
+      </div>
+
+      <div class="type-row">
+        <div class="role">Editorial</div>
+        <div class="sample" style="font-family: var(--pv-font-serif); font-weight: 500; font-size: 64px; line-height: 0.95; letter-spacing: -0.02em; color: var(--pv-ink);">A moment of <em>pause</em>.</div>
+        <div class="spec">
+          font-family: Cormorant Garamond<br>
+          weight: 400, 500, 600, 700<br>
+          italic available<br>
+          role: hero headlines, magazine sections, long-form intros
+        </div>
+      </div>
+
+      <div class="type-row">
+        <div class="role">Product</div>
+        <div class="sample">
+          <div style="font-family: var(--pv-font-sans); font-weight: 600; font-size: 24px; letter-spacing: -0.015em; color: var(--pv-ink);">Section heading</div>
+          <div style="font-family: var(--pv-font-sans); font-weight: 400; font-size: 13px; line-height: 1.55; color: var(--pv-ink); margin-top: 4px; max-width: 48ch;">Pivota body copy sits at 13&nbsp;px. The system is dense, intentionally — 13, not 14. Long-form pages may step up to 14 or 16.</div>
+        </div>
+        <div class="spec">
+          font-family: Inter<br>
+          weight: 300, 400, 500, 600, 700, 800, 900<br>
+          role: <strong style="color: var(--pv-ink);">all product UI</strong>, headings, body, labels
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 05 — USAGE -->
+  <section id="usage">
+    <div class="sec-head">
+      <div class="sec-num">05 / Usage</div>
+      <h2>Drop-in. <em>No re-implementation.</em></h2>
+      <div class="note">Link the stylesheet, use the classes. Don't re-build the logo with your own SVG paths — the CSS file ships the mark as a single class.</div>
+    </div>
+
+    <div class="usage-grid">
+
+      <div class="use">
+        <div class="ex-label">Lockup · navigation</div>
+        <div class="ex">
+          <span class="pv-logo pv-logo--gradient pv-logo--md"></span>
+          <span class="pv-wordmark pv-wordmark--sm">Pivota</span>
+        </div>
+        <div><code class="inline">.pv-logo + .pv-wordmark</code></div>
+      </div>
+
+      <div class="use">
+        <div class="ex-label">Avatar · chat</div>
+        <div class="ex">
+          <span class="pv-logo pv-logo--purple pv-logo--sm"></span>
+          <span class="pv-body" style="font-size: 13px;">Pivota AI responded to your draft</span>
+        </div>
+        <div><code class="inline">.pv-logo--purple.pv-logo--sm</code></div>
+      </div>
+
+      <div class="use">
+        <div class="ex-label">App icon · hero</div>
+        <div class="ex" style="justify-content: center; padding: 40px;">
+          <span class="pv-logo pv-logo--gradient pv-logo--2xl"></span>
+        </div>
+        <div><code class="inline">.pv-logo--gradient.pv-logo--2xl</code></div>
+      </div>
+
+      <div class="use">
+        <div class="ex-label">Stacked lockup · marketing</div>
+        <div class="ex pv-lockup pv-lockup--stacked" style="justify-content: center; padding: 32px;">
+          <span class="pv-logo pv-logo--gradient pv-logo--xl"></span>
+          <span class="pv-wordmark pv-wordmark--md">Pivota</span>
+        </div>
+        <div><code class="inline">.pv-lockup--stacked</code></div>
+      </div>
+
+    </div>
+
+    <pre style="margin-top: 20px;"><code><span class="com">&lt;!-- In your &lt;head&gt; --&gt;</span>
+<span class="tag">&lt;link</span> <span class="atr">rel</span>=<span class="val">"stylesheet"</span> <span class="atr">href</span>=<span class="val">"/pivota-brand/pivota-brand.css"</span><span class="tag">&gt;</span>
+<span class="tag">&lt;link</span> <span class="atr">rel</span>=<span class="val">"icon"</span> <span class="atr">type</span>=<span class="val">"image/svg+xml"</span> <span class="atr">href</span>=<span class="val">"/pivota-brand/svg/favicon.svg"</span><span class="tag">&gt;</span>
+<span class="tag">&lt;link</span> <span class="atr">rel</span>=<span class="val">"apple-touch-icon"</span> <span class="atr">href</span>=<span class="val">"/pivota-brand/icons/apple-touch-icon.png"</span><span class="tag">&gt;</span>
+
+<span class="com">&lt;!-- Anywhere in your &lt;body&gt; --&gt;</span>
+<span class="tag">&lt;a</span> <span class="atr">href</span>=<span class="val">"/"</span> <span class="atr">class</span>=<span class="val">"pv-lockup"</span> <span class="atr">aria-label</span>=<span class="val">"Pivota home"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;span</span> <span class="atr">class</span>=<span class="val">"pv-logo pv-logo--gradient pv-logo--md"</span><span class="tag">&gt;&lt;/span&gt;</span>
+  <span class="tag">&lt;span</span> <span class="atr">class</span>=<span class="val">"pv-wordmark pv-wordmark--md"</span><span class="tag">&gt;</span>Pivota<span class="tag">&lt;/span&gt;</span>
+<span class="tag">&lt;/a&gt;</span></code></pre>
+  </section>
+
+  <!-- 06 — DON'TS -->
+  <section id="donts">
+    <div class="sec-head">
+      <div class="sec-num">06 / Don't</div>
+      <h2>What breaks the system.</h2>
+      <div class="note">Common drift points — most logo mistakes come from improvising on the artwork. The mark is finished; leave it alone.</div>
+    </div>
+
+    <div class="donts">
+      <div class="dont">
+        <div class="stage"><span class="pv-logo pv-logo--ink" style="--pv-logo-size: 120px; transform: scaleY(0.7);"></span></div>
+        <div class="label"><div class="tag">Don't</div><div class="desc">Stretch, squash, or skew.</div></div>
+      </div>
+      <div class="dont">
+        <div class="stage" style="background: linear-gradient(135deg, #ff7adf, #b8e9ff);"><span class="pv-logo pv-logo--mark-ink" style="--pv-logo-size: 120px;"></span></div>
+        <div class="label"><div class="tag">Don't</div><div class="desc">Use retired pink or cyan-purple gradients.</div></div>
+      </div>
+      <div class="dont">
+        <div class="stage" style="background: var(--pv-primary);"><span class="pv-logo" style="--pv-logo-size: 120px; --pv-logo-src: url('icons/mark-white-1024.png'); filter: hue-rotate(140deg) saturate(0.7);"></span></div>
+        <div class="label"><div class="tag">Don't</div><div class="desc">Recolor outside the four worlds.</div></div>
+      </div>
+      <div class="dont">
+        <div class="stage"><span class="pv-logo pv-logo--ink" style="--pv-logo-size: 120px; transform: rotate(-18deg);"></span></div>
+        <div class="label"><div class="tag">Don't</div><div class="desc">Tilt or rotate the mark.</div></div>
+      </div>
+      <div class="dont">
+        <div class="stage"><div style="font-family: 'Pacifico', cursive; font-size: 80px; color: var(--pv-ink); line-height: 1;">p<span style="color: var(--pv-primary)">.</span></div></div>
+        <div class="label"><div class="tag">Don't</div><div class="desc">Use the retired Pacifico cursive.</div></div>
+      </div>
+      <div class="dont">
+        <div class="stage"><div class="pv-lockup" style="gap: 4px;"><span class="pv-logo pv-logo--gradient" style="--pv-logo-size: 64px;"></span><span class="pv-wordmark pv-wordmark--sm">Pivota</span></div></div>
+        <div class="label"><div class="tag">Don't</div><div class="desc">Crash mark + wordmark too tight.</div></div>
+      </div>
+      <div class="dont">
+        <div class="stage"><span class="pv-logo pv-logo--gradient" style="--pv-logo-size: 120px; filter: drop-shadow(2px 4px 0 var(--pv-ink));"></span></div>
+        <div class="label"><div class="tag">Don't</div><div class="desc">Add drop shadows or effects.</div></div>
+      </div>
+      <div class="dont">
+        <div class="stage" style="background: var(--pv-paper);"><div style="font-family: 'Times New Roman', serif; font-size: 92px; font-weight: 700; color: var(--pv-ink); line-height: 1;">p<span style="color: var(--pv-primary)">.</span></div></div>
+        <div class="label"><div class="tag">Don't</div><div class="desc">Substitute a system or generic font.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COLOPHON -->
+  <footer class="colophon">
+    <div>
+      <b>About this kit</b>
+      <p>The Pivota Brand Kit v2.0 supersedes all prior logo and color deliveries. Hand <code style="font-family:var(--pv-font-mono); font-size:11px;">pivota-brand/</code> (with its <code style="font-family:var(--pv-font-mono); font-size:11px;">CLAUDE.md</code>) to any agent or developer to roll the system into a new surface.</p>
+    </div>
+    <div>
+      <b>Files</b>
+      <p><code style="font-family:var(--pv-font-mono); font-size:11px;">pivota-brand.css</code><br><code style="font-family:var(--pv-font-mono); font-size:11px;">svg/*.svg</code><br><code style="font-family:var(--pv-font-mono); font-size:11px;">icons/*.png</code></p>
+    </div>
+    <div>
+      <b>Version</b>
+      <p>v2.0 · May 19 2026<br>Fredoka SemiBold locked as brand typeface.</p>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>

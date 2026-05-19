@@ -11,7 +11,11 @@ export default function HomePage() {
 
       <div className="mb-6 flex w-full max-w-3xl items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold">Pivota Creator Agent UI</h1>
+          <h1 className="flex items-center gap-2">
+            <span className="pv-logo pv-logo--gradient pv-logo--sm" aria-hidden="true" />
+            <span className="pv-wordmark pv-wordmark--sm">Pivota</span>
+            <span className="text-sm font-semibold text-slate-300">Creator Agent UI</span>
+          </h1>
           <p className="mt-1 text-sm text-slate-400">
             Each creator has a dedicated shopping agent experience.
           </p>

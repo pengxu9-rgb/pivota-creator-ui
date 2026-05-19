@@ -65,3 +65,7 @@ Direct checkout invoke flags:
   `true` = browser checkout ops try direct invoke first with `X-Checkout-Token`, then auto-fallback to creator checkout proxy.
 - `NEXT_PUBLIC_DIRECT_CHECKOUT_INVOKE_URL`  
   Direct invoke URL (default: `https://pivota-agent-production.up.railway.app/agent/shop/v1/invoke`).
+
+## Brand System
+
+This app uses Pivota Brand Kit v2.0 from `public/pivota-brand/`. Treat `public/pivota-brand/CLAUDE.md` as the local source of truth for logo, favicon, color, and brand-token usage.
