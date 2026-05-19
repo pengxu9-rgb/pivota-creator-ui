@@ -1,0 +1,223 @@
+/* ─────────────────────────────────────────────────────────────────────
+   pivota-brand.css
+   Pivota brand tokens + logo system — drop-in stylesheet.
+   v2.0 · May 19 2026 · supersedes prior logo/color deliveries.
+
+   Usage:
+     <link rel="stylesheet" href="pivota-brand.css">
+     <span class="pv-logo pv-logo--gradient pv-logo--lg" aria-label="Pivota"></span>
+   ───────────────────────────────────────────────────────────────────── */
+
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Fredoka:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap");
+
+:root {
+  /* ─── Brand · Purple (PRIMARY) ─────────────────────────────────── */
+  --pv-primary:        #534AB7;
+  --pv-primary-50:     #EEEDFE;
+  --pv-primary-800:    #3C3489;
+  --pv-primary-fg:     #FFFFFF;
+
+  /* ─── Brand · Coral · Teal · Gold ─────────────────────────────── */
+  --pv-coral:          #D85A30;
+  --pv-coral-bg:       #FAECE7;
+  --pv-coral-icon:     #993C1D;
+  --pv-teal:           #1D9E75;
+  --pv-teal-bg:        #E1F5EE;
+  --pv-teal-icon:      #0F6E56;
+  --pv-gold:           #EF9F27;
+  --pv-tip-bg:         #FAEEDA;
+  --pv-tip-fg:         #633806;
+
+  /* ─── Neutrals ─────────────────────────────────────────────────── */
+  --pv-ink:            #2C2C2A;
+  --pv-ink-85:         rgba(44,44,42,0.85);
+  --pv-ink-60:         rgba(44,44,42,0.60);
+  --pv-ink-45:         rgba(44,44,42,0.45);
+  --pv-ink-25:         rgba(44,44,42,0.25);
+  --pv-paper:          #FAFAF8;
+  --pv-paper-muted:    #F4F4F2;
+  --pv-surface:        #FFFFFF;
+
+  /* ─── Hairline borders (0.5px style, two strengths) ────────────── */
+  --pv-border:         rgba(44,44,42,0.08);
+  --pv-border-strong:  rgba(44,44,42,0.12);
+
+  /* ─── Radius ───────────────────────────────────────────────────── */
+  --pv-radius-sm:      6px;
+  --pv-radius-md:      10px;
+  --pv-radius-lg:      16px;
+  --pv-radius-pill:    999px;
+  --pv-radius-icon:    0.22;          /* icon corner = side × this */
+
+  /* ─── Elevation (no dramatic shadows) ──────────────────────────── */
+  --pv-shadow-hairline: 0 0 0 0.5px var(--pv-border);
+  --pv-shadow-sm:       0 1px 2px rgba(20,10,40,0.04), 0 0 0 0.5px var(--pv-border);
+  --pv-shadow-md:       0 2px 8px rgba(20,10,40,0.06), 0 0 0 0.5px var(--pv-border);
+  --pv-shadow-pop:      0 10px 30px rgba(20,10,40,0.10), 0 0 0 0.5px var(--pv-border);
+  --pv-shadow-glow:     0 0 20px rgba(83,74,183,0.15);
+
+  /* ─── Gradients ────────────────────────────────────────────────── */
+  --pv-gradient-primary: linear-gradient(135deg, #534AB7 0%, #7B6FD4 50%, #1D9E75 100%);
+  /* NOTE: --p-gradient-logo (pink) from v1 is RETIRED. Do not use. */
+
+  /* ─── Type families ────────────────────────────────────────────── */
+  --pv-font-brand:  "Fredoka", -apple-system, BlinkMacSystemFont, system-ui, sans-serif; /* logo + wordmark only */
+  --pv-font-sans:   "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;   /* product UI */
+  --pv-font-serif:  "Cormorant Garamond", Georgia, "Times New Roman", serif;             /* editorial display */
+  --pv-font-mono:   ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+
+  /* ─── Type scale (base 16px) ───────────────────────────────────── */
+  --pv-text-2xs:    10px;
+  --pv-text-xs:     11px;
+  --pv-text-sm:     12px;
+  --pv-text-base:   13px;
+  --pv-text-md:     14px;
+  --pv-text-lg:     16px;
+  --pv-text-xl:     20px;
+  --pv-text-2xl:    24px;
+  --pv-text-3xl:    32px;
+  --pv-text-4xl:    44px;
+  --pv-text-5xl:    64px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   PDP scope — Beauty PDP swaps primary palette to teal + tighter radius.
+   Apply on the page root: <body class="pv-pdp">.
+   ───────────────────────────────────────────────────────────────────── */
+.pv-pdp {
+  --pv-primary:       #1A8E70;
+  --pv-primary-50:    #EAF7F3;
+  --pv-primary-800:   #0B5B4B;
+  --pv-radius-lg:     8px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   THE LOGO
+   The `.pv-logo` class renders the production PNG icon as a background.
+   We use PNG (not inline SVG or CSS mask) because Fredoka can't be loaded
+   inside an SVG mask context — the rasterized icons are font-independent
+   and render identically everywhere.
+   ───────────────────────────────────────────────────────────────────── */
+
+.pv-logo {
+  --pv-logo-size: 32px;
+  --pv-logo-src: url("icons/icon-gradient-256.png");
+  display: inline-block;
+  width: var(--pv-logo-size);
+  height: var(--pv-logo-size);
+  background-image: var(--pv-logo-src);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  flex-shrink: 0;
+  border-radius: 0; /* the PNG already has its own corner radius */
+}
+
+/* Variants — swap the icon source. */
+.pv-logo--gradient    { --pv-logo-src: url("icons/icon-gradient-256.png"); }
+.pv-logo--purple      { --pv-logo-src: url("icons/icon-purple-256.png"); }
+.pv-logo--ink         { --pv-logo-src: url("icons/icon-ink-256.png"); }
+.pv-logo--paper       { --pv-logo-src: url("icons/icon-paper-256.png"); }
+.pv-logo--mark-ink    { --pv-logo-src: url("icons/mark-ink-1024.png"); }
+.pv-logo--mark-white  { --pv-logo-src: url("icons/mark-white-1024.png"); }
+
+/* Sizes */
+.pv-logo--xs { --pv-logo-size: 16px; }
+.pv-logo--sm { --pv-logo-size: 24px; }
+.pv-logo--md { --pv-logo-size: 32px; }
+.pv-logo--lg { --pv-logo-size: 48px; }
+.pv-logo--xl { --pv-logo-size: 64px; }
+.pv-logo--2xl { --pv-logo-size: 96px; }
+.pv-logo--hero { --pv-logo-size: 160px; }
+
+/* Wordmark — Fredoka 600 with brand-purple period. */
+.pv-wordmark {
+  font-family: var(--pv-font-brand);
+  font-weight: 600;
+  font-size: 32px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--pv-ink);
+  white-space: nowrap;
+  display: inline-block;
+}
+.pv-wordmark::after {
+  content: ".";
+  color: var(--pv-primary);
+}
+.pv-wordmark--sm { font-size: 20px; }
+.pv-wordmark--md { font-size: 32px; }
+.pv-wordmark--lg { font-size: 48px; }
+.pv-wordmark--xl { font-size: 72px; }
+
+/* Horizontal lockup — flex row, gap scales with wordmark size. */
+.pv-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+.pv-lockup--stacked {
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Semantic typography
+   ───────────────────────────────────────────────────────────────────── */
+.pv-display {
+  font-family: var(--pv-font-serif);
+  font-weight: 500;
+  font-size: var(--pv-text-4xl);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--pv-ink);
+}
+.pv-display-sm {
+  font-family: var(--pv-font-serif);
+  font-weight: 500;
+  font-size: var(--pv-text-3xl);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  color: var(--pv-ink);
+}
+.pv-h1 { font-family: var(--pv-font-sans); font-weight: 600; font-size: var(--pv-text-2xl); line-height: 1.2;  letter-spacing: -0.015em; color: var(--pv-ink); }
+.pv-h2 { font-family: var(--pv-font-sans); font-weight: 600; font-size: var(--pv-text-xl);  line-height: 1.25; letter-spacing: -0.01em;  color: var(--pv-ink); }
+.pv-h3 { font-family: var(--pv-font-sans); font-weight: 600; font-size: var(--pv-text-lg);  line-height: 1.3;                            color: var(--pv-ink); }
+.pv-body  { font-family: var(--pv-font-sans); font-weight: 400; font-size: var(--pv-text-base); line-height: 1.55; color: var(--pv-ink); }
+.pv-body-sm { font-family: var(--pv-font-sans); font-weight: 400; font-size: var(--pv-text-sm); line-height: 1.5; color: var(--pv-ink-85); }
+.pv-eyebrow {
+  font-family: var(--pv-font-sans); font-weight: 600;
+  font-size: var(--pv-text-xs);
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--pv-ink-60);
+}
+.pv-mono { font-family: var(--pv-font-mono); font-size: var(--pv-text-sm); color: var(--pv-ink-85); }
+
+/* ─────────────────────────────────────────────────────────────────────
+   Common surface utilities
+   ───────────────────────────────────────────────────────────────────── */
+.pv-card {
+  background: var(--pv-surface);
+  border-radius: var(--pv-radius-lg);
+  box-shadow: var(--pv-shadow-sm);
+}
+.pv-pill {
+  border-radius: var(--pv-radius-pill);
+  padding: 6px 12px;
+  font-size: var(--pv-text-xs);
+  font-weight: 500;
+  border: 0.5px solid var(--pv-border-strong);
+  background: var(--pv-surface);
+  color: var(--pv-ink);
+}
+.pv-status-online {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: var(--pv-text-2xs);
+  color: var(--pv-teal);
+  font-weight: 500;
+}
+.pv-status-online::before {
+  content: ""; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--pv-teal); display: inline-block;
+}

@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" role="img" aria-label="Pivota">
+  <defs>
+    
+  </defs>
+  <rect x="0" y="0" width="100" height="100" rx="22" ry="22" fill="#534AB7"></rect>
+  <text x="36" y="78" text-anchor="middle" class="pivota-glyph">p</text>
+  <circle cx="80" cy="72" r="8.5" fill="#FFFFFF"></circle>
+</svg>

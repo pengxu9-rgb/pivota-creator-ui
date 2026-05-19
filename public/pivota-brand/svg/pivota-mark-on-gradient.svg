@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" role="img" aria-label="Pivota">
+  <defs>
+    <linearGradient id="pv-grad" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#534AB7"></stop>
+      <stop offset="50%" stop-color="#7B6FD4"></stop>
+      <stop offset="100%" stop-color="#1D9E75"></stop>
+    </linearGradient>
+    
+  </defs>
+  <rect x="0" y="0" width="100" height="100" rx="22" ry="22" fill="url(#pv-grad)"></rect>
+  <text x="36" y="78" text-anchor="middle" class="pivota-glyph">p</text>
+  <circle cx="80" cy="72" r="8.5" fill="#FFFFFF"></circle>
+</svg>
