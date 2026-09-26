@@ -121,7 +121,9 @@ jobs:
         run: |
           for url in https://creator.pivota.cc/; do
             for i in 1 2 3; do
-              code=$(curl -s -o /dev/null -w '%{http_code}' "$url")
+              # `|| code=000`: under bash -e a curl CONNECTION failure (a dropped connection)
+              # aborted the step on the first try instead of retrying.
+              code=$(curl -s -o /dev/null -w '%{http_code}' "$url") || code=000
               [ "$code" = 200 ] && break; sleep 10
             done
             echo "${url} -> ${code}"; [ "$code" = 200 ] || exit 1
