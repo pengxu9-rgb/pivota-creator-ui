@@ -6,6 +6,8 @@ const __dirname = path.dirname(__filename);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Cloud Run: self-contained server bundle (.next/standalone/server.js)
+  output: "standalone",
   reactStrictMode: true,
   outputFileTracingRoot: __dirname,
   async rewrites() {
@@ -16,21 +18,21 @@ const nextConfig = {
       {
         source: "/accounts/:path*",
         destination:
-          "https://web-production-fedb.up.railway.app/accounts/:path*",
+          "https://api.pivota.cc/accounts/:path*",
       },
       // Proxy UGC endpoints (reviews/questions) as first-party too.
       {
         source: "/buyer/reviews/v1/:path*",
         destination:
-          "https://web-production-fedb.up.railway.app/buyer/reviews/v1/:path*",
+          "https://api.pivota.cc/buyer/reviews/v1/:path*",
       },
       {
         source: "/questions",
-        destination: "https://web-production-fedb.up.railway.app/questions",
+        destination: "https://api.pivota.cc/questions",
       },
       {
         source: "/questions/:path*",
-        destination: "https://web-production-fedb.up.railway.app/questions/:path*",
+        destination: "https://api.pivota.cc/questions/:path*",
       },
     ];
   },

@@ -1,0 +1,21 @@
+# Hand-run build of the creator-ui image, for when the deploy workflow cannot run:
+#   gcloud builds submit --project pivota-prod --region us-west1 \
+#     --config cloudbuild.yaml --substitutions=_TAG=$(git rev-parse --short HEAD) .
+# Build args default to the production values inside the Dockerfile; the normal path is
+# .github/workflows/deploy-cloud-run.yml, which builds the same Dockerfile on every merge.
+substitutions:
+  _SERVICE: creator-ui
+  _TAG: manual
+  _REGION: us-west1
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_SERVICE}:${_TAG}
+      - .
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_SERVICE}:${_TAG}
+options:
+  machineType: E2_HIGHCPU_8
+timeout: 1800s

@@ -1,0 +1,29 @@
+# Builds every PR (and main) with the production Dockerfile.
+#
+# Vercel used to build each PR; that Git integration was disconnected on 2026-09-26
+# when the site moved to Cloud Run. Without this, a PR that cannot build merges green
+# and only fails in deploy-cloud-run.yml, leaving every later merge stuck behind it.
+# The builder stage is the whole `next build`, with the same production build args.
+name: Build
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.event_name == 'push' && github.sha || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'push' }}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: docker build --target builder .
