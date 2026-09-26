@@ -1,0 +1,128 @@
+# Ship every commit on main to Cloud Run `creator-ui` (creator.pivota.cc).
+#
+# creator.pivota.cc moved off Vercel in September 2026, but only the TRAFFIC moved: each
+# release since has been a hand-run `gcloud builds submit` + `gcloud run deploy` from
+# a laptop, and the Vercel project that used to build every merge was disconnected
+# from Git on 2026-09-26. Without this workflow, merging ships nothing.
+#
+# A failed build or deploy leaves the previous revision serving: Cloud Run only shifts
+# traffic to a revision that became Ready. `build.yml` builds every PR first.
+#
+# Identity: Workload Identity Federation provider `github-frontends` (repository ids
+# of the migrated frontends, refs/heads/main only) -> sa-creator-ui-deploy, which can
+# push to one Artifact Registry repo and deploy this one Cloud Run service.
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches: [main]
+  # Manual redeploy / ROLLBACK of any commit already on main (full or short sha).
+  # A rollback lasts only until the next push to main, which deploys main again; to
+  # hold one, revert the bad commit on main. The concurrency group keeps ONE pending
+  # run, so a queued rollback can be replaced by a later push (and vice versa).
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: 'Commit on main to deploy (full or short sha). Empty = the tip of main.'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  id-token: write   # mints the OIDC token WIF exchanges
+
+# Two deploys racing can leave traffic on the older image. Queue, never cancel mid-roll.
+concurrency:
+  group: deploy-creator-ui
+  cancel-in-progress: false
+
+env:
+  PROJECT: pivota-prod
+  REGION: us-west1
+  SERVICE: creator-ui
+  REPO: us-west1-docker.pkg.dev/pivota-prod/cloud-run-source-deploy/creator-ui
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      # Check out main in full, then move to the target. Passing a short sha as the
+      # checkout `ref` fails (actions/checkout treats non-40-hex refs as branch names).
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: meta
+        name: Resolve the commit to deploy (must be on main)
+        env:
+          WANT: ${{ inputs.sha || github.sha }}
+        run: |
+          sha=$(git rev-parse --verify --quiet "${WANT}^{commit}") \
+            || { echo "::error::${WANT} is not a commit in this repository"; exit 1; }
+          git merge-base --is-ancestor "$sha" origin/main \
+            || { echo "::error::${sha} is not on main"; exit 1; }
+          git checkout --quiet --detach "$sha"
+          echo "sha=${sha}" >> "$GITHUB_OUTPUT"
+          echo "tag=$(git rev-parse --short=7 "$sha")" >> "$GITHUB_OUTPUT"
+
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/371394967380/locations/global/workloadIdentityPools/github-actions/providers/github-frontends
+          service_account: sa-creator-ui-deploy@pivota-prod.iam.gserviceaccount.com
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      # A tag is a commit, so an image already pushed for it (a rollback, a re-run) is
+      # redeployed as-is instead of rebuilt. Build args default to the production
+      # values inside the Dockerfile.
+      - name: Build and push
+        env:
+          TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          if gcloud artifacts docker images describe "${REPO}:${TAG}" >/dev/null 2>&1; then
+            echo "${REPO}:${TAG} already exists; reusing it"; exit 0
+          fi
+          gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+          docker build -t "${REPO}:${TAG}" .
+          docker push "${REPO}:${TAG}"
+
+      - name: Deploy
+        env:
+          TAG: ${{ steps.meta.outputs.tag }}
+        # --image only: env vars, secrets, scaling and ingress stay as configured on the
+        # service (they are not in this repo).
+        run: |
+          gcloud run deploy "$SERVICE" --project "$PROJECT" --region "$REGION" \
+            --image "${REPO}:${TAG}" --quiet
+
+      # Proves the service is SERVING this image, not merely that a revision exists.
+      - name: Verify Cloud Run serves this image
+        env:
+          TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          read -r ready created < <(gcloud run services describe "$SERVICE" --project "$PROJECT" \
+            --region "$REGION" --format='value(status.latestReadyRevisionName,status.latestCreatedRevisionName)')
+          [ "$ready" = "$created" ] || { echo "::error::latest revision ${created} is not Ready (serving ${ready})"; exit 1; }
+          # A revision records the image by DIGEST (REPO@sha256:...), not by the tag it was
+          # deployed with, so resolve the tag and compare digests (tags are mutable anyway).
+          want="${REPO}@$(gcloud artifacts docker images describe "${REPO}:${TAG}" \
+            --format='value(image_summary.digest)')"
+          image=$(gcloud run revisions describe "$ready" --project "$PROJECT" --region "$REGION" \
+            --format='value(spec.containers[0].image)')
+          [ "$image" = "$want" ] || { echo "::error::${ready} runs ${image}, want ${want} (${TAG})"; exit 1; }
+          pct=$(gcloud run services describe "$SERVICE" --project "$PROJECT" --region "$REGION" \
+            --format=json | jq --arg r "$ready" '[.status.traffic[] | select(.revisionName == $r) | .percent] | add // 0')
+          [ "$pct" = 100 ] || { echo "::error::${ready} has ${pct}% of traffic, want 100"; exit 1; }
+          echo "${ready} runs ${image} at 100% of traffic"
+
+      # Through the public load balancer, as users reach it.
+      - name: Smoke-test the public hosts
+        run: |
+          for url in https://creator.pivota.cc/; do
+            for i in 1 2 3; do
+              code=$(curl -s -o /dev/null -w '%{http_code}' "$url")
+              [ "$code" = 200 ] && break; sleep 10
+            done
+            echo "${url} -> ${code}"; [ "$code" = 200 ] || exit 1
+          done
