@@ -1,0 +1,527 @@
+{
+  "schema": "pokemon.card-comparison.v1",
+  "status": "catalog_partial",
+  "left": {
+    "requested": {
+      "card_id": "ja:M6A:057/103:holo"
+    },
+    "status": "exact_record",
+    "matched_records": 1,
+    "records": [
+      {
+        "card_id": "ja:M6A:057/103:holo",
+        "language": "ja",
+        "set_code": "M6A",
+        "collector_number": "057/103",
+        "variant": "holo",
+        "name": "ミュウex",
+        "provenance": "tcgdex:a211f11f3ba57d56c65c5ac33be35b77d3280757:data-asia/M/M6a/057.ts:sha256:ba1d53a482f07c28c29e1cd95a06b400795c16fa1a300df843dfd40811b227cd",
+        "match_eligible": 1,
+        "media_availability": {
+          "schema": "pokemon.catalog-media-availability.v1",
+          "status": "current_source_scan_evidence",
+          "evidence_basis": "source_image_facts",
+          "reason": "current exact source evidence; live fetch, display rights and physical printing remain unverified",
+          "with_source_scans_eligible": true,
+          "source_scan_event_id": "source-image-fact:e2043a2c68b453285e358a3193092f61028897d83e9425dcb96d4c9c608024b5",
+          "warnings": [],
+          "inspection_tier": "two_image_model_families",
+          "current_endpoint": true,
+          "source_ref": "https://www.pokemon-card.com/card-search/details.php/card/50669",
+          "image_sha256": "c1f86c07ccd702dd9359a6dc591c7b39c4974f910458e6176ede9af162201d17",
+          "live_fetch_verified": false,
+          "display_allowed": false,
+          "physical_printing_verified": false
+        }
+      }
+    ],
+    "records_truncated": false,
+    "number_context": {
+      "printed_number": "057/103",
+      "full_number_key": "57/103",
+      "numerator_key": "57",
+      "denominator_key": "103",
+      "number_format": "numeric_fraction",
+      "catalog_number": "057/103",
+      "number_basis": "catalog_coordinate_only",
+      "printed_number_semantics": "legacy_catalog_coordinate_not_visual_evidence",
+      "number_scope_id": "ja:M6A",
+      "language": "ja",
+      "set_code": "M6A"
+    },
+    "observed_printed_numbers": [
+      {
+        "card_id": "ja:M6A:057/103:holo",
+        "evidence": {
+          "schema": "pokemon.number-reading-context.v1",
+          "event_id": "number-reading:49457f7ee0b6a4f404ccf0940969bc764576978b5b54998e19ddb8ee181b76da",
+          "inspection_tier": "two_image_model_families",
+          "current_endpoint": true,
+          "status": "catalog_text_observed",
+          "catalog_number": "057/103",
+          "observed_number_texts": [
+            "057/103",
+            "057/103 RR"
+          ],
+          "review_groups": [
+            {
+              "candidate_id": "inspect-0236",
+              "cohort_snapshot_sha256": "e2d9eed1ff342f45b5c200a77709fdd9388144ce32405e06e0655fe817abc090",
+              "reviews": [
+                {
+                  "actor": "astra:blind-source:lane-3",
+                  "image_sha256": "c1f86c07ccd702dd9359a6dc591c7b39c4974f910458e6176ede9af162201d17",
+                  "model_family": "openai",
+                  "model_version": "gpt-6-astra",
+                  "observed_name": "ミュウex",
+                  "observed_number_text": "057/103",
+                  "prior_verdicts_visible": false,
+                  "review_record_sha256": "91d7d5743d1f0a9da4288ad8822db3c141fc34e5d4a0ff1580faeed9b1f95de4",
+                  "reviewed_at": "2026-10-03T11:21:58.407701+00:00",
+                  "source_ref": "https://www.pokemon-card.com/card-search/details.php/card/50669"
+                },
+                {
+                  "actor": "vertex:gemini-3.8-flash:source-image-facts-v1",
+                  "image_sha256": "c1f86c07ccd702dd9359a6dc591c7b39c4974f910458e6176ede9af162201d17",
+                  "model_family": "google",
+                  "model_version": "gemini-3.8-flash",
+                  "observed_name": "ミュウex",
+                  "observed_number_text": "057/103 RR",
+                  "prior_verdicts_visible": false,
+                  "review_record_sha256": "ee59140ebe40242093fe97663dc28868ce26e0728f92103e2e91c30b0f2e4784",
+                  "reviewed_at": "2026-10-03T11:18:41.081608+00:00",
+                  "source_ref": "https://www.pokemon-card.com/card-search/details.php/card/50669"
+                }
+              ]
+            }
+          ],
+          "source_ref": "https://www.pokemon-card.com/card-search/details.php/card/50669",
+          "image_sha256": "c1f86c07ccd702dd9359a6dc591c7b39c4974f910458e6176ede9af162201d17",
+          "visible_text_agreement": true,
+          "printed_denominator_observed": true,
+          "source_coordinate_conflict": false,
+          "reading_rule": "legacy-v1",
+          "recorded_at": "2026-10-03T11:21:58.407701+00:00",
+          "review_reuse_disclosed": false,
+          "scope": "Exact source stock-image text only; no assignment to sibling labels or seller copies.",
+          "independent_accuracy_established": false,
+          "catalog_identity_confirmed": false,
+          "physical_printing_verified": false,
+          "price_comparable": false,
+          "automatic_offer_join_allowed": false,
+          "display_allowed": false
+        }
+      }
+    ],
+    "source_image_facts": [
+      {
+        "card_id": "ja:M6A:057/103:holo",
+        "evidence": {
+          "schema": "pokemon.source-image-fact-context.v1",
+          "event_id": "source-image-fact:e2043a2c68b453285e358a3193092f61028897d83e9425dcb96d4c9c608024b5",
+          "current_endpoint": true,
+          "source_notation": {
+            "schema": "pokemon.source-image-notation-context.v1",
+            "title_mechanic": "unconfirmed_or_other",
+            "base_title_catalog_correspondence": null,
+            "title_symbol_anchors_agree": true,
+            "number_layout": "single_or_unparsed",
+            "number_scope_candidates": [
+              {
+                "raw_text": "057/103",
+                "complete_fraction_candidates": []
+              },
+              {
+                "raw_text": "057/103 RR",
+                "complete_fraction_candidates": []
+              }
+            ],
+            "number_namespace_assignment_established": false,
+            "catalog_mechanic_binding_established": false,
+            "print_run_quantity_established": false,
+            "identity_qualification_changed": false,
+            "physical_printing_verified": false,
+            "price_comparable": false
+          },
+          "source_mechanic_binding": null,
+          "inspection_tier": "two_image_model_families",
+          "evidence_level": "advisory_with_review_context_disclosed",
+          "source_ref": "https://www.pokemon-card.com/card-search/details.php/card/50669",
+          "image_sha256": "c1f86c07ccd702dd9359a6dc591c7b39c4974f910458e6176ede9af162201d17",
+          "pinned_source_hp": 160,
+          "reviews": [
+            {
+              "actor": "astra:blind-source:lane-3",
+              "expected_catalog_context_visible": false,
+              "image_sha256": "c1f86c07ccd702dd9359a6dc591c7b39c4974f910458e6176ede9af162201d17",
+              "model_family": "openai",
+              "model_version": "gpt-6-astra",
+              "prior_verdicts_visible": false,
+              "reading": {
+                "hp": 160,
+                "hp_status": "visible",
+                "notes": "",
+                "observed_number_text": "057/103",
+                "title_furigana": null,
+                "title_symbols": [],
+                "title_text_parts": [
+                  "ミュウex"
+                ]
+              },
+              "review_record_sha256": "91d7d5743d1f0a9da4288ad8822db3c141fc34e5d4a0ff1580faeed9b1f95de4",
+              "reviewed_at": "2026-10-03T11:21:58.407701+00:00",
+              "source_ref": "https://www.pokemon-card.com/card-search/details.php/card/50669"
+            },
+            {
+              "actor": "vertex:gemini-3.8-flash:source-image-facts-v1",
+              "expected_catalog_context_visible": false,
+              "image_sha256": "c1f86c07ccd702dd9359a6dc591c7b39c4974f910458e6176ede9af162201d17",
+              "model_family": "google",
+              "model_version": "gemini-3.8-flash",
+              "prior_verdicts_visible": false,
+              "reading": {
+                "hp": 160,
+                "hp_status": "visible",
+                "notes": "Card features a Pikachu head emblem marked with '30' and a 2026 copyright notice.",
+                "observed_number_text": "057/103 RR",
+                "title_furigana": null,
+                "title_symbols": [],
+                "title_text_parts": [
+                  "ミュウex"
+                ]
+              },
+              "review_record_sha256": "ee59140ebe40242093fe97663dc28868ce26e0728f92103e2e91c30b0f2e4784",
+              "reviewed_at": "2026-10-03T11:18:41.081608+00:00",
+              "source_ref": "https://www.pokemon-card.com/card-search/details.php/card/50669"
+            }
+          ],
+          "name_status": "literal_correspondence_advisory",
+          "title_interpretations": [
+            {
+              "literal_text": "ミュウex",
+              "canonical_candidate": "ミュウex",
+              "normalization_rule": null
+            },
+            {
+              "literal_text": "ミュウex",
+              "canonical_candidate": "ミュウex",
+              "normalization_rule": null
+            }
+          ],
+          "hp_status": "source_hp_agrees",
+          "observed_hp": 160,
+          "observed_number_agreement": true,
+          "warnings": [],
+          "catalog_identity_confirmed": false,
+          "physical_printing_verified": false,
+          "price_comparable": false,
+          "automatic_offer_join_allowed": false,
+          "display_allowed": false,
+          "independent_accuracy_established": false,
+          "independent_review_agreement_established": false,
+          "number_reading_qualification_changed": false,
+          "scope": "Selected exact source scan only; no sibling, physical-copy, graph or commerce approval."
+        }
+      }
+    ],
+    "physical_variant_verified": false
+  },
+  "right": {
+    "requested": {
+      "card_id": "ja:SV2A:151/165:holo"
+    },
+    "status": "exact_record",
+    "matched_records": 1,
+    "records": [
+      {
+        "card_id": "ja:SV2A:151/165:holo",
+        "language": "ja",
+        "set_code": "SV2A",
+        "collector_number": "151/165",
+        "variant": "holo",
+        "name": "ミュウex",
+        "provenance": "tcgdex:a211f11f3ba57d56c65c5ac33be35b77d3280757:data-asia/SV/SV2a/151.ts:sha256:4d167a6b0bcf7b7f3e5054065023b038b700d2837e8dd778c4b5ba5dbcebb607",
+        "match_eligible": 1,
+        "media_availability": {
+          "schema": "pokemon.catalog-media-availability.v1",
+          "status": "current_source_scan_evidence",
+          "evidence_basis": "source_image_facts",
+          "reason": "current exact source evidence; live fetch, display rights and physical printing remain unverified",
+          "with_source_scans_eligible": true,
+          "source_scan_event_id": "source-image-fact:c87932982ae89e86694f81c81c8b1a0e820e77864bbdd3eeeaa6c90c175a5090",
+          "warnings": [],
+          "inspection_tier": "two_image_model_families",
+          "current_endpoint": true,
+          "source_ref": "https://assets.tcgdex.net/ja/SV/SV2a/151/high.webp",
+          "image_sha256": "7720b1ada5c9564c2cd7f0972b11f15e3e640bf5ad9e7a7f043672cd84291a32",
+          "live_fetch_verified": false,
+          "display_allowed": false,
+          "physical_printing_verified": false
+        }
+      }
+    ],
+    "records_truncated": false,
+    "number_context": {
+      "printed_number": "151/165",
+      "full_number_key": "151/165",
+      "numerator_key": "151",
+      "denominator_key": "165",
+      "number_format": "numeric_fraction",
+      "catalog_number": "151/165",
+      "number_basis": "catalog_coordinate_only",
+      "printed_number_semantics": "legacy_catalog_coordinate_not_visual_evidence",
+      "number_scope_id": "ja:SV2A",
+      "language": "ja",
+      "set_code": "SV2A"
+    },
+    "observed_printed_numbers": [
+      {
+        "card_id": "ja:SV2A:151/165:holo",
+        "evidence": {
+          "schema": "pokemon.number-reading-context.v1",
+          "event_id": "number-reading:33c7fa67ac39b36f97b5829c0109326590d9877b752306b30435314cfab416fe",
+          "inspection_tier": "two_image_model_families",
+          "current_endpoint": true,
+          "status": "catalog_text_observed",
+          "catalog_number": "151/165",
+          "observed_number_texts": [
+            "151/165"
+          ],
+          "review_groups": [
+            {
+              "candidate_id": "inspect-0019",
+              "cohort_snapshot_sha256": "220281103cf2c63e7dc1ab83425c98e1003dd4d6cd3cfb07280164a13d95525a",
+              "reviews": [
+                {
+                  "actor": "astra:blind-source:lane-1",
+                  "image_sha256": "7720b1ada5c9564c2cd7f0972b11f15e3e640bf5ad9e7a7f043672cd84291a32",
+                  "model_family": "openai",
+                  "model_version": "gpt-6-astra",
+                  "observed_name": "ミュウex",
+                  "observed_number_text": "151/165",
+                  "prior_verdicts_visible": false,
+                  "review_record_sha256": "5cf7deef72f3eea4de8c4f9b3e34fa7f997d13346680a27cb3188b1ca81a7e1a",
+                  "reviewed_at": "2026-10-03T11:17:55.966194+00:00",
+                  "source_ref": "https://assets.tcgdex.net/ja/SV/SV2a/151/high.webp"
+                },
+                {
+                  "actor": "vertex:gemini-3.8-flash:source-image-facts-v1",
+                  "image_sha256": "7720b1ada5c9564c2cd7f0972b11f15e3e640bf5ad9e7a7f043672cd84291a32",
+                  "model_family": "google",
+                  "model_version": "gemini-3.8-flash",
+                  "observed_name": "ミュウex",
+                  "observed_number_text": "151/165",
+                  "prior_verdicts_visible": false,
+                  "review_record_sha256": "24b6f1cb7aadac5ff2933cbf6bd2f7a2107990a8152b74e9d5118161f378aefd",
+                  "reviewed_at": "2026-10-03T11:16:06.254874+00:00",
+                  "source_ref": "https://assets.tcgdex.net/ja/SV/SV2a/151/high.webp"
+                }
+              ]
+            }
+          ],
+          "source_ref": "https://assets.tcgdex.net/ja/SV/SV2a/151/high.webp",
+          "image_sha256": "7720b1ada5c9564c2cd7f0972b11f15e3e640bf5ad9e7a7f043672cd84291a32",
+          "visible_text_agreement": true,
+          "printed_denominator_observed": true,
+          "source_coordinate_conflict": false,
+          "reading_rule": "legacy-v1",
+          "recorded_at": "2026-10-03T11:17:55.966194+00:00",
+          "review_reuse_disclosed": false,
+          "scope": "Exact source stock-image text only; no assignment to sibling labels or seller copies.",
+          "independent_accuracy_established": false,
+          "catalog_identity_confirmed": false,
+          "physical_printing_verified": false,
+          "price_comparable": false,
+          "automatic_offer_join_allowed": false,
+          "display_allowed": false
+        }
+      }
+    ],
+    "source_image_facts": [
+      {
+        "card_id": "ja:SV2A:151/165:holo",
+        "evidence": {
+          "schema": "pokemon.source-image-fact-context.v1",
+          "event_id": "source-image-fact:c87932982ae89e86694f81c81c8b1a0e820e77864bbdd3eeeaa6c90c175a5090",
+          "current_endpoint": true,
+          "source_notation": {
+            "schema": "pokemon.source-image-notation-context.v1",
+            "title_mechanic": "unconfirmed_or_other",
+            "base_title_catalog_correspondence": null,
+            "title_symbol_anchors_agree": true,
+            "number_layout": "single_or_unparsed",
+            "number_scope_candidates": [
+              {
+                "raw_text": "151/165",
+                "complete_fraction_candidates": []
+              },
+              {
+                "raw_text": "151/165",
+                "complete_fraction_candidates": []
+              }
+            ],
+            "number_namespace_assignment_established": false,
+            "catalog_mechanic_binding_established": false,
+            "print_run_quantity_established": false,
+            "identity_qualification_changed": false,
+            "physical_printing_verified": false,
+            "price_comparable": false
+          },
+          "source_mechanic_binding": null,
+          "inspection_tier": "two_image_model_families",
+          "evidence_level": "advisory_with_review_context_disclosed",
+          "source_ref": "https://assets.tcgdex.net/ja/SV/SV2a/151/high.webp",
+          "image_sha256": "7720b1ada5c9564c2cd7f0972b11f15e3e640bf5ad9e7a7f043672cd84291a32",
+          "pinned_source_hp": 180,
+          "reviews": [
+            {
+              "actor": "astra:blind-source:lane-1",
+              "expected_catalog_context_visible": false,
+              "image_sha256": "7720b1ada5c9564c2cd7f0972b11f15e3e640bf5ad9e7a7f043672cd84291a32",
+              "model_family": "openai",
+              "model_version": "gpt-6-astra",
+              "prior_verdicts_visible": false,
+              "reading": {
+                "hp": 180,
+                "hp_status": "visible",
+                "notes": "",
+                "observed_number_text": "151/165",
+                "title_furigana": null,
+                "title_symbols": [],
+                "title_text_parts": [
+                  "ミュウex"
+                ]
+              },
+              "review_record_sha256": "5cf7deef72f3eea4de8c4f9b3e34fa7f997d13346680a27cb3188b1ca81a7e1a",
+              "reviewed_at": "2026-10-03T11:17:55.966194+00:00",
+              "source_ref": "https://assets.tcgdex.net/ja/SV/SV2a/151/high.webp"
+            },
+            {
+              "actor": "vertex:gemini-3.8-flash:source-image-facts-v1",
+              "expected_catalog_context_visible": false,
+              "image_sha256": "7720b1ada5c9564c2cd7f0972b11f15e3e640bf5ad9e7a7f043672cd84291a32",
+              "model_family": "google",
+              "model_version": "gemini-3.8-flash",
+              "prior_verdicts_visible": false,
+              "reading": {
+                "hp": 180,
+                "hp_status": "visible",
+                "notes": "",
+                "observed_number_text": "151/165",
+                "title_furigana": null,
+                "title_symbols": [],
+                "title_text_parts": [
+                  "ミュウex"
+                ]
+              },
+              "review_record_sha256": "24b6f1cb7aadac5ff2933cbf6bd2f7a2107990a8152b74e9d5118161f378aefd",
+              "reviewed_at": "2026-10-03T11:16:06.254874+00:00",
+              "source_ref": "https://assets.tcgdex.net/ja/SV/SV2a/151/high.webp"
+            }
+          ],
+          "name_status": "literal_correspondence_advisory",
+          "title_interpretations": [
+            {
+              "literal_text": "ミュウex",
+              "canonical_candidate": "ミュウex",
+              "normalization_rule": null
+            },
+            {
+              "literal_text": "ミュウex",
+              "canonical_candidate": "ミュウex",
+              "normalization_rule": null
+            }
+          ],
+          "hp_status": "source_hp_agrees",
+          "observed_hp": 180,
+          "observed_number_agreement": true,
+          "warnings": [],
+          "catalog_identity_confirmed": false,
+          "physical_printing_verified": false,
+          "price_comparable": false,
+          "automatic_offer_join_allowed": false,
+          "display_allowed": false,
+          "independent_accuracy_established": false,
+          "independent_review_agreement_established": false,
+          "number_reading_qualification_changed": false,
+          "scope": "Selected exact source scan only; no sibling, physical-copy, graph or commerce approval."
+        }
+      }
+    ],
+    "physical_variant_verified": false
+  },
+  "unresolved_sides": [],
+  "numbering": {
+    "number_alignment": "different_or_unparsed",
+    "same_provisional_scope": false,
+    "number_alignment_basis": "catalog_coordinates_not_observed_printed_text",
+    "printed_number_equivalence_established": false,
+    "same_full_number": false,
+    "same_numerator": false,
+    "same_denominator": false,
+    "left": {
+      "printed_number": "057/103",
+      "full_number_key": "57/103",
+      "numerator_key": "57",
+      "denominator_key": "103",
+      "number_format": "numeric_fraction",
+      "catalog_number": "057/103",
+      "number_basis": "catalog_coordinate_only",
+      "printed_number_semantics": "legacy_catalog_coordinate_not_visual_evidence",
+      "number_scope_id": "ja:M6A",
+      "language": "ja",
+      "set_code": "M6A"
+    },
+    "right": {
+      "printed_number": "151/165",
+      "full_number_key": "151/165",
+      "numerator_key": "151",
+      "denominator_key": "165",
+      "number_format": "numeric_fraction",
+      "catalog_number": "151/165",
+      "number_basis": "catalog_coordinate_only",
+      "printed_number_semantics": "legacy_catalog_coordinate_not_visual_evidence",
+      "number_scope_id": "ja:SV2A",
+      "language": "ja",
+      "set_code": "SV2A"
+    },
+    "explanation": "This alignment compares catalog coordinates in language/release namespaces. Actual visible stock-image readings are separate exact-record evidence. Equal or different catalog numbers establish neither matching artwork nor regional printing equivalence.",
+    "print_run_explanation": "A catalog denominator can be a source inventory convention; it is not verified printed text or a quantity of printed copies. These coordinates establish neither scarcity nor a price trend.",
+    "print_run_quantity_established": false,
+    "scarcity_established": false,
+    "explanation_of_release_number_assignment_established": false
+  },
+  "artwork": {
+    "status": "unestablished",
+    "reviewed_links": [],
+    "reviewed_difference_links": [],
+    "other_pair_states": [],
+    "uncovered_record_ids": [
+      "ja:M6A:057/103:holo",
+      "ja:SV2A:151/165:holo"
+    ],
+    "scope": "Only the exact reviewed stock-image endpoints; no approval transfers to sibling source labels or physical copies.",
+    "difference_scope": "A reviewed difference rules out same artwork only for its exact source endpoints; an absent/rejected link alone is not difference evidence.",
+    "all_coordinate_variants_verified": false
+  },
+  "source_metadata_warnings": [],
+  "source_number_warnings": [],
+  "required_evidence": [
+    "physical_finish_edition_and_copy_condition",
+    "authorized_fresh_offers"
+  ],
+  "next_question": "Choose exact catalog versions and supply physical-copy evidence before offer comparison.",
+  "same_physical_printing_established": false,
+  "physical_finish_verified": false,
+  "copy_condition_verified": false,
+  "price_comparable": false,
+  "price_series_merge_allowed": false,
+  "numeric_price_gap_available": false,
+  "prices": [],
+  "live_offers": [],
+  "product_url": null,
+  "automatic_offer_join_allowed": false,
+  "purchase_ready": false,
+  "public_display_allowed": false,
+  "complete_answer_established": false
+}
