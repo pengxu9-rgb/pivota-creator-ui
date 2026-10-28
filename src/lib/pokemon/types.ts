@@ -103,6 +103,7 @@ export type Conversation = {
   id:string;version:number;title:string;createdAt:number;updatedAt:number;expiresAt:number;
   messages:ChatMessage[];busy:boolean;workspace:Workspace|null;requiresRestart:boolean;
   languageClarificationPending?:boolean;
+  modelClarificationPending?:boolean;
   target:Workspace["saved_decision"];
 };
 export type ConversationSummary = Pick<Conversation,"id"|"title"|"updatedAt"|"expiresAt">;
