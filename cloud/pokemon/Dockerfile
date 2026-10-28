@@ -17,6 +17,9 @@ COPY --from=build /build/creator/public /app/creator/public
 # Explicitly retain the unbundled CJS dependency graph used by the gateway.
 COPY creator/src/lib/pokemon/ /app/creator/src/lib/pokemon/
 COPY cloud/ /app/cloud/
+# Neutral in Git/CI. A reviewed private composer may inject a dated sanitized
+# snapshot and its hash here, outside public assets and Next client bundles.
+COPY private-coverage/ /app/private-coverage/
 RUN apt-get update && apt-get install -y --no-install-recommends python3 ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 COPY commerce-backend/pokemon_index/ /app/commerce-backend/pokemon_index/

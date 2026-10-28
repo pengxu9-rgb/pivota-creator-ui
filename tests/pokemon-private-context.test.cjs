@@ -16,9 +16,12 @@ spec=importlib.util.spec_from_file_location('composer',pathlib.Path('cloud/pokem
 fe={p:b'fixture' for p in m.BUILD_FILES}
 fe.update({'cloud/pokemon/runtime/'+p:b'fixture' for p in m.RUNTIME})
 fe.update({'cloud/pokemon/Dockerfile':b'fixture','src/lib/pokemon/purchaseLink.cjs':b'fixture','src/lib/pokemon/commerceContract.cjs':b'fixture','src/lib/pokemon/cloudTestScope.cjs':b'fixture','public/icon.png':b'fixture','.env.local':b'private','operator/oauth.json':b'private','tests/private.json':b'private'})
+fe.update({'private-coverage/snapshot.json':b'neutral','private-coverage/snapshot.sha256':b'hash','private-coverage/operator.json':b'private'})
 be={p:b'fixture' for p in ['pokemon_index/commerce_service.py','pokemon_index/commerce_loop.py','pokemon_index/ebay_official.py']};be.update({'tests/token.json':b'private','.env':b'private'})
 result=m.context_files(fe,be)
 assert result['creator/public/icon.png']==b'fixture'
+assert result['private-coverage/snapshot.json']==b'neutral'
+assert not any(p.startswith('creator/public/') and 'coverage' in p for p in result)
 assert not any(v==b'private' for v in result.values())
 try:m.context_files({k:v for k,v in fe.items() if not k.endswith('purchaseLink.cjs')},be)
 except ValueError:pass

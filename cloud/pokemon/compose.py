@@ -39,6 +39,8 @@ def context_files(frontend, backend):
     for name in RUNTIME:
         result["cloud/" + name] = frontend["cloud/pokemon/runtime/" + name]
     result["Dockerfile"] = frontend["cloud/pokemon/Dockerfile"]
+    for name in ("snapshot.json", "snapshot.sha256"):
+        result["private-coverage/" + name] = frontend["private-coverage/" + name]
     for name, data in backend.items():
         if name.startswith("pokemon_index/"):
             result["commerce-backend/" + name] = data
