@@ -14,6 +14,7 @@ const {
 const { fixtureEnabled, cloudTestScope } = require("./cloudTestScope.cjs");
 const { createDurableState, stateConfiguration } = require("./googleState.cjs");
 const { betaScope } = require("./betaScope.cjs");
+const { createRuntimeModelRouter } = require("./modelRuntime.cjs");
 const {
   createConversationService,
   createConversationFileStore,
@@ -163,6 +164,7 @@ export function demoRuntime(): Runtime {
       }),
   }) as Service;
   const rawChats = createConversationService({
+    interpretTurn: createRuntimeModelRouter(),
     ...(configuration?.scope==="beta"?{retentionMs:configuration.retentionMs}:{}),
     workspace,
     admitPresentation,

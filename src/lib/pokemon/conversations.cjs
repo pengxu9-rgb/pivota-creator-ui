@@ -3,6 +3,9 @@ const family = require('./sourceFamilyAdvisory.cjs');
 const commerceHistory=require('./commerceHistory.cjs');
 const {comparisonRecords}=require('./comparisonRecords.cjs');
 const {routeChatText,releaseSuggestions}=require('./chatTextIntent.cjs');
+const {renderModelReply}=require('./modelTurn.cjs');
+const {MAX_TIMEOUT_MS:MODEL_CALL_MS}=require('./geminiVertex.cjs');
+const {PRIVATE_WORK_MS}=require('./requestBudgets.cjs');
 const fs=require('node:fs/promises');
 const path=require('node:path');
 const {randomUUID,createHash}=require('node:crypto');
@@ -11,6 +14,45 @@ const exact=(v,keys)=>v&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).
 const uuid=v=>typeof v==='string'&&/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(v);
 const fail=code=>{throw new CollectorCallError(code);};
 const copy=v=>structuredClone(v);
+const MODEL_CALL_LIMIT=20;
+const MODEL_STATUS=new Set(['accepted','unavailable','invalid','budget_exhausted']);
+const MODEL_CODES=new Set(['accepted','model_unavailable','invalid_model_proposal','model_budget_exhausted','gemini_timeout','gemini_cancelled']);
+const MODEL_EXPLANATIONS=new Set(['current_results','identity_ambiguity','grade_budget_unverified','prices_unavailable','provider_disabled','capability_scope']);
+const MODEL_FIELDS=new Set(['language','character','release','number','finish','compound','task']);
+function admittedModelRoute(value){
+  if(!exact(value,['action','languagePreference','modelMeta'])||![null,'en','ja'].includes(value.languagePreference)||
+    !exact(value.modelMeta,['status','code'])||!MODEL_STATUS.has(value.modelMeta.status)||!MODEL_CODES.has(value.modelMeta.code))return false;
+  const a=value.action;
+  if(!a||typeof a!=='object'||Array.isArray(a))return false;
+  const combinations={accepted:['accepted'],unavailable:['model_unavailable','gemini_timeout','gemini_cancelled'],invalid:['invalid_model_proposal'],budget_exhausted:['model_budget_exhausted']};
+  if(!combinations[value.modelMeta.status].includes(value.modelMeta.code)||value.modelMeta.status!=='accepted'&&a.type!=='model_clarification')return false;
+  if(a.type==='ask')return exact(a,['type','question'])&&typeof a.question==='string'&&!!a.question.trim()&&a.question.length<=2000;
+  if(a.type==='reply')return exact(a,['type','text'])&&typeof a.text==='string'&&!!a.text.trim()&&a.text.length<=200;
+  if(a.type==='refine')return exact(a,['type','scope'])&&exact(a.scope,['language'])&&['en','ja'].includes(a.scope.language);
+  if(a.type==='preferences')return exact(a,['type','preferences'])&&a.preferences&&typeof a.preferences==='object'&&!Array.isArray(a.preferences)&&
+    Object.keys(a.preferences).length>0&&Object.keys(a.preferences).every(k=>['grade_company','grade_value','budget_minor','currency'].includes(k))&&
+    Object.entries(a.preferences).every(([k,v])=>k==='budget_minor'?Number.isSafeInteger(v)&&v>=1&&v<=1e12:k==='currency'?typeof v==='string'&&/^[A-Z]{3}$/.test(v):typeof v==='string'&&v.length>0&&v.length<=20);
+  if(a.type==='recommendation_status'||a.type==='language_clarification')return exact(a,['type']);
+  if(a.type==='model_explanation')return exact(a,['type','key'])&&MODEL_EXPLANATIONS.has(a.key);
+  return a.type==='model_clarification'&&exact(a,['type','field','reason'])&&MODEL_FIELDS.has(a.field)&&
+    ['uncertain','model_unavailable','budget_exhausted'].includes(a.reason);
+}
+function modelFallback(languagePreference,code='model_unavailable'){
+  return {action:{type:'model_clarification',field:'task',reason:code==='model_budget_exhausted'?'budget_exhausted':'model_unavailable'},
+    languagePreference:['en','ja'].includes(languagePreference)?languagePreference:null,
+    modelMeta:{status:code==='model_budget_exhausted'?'budget_exhausted':code==='invalid_model_proposal'?'invalid':'unavailable',code}};
+}
+function interpretOnce(interpret,input,{signal,deadline}){
+  return new Promise((resolve,reject)=>{
+    let done=false;const controller=new AbortController();
+    const finish=(error,value)=>{if(done)return;done=true;clearTimeout(timer);signal.removeEventListener('abort',abort);if(error)reject(error);else resolve(value);};
+    const abort=()=>{controller.abort();finish(new CollectorCallError('catalog_cancelled'));};
+    const end=Math.min(deadline??Infinity,Date.now()+MODEL_CALL_MS),timer=setTimeout(()=>{controller.abort();finish(Object.assign(new Error('gemini_timeout'),{code:'gemini_timeout'}));},Math.max(0,end-Date.now()));
+    signal.addEventListener('abort',abort,{once:true});
+    if(signal.aborted){abort();return;}
+    Promise.resolve().then(()=>{if(controller.signal.aborted)throw new CollectorCallError('catalog_cancelled');return interpret(input,{signal:controller.signal,deadline:end});}).then(value=>finish(null,value),error=>finish(error));
+  });
+}
 function cardForMessage(message,id){
   const card=message?.cards?.find(c=>c.card_id===id);if(card)return card;
   for(const side of ['left','right'])for(const record of comparisonRecords(message?.comparison,side))if(record.card_id===id)return record;
@@ -47,9 +89,14 @@ function recommendationReasons(result,cardId) {
     r.field==='character_name_affiliation'?'Matches a source-bound character-name affiliation; the source does not assert a Pokédex ID.':'Source-backed catalog preference match.');
 }
 function assistantReply(workspace,action,now) {
+  workspace=workspace||{version:0,result:null};
   const r=workspace.result;let text;
   const prompt=r?.next_step?.prompt||workspace.next_step?.prompt||r?.discovery?.next_question;
   const comparisonNeedsRefresh=action?.type==='preferences'&&!!r?.discovery?.comparison;
+  if(['model_explanation','model_clarification'].includes(action?.type))return {id:randomUUID(),role:'assistant',status:'accepted',
+    text:renderModelReply(action,workspace),createdAt:now,workspaceVersion:workspace.version,catalogRevision:r?.catalog_revision||null,
+    cards:[],reasons:{},comparison:null,selectionAllowed:false,...(action.type==='model_explanation'?{catalogStatusOnly:true}:{}),
+    clarificationSuggestions:releaseSuggestions(r)};
   if(action?.type==='language_clarification')return {id:randomUUID(),role:'assistant',status:'accepted',
     text:'Which language should I use? Please choose English or Japanese, or restate the collection question with the languages you want.',
     createdAt:now,workspaceVersion:workspace.version,catalogRevision:r?.catalog_revision||null,
@@ -104,7 +151,8 @@ const FAILURE_TEXT={catalog_cancelled:'The turn was interrupted. Your conversati
   catalog_rejected_action:'That choice needs current scope or evidence. Check the latest prompt before setting a target.',
   catalog_snapshot_changed:'The catalog snapshot changed. Start a new chat and review the card again before confirming a target.'};
 
-function createConversationService({workspace,authenticate,store,now=Date.now,retentionMs=86400000,localFixtureGuard=false,admitPresentation}) {
+function createConversationService({workspace,authenticate,store,now=Date.now,retentionMs=86400000,localFixtureGuard=false,admitPresentation,interpretTurn}) {
+  if(interpretTurn!=null&&typeof interpretTurn!=='function')throw Error('invalid_model_configuration');
   const locks=new Map();
   async function owner(context){let principal;try{principal=await authenticate(context);}catch{fail('collector_caller_denied');}if(!principal||typeof principal.id!=='string'||!principal.id.trim()||principal.id.length>200)fail('collector_caller_denied');return createHash('sha256').update(principal.id).digest('hex');}
   async function read(user,id,admit=true){if(!uuid(id))fail('chat_not_found');const doc=await store.get(user,'chats',id);if(!doc||doc.expiresAt<=now())fail('chat_not_found');if(admit)await family.admitStoredPresentation(doc,admitPresentation);return doc;}
@@ -115,10 +163,12 @@ function createConversationService({workspace,authenticate,store,now=Date.now,re
     if(current&&(busy||doc.pending)){current.result=null;current.saved_decision=null;current.needs_reconfirmation=true;}
     else if(current&&doc.requiresReconfirmation){current.saved_decision=null;current.needs_reconfirmation=true;}
     if(current&&doc.languageClarificationPending){current.saved_decision=null;current.needs_reconfirmation=true;}
+    if(current&&doc.modelClarificationPending){current.saved_decision=null;current.needs_reconfirmation=true;}
     return {id:doc.id,version:doc.version,title:doc.title,createdAt:doc.createdAt,updatedAt:doc.updatedAt,expiresAt:doc.expiresAt,
       messages:commerceHistory.publicMessages(copy(doc.messages)),busy,workspace:current,requiresRestart:!busy&&!current?.result&&!!doc.workspaceId,
       languageClarificationPending:doc.languageClarificationPending===true,
-      target:!busy&&!doc.pending&&!doc.requiresReconfirmation&&!doc.languageClarificationPending?copy(current?.saved_decision||null):null};
+      modelClarificationPending:doc.modelClarificationPending===true,
+      target:!busy&&!doc.pending&&!doc.requiresReconfirmation&&!doc.languageClarificationPending&&!doc.modelClarificationPending?copy(current?.saved_decision||null):null};
   }
   async function create(context){
     const user=await owner(context),held=lock(user,null);
@@ -130,55 +180,97 @@ function createConversationService({workspace,authenticate,store,now=Date.now,re
       await store.put(user,'chats',doc.id,doc);return view(await read(user,doc.id),null);
     }finally{release(user,held);}
   }
-  async function operate(context,payload,{signal}={},textMode=false){
+  async function operate(context,payload,{signal,deadline}={},textMode=false){
+    const startedAt=Date.now();
     const user=await owner(context);
     if(!exact(payload,textMode?['id','version','text']:['id','version','action'])||!Number.isInteger(payload.version))fail('invalid_chat_request');
     if(textMode&&(typeof payload.text!=='string'||!payload.text.trim()||payload.text.length>2000))fail('invalid_chat_request');
     if(!textMode&&(!payload.action||!['ask','reply','select','compare','choose_comparison','preferences','refine','page','feedback','clear_target','inventory','resolve_owned'].includes(payload.action.type)))fail('invalid_chat_request');
     if(!textMode&&payload.action.type==='reply'&&(typeof payload.action.text!=='string'||!payload.action.text.trim()||payload.action.text.length>2000))fail('invalid_chat_request');
     if(!textMode&&payload.action.type==='ask'&&(typeof payload.action.question!=='string'||!payload.action.question.trim()||payload.action.question.length>2000))fail('invalid_chat_request');
-    const held=lock(user,payload.id,true),abort=()=>held.controller.abort();signal?.addEventListener('abort',abort,{once:true});if(signal?.aborted)abort();
-    let doc,current;
+    const held=lock(user,payload.id,true),abort=()=>held.controller.abort(),operation=family.currentOperation();
+    const signals=[...new Set([signal,operation?.signal].filter(Boolean))];
+    for(const s of signals){s.addEventListener('abort',abort,{once:true});if(s.aborted)abort();}
+    const end=Math.min(startedAt+PRIVATE_WORK_MS,...[deadline,operation?.deadline].filter(Number.isFinite));
+    const timer=setTimeout(abort,Math.max(0,end-Date.now()));
+    const active=()=>{if(Date.now()>=end)fail('catalog_timeout');if(held.controller.signal.aborted)fail('catalog_cancelled');};
+    let doc,current,pendingOwned=false;
     try {
-      doc=await read(user,payload.id);if(doc.commercePending)fail('logical_turn_in_progress');if(doc.version!==payload.version)fail('chat_version_conflict');
+      active();doc=await read(user,payload.id);if(doc.pending||doc.commercePending)fail('logical_turn_in_progress');if(doc.version!==payload.version)fail('chat_version_conflict');
       current=doc.workspaceId?await workspace.get(context,doc.workspaceId):null;
-      const routingState={languagePreference:doc.languagePreference,languageClarificationPending:doc.languageClarificationPending===true};
-      const routed=textMode?routeChatText(payload.text,current,routingState):null;
-      const action=textMode?routed.action:copy(payload.action);
+      active();const sourceDoc=copy(doc),routingState={languagePreference:doc.languagePreference,languageClarificationPending:doc.languageClarificationPending===true};
+      const modelEnabled=textMode&&typeof interpretTurn==='function',text=textMode?payload.text.trim():actionText(payload.action);
+      let routed=modelEnabled?null:textMode?routeChatText(text,current,routingState):null;
+      let action=modelEnabled?null:textMode?routed.action:copy(payload.action),modelRequestId;
+      if(modelEnabled){
+        const count=doc.modelCalls===undefined?0:Number.isSafeInteger(doc.modelCalls)&&doc.modelCalls>=0&&doc.modelCalls<=MODEL_CALL_LIMIT?doc.modelCalls:MODEL_CALL_LIMIT;
+        modelRequestId=randomUUID();
+        const time=now();doc={...doc,version:doc.version+1,updatedAt:time,title:doc.messages.length?doc.title:text.slice(0,100),
+          pending:true,requiresReconfirmation:true,commerceAnchor:null,modelCalls:count<MODEL_CALL_LIMIT?count+1:count,
+          modelPending:{requestId:modelRequestId,stateVersion:sourceDoc.version,workspaceVersion:current?.version??null,startedAt:time},
+          messages:[...doc.messages,{id:randomUUID(),role:'user',status:'submitted',text,createdAt:time}]};
+        // Reserve the call durably before acquiring credentials or contacting a model.
+        pendingOwned=true;await store.put(user,'chats',doc.id,doc);active();
+        if(count>=MODEL_CALL_LIMIT)routed=modelFallback(routingState.languagePreference,'model_budget_exhausted');
+        else{
+          try{routed=await interpretOnce(interpretTurn,{text,doc:sourceDoc,current:copy(current)},{signal:held.controller.signal,deadline:end});}
+          catch(error){active();if(error?.code==='catalog_cancelled')throw error;routed=modelFallback(routingState.languagePreference,error?.code==='gemini_timeout'?'gemini_timeout':'model_unavailable');}
+          active();if(!admittedModelRoute(routed))routed=modelFallback(routingState.languagePreference,'invalid_model_proposal');
+        }
+        action=copy(routed.action);
+      }
+      // A bare reply cannot bypass an unresolved model-only conflict, even if
+      // model configuration was subsequently disabled while the chat persisted.
+      if(textMode&&sourceDoc.modelClarificationPending&&!['ask','refine','preferences','recommendation_status','model_explanation','language_clarification','model_clarification'].includes(action.type))
+        action={type:'model_clarification',field:MODEL_FIELDS.has(sourceDoc.modelClarificationField)?sourceDoc.modelClarificationField:'task',reason:'uncertain'};
       const languageChoice=action.type==='refine'&&['en','ja'].includes(action.scope?.language)||
-        action.type==='ask'&&doc.languageClarificationPending&&routeChatText(action.question,current,routingState).action.type==='ask';
-      if(doc.languageClarificationPending&&!textMode&&!languageChoice)fail('catalog_rejected_action');
-      const statusOnly=action.type==='recommendation_status';
+        action.type==='ask'&&sourceDoc.languageClarificationPending&&routeChatText(action.question,current,routingState).action.type==='ask';
+      if(sourceDoc.languageClarificationPending&&!textMode&&!languageChoice)fail('catalog_rejected_action');
+      if(sourceDoc.modelClarificationPending&&!textMode&&!['ask','refine','preferences'].includes(action.type))fail('catalog_rejected_action');
+      if(sourceDoc.languageClarificationPending&&modelEnabled&&!languageChoice&&!['recommendation_status','model_explanation','language_clarification','model_clarification'].includes(action.type))
+        action={type:'language_clarification'};
+      const statusOnly=['recommendation_status','model_explanation'].includes(action.type),localOnly=statusOnly||['language_clarification','model_clarification'].includes(action.type);
       if(action.type==='reply'&&action.text.length>200)fail('chat_reply_too_long');
-      const text=textMode?payload.text.trim():actionText(action);
-      const time=now();doc={...doc,...(routed?{languagePreference:routed.languagePreference}:{}),...(action.type==='language_clarification'?{languageClarificationPending:true}:{}),version:doc.version+1,updatedAt:time,title:doc.messages.length?doc.title:text.slice(0,100),requiresReconfirmation:statusOnly?doc.requiresReconfirmation:true,pending:true,...(!statusOnly?{commerceAnchor:null}:{}),
-        messages:[...doc.messages,{id:randomUUID(),role:'user',status:'submitted',text,createdAt:time}]};
-      // The pending marker survives a process interruption and never confers target authority.
-      await store.put(user,'chats',doc.id,doc);
-      if(held.controller.signal.aborted)fail('catalog_cancelled');
-      if(statusOnly||action.type==='language_clarification'){
-        // A status question reads accepted context; it cannot replay a search
-        // or create new card/selection authority.
-      }else if(!current){current=await workspace.start(context,{question:action.question,limit:5},{signal:held.controller.signal});doc.workspaceId=current.id;}
-      else current=await workspace.advance(context,{id:current.id,version:current.version,action},{signal:held.controller.signal});
-      if(action.type==='select')current=await workspace.save(context,{id:current.id,version:current.version},{signal:held.controller.signal});
-      current=await workspace.get(context,current.id);
-      if(held.controller.signal.aborted)fail('catalog_cancelled');
+      const languagePending=action.type==='language_clarification'||action.type==='model_clarification'&&action.field==='language';
+      if(modelEnabled){
+        doc={...doc,languagePreference:routed.languagePreference,requiresReconfirmation:statusOnly?sourceDoc.requiresReconfirmation:true,
+          commerceAnchor:statusOnly?sourceDoc.commerceAnchor??null:null,...(languagePending?{languageClarificationPending:true}:{}),
+          ...(action.type==='model_clarification'?{modelClarificationPending:true,modelClarificationField:action.field}:{}),
+          modelLast:{requestId:modelRequestId,...routed.modelMeta}};
+      }else{
+        const time=now();doc={...doc,...(routed?{languagePreference:routed.languagePreference}:{}),...(languagePending?{languageClarificationPending:true}:{}),
+          version:doc.version+1,updatedAt:time,title:doc.messages.length?doc.title:text.slice(0,100),requiresReconfirmation:statusOnly?doc.requiresReconfirmation:true,pending:true,...(!statusOnly?{commerceAnchor:null}:{}),
+          messages:[...doc.messages,{id:randomUUID(),role:'user',status:'submitted',text,createdAt:time}]};
+        // The pending marker survives a process interruption and never confers target authority.
+        pendingOwned=true;await store.put(user,'chats',doc.id,doc);
+      }
+      active();
+      if(localOnly){
+        // Local interpretation/status/explanation cannot create selection authority or replay a search.
+      }else if(!current){
+        if(action.type!=='ask')fail('catalog_rejected_action');
+        current=await workspace.start(context,{question:action.question,limit:5},{signal:held.controller.signal,deadline:end});doc.workspaceId=current.id;
+      }else current=await workspace.advance(context,{id:current.id,version:current.version,action},{signal:held.controller.signal,deadline:end});
+      if(action.type==='select')current=await workspace.save(context,{id:current.id,version:current.version},{signal:held.controller.signal,deadline:end});
+      if(current?.id)current=await workspace.get(context,current.id);
+      active();
       const acceptedLanguage=current?.result?.scope_filters?.language;
       if(languageChoice)doc.languageClarificationPending=false;
+      if(!localOnly&&['ask','refine','preferences'].includes(action.type)){doc.modelClarificationPending=false;doc.modelClarificationField=null;}
       if(action.type==='refine'&&Object.hasOwn(action.scope,'language'))doc.languagePreference=action.scope.language;
       else if(['en','ja'].includes(acceptedLanguage))doc.languagePreference=acceptedLanguage;
-      doc={...doc,version:doc.version+1,updatedAt:now(),pending:null,requiresReconfirmation:statusOnly?doc.requiresReconfirmation:action.type!=='select'||current.needs_reconfirmation,
+      doc={...doc,version:doc.version+1,updatedAt:now(),pending:null,...(modelEnabled?{modelPending:null}:{}),
+        requiresReconfirmation:statusOnly?sourceDoc.requiresReconfirmation:action.type!=='select'||current?.needs_reconfirmation,
         messages:[...doc.messages,assistantReply(current,action,now())]};
       await store.put(user,'chats',doc.id,doc);return view(await read(user,doc.id),current);
     } catch(error) {
-      if(doc?.pending){
-        doc={...doc,version:doc.version+1,updatedAt:now(),pending:null,requiresReconfirmation:true,
+      if(pendingOwned&&doc?.pending){
+        doc={...doc,version:doc.version+1,updatedAt:now(),pending:null,...(doc.modelPending?{modelPending:null}:{}),requiresReconfirmation:true,commerceAnchor:null,
           messages:[...doc.messages,{id:randomUUID(),role:'assistant',status:'failed',text:FAILURE_TEXT[error.code]||'This turn could not finish. Your saved cards remain available. Review the current conversation before setting a target.',createdAt:now(),cards:[],reasons:{},comparison:null}]};
         await store.put(user,'chats',doc.id,doc);
       }
       throw error;
-    }finally{signal?.removeEventListener('abort',abort);release(user,held);}
+    }finally{clearTimeout(timer);for(const s of signals)s.removeEventListener('abort',abort);release(user,held);}
   }
   async function get(context,id){
     const user=await owner(context);
@@ -186,7 +278,7 @@ function createConversationService({workspace,authenticate,store,now=Date.now,re
     const held=lock(user,id);
     try{
       let doc=await read(user,id);const recovered=commerceHistory.expire(doc,now());if(recovered!==doc){await store.put(user,'chats',id,recovered);doc=recovered;}
-      if(doc.pending){doc={...doc,version:doc.version+1,pending:null,requiresReconfirmation:true,messages:[...doc.messages,{id:randomUUID(),role:'assistant',status:'failed',text:FAILURE_TEXT.catalog_cancelled,createdAt:now(),cards:[],reasons:{},comparison:null}]};await store.put(user,'chats',id,doc);doc=await read(user,id);}
+      if(doc.pending){doc={...doc,version:doc.version+1,pending:null,...(doc.modelPending?{modelPending:null}:{}),requiresReconfirmation:true,commerceAnchor:null,messages:[...doc.messages,{id:randomUUID(),role:'assistant',status:'failed',text:FAILURE_TEXT.catalog_cancelled,createdAt:now(),cards:[],reasons:{},comparison:null}]};await store.put(user,'chats',id,doc);doc=await read(user,id);}
       const current=doc.workspaceId?await workspace.get(context,doc.workspaceId):null;return view(doc,current,!!doc.commercePending);
     }finally{release(user,held);}
   }
@@ -208,7 +300,7 @@ function createConversationService({workspace,authenticate,store,now=Date.now,re
     async beginCommerce(context,payload){
       if(!exact(payload,['id','version','request_id','operation','request']))fail('invalid_commerce_request');
       const user=await owner(context),held=lock(user,payload.id);
-      try{const doc=await read(user,payload.id,false),next=commerceHistory.begin(doc,payload,now());await store.put(user,'chats',doc.id,next);return {event_id:next.commercePending.id,version:next.version};}finally{release(user,held);}
+      try{const doc=await read(user,payload.id,false);if(doc.languageClarificationPending||doc.modelClarificationPending)fail('catalog_rejected_action');const next=commerceHistory.begin(doc,payload,now());await store.put(user,'chats',doc.id,next);return {event_id:next.commercePending.id,version:next.version};}finally{release(user,held);}
     },
     async finishCommerce(context,payload){
       if(!payload||!exact(payload,['id','event_id','operation','request',...(Object.hasOwn(payload,'error')?['error']:['response'])]))fail('invalid_commerce_request');
