@@ -96,10 +96,13 @@ export type ChatMessage = {
   text:string; createdAt:number; workspaceVersion?:number; catalogRevision?:string;
   cards?:Card[]; reasons?:Record<string,string[]>; comparison?:Comparison|null;comparisonNeedsRefresh?:boolean;
   coverage?:{offset?:number;has_more?:boolean;matched_catalog_records?:number}; blockers?:Record<string,string[]>;selectionAllowed?:boolean;
+  clarificationSuggestions?:{label:string;question:string}[];
+  catalogStatusOnly?:boolean;
 };
 export type Conversation = {
   id:string;version:number;title:string;createdAt:number;updatedAt:number;expiresAt:number;
   messages:ChatMessage[];busy:boolean;workspace:Workspace|null;requiresRestart:boolean;
+  languageClarificationPending?:boolean;
   target:Workspace["saved_decision"];
 };
 export type ConversationSummary = Pick<Conversation,"id"|"title"|"updatedAt"|"expiresAt">;

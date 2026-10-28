@@ -14,3 +14,17 @@ test('recovery Refresh is disabled during Stop and pending reads, then enabled w
 
 test('browsing beta renderer offers catalog and saved history without seller or provider entry points',()=>{const html=renderMobile(null,{},true);assert.match(html,/INVITE-ONLY BROWSING BETA/);assert.match(html,/30-day history/);assert.match(html,/Private account history · retained for 30 days/);assert.match(html,/>Shortlist</);assert.doesNotMatch(html,/Find seller listings|Find Pikachu PSA 10 seller claims|>Listings<|Open Buy/);});
 test('beta collecting preferences do not promise seller-price or certificate checks',()=>{const beta=renderMobile(null,{sheet:'preferences'},true);assert.match(beta,/Budget and grade are collecting preferences/);assert.match(beta,/does not check seller prices, delivered costs or PSA certificates/);assert.match(beta,/Your saved cards stay in place/);assert.doesNotMatch(beta,/Seller asking prices and delivered costs are checked separately|clears the active listing and quote choices/);const staging=renderMobile(null,{sheet:'preferences'});assert.match(staging,/Seller asking prices and delivered costs are checked separately/);assert.match(staging,/clears the active listing and quote choices/);});
+
+test('release interpretation is an explicit current-message choice, not an automatic catalog call',()=>{
+  const choice={label:'If 151 means the set: search Charizard in Pokémon 151 (English)',question:'English Charizard cards from set SV03.5'};
+  const message={id:'clarify',role:'assistant',status:'accepted',text:'Which printed release?',cards:[],clarificationSuggestions:[choice]};
+  const calls=[],base={messages:[message],send:q=>calls.push(q)};
+  const html=renderMobile(null,base,true);
+  assert.match(html,/aria-label="Clarify the catalog request"/);
+  const button=html.match(/<button[^>]*>If 151 means the set:[^<]*<\/button>/)?.[0];
+  assert.ok(button);assert.equal(button.includes('disabled=""'),false);assert.deepEqual(calls,[]);
+  for(const overrides of [{pending:'agent'},{ready:false},{messages:[message,{id:'later',role:'assistant',status:'accepted',text:'New scope',cards:[]}]}]){
+    const old=renderMobile(null,{...base,...overrides},true).match(/<button[^>]*>If 151 means the set:[^<]*<\/button>/)?.[0];
+    assert.ok(old?.includes('disabled=""'));
+  }
+});
