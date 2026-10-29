@@ -1,0 +1,33 @@
+{
+  "schema": "pot.private-coverage-snapshot.v1",
+  "status": "unavailable",
+  "report_date": null,
+  "catalog": {
+    "source_records": null,
+    "language_sets": null,
+    "primary_with_recorded_copy": null,
+    "missing_primary": null,
+    "held_primary": null
+  },
+  "cohort": {
+    "basis": "retained_acceptance_targets",
+    "next_wave_samples": null,
+    "cards": []
+  },
+  "offers": {
+    "status": "not_ingested",
+    "metrics": {
+      "distinct_listings": null,
+      "current_active_listings": null,
+      "unique_sellers": null,
+      "claimed_product_price_groups": null,
+      "authorized_copy_photo_listings": null,
+      "front_back_photo_listings": null
+    }
+  },
+  "safeguards": {
+    "marketplace_reads_enabled": false,
+    "orders_enabled": false,
+    "payments_enabled": false
+  }
+}

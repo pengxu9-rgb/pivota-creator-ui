@@ -1,0 +1,59 @@
+name: Pokemon offline checks
+on:
+  pull_request:
+    paths:
+      - 'src/**/pokemon*/**'
+      - 'src/components/creator/Pokemon*'
+      - 'src/components/creator/pokemonClient.ts'
+      - 'tests/**'
+      - 'cloud/pokemon/**'
+      - 'private-coverage/**'
+      - 'scripts/prepare-private-coverage.cjs'
+      - 'package*.json'
+      - 'next.config.mjs'
+      - 'tsconfig.json'
+      - '.github/workflows/pokemon-offline.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: npm ci --ignore-scripts
+      - name: Offline UI and contract regressions
+        run: node --require ./tests/helpers/offline-network-guard.cjs --test tests/*.test.cjs
+      - name: TypeScript
+        run: npx --no-install tsc --noEmit --incremental false
+      - name: Checkout reviewed backend runtime
+        uses: actions/checkout@v4
+        with:
+          repository: pengxu9-rgb/pokemon-commerce-index
+          ref: 02416ebdc6cfeabafc6431a2501d41ea7ed79a32
+          path: commerce-backend
+      - name: Compose exact source context
+        run: python3 cloud/pokemon/compose.py --frontend "$GITHUB_WORKSPACE" --backend "$GITHUB_WORKSPACE/commerce-backend" --output "$RUNNER_TEMP/pokemon-context"
+      - name: Build private image without deployment
+        run: docker build -t pokemon-private-ci "$RUNNER_TEMP/pokemon-context"
+      - name: Verify packaged helpers with networking disabled
+        run: docker run --rm --network none --entrypoint node pokemon-private-ci -e "require('/app/creator/src/lib/pokemon/commerceContract.cjs'); if(require('/app/cloud/commerce-sidecar.cjs').configuration({})!==null)process.exit(1)"
+      - name: Start the actual private image with networking disabled
+        run: python3 tests/smoke-private-image.py pokemon-private-ci
+      - name: Keep source-pair manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: pokemon-private-context-manifest
+          path: ${{ runner.temp }}/pokemon-context/context-manifest.json
