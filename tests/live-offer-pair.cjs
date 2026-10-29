@@ -84,7 +84,9 @@ const printing = JSON.parse(adversarial.stdout);
 assert.equal(printing.evidence_mode, "synthetic_offline");
 assert.equal(printing.external_network_calls, 0);
 assert.ok(printing.cases.length >= 4 && printing.cases.length <= 120);
-for (const original of ["Edition", "Language", "Finish", "product_name"])
+for (const original of ["Edition", "Language", "Finish", "product_name",
+  "r3_same_grader_false_option", "r3_same_grader_zero_option", "r3_resolve_same_grader_no_name",
+  "r3_quote_same_grader_no_name", "signed_raw_contradictory_conjunction", "signed_slab_contradictory_conjunction"])
   assert.ok(printing.cases.some(row => row.case === original));
 for (const row of printing.cases) {
   assert.ok(["selected_options", "resolve_name", "quote_name"].includes(row.stage));
@@ -146,7 +148,11 @@ assert.equal(controlsResult.status, 0, controlsResult.stderr);
 const controls = JSON.parse(controlsResult.stdout);
 assert.equal(controls.evidence_mode, "synthetic_offline");
 assert.equal(controls.external_network_calls, 0);
-assert.equal(controls.cases.length, 4);
+assert.ok(controls.cases.length >= 4 && controls.cases.length <= 40);
+for (const original of ["partial_collector_positive", "raw_not_psa_graded_positive",
+  "normal_unlimited_negative_booleans_positive", "normal_unlimited_negative_phrases_positive",
+  "r3_other_grader_false_compatible", "r3_raw_false_grader_compatible", "signed_bgs_compatible_conjunction"])
+  assert.ok(controls.cases.some(row => row.case === original));
 for (const row of controls.cases) {
   validateCommerceResponse("research", row.research);
   validateCommerceResponse("select", row.selection);
