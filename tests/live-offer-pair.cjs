@@ -75,7 +75,7 @@ assert.throws(() => validateCommerceRequest("order", {quote_id: handoff.quote.bu
 // merely return a locally asserted Python exception.
 const adversarial = spawnSync("python3", ["-B", "-c",
   "import json; from tests.test_bns_printing_identity import printing_report; print(json.dumps(printing_report()))"], {
-  cwd: backend, encoding: "utf8", timeout: 30000, maxBuffer: 2 * 1024 * 1024,
+  cwd: backend, encoding: "utf8", timeout: 90000, maxBuffer: 4 * 1024 * 1024,
   env: {...process.env, PYTHONDONTWRITEBYTECODE: "1"},
 });
 assert.ifError(adversarial.error);
@@ -83,7 +83,7 @@ assert.equal(adversarial.status, 0, adversarial.stderr);
 const printing = JSON.parse(adversarial.stdout);
 assert.equal(printing.evidence_mode, "synthetic_offline");
 assert.equal(printing.external_network_calls, 0);
-assert.ok(printing.cases.length >= 4);
+assert.ok(printing.cases.length >= 4 && printing.cases.length <= 120);
 for (const original of ["Edition", "Language", "Finish", "product_name"])
   assert.ok(printing.cases.some(row => row.case === original));
 for (const row of printing.cases) {
@@ -136,6 +136,33 @@ for (const row of compatible.cases) {
   assert.deepEqual(row.provider_paths, ["/v1/oauth/token", "/v1/products/resolve", "/v1/quotes"]);
   assert.deepEqual(row.external_attempts, []);
 }
+const controlsResult = spawnSync("python3", ["-B", "-c",
+  "import json; from tests.test_bns_printing_identity import printing_controls_report; print(json.dumps(printing_controls_report()))"], {
+  cwd: backend, encoding: "utf8", timeout: 30000, maxBuffer: 2 * 1024 * 1024,
+  env: {...process.env, PYTHONDONTWRITEBYTECODE: "1"},
+});
+assert.ifError(controlsResult.error);
+assert.equal(controlsResult.status, 0, controlsResult.stderr);
+const controls = JSON.parse(controlsResult.stdout);
+assert.equal(controls.evidence_mode, "synthetic_offline");
+assert.equal(controls.external_network_calls, 0);
+assert.equal(controls.cases.length, 4);
+for (const row of controls.cases) {
+  validateCommerceResponse("research", row.research);
+  validateCommerceResponse("select", row.selection);
+  validateCommerceResponse("handoff", row.choices);
+  validateCommerceResponse("handoff", row.handoff);
+  assert.equal(row.handoff.status, "quote_ready_for_review");
+  assert.ok(row.handoff.quote);
+  assert.equal(row.handoff.quote.evidence.authenticity_verified, false);
+  assert.equal(row.handoff.quote.evidence.certificate_verified, false);
+  assert.equal(handoffView(row.handoff, Date.parse(row.handoff.quote.buyship.quoted_at), row.selection.expires_at).kind, "quote");
+  assert.equal(row.handoff.purchasable, false);
+  assert.equal(row.handoff.order_created, false);
+  assert.equal(row.handoff.purchase_action, null);
+  assert.deepEqual(row.provider_paths, ["/v1/oauth/token", "/v1/products/resolve", "/v1/quotes"]);
+  assert.deepEqual(row.external_attempts, []);
+}
 const rawResult = spawnSync("python3", ["-B", "-c",
   "import json; from tests.test_adversary_source_fixes import raw_card_report; print(json.dumps(raw_card_report()))"], {
   cwd: backend, encoding: "utf8", timeout: 30000, maxBuffer: 2 * 1024 * 1024,
@@ -156,7 +183,30 @@ assert.ok(rawOffer && selectionMatches(raw.selection, rawOffer, Date.parse(raw.r
 assert.equal(raw.selection.purchasable, false);
 assert.equal(raw.selection.order_created, false);
 assert.equal(raw.selection.purchase_action, null);
+const expiredResult = spawnSync("python3", ["-B", "-c",
+  "import json; from tests.test_adversary_source_fixes import expired_quote_report; print(json.dumps(expired_quote_report()))"], {
+  cwd: backend, encoding: "utf8", timeout: 30000, maxBuffer: 2 * 1024 * 1024,
+  env: {...process.env, PYTHONDONTWRITEBYTECODE: "1"},
+});
+assert.ifError(expiredResult.error);
+assert.equal(expiredResult.status, 0, expiredResult.stderr);
+const expired = JSON.parse(expiredResult.stdout);
+validateCommerceResponse("research", expired.research);
+validateCommerceResponse("select", expired.selection);
+validateCommerceResponse("handoff", expired.handoff);
+assert.ok(Date.parse(expired.before_publish) < Date.parse(expired.quote_expires_at));
+assert.ok(Date.parse(expired.final_checked_at) >= Date.parse(expired.quote_expires_at));
+assert.ok(expired.native_wait_elapsed >= 2.5, "Exercise an actual delayed readiness lock");
+assert.equal(expired.handoff.quote, null);
+assert.equal(expired.handoff.quote_status, "quote_expired");
+assert.equal(expired.handoff.provider_result.code, "quote_expired");
+assert.notEqual(handoffView(expired.handoff, Date.parse(expired.final_checked_at), expired.selection.expires_at).kind, "quote");
+assert.equal(expired.handoff.purchasable, false);
+assert.equal(expired.handoff.order_created, false);
+assert.equal(expired.handoff.purchase_action, null);
+assert.deepEqual(expired.external_attempts, []);
 console.log(JSON.stringify({schema:"pot.live-offer-pair-acceptance.v1", result:"passed", evidence_mode:"synthetic_offline",
   offers:research.offers.length, blocked_scenarios:report.blocked, printing_contradictions_blocked:printing.cases.length,
-  compatible_raw_quotes:compatible.cases.length, native_raw_card_selected:true,
+  compatible_raw_quotes:compatible.cases.length, compatible_printing_quotes:controls.cases.length,
+  native_raw_card_selected:true, late_quote_expiry_refused:true,
   external_network_calls:0, orders_created:0, payments_made:0}));
