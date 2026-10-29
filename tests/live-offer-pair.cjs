@@ -71,5 +71,53 @@ assert.ok(report.blocked.every(row => typeof row.scenario === "string" && typeof
 assert.ok(report.provider_paths.length >= 3);
 assert.ok(report.provider_paths.every(endpoint => ["/v1/oauth/token", "/v1/products/resolve", "/v1/quotes"].includes(endpoint)));
 assert.throws(() => validateCommerceRequest("order", {quote_id: handoff.quote.buyship.quote_id}));
+// The adversarial cases must stay refused through the actual frontend, not
+// merely return a locally asserted Python exception.
+const adversarial = spawnSync("python3", ["-B", "-c",
+  "import json; from tests.test_bns_printing_identity import printing_report; print(json.dumps(printing_report()))"], {
+  cwd: backend, encoding: "utf8", timeout: 30000, maxBuffer: 2 * 1024 * 1024,
+  env: {...process.env, PYTHONDONTWRITEBYTECODE: "1"},
+});
+assert.ifError(adversarial.error);
+assert.equal(adversarial.status, 0, adversarial.stderr);
+const printing = JSON.parse(adversarial.stdout);
+assert.equal(printing.evidence_mode, "synthetic_offline");
+assert.equal(printing.external_network_calls, 0);
+assert.equal(printing.cases.length, 4);
+for (const row of printing.cases) {
+  validateCommerceResponse("research", row.research);
+  validateCommerceResponse("select", row.selection);
+  validateCommerceResponse("handoff", row.choices);
+  validateCommerceResponse("handoff", row.handoff);
+  assert.equal(row.handoff.quote, null);
+  assert.equal(row.handoff.quote_status, "product_mismatch");
+  assert.equal(handoffView(row.handoff, Date.parse(row.research.checked_at), row.selection.expires_at).kind, "refused");
+  assert.equal(row.handoff.purchasable, false);
+  assert.equal(row.handoff.order_created, false);
+  assert.equal(row.handoff.purchase_action, null);
+  assert.ok(row.provider_paths.every(endpoint => endpoint === "/v1/oauth/token" || endpoint === "/v1/products/resolve"));
+  assert.deepEqual(row.external_attempts, []);
+}
+const rawResult = spawnSync("python3", ["-B", "-c",
+  "import json; from tests.test_adversary_source_fixes import raw_card_report; print(json.dumps(raw_card_report()))"], {
+  cwd: backend, encoding: "utf8", timeout: 30000, maxBuffer: 2 * 1024 * 1024,
+  env: {...process.env, PYTHONDONTWRITEBYTECODE: "1"},
+});
+assert.ifError(rawResult.error);
+assert.equal(rawResult.status, 0, rawResult.stderr);
+const raw = JSON.parse(rawResult.stdout);
+validateCommerceResponse("research", raw.research);
+validateCommerceResponse("select", raw.selection);
+assert.equal(raw.selection.offer.grade.kind, "raw");
+assert.equal(raw.selection.offer.grade.company, null);
+assert.equal(raw.selection.offer.grade.value, null);
+assert.equal(raw.selection.offer.grade.certificate_verified, false);
+assert.equal(raw.selection.offer.seller_condition, "Near mint or better");
+const rawOffer = raw.research.offers.find(row => row.offer_id === raw.selection.offer.offer_id);
+assert.ok(rawOffer && selectionMatches(raw.selection, rawOffer, Date.parse(raw.research.checked_at)));
+assert.equal(raw.selection.purchasable, false);
+assert.equal(raw.selection.order_created, false);
+assert.equal(raw.selection.purchase_action, null);
 console.log(JSON.stringify({schema:"pot.live-offer-pair-acceptance.v1", result:"passed", evidence_mode:"synthetic_offline",
-  offers:research.offers.length, blocked_scenarios:report.blocked, external_network_calls:0, orders_created:0, payments_made:0}));
+  offers:research.offers.length, blocked_scenarios:report.blocked, printing_contradictions_blocked:printing.cases.length,
+  native_raw_card_selected:true, external_network_calls:0, orders_created:0, payments_made:0}));

@@ -53,7 +53,7 @@ export default function CommerceChat({ command, onBusyChange, transport }: {
       return;
     }
     if (command.kind === "select" || command.kind === "handoff" || command.kind === "variant") {
-      if (!card || !request) { setStatus("Choose an exact catalog card and research its offers first. Then choose an offer number and ask for a quote."); return; }
+      if (!card || !request) { setStatus("Choose an exact catalog card and research its offers first. Then use the exact seller listing’s Select button before asking for a quote."); return; }
       setPanelCommand(command); return;
     }
     if (command.kind === "research") {
@@ -89,7 +89,7 @@ export default function CommerceChat({ command, onBusyChange, transport }: {
       {card && request && <CommercePanel key={request.id} cardId={card.card_id} cardName={card.name}
         transport={transport} initialQuery={request.query} initialUrls={request.urls} autoStart inChat chatCommand={panelCommand}
         onBusyChange={setPanelBusy} onSelectedOffer={setSelectedOffer} />}
-      <p className={s.note}>Use the controls or ask “choose offer 1”, “quote to Hong Kong”, “choose variant 2”, or “PSA cert 12345678”. Live listing steps stay in this tab and must be refreshed after reopening. No order or payment is created.</p>
+      <p className={s.note}>Use Select listing or Select for review on the exact seller listing. Offer numbers in chat open the comparison for that explicit choice. You can then ask “quote to Hong Kong”, “choose variant 2”, or “PSA cert 12345678”. Live listing steps stay in this tab and must be refreshed after reopening. No order or payment is created.</p>
     </section>
   </div>;
 }
