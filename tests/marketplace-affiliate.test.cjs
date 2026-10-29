@@ -16,6 +16,7 @@ function component(relative,stubs={}) {
     if(id in stubs)return stubs[id];
     if(id.endsWith(".module.css"))return {__esModule:true,default:new Proxy({},{get:(_,key)=>String(key)})};
     if(id.startsWith("@/lib/"))return localRequire(path.resolve(__dirname,"../src/lib",id.slice("@/lib/".length)));
+    if(id.startsWith(".")){const child=path.resolve(path.dirname(filename),id+".tsx");if(fs.existsSync(child))return {__esModule:true,default:component(path.relative(path.resolve(__dirname,"../src/components/creator"),child),stubs)};}
     return localRequire(id);
   }});
   return moduleValue.exports.default;

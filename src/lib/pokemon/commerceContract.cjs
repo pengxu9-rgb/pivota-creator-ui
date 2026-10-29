@@ -3,6 +3,7 @@ const { validateProviderResult, validateVariants, money } = require("./bnsPrevie
 const { validateSeller } = require("./sellerEvidence.cjs");
 const {validateIdentityEvidence,validateListingPhotos,validateCoverage}=require("./listingEvidence.cjs");
 const {validatePurchaseLink,validateMarketplaceConnections}=require("./purchaseLink.cjs");
+const {validateSourceReadiness}=require("./sourceReadiness.cjs");
 const fail = (code = "invalid_commerce_response") => { throw Object.assign(new Error(code), { code }); };
 const text = (v, max = 2000) => typeof v === "string" && v.trim().length > 0 && v.length <= max;
 const https = (v) => { try { const u = new URL(v); return text(v, 4096) && u.protocol === "https:" && !u.username && !u.password; } catch { return false; } };
@@ -64,6 +65,7 @@ function validateCommerceResponse(operation, value) {
     value.platforms.forEach(validateResearchPlatform);
     validateMarketplaceConnections(value.marketplace_connections);
     value.offers.forEach(validateOffer);
+    validateSourceReadiness(value.source_readiness,value.offers,value.mode);
     if(value.mode!=="synthetic_fixture"&&value.offers.some(o=>o.synthetic===true))fail();
     validateCoverage(value);
     if (new Set(value.offers.map((o) => o.offer_id)).size !== value.offers.length) fail();
