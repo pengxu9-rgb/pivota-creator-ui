@@ -83,8 +83,13 @@ assert.equal(adversarial.status, 0, adversarial.stderr);
 const printing = JSON.parse(adversarial.stdout);
 assert.equal(printing.evidence_mode, "synthetic_offline");
 assert.equal(printing.external_network_calls, 0);
-assert.equal(printing.cases.length, 4);
+assert.ok(printing.cases.length >= 4);
+for (const original of ["Edition", "Language", "Finish", "product_name"])
+  assert.ok(printing.cases.some(row => row.case === original));
 for (const row of printing.cases) {
+  assert.ok(["selected_options", "resolve_name", "quote_name"].includes(row.stage));
+  assert.equal(row.expected, "product_mismatch");
+  assert.equal(row.expected_provider_paths, row.stage === "quote_name" ? 3 : 2);
   validateCommerceResponse("research", row.research);
   validateCommerceResponse("select", row.selection);
   validateCommerceResponse("handoff", row.choices);
@@ -95,7 +100,40 @@ for (const row of printing.cases) {
   assert.equal(row.handoff.purchasable, false);
   assert.equal(row.handoff.order_created, false);
   assert.equal(row.handoff.purchase_action, null);
-  assert.ok(row.provider_paths.every(endpoint => endpoint === "/v1/oauth/token" || endpoint === "/v1/products/resolve"));
+  assert.equal(row.provider_paths.length, row.expected_provider_paths);
+  assert.deepEqual(row.provider_paths, row.stage === "quote_name" ?
+    ["/v1/oauth/token", "/v1/products/resolve", "/v1/quotes"] : ["/v1/oauth/token", "/v1/products/resolve"]);
+  assert.deepEqual(row.external_attempts, []);
+}
+const compatibleResult = spawnSync("python3", ["-B", "-c",
+  "import json; from tests.test_bns_printing_identity import compatible_raw_report; print(json.dumps(compatible_raw_report()))"], {
+  cwd: backend, encoding: "utf8", timeout: 30000, maxBuffer: 2 * 1024 * 1024,
+  env: {...process.env, PYTHONDONTWRITEBYTECODE: "1"},
+});
+assert.ifError(compatibleResult.error);
+assert.equal(compatibleResult.status, 0, compatibleResult.stderr);
+const compatible = JSON.parse(compatibleResult.stdout);
+assert.equal(compatible.evidence_mode, "synthetic_offline");
+assert.equal(compatible.external_network_calls, 0);
+assert.ok(compatible.cases.length >= 3);
+for (const row of compatible.cases) {
+  assert.equal(row.expected, "quote_ready_for_review");
+  assert.equal(row.expected_provider_paths, 3);
+  validateCommerceResponse("research", row.research);
+  validateCommerceResponse("select", row.selection);
+  validateCommerceResponse("handoff", row.choices);
+  validateCommerceResponse("handoff", row.handoff);
+  assert.equal(row.selection.offer.grade.kind, "raw");
+  assert.equal(row.handoff.status, "quote_ready_for_review");
+  const priceQuote = row.handoff.quote;
+  assert.ok(priceQuote);
+  assert.equal(priceQuote.listing.grade.certificate_verified, false);
+  assert.equal(priceQuote.evidence.authenticity_verified, false);
+  assert.equal(handoffView(row.handoff, Date.parse(priceQuote.buyship.quoted_at), row.selection.expires_at).kind, "quote");
+  assert.equal(row.handoff.purchasable, false);
+  assert.equal(row.handoff.order_created, false);
+  assert.equal(row.handoff.purchase_action, null);
+  assert.deepEqual(row.provider_paths, ["/v1/oauth/token", "/v1/products/resolve", "/v1/quotes"]);
   assert.deepEqual(row.external_attempts, []);
 }
 const rawResult = spawnSync("python3", ["-B", "-c",
@@ -120,4 +158,5 @@ assert.equal(raw.selection.order_created, false);
 assert.equal(raw.selection.purchase_action, null);
 console.log(JSON.stringify({schema:"pot.live-offer-pair-acceptance.v1", result:"passed", evidence_mode:"synthetic_offline",
   offers:research.offers.length, blocked_scenarios:report.blocked, printing_contradictions_blocked:printing.cases.length,
-  native_raw_card_selected:true, external_network_calls:0, orders_created:0, payments_made:0}));
+  compatible_raw_quotes:compatible.cases.length, native_raw_card_selected:true,
+  external_network_calls:0, orders_created:0, payments_made:0}));

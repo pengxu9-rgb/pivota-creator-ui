@@ -45,7 +45,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: pengxu9-rgb/pokemon-commerce-index
-          ref: ffba16b45f908da39af701249b19fc9aa23bc2ad
+          ref: ebfc3cf755f613aa602f3b3987a38508abc369d4
           path: commerce-backend
       - name: Validate the actual source pair through a synthetic seller-to-BNS journey
         run: node --require ./tests/helpers/offline-network-guard.cjs tests/live-offer-pair.cjs "$GITHUB_WORKSPACE/commerce-backend"
