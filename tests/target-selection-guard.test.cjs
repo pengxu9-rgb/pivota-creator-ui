@@ -1,6 +1,7 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const ts=require('typescript');
+const {readiness}=require('./sourceReadinessSamples.cjs');
 const samples=require('./commerceSamples.cjs'),{exactListing}=require('./listingEvidenceSamples.cjs');
 const {validateOffer}=require('../src/lib/pokemon/commerceContract.cjs');
 const {canSelectForTarget,filterComparisonOffers,offerSection}=require('../src/lib/pokemon/offerEvidence.cjs');
@@ -37,7 +38,7 @@ function runtime(relative,dependencies={}){
   return {get value(){return value;},render,async settle(){for(let i=0;i<24;i++){if(dirty)render();await Promise.resolve();}if(dirty)render();return value;},dispose(){for(const c of cells)c?.cleanup?.();}};
 }
 function flowHarness(offers){
-  const requests=[],research={...samples.research(),checked_at:new Date().toISOString(),offers};
+  const requests=[],research={...samples.research(),checked_at:new Date().toISOString(),offers,source_readiness:readiness()};
   const transport=async(operation,payload)=>{requests.push({operation,payload:clone(payload)});if(operation==='commerce/research')return research;if(operation==='commerce/select'){const offer=offers.find(o=>o.offer_id===payload.offer_id);return {...samples.selection(),expires_at:new Date(Date.now()+300000).toISOString(),offer:clone(offer)};}throw Error('Unexpected transport '+operation);};
   const h=runtime('live/useCommerceFlow.ts',{'../../pokemonClient':{pokemonApi:transport},props:{transport}});
   return {...h,get value(){return h.value;},requests,research,async researchOffers(){await h.settle();await h.value.researchOffers({card_id:anchor,query:'Pikachu',platforms:['mercari']});await h.settle();}};

@@ -10,7 +10,7 @@ const shared=require("@/lib/pokemon/mobileAgent.cjs");
 const {changeBookmark}=require("@/lib/pokemon/bookmarkChange.cjs");
 const {preferencePatch}=require("@/lib/pokemon/bnsChatState.cjs");
 const ROOT="/creator/pokemon-collector/shopper";
-type Sheet="compare"|"preferences"|"saved"|"history"|"handoff"|"psa"|null;
+type Sheet="offers"|"compare"|"preferences"|"saved"|"history"|"handoff"|"psa"|null;
 export type CatalogDraft={text:string;cards:Card[];product_urls:string[];grade:string};
 export default function useMobileAgent({browsingBeta=false}:{browsingBeta?:boolean}={}){
   const router=useRouter(),params=useSearchParams(),desired=params.get("conversation");
@@ -102,7 +102,7 @@ export default function useMobileAgent({browsingBeta=false}:{browsingBeta?:boole
     await task("catalog",async(signal,current)=>{const result=await api<{cards:Card[]}>("catalog/search",{q,offset:0},signal);if(current())setDraft({text,cards:result.cards.slice(0,12),product_urls:urls,grade});});
   }
   async function researchCard(value:Card,urls?:string[]){
-    if(browsingBeta){setError("Live seller listings are not available in this browsing beta. You can browse and save catalog cards.");return;}
+    if(browsingBeta){setSheet("offers");return;}
     if(!canAct())return;
     const productUrls=shared.urlsForResearch({cardId:value.card_id,explicit:urls,draft,active:researchUrlContext.current});
     researchUrlContext.current={cardId:value.card_id,urls:productUrls};
@@ -122,7 +122,7 @@ export default function useMobileAgent({browsingBeta=false}:{browsingBeta?:boole
     const value=text.trim();if(!value||!canAct())return;
     const intent=shared.commerceIntent(value);
     if(!intent){await agentTurn(value);return;}
-    if(browsingBeta){setError("This beta supports catalog browsing and saved preferences. Live listings, certificate checks and purchase quotes are not enabled.");return;}
+    if(browsingBeta){setSheet("offers");return;}
     if(intent.kind==="research"){
       if(/^(?:refresh|refresh offers|check again)[.!]?$/i.test(value)&&card)await researchCard(card);else await findCatalog(value,intent.product_urls||[]);
     }else if(intent.kind==="select"){

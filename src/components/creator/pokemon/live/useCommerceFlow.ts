@@ -4,6 +4,7 @@ import {pokemonApi} from "../../pokemonClient";
 import type {CommerceTransport,Research,Selection,Handoff,Offer,VariantChoice} from "@/lib/pokemon/commerceTypes";
 import type {PsaVerification} from "./PsaCertificate";
 const {validateCommerceResponse}=require("@/lib/pokemon/commerceContract.cjs");
+const {sourceReadAllowed}=require("@/lib/pokemon/sourceReadiness.cjs");
 const {visibleOffers}=require("@/lib/pokemon/mobileAgent.cjs");
 const {canSelectForTarget,certificateBlocksSelection}=require("@/lib/pokemon/offerEvidence.cjs");
 const {variantScope,chooseVariant,variantKeyFor}=require("@/lib/pokemon/bnsVariantChoice.cjs");
@@ -37,7 +38,7 @@ export default function useCommerceFlow({transport=pokemonApi,canStart=()=>true}
   function setCountry(value:string){if(value!==country){contextChanged();setCountryState(value);setRegionState("");}}
   function setRegion(value:string){if(value!==region){contextChanged();setRegionState(value);}}
   function setForwarder(value:string){if(value!==forwarder){contextChanged();setForwarderState(value);}}
-  function chooseOffer(id:string){if(running.current)return;const offer=rows.find(o=>o.offer_id===id);if(!offer||!research||!canSelectForTarget(offer,research.card_id,Date.now(),certificateResults[id]))return;setSelectedOfferId(id);if(id!==selectedOfferId)invalidateSelection();}
+  function chooseOffer(id:string){if(running.current)return;const offer=rows.find(o=>o.offer_id===id);if(!offer||!research||!sourceReadAllowed(research,offer.source)||!canSelectForTarget(offer,research.card_id,Date.now(),certificateResults[id]))return;setSelectedOfferId(id);if(id!==selectedOfferId)invalidateSelection();}
   async function task(kind:string,work:(signal:AbortSignal,current:()=>boolean)=>Promise<void>){
     if(running.current||!config.current.canStart())return;
     running.current=true;const c=new AbortController(),mine=++generation.current;flight.current=c;setPending(kind);setError("");
@@ -58,6 +59,7 @@ export default function useCommerceFlow({transport=pokemonApi,canStart=()=>true}
   async function selectOffer(id=selectedOfferId){
     if(running.current||!config.current.canStart())return;
     const offer=rows.find(o=>o.offer_id===id);if(!research||!offer){setError("Choose an exact listing from the current comparison.");return;}
+    if(!sourceReadAllowed(research,offer.source)){invalidateSelection();setError("This source is not active. Captured offers remain visible, but selection and BNS checks need approved source access.");return;}
     if(!canSelectForTarget(offer,research.card_id,Date.now(),certificateResults[id])){setError("This observation is sold, unavailable, expired or needs review. It cannot be selected.");return;}
     setSelectedOfferId(id);invalidateSelection();
     await task("select",async(signal,current)=>{
@@ -74,6 +76,7 @@ export default function useCommerceFlow({transport=pokemonApi,canStart=()=>true}
   async function prepareHandoff(){
     if(running.current||!config.current.canStart())return;
     if(!research||!chosen){setError("Choose an exact listing before continuing.");return;}
+    if(!sourceReadAllowed(research,chosen.source)){invalidateSelection();setError("This source is not active. Recheck its access before selecting or requesting a BNS quote.");return;}
     if(!canSelectForTarget(chosen,research.card_id,Date.now(),certificateResults[chosen.offer_id])){invalidateSelection();setError("This listing needs fresh, available evidence without a grading or certificate conflict before handoff.");return;}
     const path=research.forwarders.find(p=>p.id===forwarder);
     if(!path||!path.quote_available&&!path.manual_handoff_available){setError("Choose a buying path available for this check.");return;}

@@ -4,7 +4,7 @@ const {createRequire}=require('node:module'),localRequire=createRequire(path.res
 const ts=localRequire('typescript'),React=localRequire('react'),{renderToStaticMarkup}=localRequire('react-dom/server');
 const sample=require('./commerceSamples.cjs'),clock=Date.parse('2026-10-22T01:00:02Z');
 function listing(){const offer=sample.offer();offer.seller={id:'fixture-seller-1',display_name:null,url:null,evidence_ref:'offline-fixture:seller',observed_at:offer.observed_at,reputation:null};return offer;}
-function render({synthetic=false,forwarders=[],selected=true,expired=false,sheet='compare'}={}){
+function render({synthetic=false,forwarders=[],selected=true,expired=false,sheet='compare',browsingBeta=false}={}){
   const offer={...listing(),synthetic},research={...sample.research(),mode:synthetic?'synthetic_fixture':'on_demand_research',offers:[offer],forwarders};
   const state={ready:true,pending:'',error:'',thread:{workspace:{result:{candidate_cards:[],preferences:{}}}},messages:[],cards:[],history:[],bookmarks:[],compareIds:[],feedback:{},sheet,budget:null,budgetCurrency:null,gradePreference:'',
     card:{card_id:research.card_id,name:'Pikachu',collector_number:'173/165',set_code:'SV2A',language:'ja'},
@@ -22,7 +22,7 @@ function render({synthetic=false,forwarders=[],selected=true,expired=false,sheet
       return localRequire(id);
     }});return moduleValue.exports;
   }
-  return renderToStaticMarkup(React.createElement(load('pokemon/shopper/MobileAgent.tsx').default));
+  return renderToStaticMarkup(React.createElement(load('pokemon/shopper/MobileAgent.tsx').default,{browsingBeta}));
 }
 test('no usable forwarder renders price research only with canonical selection review and a validated seller ID',()=>{
   for(const forwarders of [[],[{id:'buyship',label:'Buy & Ship',quote_available:false,manual_handoff_available:false}]]){
@@ -51,3 +51,5 @@ test('typed provider commands in price-only mode open an explanatory fallback in
   const psa=render({synthetic:true,sheet:'psa'});assert.match(psa,/PSA lookup unavailable/);assert.match(psa,/Seller grade claims have not been verified with PSA/);assert.match(psa,/Back to listing review/);
   const handoff=render({synthetic:true,sheet:'handoff'});assert.match(handoff,/Buying service unavailable/);assert.match(handoff,/Delivered quotes and URL handoff are unavailable/);assert.match(handoff,/Back to listing review/);
 });
+
+test('browsing beta exposes a passive seller-access journey without source or quote controls',()=>{const html=render({browsingBeta:true,sheet:'offers'});assert.match(html,/Seller offer access/);assert.match(html,/Seller offers are not enabled in this beta/);assert.match(html,/BNS quote requests are off/);assert.doesNotMatch(html,/Check delivered quote|Prepare URL handoff|aria-label="Buying path"|Open Buy&amp;Ship request entry/);});

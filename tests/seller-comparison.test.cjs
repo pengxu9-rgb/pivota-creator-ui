@@ -6,6 +6,7 @@ const {sellerProfileUrl,sellerView}=require("../src/lib/pokemon/sellerEvidence.c
 const {groupComparableOffers,listingObservations,listingCoverage,offerEvidence}=require("../src/lib/pokemon/offerEvidence.cjs");
 const {selectionMatches,handoffMatches}=require("../src/lib/pokemon/bnsChatState.cjs");
 const {exactListing,photo}=require("./listingEvidenceSamples.cjs");
+const {readiness}=require("./sourceReadinessSamples.cjs");
 const sample=require("./commerceSamples.cjs"),clock=Date.parse("2026-10-22T01:00:02Z"),cardId=sample.research().card_id;
 const clone=structuredClone;
 function reputation(changes={}){return {rating:{value:4.8,scale:5},review_count:127,positive_feedback_percent:null,feedback_score:null,evidence_ref:"fixture:seller-metrics",observed_at:"2026-10-22T01:00:00Z",...changes};}
@@ -20,7 +21,7 @@ const component=()=>{
   return m.exports.default;
 };
 const Board=component(),React=localRequire("react"),{renderToStaticMarkup}=localRequire("react-dom/server");
-const render=(offers,props={})=>renderToStaticMarkup(React.createElement(Board,{offers,cardId,clock,onSelect(){},onCertificate(){},...props}));
+const render=(offers,props={})=>renderToStaticMarkup(React.createElement(Board,{offers,cardId,clock,onSelect(){},onCertificate(){},research:{...sample.research(),offers,source_readiness:[...readiness(),].map(row=>({...row,status:"enabled",method:row.source==="ebay_us"?"api":"crawl",listing_read_enabled:true,photo_display:"authorized_only",blocker:null}))},...props}));
 const articles=html=>html.match(/<article\b[\s\S]*?<\/article>/g)||[];
 const chooseButtons=html=>html.match(/<button\b[^>]*class="choose"[^>]*>[\s\S]*?<\/button>/g)||[];
 
@@ -171,7 +172,8 @@ test("pinning affordances stay separate from the explicitly selected quote listi
 test("offered-copy photos are shown only from validated listing attachments, never substituted catalog art",()=>{
   const missing=offer("missing",{image_url:"https://catalog.example/art.jpg"}),missingHtml=render([missing]);
   assert.doesNotMatch(missingHtml,/<img\b|catalog\.example/);assert.match(missingHtml,/No photos of this offered copy were extracted/);assert.match(missingHtml,/Catalog artwork is not physical-copy evidence/);
-  const o=offer("photo");o.listing_photos=[photo(o)];const html=render([o]);assert.equal((html.match(/<img\b/g)||[]).length,2);
+  const o=offer("photo");o.listing_photos=[photo(o)];const permission={research:{...sample.research(),offers:[o],source_readiness:readiness()}};const html=render([o],permission);assert.equal((html.match(/<img\b/g)||[]).length,2);
   assert.match(html,/offered copy/);assert.match(html,/physical-copy connection unverified/);assert.match(html,/referrerPolicy="no-referrer"/);
-  const unsafe=render([{...o,listing_photos:[photo(o,{url:"https://catalog.example/art.jpg"})]}]);assert.doesNotMatch(unsafe,/<img\b|catalog\.example/);assert.match(unsafe,/No listing<br\/>photo/);
+  for(const research of [undefined,{...sample.research(),source_readiness:[{}]},{...sample.research(),source_readiness:readiness({photos:false})}]){const hidden=render([o],{research});assert.doesNotMatch(hidden,/<img\b|href="https:\/\/static\.mercdn/);assert.match(hidden,/display permission is confirmed/);}
+  const unsafe=render([{...o,listing_photos:[photo(o,{url:"https://catalog.example/art.jpg"})]}],permission);assert.doesNotMatch(unsafe,/<img\b|catalog\.example/);assert.match(unsafe,/No listing<br\/>photo/);
 });
