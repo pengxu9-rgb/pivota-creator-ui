@@ -1,0 +1,20 @@
+name: Pot release offline preflight
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-release-controller:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate release controller with synthetic offline cloud fixtures
+        run: python3 -B tests/pot-release-test.py -v
