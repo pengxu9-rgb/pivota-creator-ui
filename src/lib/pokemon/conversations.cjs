@@ -2,6 +2,7 @@
 const family = require('./sourceFamilyAdvisory.cjs');
 const commerceHistory=require('./commerceHistory.cjs');
 const {comparisonRecords}=require('./comparisonRecords.cjs');
+const {conversationText}=require('./conversationText.cjs');
 const fs=require('node:fs/promises');
 const path=require('node:path');
 const {randomUUID,createHash}=require('node:crypto');
@@ -118,14 +119,15 @@ function createConversationService({workspace,authenticate,store,now=Date.now,re
     if(!textMode&&payload.action.type==='reply'&&(typeof payload.action.text!=='string'||!payload.action.text.trim()||payload.action.text.length>2000))fail('invalid_chat_request');
     if(!textMode&&payload.action.type==='ask'&&(typeof payload.action.question!=='string'||!payload.action.question.trim()||payload.action.question.length>2000))fail('invalid_chat_request');
     const held=lock(user,payload.id,true),abort=()=>held.controller.abort();signal?.addEventListener('abort',abort,{once:true});if(signal?.aborted)abort();
-    let doc,current;
+    let doc,current,notice='';
     try {
       doc=await read(user,payload.id);if(doc.commercePending)fail('logical_turn_in_progress');if(doc.version!==payload.version)fail('chat_version_conflict');
       current=doc.workspaceId?await workspace.get(context,doc.workspaceId):null;
-      const action=textMode?{type:!current||!current.result?'ask':'reply',...(current?.result?{text:payload.text.trim()}:{question:payload.text.trim()})}:copy(payload.action);
+      const interpreted=textMode?conversationText(payload.text.trim(),current?.result):null;
+      const action=interpreted?interpreted.action:copy(payload.action);notice=interpreted?.notice||'';
       if(action.type==='reply'&&action.text.length>200)fail('chat_reply_too_long');
       const text=textMode?payload.text.trim():actionText(action);
-      const time=now();doc={...doc,version:doc.version+1,updatedAt:time,title:doc.messages.length?doc.title:text.slice(0,100),requiresReconfirmation:true,pending:true,commerceAnchor:null,
+      const time=now();doc={...doc,version:doc.version+1,updatedAt:time,title:doc.messages.length?doc.title:text.slice(0,100),requiresReconfirmation:true,pending:true,pendingTextNotice:notice||null,commerceAnchor:null,
         messages:[...doc.messages,{id:randomUUID(),role:'user',status:'submitted',text,createdAt:time}]};
       // The pending marker survives a process interruption and never confers target authority.
       await store.put(user,'chats',doc.id,doc);
@@ -135,13 +137,14 @@ function createConversationService({workspace,authenticate,store,now=Date.now,re
       if(action.type==='select')current=await workspace.save(context,{id:current.id,version:current.version},{signal:held.controller.signal});
       current=await workspace.get(context,current.id);
       if(held.controller.signal.aborted)fail('catalog_cancelled');
-      doc={...doc,version:doc.version+1,updatedAt:now(),pending:null,requiresReconfirmation:action.type!=='select'||current.needs_reconfirmation,
-        messages:[...doc.messages,assistantReply(current,action,now())]};
+      const reply=assistantReply(current,action,now());if(notice)reply.text=notice+'\n\n'+reply.text;
+      doc={...doc,version:doc.version+1,updatedAt:now(),pending:null,pendingTextNotice:null,requiresReconfirmation:action.type!=='select'||current.needs_reconfirmation,
+        messages:[...doc.messages,reply]};
       await store.put(user,'chats',doc.id,doc);return view(await read(user,doc.id),current);
     } catch(error) {
       if(doc?.pending){
-        doc={...doc,version:doc.version+1,updatedAt:now(),pending:null,requiresReconfirmation:true,
-          messages:[...doc.messages,{id:randomUUID(),role:'assistant',status:'failed',text:FAILURE_TEXT[error.code]||'This turn could not finish. Your saved cards remain available. Review the current conversation before setting a target.',createdAt:now(),cards:[],reasons:{},comparison:null}]};
+        doc={...doc,version:doc.version+1,updatedAt:now(),pending:null,pendingTextNotice:null,requiresReconfirmation:true,
+          messages:[...doc.messages,{id:randomUUID(),role:'assistant',status:'failed',text:(notice?notice+'\n\n':'')+(FAILURE_TEXT[error.code]||'This turn could not finish. Your saved cards remain available. Review the current conversation before setting a target.'),createdAt:now(),cards:[],reasons:{},comparison:null}]};
         await store.put(user,'chats',doc.id,doc);
       }
       throw error;
@@ -153,7 +156,7 @@ function createConversationService({workspace,authenticate,store,now=Date.now,re
     const held=lock(user,id);
     try{
       let doc=await read(user,id);const recovered=commerceHistory.expire(doc,now());if(recovered!==doc){await store.put(user,'chats',id,recovered);doc=recovered;}
-      if(doc.pending){doc={...doc,version:doc.version+1,pending:null,requiresReconfirmation:true,messages:[...doc.messages,{id:randomUUID(),role:'assistant',status:'failed',text:FAILURE_TEXT.catalog_cancelled,createdAt:now(),cards:[],reasons:{},comparison:null}]};await store.put(user,'chats',id,doc);doc=await read(user,id);}
+      if(doc.pending){doc={...doc,version:doc.version+1,pending:null,pendingTextNotice:null,requiresReconfirmation:true,messages:[...doc.messages,{id:randomUUID(),role:'assistant',status:'failed',text:(doc.pendingTextNotice?doc.pendingTextNotice+'\n\n':'')+FAILURE_TEXT.catalog_cancelled,createdAt:now(),cards:[],reasons:{},comparison:null}]};await store.put(user,'chats',id,doc);doc=await read(user,id);}
       const current=doc.workspaceId?await workspace.get(context,doc.workspaceId):null;return view(doc,current,!!doc.commercePending);
     }finally{release(user,held);}
   }
