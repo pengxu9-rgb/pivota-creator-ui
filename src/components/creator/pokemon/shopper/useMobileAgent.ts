@@ -33,7 +33,10 @@ export default function useMobileAgent({browsingBeta=false}:{browsingBeta?:boole
     const old=threadRef.current;threadRef.current=value;setThread(value);loaded.current=value.id;
     if(syncGrade||old?.id!==value.id||old?.workspace?.version!==value.workspace?.version)hydrate(value,syncGrade);
     setHistory(prev=>[{id:value.id,title:value.title,updatedAt:value.updatedAt,expiresAt:value.expiresAt},...prev.filter(h=>h.id!==value.id)].sort((a,b)=>b.updatedAt-a.updatedAt));
-    if(desired!==value.id)router.replace(ROOT+"?conversation="+encodeURIComponent(value.id),{scroll:false});
+    // The reply is already loaded. Updating its address must not request a new
+    // server-rendered page (private proxies do not relay Next's Flight headers).
+    // Next's native-history wrapper keeps useSearchParams in sync without a fetch.
+    if(desired!==value.id&&typeof window!=="undefined")window.history.replaceState(null,"",ROOT+"?conversation="+encodeURIComponent(value.id));
   }
   function clearCurrent(){flow.reset();researchUrlContext.current=null;setCard(null);setDraft(null);setCertificate("");setCertificateOfferId("");setSheet(null);setCompareIds([]);}
   useEffect(()=>{
@@ -48,7 +51,10 @@ export default function useMobileAgent({browsingBeta=false}:{browsingBeta?:boole
         setBookmarks(saved);setBookmarkUnverified(false);setHistory(chats);setThread(current);threadRef.current=current;loaded.current=current?.id||null;if(current)hydrate(current,true);else{setBudget(null);setBudgetCurrency(null);setGradePreference("");flow.setCountry("HK");flow.setRegion("");}setReady(true);
       }catch(e){if(mine===generation.current&&!c.signal.aborted)setError(e instanceof Error?e.message:"This session is unavailable.");}
       finally{if(mine===generation.current)running.current=false;}
-    })();return()=>{c.abort();flight.current?.abort();};
+    // A self-authored URL update may arrive after the next turn has started.
+    // Cancel this bootstrap only; actual navigation aborts the current turn at
+    // the start of this effect, and unmount has its own global cancellation.
+    })();return()=>{c.abort();};
   // Adopting an already-loaded conversation keeps the current check mounted.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[desired]);
@@ -156,6 +162,7 @@ export default function useMobileAgent({browsingBeta=false}:{browsingBeta?:boole
   function toggleCompare(id:string){if(!canAct())return;setCompareIds(prev=>prev.includes(id)?prev.filter(v=>v!==id):prev.length<2?[...prev,id]:[prev[1],id]);}
   const messages=thread?.messages||[],cards=[...new Map([...messages.flatMap(m=>m.cards||[]),...(draft?.cards||[]),...bookmarks.map(b=>b.card),...(card?[card]:[])].map(c=>[c.card_id,c])).values()].slice(0,100),
     latestCatalogMessage=[...messages].reverse().find(m=>m.role==="assistant"&&!m.commerce&&m.status==="accepted"),feedback=thread?.workspace?.collecting_feedback||{};
-  return {ready,error:error||flow.error,pending:pending||flow.pending||(psaPending?"psa":""),thread,history,bookmarks,bookmarkUnverified,messages,cards,draft,card,sheet,certificate,certificateOfferId,openCertificate,budget,budgetCurrency,gradePreference,compareIds,feedback,latestCatalogMessage,flow,
+  const restoringConversation=!ready&&!!desired&&!thread;
+  return {ready,restoringConversation,error:error||flow.error,pending:pending||flow.pending||(psaPending?"psa":""),thread,history,bookmarks,bookmarkUnverified,messages,cards,draft,card,sheet,certificate,certificateOfferId,openCertificate,budget,budgetCurrency,gradePreference,compareIds,feedback,latestCatalogMessage,flow,
     transport,setPsaPending,setSheet,setError,setCertificate,send,researchCard,historicalResearch,prepareHandoff,saveCard,updatePreferences,newChat,resume,toggleCompare,catalogAction,refreshConversation,stop};
 }
