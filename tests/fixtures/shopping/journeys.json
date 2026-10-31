@@ -1,0 +1,116 @@
+{
+  "schema": "shopping.synthetic.journeys.v1",
+  "synthetic": true,
+  "design_sha256": "49fc2d1ffd81f2bad03442de4561f2c0269506dbf8f1a5baabca9cac02be6527",
+  "clock": 1793491200000,
+  "repetitions_per_arm": 10,
+  "arms": [
+    "model-off",
+    "scripted"
+  ],
+  "journeys": [
+    {
+      "id": "J01",
+      "query": "Japanese Pikachu 173/165, PSA 10, under ¥30,000",
+      "requirements": {
+        "printing_ref": "print_jp_pikachu173",
+        "language": "ja",
+        "finish": "holo",
+        "grade_kind": "slab",
+        "grade_company": "PSA",
+        "grade_value": "10",
+        "condition_bucket": "graded",
+        "quantity": 1,
+        "currency": "JPY",
+        "budget_minor": "30000",
+        "budget_basis": "delivered",
+        "destination_ref": "dest_hk",
+        "route": "direct"
+      },
+      "offer_ref": "offer_A",
+      "turns_to_preview": 4,
+      "turns_to_first_offer": 1,
+      "transcript": "### J01 — Exact printing\n\n1. **User:** “Japanese Pikachu 173/165, PSA 10, under ¥30,000.” **Pot:** Immediately shows qualified read-only offers for that fixture printing: A at JPY 28,000 item ask and B at JPY 28,500, with original URLs, seller evidence and timestamps. A visible control says **“Assuming JPY item price · change.”** The Japanese printing supports this exploratory assumption only; no target, accepted budget, delivered-price winner or quote is created. No clarification is required before showing the offers.\n2. **User:** “JPY 30,000 delivered to Hong Kong.” **Pot:** Shows the fixture printing, language, finish, grade evidence level, quantity one, destination and total cap for explicit confirmation. On confirmation, server-authored typed actions pass admission; this compound sentence is never rewritten and sent to the legacy parser.\n3. **User:** Confirms and chooses “Compare offers.” **Pot:** Binds the confirmed target and requirements through admission; the offer board already shown in turn 1 remains grouped by exact printing. Seller feedback appears on its original scale with count/time. Missing shipping prevents a delivered-price winner. A PSA database match, if supplied, is labeled separately from physical authentication.\n4. **User:** “Preview A.” **Pot:** Refreshes A and shows item 28,000, shipping 1,200, fees 300, explicitly quoted tax 0: **JPY 29,500**, destination, seller and expiry. The trusted button says “Approve simulated purchase.” Pressing it atomically records approval and reserves/enqueues the simulation; the model does not dispatch it. Approval, simulated submission and the simulator receipt remain separate events."
+    },
+    {
+      "id": "J02",
+      "query": "A nice Charizard for my son",
+      "requirements": {
+        "printing_ref": "print_en_charizard006",
+        "language": "en",
+        "finish": "holo",
+        "grade_kind": "raw",
+        "grade_company": null,
+        "grade_value": null,
+        "condition_bucket": "near_mint",
+        "quantity": 1,
+        "currency": "USD",
+        "budget_minor": "5000",
+        "budget_basis": "item",
+        "destination_ref": "dest_hk",
+        "route": "direct"
+      },
+      "offer_ref": "offer_CHAR_A",
+      "turns_to_preview": 4,
+      "turns_to_first_offer": 1,
+      "transcript": "### J02 — Vague request\n\n1. **User:** “A nice Charizard for my son.” **Pot:** Shows labeled candidate printings and asks, “A display gift or a graded collectible? What language and budget?” It gives a brief aesthetic explanation without a fabricated price or investment claim.\n2. **User:** “English, display gift, raw, USD 50 item budget.” **Pot:** Shows those proposed requirements. The user confirms a fixture printing and condition bucket using explicit controls; inferred preferences remain visibly proposed until then.\n3. **User:** Selects the printing. **Pot:** Compares available exact-printing, raw-condition, single-card offers. Alternatives with different printings remain separate. “Lowest observed item ask among these checked listings” carries scope/time; it never means cheapest across the whole market.\n4. **User:** Chooses a seller and destination. **Pot:** Requests a refreshed preview, displays delivered charges separately from the item budget, and offers simulation only after all required terms are known."
+    },
+    {
+      "id": "J03",
+      "query": "pikacu cards",
+      "requirements": {
+        "printing_ref": "print_jp_pikachu173",
+        "language": "ja",
+        "finish": "holo",
+        "grade_kind": "slab",
+        "grade_company": "PSA",
+        "grade_value": "10",
+        "condition_bucket": "graded",
+        "quantity": 1,
+        "currency": "JPY",
+        "budget_minor": "30000",
+        "budget_basis": "delivered",
+        "destination_ref": "dest_hk",
+        "route": "direct"
+      },
+      "offer_ref": "offer_A",
+      "turns_to_preview": 3,
+      "turns_to_first_offer": 1,
+      "transcript": "### J03 — Typo and ambiguous language\n\n1. **User:** “pikacu cards.” **Pot:** Shows **“Assuming Pikachu · change”** and both English and Japanese candidate-printing groups, with source-backed read-only observations where available. It does not ask the user to choose a language before showing candidates, merge the groups for price ranking or run a corrected native search. PR #33's original hold still applies to the original text.\n2. **User:** Chooses “Pikachu / Japanese.” **Pot:** Presents catalog-backed printing choices; the original message remains unchanged. An opaque server action resolves the chosen record through admission. The model cannot mint the record or change the held goal.\n3. **User:** Chooses a printing, PSA 10, and JPY budget controls. **Pot:** Shows accepted requirements, qualified offers and seller comparison, then follows J01's refreshed preview and simulation. If the user declines the suggestion, exploration remains unbound."
+    },
+    {
+      "id": "J04",
+      "query": "Preview selected listing A",
+      "requirements": {
+        "printing_ref": "print_jp_pikachu173",
+        "language": "ja",
+        "finish": "holo",
+        "grade_kind": "slab",
+        "grade_company": "PSA",
+        "grade_value": "10",
+        "condition_bucket": "graded",
+        "quantity": 1,
+        "currency": "JPY",
+        "budget_minor": "30000",
+        "budget_basis": "delivered",
+        "destination_ref": "dest_hk",
+        "route": "forwarder"
+      },
+      "offer_ref": "offer_A",
+      "turns_to_preview": 4,
+      "turns_to_first_offer": 1,
+      "new_budget_minor": "31000",
+      "faults": [
+        "price_change",
+        "timeout_after_submit"
+      ],
+      "transcript": "### J04 — Price change, then submission timeout\n\n1. **User:** “Preview selected listing A.” **Pot:** Refresh changes its item ask from JPY 28,000 to 29,000; delivered total changes from 29,500 to 30,500. Invalidates the old preview/approval and shows the difference: “Above your JPY 30,000 delivered cap; nothing submitted.”\n2. **User:** Explicitly changes the cap to JPY 31,000 and approves the **new** simulated preview. **Pot:** The trusted approval action atomically records its exact terms and reserves/enqueues one simulated operation, without waiting for a model call.\n3. **Simulator:** Creates an order, then loses the response. **Pot:** “Submission outcome unknown. Checking the existing attempt; do not submit again.” Reopening or pressing the button again reads the same operation.\n4. **User:** “Did it work?” **Pot:** Reconciliation finds that attempt's order and shows its simulator receipt, amount and status. If lookup is inconclusive, it remains unknown with a recovery action; no replacement order is submitted."
+    }
+  ],
+  "unexpected_question_rule": {
+    "frozen_unresolved_value_first": true,
+    "fallback": "Use what I already said",
+    "count_each_event_as_unnecessary": true,
+    "continue_with_original_limits": true
+  }
+}

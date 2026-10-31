@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "shopping.v1/get_alternatives",
+  "title": "get_alternatives",
+  "description": "",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "task_ref": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.:-]{0,159}$"
+    },
+    "printing_ref": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.:-]{0,159}$"
+    }
+  },
+  "required": [
+    "task_ref",
+    "printing_ref"
+  ],
+  "x-tool-name": "get_alternatives",
+  "x-model-callable": true,
+  "x-callers": [
+    "model",
+    "ui"
+  ],
+  "x-effect": "read",
+  "x-response-schema": {
+    "$ref": "common.schema.json#/$defs/envelope"
+  }
+}

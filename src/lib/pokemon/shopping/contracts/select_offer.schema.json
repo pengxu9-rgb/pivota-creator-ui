@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "shopping.v1/select_offer",
+  "title": "select_offer",
+  "description": "",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "task_ref": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.:-]{0,159}$"
+    },
+    "offer_ref": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.:-]{0,159}$"
+    },
+    "human_action_ref": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.:-]{0,159}$"
+    },
+    "requirements": {
+      "$ref": "common.schema.json#/$defs/requirements"
+    },
+    "request_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.:-]{0,159}$"
+    },
+    "expected_version": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "cancellation_epoch": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "required": [
+    "task_ref",
+    "offer_ref",
+    "human_action_ref",
+    "requirements",
+    "request_id",
+    "expected_version",
+    "cancellation_epoch"
+  ],
+  "x-tool-name": "select_offer",
+  "x-model-callable": true,
+  "x-callers": [
+    "model",
+    "ui"
+  ],
+  "x-effect": "mutation",
+  "x-response-schema": {
+    "$ref": "common.schema.json#/$defs/envelope"
+  }
+}

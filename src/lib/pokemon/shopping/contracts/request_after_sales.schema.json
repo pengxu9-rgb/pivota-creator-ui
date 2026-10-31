@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "shopping.v1/request_after_sales",
+  "title": "request_after_sales",
+  "description": "",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "task_ref": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.:-]{0,159}$"
+    },
+    "operation_ref": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.:-]{0,159}$"
+    },
+    "case_kind": {
+      "enum": [
+        "cancel",
+        "return",
+        "refund"
+      ]
+    },
+    "human_action_ref": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.:-]{0,159}$"
+    },
+    "request_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.:-]{0,159}$"
+    },
+    "expected_version": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "cancellation_epoch": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "required": [
+    "task_ref",
+    "operation_ref",
+    "case_kind",
+    "human_action_ref",
+    "request_id",
+    "expected_version",
+    "cancellation_epoch"
+  ],
+  "x-tool-name": "request_after_sales",
+  "x-model-callable": false,
+  "x-callers": [
+    "ui"
+  ],
+  "x-effect": "mutation",
+  "x-response-schema": {
+    "$ref": "common.schema.json#/$defs/envelope"
+  }
+}

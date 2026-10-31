@@ -1,0 +1,34 @@
+{
+  "schema": "shopping.synthetic.faults.v1",
+  "synthetic": true,
+  "cases": [
+    {
+      "id": "price_change",
+      "new_price_minor": "29000",
+      "new_total_minor": "30500",
+      "new_budget_minor": "31000",
+      "oracle": "new_approval_required"
+    },
+    {
+      "id": "out_of_stock",
+      "oracle": "no_order"
+    },
+    {
+      "id": "timeout_after_submit",
+      "order_ref": "sim_order_001",
+      "oracle": "one_order_reconciled"
+    },
+    {
+      "id": "duplicate_submit",
+      "oracle": "one_dispatch_replay_changed_payload_conflict"
+    },
+    {
+      "id": "partial_failure",
+      "oracle": "merchant_once_trusted_forwarding_only_recovery"
+    },
+    {
+      "id": "inconclusive_lookup",
+      "oracle": "unknown_no_replacement"
+    }
+  ]
+}
