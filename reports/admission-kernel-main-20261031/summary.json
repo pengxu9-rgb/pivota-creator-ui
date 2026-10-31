@@ -1,0 +1,932 @@
+{
+  "schema": "pot.admission.main-preparation.v1",
+  "approved": false,
+  "main": "3ec4bf7ca745e1a07fafe150e6c4535c54c4ce92",
+  "source_head": "918bd468af52b8f87248406305b893a0410105ed",
+  "branch": "codex/admission-kernel-main-20261031",
+  "product_commit": "the single commit containing this file; exact SHA is reported in the chat",
+  "pilot": "model off for chat turns",
+  "validation": {
+    "head": "ff6b78af8ffbaa1222ce371e67c7cf2983f6f816",
+    "tree": "4290515dcd970a8de048b45d9321dd78db50121c",
+    "src_tree": "7056d74b50262ddd533ead0bc424c3ceef755cb7",
+    "tests_tree": "5d13eab6a769561e5471b4da929b0acb20ecfcfe"
+  },
+  "conflicts": [
+    {
+      "file": "src/lib/pokemon/conversations.cjs",
+      "hunks": [
+        {
+          "id": "C1",
+          "resolution": "Use kernel imports (router, reply renderer, budgets, admit and adapter). Main conversationText is retained as a standalone helper but is not the service authority."
+        },
+        {
+          "id": "C2",
+          "resolution": "Keep kernel combined cancellation signals, bounded deadline, active checks and pending ownership; omit the notice state used only by new raw correction dispatch."
+        },
+        {
+          "id": "C3",
+          "resolution": "Keep source user text and durable turn reservation, route every candidate through admit and every execute/save through catalogAdapter. Do not retain main raw workspace start/advance/save or rewritten-text dispatch."
+        },
+        {
+          "id": "C4",
+          "resolution": "Combine main historical pendingTextNotice disclosure/clear with kernel modelPending clear, commerceAnchor withdrawal and reconfirmation. Get/reopen never reruns native work."
+        }
+      ]
+    },
+    {
+      "file": "src/components/creator/pokemon/shopper/useMobileAgent.ts",
+      "hunks": [
+        {
+          "id": "U1",
+          "resolution": "Keep shared latestCatalogMessage admission-aware filtering and main restoringConversation computation/return. All main native-history, reset and cancellation changes remain."
+        }
+      ]
+    },
+    {
+      "file": "src/components/creator/pokemon/shopper/MobileAgent.tsx",
+      "hunks": [],
+      "resolution": "Automatic merge: retain main restore/loading UI, qualified starter prompt and seller-access journey; retain kernel action eligibility."
+    },
+    {
+      "file": "tests/pokemon-private-context.test.cjs",
+      "hunks": [],
+      "resolution": "Automatic merge: retain main neutral private-coverage fixtures/assertions and kernel packaged helper checks. Explicitly inherit NODE_OPTIONS into the Python fixture child."
+    }
+  ],
+  "main_behaviours": [
+    {
+      "file": "src/components/creator/pokemon/live/CommerceChat.tsx",
+      "behaviour": "Keep explicit listing-button selection and classic quote/refusal presentation; no numeric source-order selection bypass.",
+      "unchanged_from_main": true
+    },
+    {
+      "file": "src/components/creator/pokemon/live/CommercePanel.tsx",
+      "behaviour": "Keep classic source availability, refusal and quote review controls.",
+      "unchanged_from_main": true
+    },
+    {
+      "file": "src/components/creator/pokemon/live/useCommerceFlow.ts",
+      "behaviour": "Keep selected-offer compatibility, refusal handling, destination/expiry/handoff checks.",
+      "unchanged_from_main": true
+    },
+    {
+      "file": "src/components/creator/pokemon/shopper/MobileAgent.module.css",
+      "behaviour": "Keep main seller-access and journey presentation styles.",
+      "unchanged_from_main": true
+    },
+    {
+      "file": "src/components/creator/pokemon/shopper/MobileAgent.tsx",
+      "behaviour": "Keep restore skeleton instead of welcome during navigation; keep qualified Pikachu starter and passive beta seller-access journey.",
+      "unchanged_from_main": false
+    },
+    {
+      "file": "src/components/creator/pokemon/shopper/OfferEvidenceBoard.tsx",
+      "behaviour": "Keep offer eligibility/selection and evidence rendering strengthened by main.",
+      "unchanged_from_main": true
+    },
+    {
+      "file": "src/components/creator/pokemon/shopper/OfferJourney.module.css",
+      "behaviour": "Retain new passive seller-access journey styles.",
+      "unchanged_from_main": true
+    },
+    {
+      "file": "src/components/creator/pokemon/shopper/OfferJourney.tsx",
+      "behaviour": "Retain new passive source/offer/quote status journey, with provider activation absent.",
+      "unchanged_from_main": true
+    },
+    {
+      "file": "src/components/creator/pokemon/shopper/useMobileAgent.ts",
+      "behaviour": "Keep native-history URL updates (no server navigation), local bootstrap cleanup, back/forward/unmount cancellation, new-chat readiness and restoringConversation; combine admission-aware latest message helper.",
+      "unchanged_from_main": false
+    },
+    {
+      "file": "src/lib/pokemon/commerceContract.cjs",
+      "behaviour": "Keep stricter selected-offer/quote evidence validation and detailed refusal support.",
+      "unchanged_from_main": true
+    },
+    {
+      "file": "src/lib/pokemon/commerceTypes.ts",
+      "behaviour": "Keep main source/quote contract types.",
+      "unchanged_from_main": true
+    },
+    {
+      "file": "src/lib/pokemon/conversationText.cjs",
+      "behaviour": "Keep standalone helper/unit coverage. Its corrected-raw/native dispatch and broad restart shortcuts are not integrated into the service; admission governs.",
+      "unchanged_from_main": true
+    },
+    {
+      "file": "src/lib/pokemon/conversations.cjs",
+      "behaviour": "Resolve the four conflict hunks as above; keep original message persistence and disclose only historical pending correction notices.",
+      "unchanged_from_main": false
+    },
+    {
+      "file": "src/lib/pokemon/privateCoverage.cjs",
+      "behaviour": "Keep main private neutral report/hash-bound read gate, without source activation.",
+      "unchanged_from_main": true
+    },
+    {
+      "file": "src/lib/pokemon/sourceReadiness.cjs",
+      "behaviour": "Keep main passive provider availability reporting without activation.",
+      "unchanged_from_main": true
+    }
+  ],
+  "dropped_main_behaviours": [
+    {
+      "behaviour": "Automatically correct pikacu to Pikachu and send corrected text to native.",
+      "reason": "That path rewrites user identity and directly dispatches without an AdmittedPlan. The kernel requires an admitted literal query; a held typo can be followed by Find Japanese Pikachu cards in the same chat."
+    },
+    {
+      "behaviour": "Treat a New question prefix as an unconditional native restart, or reuse a legacy workspace whose stored goal is not admitted.",
+      "reason": "This bypasses whole-text/stored-goal admission. Keep the kernel hold/new-chat recovery boundary; do not relax bare-name, compound, preference or ISO-plus-symbol holds."
+    },
+    {
+      "behaviour": "Persist a new correction notice on raw corrected dispatch success/failure.",
+      "reason": "No corrected raw dispatch occurs. Original user messages, admitted-turn failure/cancel persistence and old pending-notice recovery remain."
+    }
+  ],
+  "public_scan": {
+    "before": {
+      "counts": {
+        "email": 13,
+        "absolute_local": 151,
+        "ya29": 0,
+        "bearer": 17,
+        "private_key": 0,
+        "long_base64": 0,
+        "project": 2182,
+        "bucket": 0
+      },
+      "new_email_values": 2,
+      "new_project_values": 0,
+      "new_bucket_values": 0,
+      "files": {
+        "email": [
+          ".github/workflows/deploy-cloud-run.yml",
+          "reports/admission-kernel-live-model/attempt-1-transport-blocked/REPORT.md",
+          "reports/admission-kernel-live-model/token-launch.py",
+          "src/app/account/orders/[orderId]/page.tsx",
+          "tests/listing-evidence.test.cjs",
+          "tests/marketplace-affiliate.test.cjs",
+          "tests/model-turn-contract.test.cjs",
+          "tests/pot-release-test.py",
+          "tests/release-routing.test.cjs",
+          "tests/seller-comparison.test.cjs"
+        ],
+        "absolute_local": [
+          "reports/admission-kernel-live-model/REPORT.md",
+          "reports/admission-kernel-live-model/attempt-3-interrupted/REPORT.md",
+          "reports/admission-kernel-live-model/attempt-3-interrupted/attempt-3-raw-evidence-manifest.json",
+          "reports/admission-kernel-live-model/attempt-4-raw-evidence-manifest.json",
+          "reports/admission-kernel-round2/REPORT.md",
+          "reports/admission-kernel-round2/evidence/admission-vocabulary-provenance.json",
+          "reports/admission-kernel-round2/evidence/build-admission-vocabulary.py",
+          "reports/admission-kernel-round2/evidence/review-probes.json",
+          "reports/admission-kernel-round3/REPORT.md",
+          "reports/admission-kernel-round3/evidence/pool-proof.py",
+          "reports/admission-kernel-round3/evidence/review-provenance.json",
+          "reports/admission-kernel-round4/REPORT.md",
+          "reports/admission-kernel-round4/review-input-provenance.json",
+          "reports/admission-kernel-round5/REPORT.md",
+          "reports/admission-kernel-round5/cards-module-final-status.json",
+          "reports/admission-kernel-round5/cards-module-status.json",
+          "reports/admission-kernel-round5/review-input-provenance.json",
+          "reports/admission-kernel-round6/REPORT.md",
+          "reports/admission-kernel-round6/gate-summary.json",
+          "reports/admission-kernel-round6/raw-log-manifest.json",
+          "reports/admission-kernel/REPORT.md",
+          "reports/admission-kernel/evidence/native-worker.py",
+          "reports/evidence-archive/README.md",
+          "src/lib/pokemon/admissionVocabulary.json"
+        ],
+        "ya29": [],
+        "bearer": [
+          "cloud/pokemon/runtime/commerce-sidecar.cjs",
+          "reports/admission-kernel-live-model/guard-tests.cjs",
+          "reports/admission-kernel-live-model/live-allowlist-guard.cjs",
+          "src/app/api/creator-agent/checkout/session/route.ts",
+          "src/app/api/creator-agent/pokemon-collector/commerce/[operation]/route.ts",
+          "src/app/api/photo-analysis/skin/route.ts",
+          "src/app/api/photo-analysis/upload/route.ts",
+          "src/app/api/reviews/buyer/create/route.ts",
+          "src/app/api/reviews/buyer/exchange/route.ts",
+          "src/lib/pokemon/catalogImageStore.cjs",
+          "src/lib/pokemon/geminiVertex.cjs",
+          "src/lib/pokemon/googleObjectBackend.cjs",
+          "src/lib/pokemon/liveCatalog.cjs",
+          "src/lib/pokemon/vendor/collectorClient.cjs",
+          "tests/gemini-vertex-transport.test.cjs"
+        ],
+        "private_key": [],
+        "long_base64": [],
+        "project": [
+          ".env.example",
+          ".github/workflows/deploy-cloud-run.yml",
+          "README.md",
+          "cloud/pokemon/release/README.md",
+          "cloud/pokemon/release/pot_release.py",
+          "cloud/pokemon/runtime/runtime.cjs",
+          "cloudbuild.yaml",
+          "docs/creator-release-routing.md",
+          "package-lock.json",
+          "package.json",
+          "public/pivota-brand/CLAUDE.md",
+          "public/pivota-brand/HANDOFF.md",
+          "public/pivota-brand/README.md",
+          "public/pivota-brand/index.html",
+          "public/pivota-brand/pivota-brand.css",
+          "public/pivota-brand/svg/pivota-mark-on-gradient.svg",
+          "public/pivota-brand/svg/pivota-mark-on-purple.svg",
+          "public/pivota-brand/svg/pivota-mark.svg",
+          "public/pivota-brand/svg/pivota-wordmark.svg",
+          "reports/admission-kernel-live-model/REPORT.md",
+          "reports/admission-kernel-live-model/attempt-1-transport-blocked/REPORT.md",
+          "reports/admission-kernel-live-model/attempt-1-transport-blocked/proposals.json",
+          "reports/admission-kernel-live-model/attempt-2-proxy/REPORT.md",
+          "reports/admission-kernel-live-model/attempt-2-proxy/proposals.json.gz",
+          "reports/admission-kernel-live-model/attempt-3-interrupted/REPORT.md",
+          "reports/admission-kernel-live-model/attempt-3-interrupted/proposals.json.gz",
+          "reports/admission-kernel-live-model/build-corpus.cjs",
+          "reports/admission-kernel-live-model/collect.cjs",
+          "reports/admission-kernel-live-model/corpus.json",
+          "reports/admission-kernel-live-model/detached-launch.py",
+          "reports/admission-kernel-live-model/holdout-e.json",
+          "reports/admission-kernel-live-model/offline-fixture.cjs",
+          "reports/admission-kernel-live-model/proposals.json",
+          "src/app/api/photo-analysis/skin/route.ts",
+          "src/app/api/photo-analysis/upload/route.ts",
+          "src/app/layout.tsx",
+          "src/lib/creatorAgentGateway.ts",
+          "src/lib/pokemon/betaScope.cjs",
+          "src/lib/pokemon/cloudTestScope.cjs",
+          "src/lib/pokemon/googleState.cjs",
+          "src/lib/pokemon/vendor/collectorClient.cjs",
+          "src/lib/pokemon/workspaceFeedback.cjs",
+          "tests/admission-round4-stored-goals.test.cjs",
+          "tests/admission-round5.test.cjs",
+          "tests/admission-round6.test.cjs",
+          "tests/conversation-text.test.cjs",
+          "tests/model-runtime.test.cjs",
+          "tests/private-coverage.test.cjs",
+          "tests/release-routing.test.cjs",
+          "tests/smoke-private-image.py"
+        ],
+        "bucket": []
+      }
+    },
+    "after": {
+      "counts": {
+        "email": 11,
+        "absolute_local": 0,
+        "ya29": 0,
+        "bearer": 17,
+        "private_key": 0,
+        "long_base64": 0,
+        "project": 1082,
+        "bucket": 0
+      },
+      "new_email_values": 0,
+      "new_project_values": 0,
+      "new_bucket_values": 0,
+      "files": {
+        "email": [
+          ".github/workflows/deploy-cloud-run.yml",
+          "src/app/account/orders/[orderId]/page.tsx",
+          "tests/listing-evidence.test.cjs",
+          "tests/marketplace-affiliate.test.cjs",
+          "tests/model-turn-contract.test.cjs",
+          "tests/pot-release-test.py",
+          "tests/release-routing.test.cjs",
+          "tests/seller-comparison.test.cjs"
+        ],
+        "absolute_local": [],
+        "ya29": [],
+        "bearer": [
+          "cloud/pokemon/runtime/commerce-sidecar.cjs",
+          "reports/admission-kernel-live-model/guard-tests.cjs",
+          "reports/admission-kernel-live-model/live-allowlist-guard.cjs",
+          "src/app/api/creator-agent/checkout/session/route.ts",
+          "src/app/api/creator-agent/pokemon-collector/commerce/[operation]/route.ts",
+          "src/app/api/photo-analysis/skin/route.ts",
+          "src/app/api/photo-analysis/upload/route.ts",
+          "src/app/api/reviews/buyer/create/route.ts",
+          "src/app/api/reviews/buyer/exchange/route.ts",
+          "src/lib/pokemon/catalogImageStore.cjs",
+          "src/lib/pokemon/geminiVertex.cjs",
+          "src/lib/pokemon/googleObjectBackend.cjs",
+          "src/lib/pokemon/liveCatalog.cjs",
+          "src/lib/pokemon/vendor/collectorClient.cjs",
+          "tests/gemini-vertex-transport.test.cjs"
+        ],
+        "private_key": [],
+        "long_base64": [],
+        "project": [
+          ".env.example",
+          ".github/workflows/deploy-cloud-run.yml",
+          "README.md",
+          "cloud/pokemon/release/README.md",
+          "cloud/pokemon/release/pot_release.py",
+          "cloud/pokemon/runtime/runtime.cjs",
+          "cloudbuild.yaml",
+          "docs/creator-release-routing.md",
+          "package-lock.json",
+          "package.json",
+          "public/pivota-brand/CLAUDE.md",
+          "public/pivota-brand/HANDOFF.md",
+          "public/pivota-brand/README.md",
+          "public/pivota-brand/index.html",
+          "public/pivota-brand/pivota-brand.css",
+          "public/pivota-brand/svg/pivota-mark-on-gradient.svg",
+          "public/pivota-brand/svg/pivota-mark-on-purple.svg",
+          "public/pivota-brand/svg/pivota-mark.svg",
+          "public/pivota-brand/svg/pivota-wordmark.svg",
+          "reports/admission-kernel-live-model/REPORT.md",
+          "reports/admission-kernel-live-model/build-corpus.cjs",
+          "reports/admission-kernel-live-model/collect.cjs",
+          "reports/admission-kernel-live-model/corpus.json",
+          "reports/admission-kernel-live-model/detached-launch.py",
+          "reports/admission-kernel-live-model/holdout-e.json",
+          "reports/admission-kernel-live-model/offline-fixture.cjs",
+          "reports/admission-kernel-live-model/proposals.json",
+          "reports/admission-kernel-main-20261031/summary.json",
+          "src/app/api/photo-analysis/skin/route.ts",
+          "src/app/api/photo-analysis/upload/route.ts",
+          "src/app/layout.tsx",
+          "src/lib/creatorAgentGateway.ts",
+          "src/lib/pokemon/betaScope.cjs",
+          "src/lib/pokemon/cloudTestScope.cjs",
+          "src/lib/pokemon/googleState.cjs",
+          "src/lib/pokemon/vendor/collectorClient.cjs",
+          "src/lib/pokemon/workspaceFeedback.cjs",
+          "tests/admission-round4-stored-goals.test.cjs",
+          "tests/admission-round5.test.cjs",
+          "tests/admission-round6.test.cjs",
+          "tests/conversation-text.test.cjs",
+          "tests/model-runtime.test.cjs",
+          "tests/private-coverage.test.cjs",
+          "tests/release-routing.test.cjs",
+          "tests/smoke-private-image.py"
+        ],
+        "bucket": []
+      }
+    },
+    "bearer_indicator_note": "Header constructors/assertions and fake fixtures, not credential values.",
+    "email_note": "Remaining email values were already present on main; new account literal removed and synthetic test address replaced with an existing main fixture value."
+  },
+  "hash_binding_updates": {
+    "vocabulary_file": "src/lib/pokemon/admissionVocabulary.json",
+    "generator_file": "reports/admission-kernel-round2/evidence/build-admission-vocabulary.py",
+    "provenance_file": "reports/admission-kernel-round2/evidence/admission-vocabulary-provenance.json",
+    "pool_fixture_file": "reports/admission-kernel-round3/evidence/pool-proof-fixture.json",
+    "pool_worker_file": "reports/admission-kernel-round3/evidence/pool-proof.py",
+    "vocabulary_before": "9cc544ce21232f9c729f22adbcb6d680bd12059338ea7df4a02020bad80410ec",
+    "vocabulary_after": "6d763083ca01413f7d071d2e65a34145da49543338df6b2c12f1d682ac20a516",
+    "vocabulary_semantics_identical": true,
+    "database_sha256_unchanged": "a72ba074fdf13f426b5709f67926e631ad32f52e92d08ff3e1ab646ed3b8f204",
+    "pool_worker_before": "9302a92920e071c45b5fa9c89905c932da8be67ed03cc007e9d28bc791a59579",
+    "pool_worker_after": "b48dfca8dba37c0670e58c8b9998a8c5fa5d14a9af0efed950ee6378892efc50",
+    "pool_payload_identical_except_worker_binding": true,
+    "gzip_manifests": [
+      {
+        "file": "manifest.json.gz",
+        "schema": "pot.admission.compressed-manifest.v1",
+        "encoding": "gzip",
+        "uncompressed_bytes": 1611573,
+        "uncompressed_sha256": "19f12b7eb108293a958166acd71492acb9ce78362757104069185364a543b8e7",
+        "compressed_bytes": 694985,
+        "compressed_sha256": "7819bfa2510880f569f18394fc42f9a055dc8e07d705a38f027d50e6082ad979",
+        "all_bytes_retained_inside_repository": true,
+        "repository_pointer": "reports/evidence-archive/manifest.json"
+      },
+      {
+        "file": "raw-log-manifest.json.gz",
+        "schema": "pot.admission.compressed-manifest.v1",
+        "encoding": "gzip",
+        "uncompressed_bytes": 1226710,
+        "uncompressed_sha256": "e8534e31588d58707effd7065afb07db1ac590920822315b2096f0a895485a8a",
+        "compressed_bytes": 462426,
+        "compressed_sha256": "fc9b38ed3c40b3644df8cb0fa2698a439eeffd87a2ecd4d051a1fd712f14144f",
+        "all_bytes_retained_inside_repository": true,
+        "repository_pointer": "reports/admission-kernel-round6/raw-log-manifest.json"
+      }
+    ]
+  },
+  "archive": {
+    "manifest": "reports/admission-kernel-main-archive/manifest.json",
+    "manifest_sha256": "34de877f7e759964174351a1561648e4b9b048831cef9f4d6729964cbefd98b6",
+    "file_count": 38,
+    "total_bytes": 818092,
+    "restore": {
+      "fresh_clone_head": "ff6b78af8ffbaa1222ce371e67c7cf2983f6f816",
+      "files": 38,
+      "bytes": 818092,
+      "all_bytes_verified": true,
+      "network_attempts": 0
+    },
+    "legacy_restore": {
+      "restored": 10171,
+      "bytes": 60773067,
+      "source_head": "e9eba70f423fd6e7f37528c8e8f28fa072dab9eb",
+      "manifest_sha256": "19f12b7eb108293a958166acd71492acb9ce78362757104069185364a543b8e7",
+      "network_attempts": 0,
+      "verified": true
+    }
+  },
+  "gates": [
+    {
+      "name": "phase-b1",
+      "exit_code": 0,
+      "signal": null,
+      "counts": {
+        "tests": 0,
+        "pass": 0,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "node_audits": 1,
+      "python_audits": 0,
+      "log_sha256": "c1830cc8d3b65a47fdadc00338b060557c3874d30910a4dfa8b5974129e98613",
+      "network_attempts": 0
+    },
+    {
+      "name": "phase-b2",
+      "exit_code": 0,
+      "signal": null,
+      "counts": {
+        "tests": 0,
+        "pass": 0,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "node_audits": 1,
+      "python_audits": 0,
+      "log_sha256": "12b021d60996dc5566b53463b30a382f76dbad5124c4ea16bbb9ae3e50713cd1",
+      "network_attempts": 0
+    },
+    {
+      "name": "restore-new-archive",
+      "exit_code": 0,
+      "signal": null,
+      "counts": {
+        "tests": 0,
+        "pass": 0,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "node_audits": 1,
+      "python_audits": 0,
+      "log_sha256": "38de168a4d806fca3bb470259a9be82cc667e357f75bbf83f140ab3822400549",
+      "network_attempts": 0
+    },
+    {
+      "name": "restore-legacy-archive",
+      "exit_code": 0,
+      "signal": null,
+      "counts": {
+        "tests": 0,
+        "pass": 0,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "node_audits": 1,
+      "python_audits": 0,
+      "log_sha256": "a8fd9b8a5944439c382ff6daf65493d32106a6a3c9c019e4846a079c408be438",
+      "network_attempts": 0
+    },
+    {
+      "name": "default-off",
+      "exit_code": 0,
+      "signal": null,
+      "counts": {
+        "tests": 3,
+        "pass": 3,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "node_audits": 2,
+      "python_audits": 0,
+      "log_sha256": "23f1e5443a12f3f57beb0bdb94d64f874da5f40532c9ebfba48f5f3404a3c422",
+      "network_attempts": 0
+    },
+    {
+      "name": "deploy-routing-cli",
+      "exit_code": 0,
+      "signal": null,
+      "counts": {
+        "tests": 0,
+        "pass": 0,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "node_audits": 0,
+      "python_audits": 1,
+      "log_sha256": "0f4096f38bb74022c8684aca69577e4f02ae3b0e22bed1e041cf5756cec34fb9",
+      "network_attempts": 0
+    },
+    {
+      "name": "main-pot-release-python",
+      "exit_code": 0,
+      "signal": null,
+      "counts": {
+        "tests": 0,
+        "pass": 0,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "node_audits": 0,
+      "python_audits": 1,
+      "log_sha256": "a6b86506cb4bb7d71870035060a9b8c045bd795840c55c64613bd084c7b18305",
+      "network_attempts": 0,
+      "python_tests": 23
+    },
+    {
+      "name": "vocabulary-check",
+      "exit_code": 0,
+      "signal": null,
+      "counts": {
+        "tests": 0,
+        "pass": 0,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "node_audits": 0,
+      "python_audits": 1,
+      "log_sha256": "67489c15aef615372b21df552b7d8d10b23eb681ade820dcf9c824f90f791773",
+      "network_attempts": 0
+    },
+    {
+      "name": "typescript",
+      "exit_code": 0,
+      "signal": null,
+      "counts": {
+        "tests": 0,
+        "pass": 0,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "node_audits": 1,
+      "python_audits": 0,
+      "log_sha256": "9e572658fd9755b9c12d3b407bf8b2cad24e7c40dc6be548534c72089d9df628",
+      "network_attempts": 0
+    },
+    {
+      "name": "original-file-set292",
+      "exit_code": 0,
+      "signal": null,
+      "counts": {
+        "tests": 292,
+        "pass": 292,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "node_audits": 23,
+      "python_audits": 1,
+      "log_sha256": "46732080012de6e02a924d47ad2ecf28972393d037393d2124139d046c27e64a",
+      "network_attempts": 0
+    },
+    {
+      "name": "main-pot-node",
+      "exit_code": 0,
+      "signal": null,
+      "counts": {
+        "tests": 162,
+        "pass": 162,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "node_audits": 23,
+      "python_audits": 52,
+      "log_sha256": "a0aec03010918efd8771fa2f7c152c2e62bb3eb745abda931af62ab987d31260",
+      "network_attempts": 0
+    },
+    {
+      "name": "full475",
+      "exit_code": 0,
+      "signal": null,
+      "counts": {
+        "tests": 475,
+        "pass": 475,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "node_audits": 45,
+      "python_audits": 52,
+      "log_sha256": "46ad911ae336636c455803644d6d3773bb20ab82ed5a2acc56e2943c024df56e",
+      "network_attempts": 0
+    },
+    {
+      "name": "fresh93",
+      "exit_code": 0,
+      "signal": null,
+      "counts": {
+        "tests": 0,
+        "pass": 0,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "node_audits": 1,
+      "python_audits": 0,
+      "log_sha256": "ec08c17454391bf34e28996bc2eda089e480644611aac10aacf8d6a04188e8f8",
+      "network_attempts": 0
+    }
+  ],
+  "original_scenarios": {
+    "original_count": 291,
+    "current_file_set_pass": 292,
+    "all_original_names_present": true,
+    "added_main_test": [
+      "browsing beta exposes a passive seller-access journey without source or quote controls"
+    ],
+    "old_source_probe": {
+      "pass": 285,
+      "fail": 6,
+      "reason": "Frozen source fixtures are incompatible with main; retain current main fixtures without production relaxation.",
+      "log": "../gates/original291.log"
+    }
+  },
+  "phaseB": {
+    "byte_identical_twice": true,
+    "byte_identical_to_reviewed": true,
+    "sha256": "77ab2c392d1a88132270cf41c76f56fecccbecbda74c3567de582ed820af031b",
+    "safety": {
+      "S1": {
+        "failures": 0,
+        "status": "pass"
+      },
+      "S2": {
+        "failures": 0,
+        "status": "pass"
+      },
+      "S3": {
+        "failures": 0,
+        "status": "pass"
+      },
+      "S4": {
+        "failures": 0,
+        "status": "pass"
+      },
+      "S5": {
+        "failures": 0,
+        "status": "pass"
+      },
+      "S6": {
+        "failures": 0,
+        "status": "pass"
+      }
+    },
+    "changed_rows": [],
+    "native": {
+      "completed": 0,
+      "pending": false,
+      "required": 0,
+      "results": [],
+      "worker_started": false
+    },
+    "network_attempts": 0
+  },
+  "mutations": {
+    "complete": true,
+    "rows": 93,
+    "caught": 88,
+    "equivalents": [
+      "remove_reply_binding",
+      "restore_generic_word_reply",
+      "adapter_execute_runs_held_plans",
+      "R4_lucario_prefix",
+      "R4_forms_case_sensitive_ex_only"
+    ],
+    "test_files": 43,
+    "cells": 4136,
+    "node_audits": 8316,
+    "python_audits": 4940,
+    "retargeted_mutants": [],
+    "network_attempts": 0,
+    "scratch_cleaned": true
+  },
+  "mutation_verification": {
+    "passed": true,
+    "source_head": "ff6b78af8ffbaa1222ce371e67c7cf2983f6f816",
+    "source_manifest_rows": 415,
+    "rows": 93,
+    "caught": 88,
+    "equivalent": 5,
+    "cells": 4136,
+    "node_audits": 8316,
+    "python_audits": 4940,
+    "assertion_failure_cells": 157,
+    "every_log_hash_and_cell_receipt_verified": true,
+    "every_mutation_recomputed": true,
+    "all_python_receipts_uniquely_bound": true,
+    "retargeted_mutants": [],
+    "network_attempts": 0,
+    "signals_sent": 0
+  },
+  "deploy_routing": {
+    "deploy_creator": true,
+    "reason": "creator/shared paths changed",
+    "path_count": 145,
+    "creator_path_count": 100,
+    "creator_paths_sample": [
+      "reports/EVIDENCE_PLAN.md",
+      "reports/admission-kernel-live-model/REPORT.md",
+      "reports/admission-kernel-live-model/attempt-2-raw-evidence-manifest.json",
+      "reports/admission-kernel-live-model/attempt-4-raw-evidence-manifest.json",
+      "reports/admission-kernel-live-model/build-corpus.cjs",
+      "reports/admission-kernel-live-model/build-holdout-e.cjs",
+      "reports/admission-kernel-live-model/collect.cjs",
+      "reports/admission-kernel-live-model/corpus.json",
+      "reports/admission-kernel-live-model/detached-launch.py",
+      "reports/admission-kernel-live-model/detached-rehearsal.cjs",
+      "reports/admission-kernel-live-model/dynamic-context.cjs",
+      "reports/admission-kernel-live-model/guard-tests.cjs",
+      "reports/admission-kernel-live-model/holdout-e.json",
+      "reports/admission-kernel-live-model/live-allowlist-guard.cjs",
+      "reports/admission-kernel-live-model/native-replay.cjs",
+      "reports/admission-kernel-live-model/offline-fixture.cjs",
+      "reports/admission-kernel-live-model/proposals.json",
+      "reports/admission-kernel-live-model/raw-evidence-manifest.json",
+      "reports/admission-kernel-live-model/replay.cjs",
+      "reports/admission-kernel-live-model/summary.json"
+    ],
+    "main": "3ec4bf7ca745e1a07fafe150e6c4535c54c4ce92",
+    "router_sha256": "d861235c0ca524919f64922ed3d11d960dbd5a83c52935e2bf61aa4ce7ab0cac",
+    "staged_path_set_sha256": "db2fa03cf115474d4b2ac622115b30ba2ff710641401fb22c2a3826c0bbaa806",
+    "boundary_proof": "HEAD remains main; the final product commit will have only that parent. Full CLI ancestry checks passed on the identical pre-report validation tree.",
+    "method": "real route function with only Git path acquisition supplied from the exact staged diff; no cloud authentication",
+    "creator_paths": [
+      "reports/EVIDENCE_PLAN.md",
+      "reports/admission-kernel-live-model/REPORT.md",
+      "reports/admission-kernel-live-model/attempt-2-raw-evidence-manifest.json",
+      "reports/admission-kernel-live-model/attempt-4-raw-evidence-manifest.json",
+      "reports/admission-kernel-live-model/build-corpus.cjs",
+      "reports/admission-kernel-live-model/build-holdout-e.cjs",
+      "reports/admission-kernel-live-model/collect.cjs",
+      "reports/admission-kernel-live-model/corpus.json",
+      "reports/admission-kernel-live-model/detached-launch.py",
+      "reports/admission-kernel-live-model/detached-rehearsal.cjs",
+      "reports/admission-kernel-live-model/dynamic-context.cjs",
+      "reports/admission-kernel-live-model/guard-tests.cjs",
+      "reports/admission-kernel-live-model/holdout-e.json",
+      "reports/admission-kernel-live-model/live-allowlist-guard.cjs",
+      "reports/admission-kernel-live-model/native-replay.cjs",
+      "reports/admission-kernel-live-model/offline-fixture.cjs",
+      "reports/admission-kernel-live-model/proposals.json",
+      "reports/admission-kernel-live-model/raw-evidence-manifest.json",
+      "reports/admission-kernel-live-model/replay.cjs",
+      "reports/admission-kernel-live-model/summary.json",
+      "reports/admission-kernel-live-model/token-launch.py",
+      "reports/admission-kernel-main-20261031/REPORT.md",
+      "reports/admission-kernel-main-20261031/summary.json",
+      "reports/admission-kernel-main-archive/README.md",
+      "reports/admission-kernel-main-archive/manifest.json",
+      "reports/admission-kernel-main-archive/restore.cjs",
+      "reports/admission-kernel-round2/evidence/admission-vocabulary-provenance.json",
+      "reports/admission-kernel-round2/evidence/audit.cjs",
+      "reports/admission-kernel-round2/evidence/build-admission-vocabulary.py",
+      "reports/admission-kernel-round2/evidence/clarification-rate.cjs",
+      "reports/admission-kernel-round2/evidence/claude-clarification-labels.json",
+      "reports/admission-kernel-round2/evidence/legacy-mutations.cjs",
+      "reports/admission-kernel-round2/evidence/mutations.cjs",
+      "reports/admission-kernel-round2/evidence/native-admitted-replay.cjs",
+      "reports/admission-kernel-round2/evidence/parity-matrix-run.cjs",
+      "reports/admission-kernel-round2/evidence/parity-matrix.cjs",
+      "reports/admission-kernel-round2/evidence/probes.cjs",
+      "reports/admission-kernel-round2/evidence/review-probes.json",
+      "reports/admission-kernel-round2/evidence/second-line-mutations.cjs",
+      "reports/admission-kernel-round3/evidence/audit.cjs",
+      "reports/admission-kernel-round3/evidence/clarification-rate.cjs",
+      "reports/admission-kernel-round3/evidence/identity-oracle.cjs",
+      "reports/admission-kernel-round3/evidence/legacy-mutations.cjs",
+      "reports/admission-kernel-round3/evidence/mutation-equivalence.md",
+      "reports/admission-kernel-round3/evidence/mutations.cjs",
+      "reports/admission-kernel-round3/evidence/native-admitted-replay.cjs",
+      "reports/admission-kernel-round3/evidence/parity-matrix-run.cjs",
+      "reports/admission-kernel-round3/evidence/parity-matrix.cjs",
+      "reports/admission-kernel-round3/evidence/pool-proof-fixture.json",
+      "reports/admission-kernel-round3/evidence/pool-proof.cjs",
+      "reports/admission-kernel-round3/evidence/pool-proof.py",
+      "reports/admission-kernel-round3/evidence/probes.cjs",
+      "reports/admission-kernel-round3/evidence/review-kernel-cases-1.json",
+      "reports/admission-kernel-round3/evidence/review-kernel-cases-3.json",
+      "reports/admission-kernel-round3/evidence/review-minimal-cases.json",
+      "reports/admission-kernel-round3/evidence/review-probes-r3-1.json",
+      "reports/admission-kernel-round3/evidence/review-probes-r3-2.json",
+      "reports/admission-kernel-round3/evidence/review-probes-r3-3.json",
+      "reports/admission-kernel-round3/evidence/review-probes-r3-4.json",
+      "reports/admission-kernel-round3/evidence/review-provenance.json",
+      "reports/admission-kernel-round3/evidence/round3-mutations.cjs",
+      "reports/admission-kernel-round3/evidence/second-line-mutations.cjs",
+      "reports/admission-kernel-round4/evidence/mutations.cjs",
+      "reports/admission-kernel-round4/evidence/native-stored-goals.cjs",
+      "reports/admission-kernel-round4/evidence/positive-space-probes.json",
+      "reports/admission-kernel-round4/evidence/run-prior-gate.cjs",
+      "reports/admission-kernel-round4/evidence/stored-goal-mutants.cjs",
+      "reports/admission-kernel-round5/evidence/mutations.cjs",
+      "reports/admission-kernel-round5/evidence/native-round5.cjs",
+      "reports/admission-kernel-round5/evidence/review-flows.json",
+      "reports/admission-kernel-round5/evidence/review-inject.json",
+      "reports/admission-kernel-round5/evidence/round5-mutants.cjs",
+      "reports/admission-kernel-round5/evidence/run-prior-gate.cjs",
+      "reports/admission-kernel-round5/mutation-verification.json",
+      "reports/admission-kernel-round5/native-controller.cjs",
+      "reports/admission-kernel-round5/precommit-check.json",
+      "reports/admission-kernel-round5/resource-sample-distribution.json",
+      "reports/admission-kernel-round5/review-input-provenance.json",
+      "reports/admission-kernel-round5/run-native-quiet.cjs",
+      "reports/admission-kernel-round5/validation-summary.json",
+      "reports/admission-kernel-round6/REPORT.md",
+      "reports/admission-kernel-round6/gate-summary.json",
+      "reports/admission-kernel-round6/mutation-table.md",
+      "reports/admission-kernel-round6/mutations.cjs",
+      "reports/admission-kernel-round6/python-guard.py",
+      "reports/admission-kernel-round6/raw-log-manifest.json",
+      "reports/admission-kernel-round6/raw-log-manifest.json.gz",
+      "reports/admission-kernel/REPORT.md",
+      "reports/admission-kernel/evidence/clarification-rate.cjs",
+      "reports/admission-kernel/evidence/corpus.cjs",
+      "reports/admission-kernel/evidence/mutations.cjs",
+      "reports/admission-kernel/evidence/native-replay.cjs",
+      "reports/admission-kernel/evidence/native-worker.py",
+      "reports/admission-kernel/independent-post-replay-integrity.json",
+      "reports/admission-kernel/mutation-table.md",
+      "reports/admission-kernel/validation-summary.json",
+      "reports/evidence-archive/README.md",
+      "reports/evidence-archive/manifest.json",
+      "reports/evidence-archive/manifest.json.gz",
+      "reports/evidence-archive/restore.cjs"
+    ],
+    "network_calls": 0
+  },
+  "unavailable": [
+    {
+      "steps": [
+        "reviewed-backend source pair",
+        "exact source-pair context composition"
+      ],
+      "reason": "Pinned backend 2720dde7a6c9852e00f0098bd41ae93171280415 is absent from all 13 relevant local checkouts. Only read-only GitHub main fetch was authorised; no backend fetch performed."
+    },
+    {
+      "steps": [
+        "private Docker image build",
+        "packaged helper/image runtime smoke checks"
+      ],
+      "reason": "Docker executable is absent from PATH and standard local installation locations; no installation, image pull or cloud build attempted."
+    }
+  ],
+  "local_runtimes": {
+    "node": "24.10.0",
+    "python": "3.14.7",
+    "workflow_node": "22",
+    "workflow_python": "3.11"
+  },
+  "dependency_note": "Existing local dependencies were reused; npm ci, backend fetch and image pulls were not run.",
+  "external_evidence": {
+    "root": "<evidence>/admission-kernel-squash-prep-20261031",
+    "manifest": "raw-evidence-manifest.json",
+    "sha256": "c8b9c4ef951ec2f1f82499b7ae38834f30de767229b92903c006d890f2f569b5",
+    "file_count": 23293
+  },
+  "constraints": {
+    "pins_unchanged": true,
+    "model_default_off_unchanged": true,
+    "new_workflow_Docker_cloud_model_settings": false,
+    "protected_source_refs_unchanged": true,
+    "push": false,
+    "PR": false,
+    "merge": false,
+    "deploy": false,
+    "live_calls": false,
+    "cloud_calls": false,
+    "foreign_process_signals": 0
+  },
+  "doc_format_adjustment": {
+    "file": "reports/admission-kernel-round6/REPORT.md",
+    "before_sha256": "472786031a240d4f348e37aa3554c8e4c4edaddd90c50edb0c841c09a1c0ae9e",
+    "after_sha256": "de3c18134d37f8f3eb98e9ccb53a447fb9e8a161e59e230868e09c45f8b7d016",
+    "bytes_removed": 1,
+    "kind": "one redundant final Markdown newline only",
+    "not_an_executed_input": true,
+    "source_test_and_gate_code_unchanged": true,
+    "validation_head": "ff6b78af8ffbaa1222ce371e67c7cf2983f6f816",
+    "network_attempts": 0
+  },
+  "footprint": {
+    "files": 145,
+    "new_or_changed_bytes": 4984588,
+    "file_limit": 150,
+    "byte_limit": 5000000
+  }
+}

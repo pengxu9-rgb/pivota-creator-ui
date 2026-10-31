@@ -1,5 +1,6 @@
 'use strict';
 const family = require('../sourceFamilyAdvisory.cjs');
+const {CollectorCallError}=require('../collectorError.cjs');
 
 // Private catalog orchestration only. The caller authenticates its own users
 // and owns session storage; this connector does not mint commerce identities.
@@ -20,11 +21,6 @@ const ACTION_FIELDS = {
   choose_comparison: ['type', 'side', 'card_id'],
 };
 
-class CollectorCallError extends Error {
-  constructor(code, retryable = false) {
-    super(code); this.name = 'CollectorCallError'; this.code = code; this.retryable = retryable;
-  }
-}
 function exactKeys(value, keys) {
   return value && typeof value === 'object' && !Array.isArray(value)
     && Object.keys(value).sort().join(',') === [...keys].sort().join(',');

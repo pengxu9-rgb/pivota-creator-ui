@@ -1,0 +1,33 @@
+[
+ {
+  "id": "A6_not_charizard_bookmark",
+  "initial": "English Pikachu cards",
+  "text": "Find cards that are not Charizard",
+  "bookmarkFirst": true
+ },
+ {
+  "id": "A3_not_ex_bookmark",
+  "initial": "English Charizard cards",
+  "text": "Find Charizard cards that are not ex",
+  "bookmarkFirst": true
+ },
+ {
+  "id": "A3m_not_ex_model",
+  "intent": "search",
+  "initial": "English Charizard cards",
+  "text": "Find Charizard cards that are not ex",
+  "bookmarkFirst": true
+ },
+ {
+  "id": "M15_ja_bookmark",
+  "initial": "Japanese Charizard cards",
+  "prefs": {
+   "currency": "USD",
+   "budget_minor": 100000,
+   "grade_company": "PSA",
+   "grade_value": "10"
+  },
+  "text": "リザードン 50ドル以下",
+  "bookmarkFirst": true
+ }
+]

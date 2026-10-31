@@ -1,0 +1,9 @@
+[
+ {"id":"T1","ingress":"typed","text":"Find Charizard cards without ＪＡＰＡＮＥＳＥ","lang":null},
+ {"id":"T2","ingress":"typed","text":"Find Charizard cards ｎｏｔ ｈｏｌｏ"},
+ {"id":"T3","ingress":"typed","text":"ｈｏｌｏ","field":"variant","action":{"type":"reply","text":"ｈｏｌｏ"}},
+ {"id":"T4","ingress":"typed","text":"Find cards that are not Charizard"},
+ {"id":"T5","ingress":"typed","text":"リザードン 50ドル以下","lang":"ja"},
+ {"id":"T6","ingress":"typed","text":"Find Charizard cards not\u0085from Base Set"},
+ {"id":"T7","ingress":"typed","text":"Ｆｉｎｄ Ｃｈａｒｉｚａｒｄ ｃａｒｄｓ ｆｒｏｍ Ｂａｓｅ Ｓｅｔ"}
+]

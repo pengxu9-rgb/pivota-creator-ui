@@ -161,7 +161,7 @@ export default function useMobileAgent({browsingBeta=false}:{browsingBeta?:boole
   function resume(id:string){if(running.current||flow.running.current||psaPending)return;setSheet(null);if(id!==thread?.id)router.replace(ROOT+"?conversation="+encodeURIComponent(id),{scroll:false});}
   function toggleCompare(id:string){if(!canAct())return;setCompareIds(prev=>prev.includes(id)?prev.filter(v=>v!==id):prev.length<2?[...prev,id]:[prev[1],id]);}
   const messages=thread?.messages||[],cards=[...new Map([...messages.flatMap(m=>m.cards||[]),...(draft?.cards||[]),...bookmarks.map(b=>b.card),...(card?[card]:[])].map(c=>[c.card_id,c])).values()].slice(0,100),
-    latestCatalogMessage=[...messages].reverse().find(m=>m.role==="assistant"&&!m.commerce&&m.status==="accepted"),feedback=thread?.workspace?.collecting_feedback||{};
+    latestCatalogMessage=shared.latestCatalogMessage(messages) as Conversation["messages"][number]|undefined,feedback=thread?.workspace?.collecting_feedback||{};
   const restoringConversation=!ready&&!!desired&&!thread;
   return {ready,restoringConversation,error:error||flow.error,pending:pending||flow.pending||(psaPending?"psa":""),thread,history,bookmarks,bookmarkUnverified,messages,cards,draft,card,sheet,certificate,certificateOfferId,openCertificate,budget,budgetCurrency,gradePreference,compareIds,feedback,latestCatalogMessage,flow,
     transport,setPsaPending,setSheet,setError,setCertificate,send,researchCard,historicalResearch,prepareHandoff,saveCard,updatePreferences,newChat,resume,toggleCompare,catalogAction,refreshConversation,stop};

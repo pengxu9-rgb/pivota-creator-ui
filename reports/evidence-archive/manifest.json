@@ -1,0 +1,9 @@
+{
+  "schema": "pot.admission.compressed-manifest.v1",
+  "encoding": "gzip",
+  "file": "manifest.json.gz",
+  "uncompressed_bytes": 1611573,
+  "uncompressed_sha256": "19f12b7eb108293a958166acd71492acb9ce78362757104069185364a543b8e7",
+  "compressed_bytes": 694985,
+  "compressed_sha256": "7819bfa2510880f569f18394fc42f9a055dc8e07d705a38f027d50e6082ad979"
+}

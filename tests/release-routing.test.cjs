@@ -10,6 +10,7 @@ const root = path.resolve(__dirname, '..');
 const router = path.join(root, 'scripts/release-routing.py');
 const cleanEnv = {
   PATH: process.env.PATH,
+  NODE_OPTIONS: process.env.NODE_OPTIONS,
   LC_ALL: 'C',
   GIT_CONFIG_NOSYSTEM: '1',
   GIT_CONFIG_GLOBAL: '/dev/null',

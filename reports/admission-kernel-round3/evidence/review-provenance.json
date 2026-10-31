@@ -1,0 +1,40 @@
+{
+  "reviewed_head": "6a1e858cb48f4805bd7deb28356018706a872e92",
+  "files": {
+    "minimal-cases.json": {
+      "source": "<evidence>/admission-kernel-claude-review-round3-20261028/repro/minimal-cases.json",
+      "sha256": "138770484c19d0083c178d4049e0890f281d7699a80f5ee4205ed3dd86ef7a87",
+      "fixture": "review-minimal-cases.json"
+    },
+    "kernel-cases-1.json": {
+      "source": "<evidence>/admission-kernel-claude-review-round3-20261028/repro/kernel-cases-1.json",
+      "sha256": "20a9650d472db1df65d9c711e0eef1b0b6310e869efa7fac862777d98a167775",
+      "fixture": "review-kernel-cases-1.json"
+    },
+    "kernel-cases-3.json": {
+      "source": "<evidence>/admission-kernel-claude-review-round3-20261028/repro/kernel-cases-3.json",
+      "sha256": "a3f75010c0512e4e9d825477218a0400758e4bce947bb6f0b412d6109e99166e",
+      "fixture": "review-kernel-cases-3.json"
+    },
+    "probes-r3-1.json": {
+      "source": "<evidence>/admission-kernel-claude-review-round3-20261028/repro/probes-r3-1.json",
+      "sha256": "1b1fb7ce758bd7a2847f46678010d616b39bce840b7166ad04e5f01b342c270a",
+      "fixture": "review-probes-r3-1.json"
+    },
+    "probes-r3-2.json": {
+      "source": "<evidence>/admission-kernel-claude-review-round3-20261028/repro/probes-r3-2.json",
+      "sha256": "8d7d06f7d0d46bec1c3865b8e46a5b523fa27f556322a4727f76d9510efdef92",
+      "fixture": "review-probes-r3-2.json"
+    },
+    "probes-r3-3.json": {
+      "source": "<evidence>/admission-kernel-claude-review-round3-20261028/repro/probes-r3-3.json",
+      "sha256": "666a36560f2cf3c307d324a1dbade3968e6b8f2a68dea384a5fed83ff33b5a2b",
+      "fixture": "review-probes-r3-3.json"
+    },
+    "probes-r3-4.json": {
+      "source": "<evidence>/admission-kernel-claude-review-round3-20261028/repro/probes-r3-4.json",
+      "sha256": "2a6b626b8044f7087cac39994acc1def8a948e7eee8fc26205c5a9a25510641d",
+      "fixture": "review-probes-r3-4.json"
+    }
+  }
+}

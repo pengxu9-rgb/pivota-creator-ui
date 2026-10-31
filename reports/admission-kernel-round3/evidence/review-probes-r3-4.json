@@ -1,0 +1,11 @@
+[
+ {"id":"H1_find_from_holon_ja","initial":"Japanese Charizard cards","text":"Find Charizard cards from ホロンの幻影"},
+ {"id":"H2_recommend_from_holon_ja","initial":"Japanese Charizard cards","text":"Recommend Charizard cards from ホロンの幻影"},
+ {"id":"H3_recommend_mew_holon_ja","initial":"Japanese Mew cards","text":"Recommend Mew cards from ホロンの幻影"},
+ {"id":"H4_recommend_pikachu_holon_ja","initial":"Japanese Pikachu cards","text":"Recommend Pikachu cards from ホロンの研究塔"},
+ {"id":"H5_recommend_pikachu_holon_ja_m","intent":"recommend","initial":"Japanese Pikachu cards","text":"Recommend Pikachu cards from ホロンの研究塔"},
+ {"id":"H6_find_holon_en","initial":"English Charizard cards","text":"Find Charizard cards from Holon Phantoms"},
+ {"id":"H7_recommend_holon_en","initial":"English Pikachu cards","text":"Recommend Pikachu cards from Holon Phantoms"},
+ {"id":"R1_recommend_holo","initial":"English Charizard cards","text":"Recommend Charizard holo cards"},
+ {"id":"R2_recommend_not_charizard_m","intent":"recommend","initial":"English Pikachu cards","text":"Recommend cards that are not Charizard","selectFirst":true}
+]

@@ -1,0 +1,301 @@
+{
+  "schema": "pot.admission.round6-gate-summary.v1",
+  "base": "709ece441ae98e5300fbd801f0354bf8d808af99",
+  "measured_head": "a0ab8c79570f6847ad3f07399d8af095b4462d6f",
+  "branch": "codex/admission-kernel-20261028",
+  "report_commit": "The final evidence-only commit SHA is supplied in the handoff. Its src/tests/frozen mutation inputs must be byte-identical to the measured commit.",
+  "production": {
+    "changed": false,
+    "base_src_tree": "e8bb0ab1855d58ab463ac4ff051b7f93d5e07b3f",
+    "measured_src_tree": "e8bb0ab1855d58ab463ac4ff051b7f93d5e07b3f",
+    "working_tree_verified": true
+  },
+  "new_tests": [
+    {
+      "family": "collector anchor",
+      "negative_texts": 5,
+      "direct_action_cells": 40
+    },
+    {
+      "family": "set anchor",
+      "negative_texts": 4,
+      "direct_action_cells": 32
+    },
+    {
+      "family": "confirmation anchor",
+      "negative_texts": 10,
+      "direct_action_cells": 80
+    },
+    {
+      "family": "private locked replay",
+      "negative_texts": 19,
+      "cells": 152,
+      "native_calls_on_held_turns": 0,
+      "workspace_writes_on_held_turns": 0
+    },
+    {
+      "family": "positive replay",
+      "forms": 12,
+      "cells": 48
+    }
+  ],
+  "full_suite": {
+    "tests": 403,
+    "passed": 403,
+    "test_files": 34,
+    "exit_code": 0,
+    "log": {
+      "path": "mutation-gate/logs/baseline/full-suite.log",
+      "bytes": 108853,
+      "sha256": "9a32410d30be35c404101392ad0869e50d89716a694cb5ddb3a60dc56c401197"
+    }
+  },
+  "mutations": {
+    "method": "fresh full 93-by-all-final-test-files sweep; no deltas or subsets",
+    "mutants": 93,
+    "test_files": 34,
+    "fresh_mutant_test_cells": 3162,
+    "total_verified_cells_and_syntax_checks": 3290,
+    "caught": 88,
+    "equivalent": 5,
+    "explicit_assertion_failures": 287,
+    "new_mutants": [
+      {
+        "mutant": "R6_reply_collector_unanchored",
+        "caught": true,
+        "explicit_assertion_test": "tests/admission-round6.test.cjs"
+      },
+      {
+        "mutant": "R6_reply_set_unanchored",
+        "caught": true,
+        "explicit_assertion_test": "tests/admission-round6.test.cjs"
+      },
+      {
+        "mutant": "R6_reply_confirm_unanchored",
+        "caught": true,
+        "explicit_assertion_test": "tests/admission-round6.test.cjs"
+      }
+    ],
+    "worker_network_audits": 6615,
+    "network_attempts": 0,
+    "exit_code": 0,
+    "scratch_cleaned": true,
+    "source_test_input_hashes_verified": 385,
+    "matrix": {
+      "path": "mutation-gate/mutations.json",
+      "bytes": 5399612,
+      "sha256": "6def3c627c271ee3d41458e9413e0308f6914f0f7a93fe5ab2582d4bcb79508a"
+    },
+    "verifier": {
+      "path": "mutation-gate/mutation-verification.json",
+      "bytes": 2242,
+      "sha256": "b8099574852c7ca258983afb44fb5a2831a0f9677ad1574a664811c2d0f3e0dd"
+    },
+    "harness": {
+      "path": "mutation-gate/run-fresh.cjs",
+      "bytes": 16715,
+      "sha256": "1f18b3c99e0211088f9e7fc8935c212ed725f3d80188de1cba456698678b4a73"
+    },
+    "verification_helper": {
+      "path": "mutation-gate/verify-fresh.cjs",
+      "bytes": 8861,
+      "sha256": "a33b5bb879272676f711ebbd4f803f507a0d2a2fd6db598c1a3b528245bf261f"
+    }
+  },
+  "original": {
+    "tests": 291,
+    "passed": 291,
+    "exit_code": 0,
+    "log": {
+      "path": "root/original-291.tap",
+      "bytes": 72234,
+      "sha256": "ea0b973e949073818702d22b1cd6fa1eac096065f29c118337a1db00070450b1"
+    }
+  },
+  "typescript": {
+    "exit_code": 0,
+    "after_scratch_cleanup": true,
+    "log": {
+      "path": "root/typescript.log",
+      "bytes": 70,
+      "sha256": "e30fe405d1c9986ca5d9463d1bbe54a3ccd30b9f0a9e01f2dacb7c56ec4ff7ee"
+    }
+  },
+  "vocabulary": {
+    "exit_code": 0,
+    "unchanged": true,
+    "output_sha256": "9cc544ce21232f9c729f22adbcb6d680bd12059338ea7df4a02020bad80410ec",
+    "database_sha256": "a72ba074fdf13f426b5709f67926e631ad32f52e92d08ff3e1ab646ed3b8f204",
+    "python_network_attempts": 0,
+    "log": {
+      "path": "root/vocabulary.log",
+      "bytes": 728,
+      "sha256": "7ef700e47430135aa68f76e19578c7c355c47be6134b1d5c7f626a40ebcd7f25"
+    }
+  },
+  "local_gate_summary": {
+    "path": "root/local-checks.json",
+    "bytes": 9889,
+    "sha256": "ef673df65d34c0de9f7c1c2915015f9a87aca4fba1b481029dc72274d91191c2"
+  },
+  "native_and_clarification": {
+    "rerun": false,
+    "reason": "src/ is byte-identical to 709ece4, so the round-6 brief permits retaining its earlier native and clarification evidence.",
+    "retained_repository_path": "reports/admission-kernel-round5/validation-summary.json",
+    "retained_sha256": "5549d896279c016562e196934b01085dc323ba3723cd6820ffbe532fdf6bd5a9",
+    "not_a_fresh_native_measurement": true
+  },
+  "review": {
+    "files_verified": 36,
+    "initial_provenance": {
+      "path": "root/initial-provenance.json",
+      "bytes": 9898,
+      "sha256": "772cfba980dba7f29c5b50282cbdbce0074d9168637a5874b10d413fef52dd30"
+    },
+    "read_only_files_unchanged": true
+  },
+  "resources": {
+    "start": {
+      "time": "2026-10-29T14:40:27.939Z",
+      "logical_cpus": 10,
+      "load": [
+        9.341796875,
+        12.14697265625,
+        11.98095703125
+      ],
+      "idle_percent": 70.20202020202021
+    },
+    "resource_observations": 243,
+    "sampled_min_load1": 6.62060546875,
+    "sampled_max_load1": 87.33056640625,
+    "load_values_retained_in_external_matrix": true,
+    "continuous_quietness_proven": false
+  },
+  "python_guard": {
+    "final_mutation_workers": 95,
+    "original_suite_workers": 1,
+    "final_gate_attempts": 0,
+    "context_program_sha256": "18292cf5784b8ee4057b3a815ac6bac9b4a5c8216a336b49205854a40d40c522",
+    "launcher": {
+      "path": "python-shim/guard-launcher.py",
+      "bytes": 2824,
+      "sha256": "f4d693b54746aa59811919bef8bac7b9e186c6c47054208f9eddee1d3fd29f7a"
+    },
+    "mutation_config": {
+      "directory": "<evidence>/admission-kernel-round6-evidence/python-shim",
+      "launcher_sha256": "f4d693b54746aa59811919bef8bac7b9e186c6c47054208f9eddee1d3fd29f7a",
+      "shell_sha256": "ad75d99c71f0305b076c4a090d5d7b72d50694e4743b1adf005c1202ae3f7c0c",
+      "controls_file": "<evidence>/admission-kernel-round6-evidence/python-shim/preflight.json",
+      "controls_sha256": "dfd2d3e5b64e1e7a664a43c66259c6582e37b39da8fa15c93881b3ea67bd4d9a",
+      "context_test_file": "tests/pokemon-private-context.test.cjs",
+      "context_program_sha256": "18292cf5784b8ee4057b3a815ac6bac9b4a5c8216a336b49205854a40d40c522",
+      "expected_full_sweep_workers": 95,
+      "audit_binding": "Python ppid must be an actual Node guard audit PID for this cell; exact program SHA, cwd and isolated flags are checked."
+    },
+    "local_config": {
+      "schema": "pot.admission.round6-local-python-config.v1",
+      "directory": "<evidence>/admission-kernel-round6-evidence/root/local-python-shim",
+      "launcher_sha256": "f4d693b54746aa59811919bef8bac7b9e186c6c47054208f9eddee1d3fd29f7a",
+      "shell_sha256": "608e94c59deaccd04eb41279458fbd51424fadad91f9e9791ae1caffe4dd9f30",
+      "context_program_sha256": "18292cf5784b8ee4057b3a815ac6bac9b4a5c8216a336b49205854a40d40c522",
+      "context_program_file": "<evidence>/admission-kernel-round6-evidence/root/local-python-shim/programs/18292cf5784b8ee4057b3a815ac6bac9b4a5c8216a336b49205854a40d40c522.py",
+      "reference_main_launcher": "<evidence>/admission-kernel-round6-evidence/python-shim/guard-launcher.py",
+      "reference_main_controls": "<evidence>/admission-kernel-round6-evidence/python-shim/preflight.json",
+      "reference_main_controls_sha256": "dfd2d3e5b64e1e7a664a43c66259c6582e37b39da8fa15c93881b3ea67bd4d9a",
+      "scope": "Only original-291 isolated filesystem context probe; mutation audit namespace remains unchanged.",
+      "config_file": "<evidence>/admission-kernel-round6-evidence/root/local-python-shim/config.json",
+      "config_sha256": "267d770b43a7eb4bc7a57d37d4313f4e6304e95225d091736eea34e70a19e6ad",
+      "audit_namespace_separate_from_mutation": true
+    },
+    "controls": {
+      "separate_from_final_cells": true,
+      "context_exit_code": 0,
+      "synthetic_canary_exit_code": 1,
+      "current_synthetic_denied_events": 1,
+      "preserved_synthetic_denied_events": 1,
+      "aggregate_synthetic_denied_events": 2,
+      "actual_os_network_io": false,
+      "receipt": {
+        "path": "python-shim/preflight.json",
+        "bytes": 3646,
+        "sha256": "dfd2d3e5b64e1e7a664a43c66259c6582e37b39da8fa15c93881b3ea67bd4d9a"
+      },
+      "preserved_receipt": {
+        "path": "python-shim/pre-atomic-controls/preflight.json",
+        "bytes": 3646,
+        "sha256": "fda462b0868c53d0ed22f86717a2d61f73ddd0fca2b59a74cede493cfdf77253"
+      }
+    }
+  },
+  "preserved_attempts": [
+    {
+      "accepted": false,
+      "completed_rows": 53,
+      "guard_complete": false,
+      "gate_exit_code": 1,
+      "no_retained_cells": true,
+      "reason": "The filesystem-only Python -I -B -c context test lacked a Python socket-deny layer. This Node-guarded partial sweep is abandoned, not retained in the final matrix. One owned test leaf was signaled to drain the runner naturally.",
+      "receipt": {
+        "path": "attempts/pre-python-wrapper-guard/attempt-receipt.json",
+        "bytes": 897,
+        "sha256": "f9e9c39826ff36738146b1cab2c03ec00a5671ef4103b08a6921bd9ac9b8b730"
+      },
+      "ownership_receipt": {
+        "path": "attempts/pre-python-wrapper-guard/owned-cancellation.json",
+        "bytes": 3978,
+        "sha256": "b74dba58588e5a35988b84b2092d1e27ca21df0e408c4e674d02bf8753ac96aa"
+      }
+    },
+    {
+      "accepted": false,
+      "completed_rows": 0,
+      "baseline_tests": 403,
+      "baseline_pass": 403,
+      "gate_exit_code": 1,
+      "no_retained_cells": true,
+      "reason": "Fail-closed exact physical cwd binding: macOS /var alias differed from Python /private/var canonical cwd; program SHA and parent PID were correct. Baseline403 passed, no mutant cells retained.",
+      "receipt": {
+        "path": "attempts/python-cwd-alias/attempt-receipt.json",
+        "bytes": 667,
+        "sha256": "ddf49284298323c7d1d88b58f30495e3275e2bbe32a5e693d92f22bf91349bf8"
+      }
+    }
+  ],
+  "committed_evidence": {
+    "files": 4,
+    "bytes": 1263326,
+    "limits": {
+      "bytes_less_than": 2000000,
+      "files_less_than": 50
+    },
+    "manifest": {
+      "file": "raw-log-manifest.json",
+      "sha256": "6dfc29bfc7ba34d5efa6e8737c0536d07de5bf6c3d7ccdf918f61981bddce3fc",
+      "external_files": 10669,
+      "external_bytes": 39047003
+    }
+  },
+  "process_signals": {
+    "aggregate_owned_signal_events": 1,
+    "abandoned_attempt_owned_signals": [
+      {
+        "pid": 9526,
+        "uid": 501,
+        "start": "Thu Oct 29 22:14:18 2026",
+        "signal": "SIGTERM",
+        "sent": true,
+        "ownership_verified": true
+      }
+    ],
+    "final_fresh_sweep_owned_signal_events": 0,
+    "foreign_processes": 0
+  },
+  "network_attempts": 0,
+  "network_attempts_scope": "Final gate executions; current and preserved synthetic denial controls are accounted separately.",
+  "production_pins_provider_settings_unchanged": true,
+  "earlier_evidence_unchanged": true,
+  "pushed": false,
+  "merged": false,
+  "deployed": false,
+  "approved": false
+}

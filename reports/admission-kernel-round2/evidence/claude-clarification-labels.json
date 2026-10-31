@@ -1,0 +1,1307 @@
+{
+  "schema": "claude.review.clarification-relabel.v1",
+  "source": "reports/admission-kernel/clarification-rate.json @ dfb299c (model-off route only)",
+  "unique_texts": 150,
+  "expressible": {
+    "denominator": 34,
+    "unnecessary_clarifications": 14,
+    "rate": 0.4117647058823529
+  },
+  "required_hold": {
+    "denominator": 114,
+    "held": 114,
+    "missed": 0
+  },
+  "off_topic": {
+    "denominator": 2,
+    "misrouted_to_catalog": 2
+  },
+  "codex_clear_supported_vs_claude_expressible_disagreements": [
+    {
+      "id": "commercial_7",
+      "text": "Find Charizard under USD 100",
+      "codex": "clear_unsupported",
+      "claude": "expressible",
+      "outcome": "clarified"
+    },
+    {
+      "id": "commercial_6",
+      "text": "Find Charizard cards for 100 yen",
+      "codex": "clear_unsupported",
+      "claude": "expressible",
+      "outcome": "clarified"
+    },
+    {
+      "id": "commercial_8",
+      "text": "Find Charizard for €100",
+      "codex": "clear_unsupported",
+      "claude": "expressible",
+      "outcome": "clarified"
+    },
+    {
+      "id": "commercial_9",
+      "text": "Find Charizard below GBP 100",
+      "codex": "clear_unsupported",
+      "claude": "expressible",
+      "outcome": "clarified"
+    },
+    {
+      "id": "commercial_10",
+      "text": "Find Charizard with a budget of USD 100",
+      "codex": "clear_unsupported",
+      "claude": "expressible",
+      "outcome": "clarified"
+    },
+    {
+      "id": "commercial_14",
+      "text": "budget $USD 100",
+      "codex": "clear_unsupported",
+      "claude": "expressible",
+      "outcome": "clarified"
+    },
+    {
+      "id": "commercial_15",
+      "text": "budget JPY ¥10000",
+      "codex": "clear_unsupported",
+      "claude": "expressible",
+      "outcome": "clarified"
+    },
+    {
+      "id": "commercial_20",
+      "text": "no more than fifty yen",
+      "codex": "clear_unsupported",
+      "claude": "expressible",
+      "outcome": "clarified"
+    },
+    {
+      "id": "commercial_23",
+      "text": "Find Charizard PSA 10",
+      "codex": "clear_unsupported",
+      "claude": "expressible",
+      "outcome": "clarified"
+    },
+    {
+      "id": "commercial_24",
+      "text": "Find BGS 9.5 Charizard cards",
+      "codex": "clear_unsupported",
+      "claude": "expressible",
+      "outcome": "clarified"
+    },
+    {
+      "id": "commercial_25",
+      "text": "Find Charizard CGC 10",
+      "codex": "clear_unsupported",
+      "claude": "expressible",
+      "outcome": "clarified"
+    },
+    {
+      "id": "broad_signal_3",
+      "text": "Find Charizard cards for 100 yuan",
+      "codex": "clear_unsupported",
+      "claude": "expressible",
+      "outcome": "clarified"
+    }
+  ],
+  "rows": [
+    {
+      "id": "frame_en_17",
+      "text": "Show Charizard cards; \"English\" is just an example",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_1",
+      "text": "Find Charizard cards without using English",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_3",
+      "text": "Show Charizard cards, exclude English",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_5",
+      "text": "Charizard cards other than English",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_6",
+      "text": "Show Charizard, anything but English",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "commercial_2",
+      "text": "Find Charizard cards for less than a hundred dollars",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "commercial_1",
+      "text": "Find Charizard cards, max 100 dollars",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "commercial_3",
+      "text": "Charizard cards around 100 bucks",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "commercial_21",
+      "text": "Find gem mint graded Charizard cards",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "commercial_22",
+      "text": "Find Charizard cards grade 9 or better",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "supported_10",
+      "text": "Find English Charizard SV03.5 006/165",
+      "codex_label": "clear_supported",
+      "claude_label": "expressible",
+      "outcome": "catalog_ask",
+      "verdict": "ok"
+    },
+    {
+      "id": "commercial_7",
+      "text": "Find Charizard under USD 100",
+      "codex_label": "clear_unsupported",
+      "claude_label": "expressible",
+      "outcome": "clarified",
+      "verdict": "unnecessary_clarification"
+    },
+    {
+      "id": "frame_en_2",
+      "text": "Find Charizard cards without English",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_4",
+      "text": "Show Charizard cards excluding English",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_7",
+      "text": "Show Charizard cards, skip English",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_8",
+      "text": "Show Charizard cards, avoid English",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_9",
+      "text": "Show Charizard cards, do not use English",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_10",
+      "text": "Show Charizard cards, don't include English",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_11",
+      "text": "Show Charizard cards, never English",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_12",
+      "text": "Show Charizard cards, no English",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_13",
+      "text": "Show Charizard cards, not English",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_14",
+      "text": "Show Charizard cards except English",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_15",
+      "text": "I do not want English Charizard cards",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_16",
+      "text": "I don't prefer English Charizard cards",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_18",
+      "text": "Show Charizard cards; 'English' is an example",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_19",
+      "text": "Show Charizard cards; “English” is a sample",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_20",
+      "text": "Show Charizard cards; 「English」 is just an example",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_21",
+      "text": "Show Charizard cards; the word English is only an example",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_22",
+      "text": "Show Charizard cards; English is a word",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_23",
+      "text": "Show Charizard cards; English is just an example",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_24",
+      "text": "Show Charizard cards; use English as a hypothetical example",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_25",
+      "text": "What does English mean?",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_26",
+      "text": "What is the meaning of English?",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_27",
+      "text": "Define English",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_28",
+      "text": "Can you explain the word English?",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_29",
+      "text": "Is English a language?",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_30",
+      "text": "I am not sure about English",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_31",
+      "text": "Should I choose English?",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_32",
+      "text": "Could English mean something else?",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_33",
+      "text": "English is not my choice",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_34",
+      "text": "English is not wanted",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_35",
+      "text": "Not only English; I need to decide",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_36",
+      "text": "I saw the label English, what does it mean?",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_37",
+      "text": "English is not wanted for Charizard",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_38",
+      "text": "English is just an example for Charizard",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_39",
+      "text": "English should be excluded from Charizard cards",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_en_40",
+      "text": "English is hypothetical for Charizard cards",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_1",
+      "text": "Find Charizard cards without using Japanese",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_2",
+      "text": "Find Charizard cards without Japanese",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_3",
+      "text": "Show Charizard cards, exclude Japanese",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_4",
+      "text": "Show Charizard cards excluding Japanese",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_5",
+      "text": "Charizard cards other than Japanese",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_6",
+      "text": "Show Charizard, anything but Japanese",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_7",
+      "text": "Show Charizard cards, skip Japanese",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_8",
+      "text": "Show Charizard cards, avoid Japanese",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_9",
+      "text": "Show Charizard cards, do not use Japanese",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_10",
+      "text": "Show Charizard cards, don't include Japanese",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_11",
+      "text": "Show Charizard cards, never Japanese",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_12",
+      "text": "Show Charizard cards, no Japanese",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_13",
+      "text": "Show Charizard cards, not Japanese",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_14",
+      "text": "Show Charizard cards except Japanese",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_15",
+      "text": "I do not want Japanese Charizard cards",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_16",
+      "text": "I don't prefer Japanese Charizard cards",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_17",
+      "text": "Show Charizard cards; \"Japanese\" is just an example",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_18",
+      "text": "Show Charizard cards; 'Japanese' is an example",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_19",
+      "text": "Show Charizard cards; “Japanese” is a sample",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_20",
+      "text": "Show Charizard cards; 「Japanese」 is just an example",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_21",
+      "text": "Show Charizard cards; the word Japanese is only an example",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_22",
+      "text": "Show Charizard cards; Japanese is a word",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_23",
+      "text": "Show Charizard cards; Japanese is just an example",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_24",
+      "text": "Show Charizard cards; use Japanese as a hypothetical example",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_25",
+      "text": "What does Japanese mean?",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_26",
+      "text": "What is the meaning of Japanese?",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_27",
+      "text": "Define Japanese",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_28",
+      "text": "Can you explain the word Japanese?",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_29",
+      "text": "Is Japanese a language?",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_30",
+      "text": "I am not sure about Japanese",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_31",
+      "text": "Should I choose Japanese?",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_32",
+      "text": "Could Japanese mean something else?",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_33",
+      "text": "Japanese is not my choice",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_34",
+      "text": "Japanese is not wanted",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_35",
+      "text": "Not only Japanese; I need to decide",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_36",
+      "text": "I saw the label Japanese, what does it mean?",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_37",
+      "text": "Japanese is not wanted for Charizard",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_38",
+      "text": "Japanese is just an example for Charizard",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_39",
+      "text": "Japanese should be excluded from Charizard cards",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "frame_ja_40",
+      "text": "Japanese is hypothetical for Charizard cards",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "commercial_4",
+      "text": "Find Charizard cards under 100",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "commercial_5",
+      "text": "Find Charizard cards at most one hundred dollars",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "commercial_6",
+      "text": "Find Charizard cards for 100 yen",
+      "codex_label": "clear_unsupported",
+      "claude_label": "expressible",
+      "outcome": "clarified",
+      "verdict": "unnecessary_clarification"
+    },
+    {
+      "id": "commercial_8",
+      "text": "Find Charizard for €100",
+      "codex_label": "clear_unsupported",
+      "claude_label": "expressible",
+      "outcome": "clarified",
+      "verdict": "unnecessary_clarification"
+    },
+    {
+      "id": "commercial_9",
+      "text": "Find Charizard below GBP 100",
+      "codex_label": "clear_unsupported",
+      "claude_label": "expressible",
+      "outcome": "clarified",
+      "verdict": "unnecessary_clarification"
+    },
+    {
+      "id": "commercial_10",
+      "text": "Find Charizard with a budget of USD 100",
+      "codex_label": "clear_unsupported",
+      "claude_label": "expressible",
+      "outcome": "clarified",
+      "verdict": "unnecessary_clarification"
+    },
+    {
+      "id": "commercial_11",
+      "text": "budget $100",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "commercial_12",
+      "text": "budget ¥10000",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "commercial_13",
+      "text": "budget ￥10000",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "commercial_14",
+      "text": "budget $USD 100",
+      "codex_label": "clear_unsupported",
+      "claude_label": "expressible",
+      "outcome": "clarified",
+      "verdict": "unnecessary_clarification"
+    },
+    {
+      "id": "commercial_15",
+      "text": "budget JPY ¥10000",
+      "codex_label": "clear_unsupported",
+      "claude_label": "expressible",
+      "outcome": "clarified",
+      "verdict": "unnecessary_clarification"
+    },
+    {
+      "id": "commercial_16",
+      "text": "budget a hundred dollars",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "commercial_17",
+      "text": "max 100 dollars",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "commercial_18",
+      "text": "around 100 bucks",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "commercial_19",
+      "text": "under one hundred",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "commercial_20",
+      "text": "no more than fifty yen",
+      "codex_label": "clear_unsupported",
+      "claude_label": "expressible",
+      "outcome": "clarified",
+      "verdict": "unnecessary_clarification"
+    },
+    {
+      "id": "commercial_23",
+      "text": "Find Charizard PSA 10",
+      "codex_label": "clear_unsupported",
+      "claude_label": "expressible",
+      "outcome": "clarified",
+      "verdict": "unnecessary_clarification"
+    },
+    {
+      "id": "commercial_24",
+      "text": "Find BGS 9.5 Charizard cards",
+      "codex_label": "clear_unsupported",
+      "claude_label": "expressible",
+      "outcome": "clarified",
+      "verdict": "unnecessary_clarification"
+    },
+    {
+      "id": "commercial_25",
+      "text": "Find Charizard CGC 10",
+      "codex_label": "clear_unsupported",
+      "claude_label": "expressible",
+      "outcome": "clarified",
+      "verdict": "unnecessary_clarification"
+    },
+    {
+      "id": "commercial_26",
+      "text": "Find Charizard graded",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "commercial_27",
+      "text": "I want gem mint",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "commercial_28",
+      "text": "grade 9 or better",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "supported_1",
+      "text": "Find Pikachu cards",
+      "codex_label": "clear_supported",
+      "claude_label": "expressible",
+      "outcome": "catalog_ask",
+      "verdict": "ok"
+    },
+    {
+      "id": "supported_2",
+      "text": "Charizard",
+      "codex_label": "clear_supported",
+      "claude_label": "expressible",
+      "outcome": "catalog_ask",
+      "verdict": "ok"
+    },
+    {
+      "id": "supported_3",
+      "text": "Mewtwo",
+      "codex_label": "clear_supported",
+      "claude_label": "expressible",
+      "outcome": "catalog_ask",
+      "verdict": "ok"
+    },
+    {
+      "id": "supported_4",
+      "text": "SV03.5",
+      "codex_label": "clear_supported",
+      "claude_label": "expressible",
+      "outcome": "catalog_ask",
+      "verdict": "ok"
+    },
+    {
+      "id": "supported_5",
+      "text": "006/165",
+      "codex_label": "clear_supported",
+      "claude_label": "expressible",
+      "outcome": "catalog_ask",
+      "verdict": "ok"
+    },
+    {
+      "id": "supported_6",
+      "text": "Lucario",
+      "codex_label": "clear_supported",
+      "claude_label": "expressible",
+      "outcome": "clarified",
+      "verdict": "unnecessary_clarification"
+    },
+    {
+      "id": "supported_7",
+      "text": "Vaporeon",
+      "codex_label": "clear_supported",
+      "claude_label": "expressible",
+      "outcome": "clarified",
+      "verdict": "unnecessary_clarification"
+    },
+    {
+      "id": "supported_8",
+      "text": "English Charizard cards",
+      "codex_label": "clear_supported",
+      "claude_label": "expressible",
+      "outcome": "catalog_ask",
+      "verdict": "ok"
+    },
+    {
+      "id": "supported_9",
+      "text": "Japanese Charizard cards",
+      "codex_label": "clear_supported",
+      "claude_label": "expressible",
+      "outcome": "catalog_ask",
+      "verdict": "ok"
+    },
+    {
+      "id": "supported_11",
+      "text": "English only",
+      "codex_label": "clear_supported",
+      "claude_label": "expressible",
+      "outcome": "refine",
+      "verdict": "ok"
+    },
+    {
+      "id": "supported_12",
+      "text": "English please",
+      "codex_label": "clear_supported",
+      "claude_label": "expressible",
+      "outcome": "refine",
+      "verdict": "ok"
+    },
+    {
+      "id": "supported_13",
+      "text": "Japanese only",
+      "codex_label": "clear_supported",
+      "claude_label": "expressible",
+      "outcome": "refine",
+      "verdict": "ok"
+    },
+    {
+      "id": "supported_14",
+      "text": "Japanese please",
+      "codex_label": "clear_supported",
+      "claude_label": "expressible",
+      "outcome": "refine",
+      "verdict": "ok"
+    },
+    {
+      "id": "supported_15",
+      "text": "English, no preference for the rest",
+      "codex_label": "clear_supported",
+      "claude_label": "expressible",
+      "outcome": "refine",
+      "verdict": "ok"
+    },
+    {
+      "id": "supported_16",
+      "text": "Japanese, no preference for the rest",
+      "codex_label": "clear_supported",
+      "claude_label": "expressible",
+      "outcome": "refine",
+      "verdict": "ok"
+    },
+    {
+      "id": "supported_17",
+      "text": "budget USD 100",
+      "codex_label": "clear_supported",
+      "claude_label": "expressible",
+      "outcome": "preferences",
+      "verdict": "ok"
+    },
+    {
+      "id": "supported_18",
+      "text": "budget JPY 10000",
+      "codex_label": "clear_supported",
+      "claude_label": "expressible",
+      "outcome": "preferences",
+      "verdict": "ok"
+    },
+    {
+      "id": "supported_19",
+      "text": "PSA 10",
+      "codex_label": "clear_supported",
+      "claude_label": "expressible",
+      "outcome": "preferences",
+      "verdict": "ok"
+    },
+    {
+      "id": "supported_20",
+      "text": "BGS 9.5",
+      "codex_label": "clear_supported",
+      "claude_label": "expressible",
+      "outcome": "preferences",
+      "verdict": "ok"
+    },
+    {
+      "id": "supported_21",
+      "text": "Have you recommended the cards?",
+      "codex_label": "clear_supported",
+      "claude_label": "expressible",
+      "outcome": "recommendation_status",
+      "verdict": "ok"
+    },
+    {
+      "id": "supported_22",
+      "text": "Where are my recommendations?",
+      "codex_label": "clear_supported",
+      "claude_label": "expressible",
+      "outcome": "recommendation_status",
+      "verdict": "ok"
+    },
+    {
+      "id": "unsupported_1",
+      "text": "Order this card now",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "unsupported_2",
+      "text": "Pay for this card",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "unsupported_3",
+      "text": "What is the weather?",
+      "codex_label": "clear_unsupported",
+      "claude_label": "off_topic",
+      "outcome": "catalog_ask",
+      "verdict": "misrouted_to_catalog"
+    },
+    {
+      "id": "unsupported_4",
+      "text": "Write me a poem",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "unsupported_5",
+      "text": "Buy Charizard at the lowest price",
+      "codex_label": "clear_unsupported",
+      "claude_label": "off_topic",
+      "outcome": "catalog_ask",
+      "verdict": "misrouted_to_catalog"
+    },
+    {
+      "id": "unsupported_6",
+      "text": "Verify PSA certificate 99900194",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "ambiguous_1",
+      "text": "English or Japanese",
+      "codex_label": "ambiguous",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "ambiguous_2",
+      "text": "budget 100",
+      "codex_label": "ambiguous",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "ambiguous_3",
+      "text": "Which grade should I choose?",
+      "codex_label": "ambiguous",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "ambiguous_4",
+      "text": "English and Japanese please",
+      "codex_label": "ambiguous",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "multiple_scope_1",
+      "text": "Find Charizard SV03.5 006/165 or SV4 006/165",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "multiple_scope_2",
+      "text": "Find Charizard in SV03.5 and SV4",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "multiple_scope_3",
+      "text": "Find Charizard 006/165 or 183/165",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "broad_signal_1",
+      "text": "Find Korean Charizard cards",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "broad_signal_2",
+      "text": "Find French Charizard cards",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "broad_signal_3",
+      "text": "Find Charizard cards for 100 yuan",
+      "codex_label": "clear_unsupported",
+      "claude_label": "expressible",
+      "outcome": "clarified",
+      "verdict": "unnecessary_clarification"
+    },
+    {
+      "id": "broad_signal_4",
+      "text": "Find Charizard cards CHF 100",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "broad_signal_5",
+      "text": "Find Charizard cards ₹100",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "broad_signal_6",
+      "text": "Find Charizard cards at most 100",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    },
+    {
+      "id": "broad_signal_7",
+      "text": "Find Charizard cards with a 100 CAD limit",
+      "codex_label": "clear_unsupported",
+      "claude_label": "required_hold",
+      "outcome": "clarified",
+      "verdict": "ok_required_hold"
+    }
+  ]
+}

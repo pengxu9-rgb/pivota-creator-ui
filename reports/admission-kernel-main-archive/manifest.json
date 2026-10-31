@@ -1,0 +1,201 @@
+{
+  "schema": "pot.admission.main-evidence-archive.v1",
+  "source_head": "918bd468af52b8f87248406305b893a0410105ed",
+  "base_main": "3ec4bf7ca745e1a07fafe150e6c4535c54c4ce92",
+  "archive_hint": "<evidence>/admission-kernel-main-evidence-20261031",
+  "note": "Post-public-scrub historical copies; original unsanitized bytes remain on the two unchanged local source refs. No test, gate, vocabulary input or round-6 file is externalized.",
+  "file_count": 38,
+  "total_bytes": 818092,
+  "files": [
+    {
+      "path": "reports/admission-kernel-live-model/attempt-1-transport-blocked/REPORT.md",
+      "bytes": 5898,
+      "sha256": "8b0a0c013dc76e340d5bb9db6818cfeb58801eb38666948a30b2bb76a2905754"
+    },
+    {
+      "path": "reports/admission-kernel-live-model/attempt-1-transport-blocked/proposals.json",
+      "bytes": 188303,
+      "sha256": "355c3613ed31c521519ab81d01514d1c90de1d59c98fcdbcc8f8aee20181644d"
+    },
+    {
+      "path": "reports/admission-kernel-live-model/attempt-1-transport-blocked/summary.json",
+      "bytes": 261440,
+      "sha256": "5f8d081a36e7b530190f9d4342a659dedab55dd8efbf69e7bbf45dcad7118e28"
+    },
+    {
+      "path": "reports/admission-kernel-live-model/attempt-2-proxy/REPORT.md",
+      "bytes": 6012,
+      "sha256": "9f43d457836bd0e5d9cf5034b026946d04bee0d388d75990a38c463713d8b951"
+    },
+    {
+      "path": "reports/admission-kernel-live-model/attempt-2-proxy/proposals.json.gz",
+      "bytes": 71245,
+      "sha256": "8d2c6fe1a2badb47b03f3dffc0989b82eeac68c418223eb84409f5c55c6c183d"
+    },
+    {
+      "path": "reports/admission-kernel-live-model/attempt-2-proxy/summary.json.gz",
+      "bytes": 29274,
+      "sha256": "ee2d5751e048d65b2b0f96f3e41a62e2b17df25751d95aada1885552e5eb10a4"
+    },
+    {
+      "path": "reports/admission-kernel-live-model/attempt-3-interrupted/REPORT.md",
+      "bytes": 7463,
+      "sha256": "ffa1f4133b39306ac62deb84f11a2a6f4f2dc398ba7a8f765848843bbf6503f8"
+    },
+    {
+      "path": "reports/admission-kernel-live-model/attempt-3-interrupted/attempt-3-raw-evidence-manifest.json",
+      "bytes": 3695,
+      "sha256": "7bd6fae4747d35cbacb567161b6cae5c4d363fc37d042728c62f934c30a11f18"
+    },
+    {
+      "path": "reports/admission-kernel-live-model/attempt-3-interrupted/proposals.json.gz",
+      "bytes": 11720,
+      "sha256": "2c1b2a8752f684962efd9d08ac2fe847043fd549c331f1b4216adef545ec7a7e"
+    },
+    {
+      "path": "reports/admission-kernel-live-model/attempt-3-interrupted/summary.json.gz",
+      "bytes": 12707,
+      "sha256": "f83422d0cb2b18a74e431157bebe8eba251478d325ceb3448833ccb3218e1437"
+    },
+    {
+      "path": "reports/admission-kernel-round2/REPORT.md",
+      "bytes": 13698,
+      "sha256": "97739910f5f9ea2056c453cfc9f009aa1bb79ec059ca44412ca4e13a86db0d04"
+    },
+    {
+      "path": "reports/admission-kernel-round2/legacy-mutation-table.md",
+      "bytes": 3088,
+      "sha256": "edb20d814ddc018fd4bac3fd27700b80a37896281959c93e0a640ccafd4ef7fd"
+    },
+    {
+      "path": "reports/admission-kernel-round2/mutation-table.md",
+      "bytes": 10881,
+      "sha256": "825d8e27ada713d1f70d0481fbb1f1d0dd5ddc03af80208e107f2daa307e79be"
+    },
+    {
+      "path": "reports/admission-kernel-round2/regression-integrity.json",
+      "bytes": 3138,
+      "sha256": "f48d512c26f5282a8191f338a1e455e90904665b2f322ec5a8c60d20278730f0"
+    },
+    {
+      "path": "reports/admission-kernel-round2/second-line-mutation-table.md",
+      "bytes": 3492,
+      "sha256": "423e7472ed0c19f5f2b23d1125a93377ef16003c6487302606c110d180a2c483"
+    },
+    {
+      "path": "reports/admission-kernel-round2/semantic-evidence-summary.json",
+      "bytes": 4513,
+      "sha256": "1d6126ce0ef507725515347fc81153bf0e523c5b2f3ea63cb9675df02c54d416"
+    },
+    {
+      "path": "reports/admission-kernel-round2/validation-summary.json",
+      "bytes": 10793,
+      "sha256": "8f9da6b034d86bcc1135130bafdb5076ef2f140a293ede20e42b0f7c141ca52a"
+    },
+    {
+      "path": "reports/admission-kernel-round3/REPORT.md",
+      "bytes": 15755,
+      "sha256": "8e7d0f325446b6b8d35c477b73b2516971fbffcbf3afa3a1a0ab5872f8bba856"
+    },
+    {
+      "path": "reports/admission-kernel-round3/legacy-mutation-table.md",
+      "bytes": 4505,
+      "sha256": "71f8107733d820cf46cf12f96b4bc28fc0397c56b978991b0f0270b5e4b09bad"
+    },
+    {
+      "path": "reports/admission-kernel-round3/mutation-table.md",
+      "bytes": 13715,
+      "sha256": "8b383cb2982f4d63aab7822dc24376843ea6b38e5d4fffd70e80a4a481c7661e"
+    },
+    {
+      "path": "reports/admission-kernel-round3/mutation-verification.json",
+      "bytes": 944,
+      "sha256": "db52d0a4f1182843379dfb497a838c3c35a99dbe58444ae18e4ea97eea698c02"
+    },
+    {
+      "path": "reports/admission-kernel-round3/round3-mutation-table.md",
+      "bytes": 2625,
+      "sha256": "042217fcde63402dc5a05a54e37d8da2d9645ba3b6a1591bd9826c8a91fbcba8"
+    },
+    {
+      "path": "reports/admission-kernel-round3/second-line-mutation-table.md",
+      "bytes": 3681,
+      "sha256": "6d506fb3bd4f6a929b4df3a691cc4f8e804a5c31677a1ad3edf954e8508fd959"
+    },
+    {
+      "path": "reports/admission-kernel-round3/validation-summary.json",
+      "bytes": 9229,
+      "sha256": "2b126336989ca9e3dbcfe08f8cfba0d26a5e6c1ea36f0c64cc46d9fc2fb134d3"
+    },
+    {
+      "path": "reports/admission-kernel-round4/REPORT.md",
+      "bytes": 16541,
+      "sha256": "8f5f586fbedd42a53fb6a60125710bae2e20aadfd55c3515ba7c1cded86cffa4"
+    },
+    {
+      "path": "reports/admission-kernel-round4/clarification-comparison.json",
+      "bytes": 1147,
+      "sha256": "6f02411fd388c11edfc1efa349011edcb8e5784b2b52eb08fc49fe14960bd151"
+    },
+    {
+      "path": "reports/admission-kernel-round4/mutation-table.md",
+      "bytes": 18277,
+      "sha256": "895b30db0d13f4c1d1102fca27370c1377b8ebcd452f4550d771a6f170d52a32"
+    },
+    {
+      "path": "reports/admission-kernel-round4/mutation-verification.json",
+      "bytes": 1560,
+      "sha256": "b0ce49079573bae73b6aa3e8176449bb58f01659748df58e8085866b51c9d10c"
+    },
+    {
+      "path": "reports/admission-kernel-round4/native-validation-summary.json",
+      "bytes": 3264,
+      "sha256": "623202ae58fa00297e639f1d07a70a018c511930fbb1e75a7d2688ba4e95361b"
+    },
+    {
+      "path": "reports/admission-kernel-round4/review-input-provenance.json",
+      "bytes": 10314,
+      "sha256": "0df14e9ade4f1d8b305e3ccb9c0eccddd98b51e17616c34f03ee85a67bf7113a"
+    },
+    {
+      "path": "reports/admission-kernel-round4/validation-summary.json",
+      "bytes": 6865,
+      "sha256": "499daf469626654d417ca7f382864045b1eb8d27068cdace8c1b5a75733ea96e"
+    },
+    {
+      "path": "reports/admission-kernel-round5/REPORT.md",
+      "bytes": 23178,
+      "sha256": "ac3c961ea72fde0e4f28ed8c197da9c8288b0f653e4f9b8ad281f227e08f1cc8"
+    },
+    {
+      "path": "reports/admission-kernel-round5/cards-module-final-status.json",
+      "bytes": 570,
+      "sha256": "4a9c26d8c037583d88435afba7c0cdd7c8bce0c431ff7ae56038506f2ce3ad93"
+    },
+    {
+      "path": "reports/admission-kernel-round5/cards-module-status.json",
+      "bytes": 484,
+      "sha256": "d9233d9c3ffeff9da502a3da22f6ed47df08e0dd0d159ad18607449ba31f1d90"
+    },
+    {
+      "path": "reports/admission-kernel-round5/clarification-comparison.json",
+      "bytes": 1147,
+      "sha256": "2c4b04ef3b268bcac53cde049f98da761f9ff55be9c09efee4ef269fe401b3e1"
+    },
+    {
+      "path": "reports/admission-kernel-round5/local-checks.json",
+      "bytes": 5870,
+      "sha256": "f51a58b084ffcfa25766c3581beeb103b313bf5419da42afad5dab551ef58c6e"
+    },
+    {
+      "path": "reports/admission-kernel-round5/multi-turn-comparison.json",
+      "bytes": 2211,
+      "sha256": "b8b79c9f0437e7fe497e5828d0ef831c93a6e75e1904e9da51ce4160c1e9800d"
+    },
+    {
+      "path": "reports/admission-kernel-round5/mutation-table.md",
+      "bytes": 28850,
+      "sha256": "aa8ef884c62caf25a28882afdaf94465d01de77df33d246dc96793466921aea4"
+    }
+  ]
+}

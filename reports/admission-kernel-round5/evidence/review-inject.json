@@ -1,0 +1,332 @@
+[
+ {
+  "id": "B0_reco_baseline",
+  "initial": "Recommend Charizard cards",
+  "actions": [
+   {
+    "type": "page",
+    "offset": 0
+   }
+  ],
+  "dump": true,
+  "inject": []
+ },
+ {
+  "id": "B1_reco_refine_baseline",
+  "initial": "Recommend Charizard cards",
+  "actions": [
+   {
+    "type": "refine",
+    "scope": {
+     "language": "en"
+    }
+   }
+  ],
+  "inject": []
+ },
+ {
+  "id": "J_not_ex_page",
+  "initial": "Recommend Charizard cards",
+  "inject": [
+   {
+    "type": "reply",
+    "text": "not ex"
+   }
+  ],
+  "actions": [
+   {
+    "type": "page",
+    "offset": 0
+   }
+  ],
+  "selectFirst": true
+ },
+ {
+  "id": "J_not_ex_refine",
+  "initial": "Recommend Charizard cards",
+  "inject": [
+   {
+    "type": "reply",
+    "text": "not ex"
+   }
+  ],
+  "actions": [
+   {
+    "type": "refine",
+    "scope": {
+     "language": "en"
+    }
+   }
+  ],
+  "selectFirst": true
+ },
+ {
+  "id": "J_charizard_not_ex_page",
+  "initial": "Recommend Charizard cards",
+  "inject": [
+   {
+    "type": "reply",
+    "text": "Charizard cards that are not ex"
+   }
+  ],
+  "actions": [
+   {
+    "type": "page",
+    "offset": 0
+   }
+  ],
+  "selectFirst": true
+ },
+ {
+  "id": "J_charizard_not_ex_refine",
+  "initial": "Recommend Charizard cards",
+  "inject": [
+   {
+    "type": "reply",
+    "text": "Charizard cards that are not ex"
+   }
+  ],
+  "actions": [
+   {
+    "type": "refine",
+    "scope": {
+     "language": "en"
+    }
+   }
+  ],
+  "selectFirst": true
+ },
+ {
+  "id": "J_anything_but_page",
+  "initial": "Recommend Charizard cards",
+  "inject": [
+   {
+    "type": "reply",
+    "text": "anything but Charizard"
+   }
+  ],
+  "actions": [
+   {
+    "type": "page",
+    "offset": 0
+   }
+  ],
+  "selectFirst": true
+ },
+ {
+  "id": "J_anything_but_refine",
+  "initial": "Recommend Charizard cards",
+  "inject": [
+   {
+    "type": "reply",
+    "text": "anything but Charizard"
+   }
+  ],
+  "actions": [
+   {
+    "type": "refine",
+    "scope": {
+     "language": "en"
+    }
+   }
+  ],
+  "selectFirst": true
+ },
+ {
+  "id": "J_no_arita_page",
+  "initial": "Recommend Charizard cards",
+  "inject": [
+   {
+    "type": "reply",
+    "text": "no Mitsuhiro Arita please"
+   }
+  ],
+  "actions": [
+   {
+    "type": "page",
+    "offset": 0
+   }
+  ],
+  "selectFirst": true
+ },
+ {
+  "id": "J_no_arita_refine",
+  "initial": "Recommend Charizard cards",
+  "inject": [
+   {
+    "type": "reply",
+    "text": "no Mitsuhiro Arita please"
+   }
+  ],
+  "actions": [
+   {
+    "type": "refine",
+    "scope": {
+     "language": "en"
+    }
+   }
+  ],
+  "selectFirst": true
+ },
+ {
+  "id": "J_not_by_arita_page",
+  "initial": "Recommend Charizard cards",
+  "inject": [
+   {
+    "type": "reply",
+    "text": "Charizard cards not by Mitsuhiro Arita"
+   }
+  ],
+  "actions": [
+   {
+    "type": "page",
+    "offset": 0
+   }
+  ],
+  "selectFirst": true
+ },
+ {
+  "id": "J_not_by_arita_refine",
+  "initial": "Recommend Charizard cards",
+  "inject": [
+   {
+    "type": "reply",
+    "text": "Charizard cards not by Mitsuhiro Arita"
+   }
+  ],
+  "actions": [
+   {
+    "type": "refine",
+    "scope": {
+     "language": "en"
+    }
+   }
+  ],
+  "selectFirst": true
+ },
+ {
+  "id": "J_exclude_charizard_page",
+  "initial": "Recommend Charizard cards",
+  "inject": [
+   {
+    "type": "reply",
+    "text": "Pokemon cards but exclude Charizard"
+   }
+  ],
+  "actions": [
+   {
+    "type": "page",
+    "offset": 0
+   }
+  ],
+  "selectFirst": true
+ },
+ {
+  "id": "J_exclude_charizard_refine",
+  "initial": "Recommend Charizard cards",
+  "inject": [
+   {
+    "type": "reply",
+    "text": "Pokemon cards but exclude Charizard"
+   }
+  ],
+  "actions": [
+   {
+    "type": "refine",
+    "scope": {
+     "language": "en"
+    }
+   }
+  ],
+  "selectFirst": true
+ },
+ {
+  "id": "J_by_arita_page",
+  "initial": "Recommend Charizard cards",
+  "inject": [
+   {
+    "type": "reply",
+    "text": "Charizard cards by Mitsuhiro Arita"
+   }
+  ],
+  "actions": [
+   {
+    "type": "page",
+    "offset": 0
+   }
+  ],
+  "selectFirst": true
+ },
+ {
+  "id": "J_by_arita_refine",
+  "initial": "Recommend Charizard cards",
+  "inject": [
+   {
+    "type": "reply",
+    "text": "Charizard cards by Mitsuhiro Arita"
+   }
+  ],
+  "actions": [
+   {
+    "type": "refine",
+    "scope": {
+     "language": "en"
+    }
+   }
+  ],
+  "selectFirst": true
+ },
+ {
+  "id": "J_ctrl_inject_ask",
+  "initial": "Recommend Charizard cards",
+  "inject": [
+   {
+    "type": "ask",
+    "question": "English Find cards that are not Charizard"
+   }
+  ],
+  "actions": [
+   {
+    "type": "page",
+    "offset": 0
+   }
+  ]
+ },
+ {
+  "id": "J_find_not_ex_reply",
+  "initial": "Find Charizard cards",
+  "inject": [
+   {
+    "type": "reply",
+    "text": "not ex"
+   }
+  ],
+  "actions": [
+   {
+    "type": "refine",
+    "scope": {
+     "language": "en"
+    }
+   }
+  ],
+  "selectFirst": true
+ },
+ {
+  "id": "J_find_holo_reply",
+  "initial": "Find Charizard cards",
+  "inject": [
+   {
+    "type": "reply",
+    "text": "holo"
+   }
+  ],
+  "actions": [
+   {
+    "type": "refine",
+    "scope": {
+     "language": "en"
+    }
+   }
+  ]
+ }
+]

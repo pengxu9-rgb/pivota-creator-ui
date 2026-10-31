@@ -1,0 +1,15 @@
+[
+ {"id":"A6_not_charizard_select","initial":"English Pikachu cards","text":"Find cards that are not Charizard","selectFirst":true},
+ {"id":"A6_not_charizard_bookmark","initial":"English Pikachu cards","text":"Find cards that are not Charizard","bookmarkFirst":true},
+ {"id":"A6m_not_charizard_model_search","intent":"search","initial":"English Pikachu cards","text":"Find cards that are not Charizard","selectFirst":true},
+ {"id":"A9_non_charizard","initial":"English Pikachu cards","text":"Find non-Charizard cards","selectFirst":true},
+ {"id":"A10_anything_but_pikachu","initial":"English Charizard cards","text":"Find anything but Pikachu cards","selectFirst":true},
+ {"id":"A11_other_than_pikachu","initial":"English Charizard cards","text":"Show cards other than Pikachu","selectFirst":true},
+ {"id":"A12_no_mewtwo_please","initial":"English Pikachu cards","text":"Find cards, no Mewtwo please","selectFirst":true},
+ {"id":"A13_ja_not_pikachu","initial":"Japanese Charizard cards","text":"ピカチュウ以外のカードを探して","selectFirst":true},
+ {"id":"A3_not_ex_bookmark","initial":"English Charizard cards","text":"Find Charizard cards that are not ex","bookmarkFirst":true},
+ {"id":"A3m_not_ex_model","intent":"search","initial":"English Charizard cards","text":"Find Charizard cards that are not ex","bookmarkFirst":true},
+ {"id":"M15_ja_bookmark","initial":"Japanese Charizard cards","prefs":{"currency":"USD","budget_minor":100000,"grade_company":"PSA","grade_value":"10"},"text":"リザードン 50ドル以下","bookmarkFirst":true},
+ {"id":"M15b_zh_50_meiyuan","initial":"English Charizard cards","prefs":{"currency":"USD","budget_minor":100000,"grade_company":"PSA","grade_value":"10"},"text":"Find Charizard cards 50美元以内","selectFirst":true},
+ {"id":"M15c_ja_gojuu_doru","initial":"Japanese Charizard cards","prefs":{"currency":"USD","budget_minor":100000,"grade_company":"PSA","grade_value":"10"},"text":"リザードン 五十ドルまで","selectFirst":true}
+]
