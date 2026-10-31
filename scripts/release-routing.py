@@ -21,6 +21,8 @@ NON_CREATOR_PREFIXES = (
     # Tests/fixtures are not production inputs. Runtime source stays subject to the
     # explicit ownership rules above even when changed alongside a test.
     b"tests/",
+    # Non-runtime evidence, never copied into the creator image.
+    b"reports/",
 )
 NON_CREATOR_FILES = frozenset((
     b"src/components/creator/PokemonCards.tsx",
