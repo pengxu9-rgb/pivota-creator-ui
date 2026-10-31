@@ -13,6 +13,8 @@ Release configuration is also non-runtime: `deploy-cloud-run.yml` itself, `scrip
 
 `tests/` is nonproduction code, fixtures, and test helpers. Tests-only edits do not release creator; a shared production file changed with a test still does. Neither the creator Dockerfile nor application imports should start consuming `tests/` as runtime input without revisiting this rule. The generic `Build` workflow still builds every PR and main push.
 
+`reports/` contains non-runtime evidence, never copied into the creator image. Reports-only edits do not release creator; a shared production file changed with a report still does. Neither the creator Dockerfile nor application imports should start consuming `reports/` as runtime input without revisiting this rule.
+
 Only an eligible creator deploy job receives cloud OIDC permission and enters the `deploy-creator-ui` concurrency queue. A skipped Pot-only run cannot replace an already queued creator deployment. The target remains fixed to service `creator-ui`, registry `us-west1-docker.pkg.dev/pivota-prod/cloud-run-source-deploy/creator-ui`, and the creator deployment identity. This workflow never targets Pot.
 
 For a manual creator redeploy or rollback, dispatch **Deploy to Cloud Run** from `main`, enter `creator.pivota.cc` in `confirm_target`, and optionally supply a commit SHA (7–40 hexadecimal characters). Empty SHA uses that run's main commit. The resolved commit must still belong to `origin/main`, and validation finishes before cloud authentication. An invalid or missing target confirmation skips deployment. A later eligible creator push may supersede a queued rollback; Pot-only pushes do not join that queue.
