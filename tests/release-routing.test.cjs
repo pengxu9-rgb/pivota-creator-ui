@@ -244,3 +244,83 @@ test('workflow gates cloud auth/queue at the deploy job and preserves creator id
   assert.match(deploy, /service_account: sa-creator-ui-deploy@pivota-prod\.iam\.gserviceaccount\.com/);
   assert.doesNotMatch(workflow, /gcloud run deploy[^\n]*(?:pot-beta|pokemon)/);
 });
+
+test('reports-only push skips creator', t => {
+  const f = fixture(t, { 'reports/review/summary.md': 'previous evidence' });
+  commit(f.repo, { 'reports/review/summary.md': 'updated evidence' });
+  const decision = route(f);
+  assert.equal(decision.deploy_creator, false);
+  assert.equal(decision.path_count, 1);
+  assert.equal(decision.creator_path_count, 0);
+});
+
+test('adding and deleting reports skip creator, separately and in one range', t => {
+  const f = fixture(t, { 'reports/remove.md': 'old evidence' });
+  const added = commit(f.repo, { 'reports/new/summary.json': '{}' });
+  assert.equal(route(f).deploy_creator, false);
+  fs.unlinkSync(path.join(f.repo, 'reports/remove.md'));
+  const deleted = commit(f.repo);
+  const deletion = route(f, { before: added, after: deleted });
+  assert.equal(deletion.deploy_creator, false);
+  assert.equal(deletion.path_count, 1);
+  const combined = route(f);
+  assert.equal(combined.deploy_creator, false);
+  assert.equal(combined.path_count, 2);
+  assert.equal(combined.creator_path_count, 0);
+});
+
+test('reports plus shared source release and identify the shared file', t => {
+  const f = fixture(t);
+  const shared = 'src/lib/shared-with-report.ts';
+  commit(f.repo, { 'reports/review.md': 'evidence', [shared]: 'shared production' });
+  const decision = route(f);
+  assert.equal(decision.deploy_creator, true);
+  assert.equal(decision.creator_path_count, 1);
+  assert.deepEqual(decision.creator_paths_sample, [shared]);
+});
+
+test('reports plus Pot files skip creator', t => {
+  const f = fixture(t);
+  commit(f.repo, {
+    'reports/review.md': 'evidence',
+    'src/lib/pokemon/report-fixture.cjs': 'Pot source',
+    'src/components/creator/pokemon/ReportFixture.tsx': 'Pot component',
+  });
+  const decision = route(f);
+  assert.equal(decision.deploy_creator, false);
+  assert.equal(decision.path_count, 3);
+  assert.equal(decision.creator_path_count, 0);
+});
+
+test('renames between reports and creator source release in both directions', t => {
+  const source = 'src/app/report-fixture.tsx';
+  const f = fixture(t, {
+    'src/app/creator/page.tsx': 'creator baseline',
+    'reports/source.tsx': 'same contents',
+  });
+  git(f.repo, 'mv', 'reports/source.tsx', source);
+  const movedOut = commit(f.repo);
+  const outDecision = route(f);
+  assert.equal(outDecision.deploy_creator, true);
+  assert.equal(outDecision.path_count, 2);
+  assert.deepEqual(outDecision.creator_paths_sample, [source]);
+  fs.mkdirSync(path.join(f.repo, 'reports'), { recursive: true });
+  git(f.repo, 'mv', source, 'reports/returned.tsx');
+  const movedIn = commit(f.repo);
+  const inDecision = route(f, { before: movedOut, after: movedIn });
+  assert.equal(inDecision.deploy_creator, true);
+  assert.equal(inDecision.path_count, 2);
+  assert.deepEqual(inDecision.creator_paths_sample, [source]);
+});
+
+test('near-miss report paths remain creator/shared', t => {
+  const f = fixture(t);
+  for (const name of ['reportsx/a.md', 'src/reports/a.ts', 'report/a.md', 'Reports/a.md']) {
+    const before = git(f.repo, 'rev-parse', 'HEAD');
+    commit(f.repo, { [name]: 'shared change' });
+    const decision = route(f, { before });
+    assert.equal(decision.deploy_creator, true, name);
+    assert.equal(decision.creator_path_count, 1);
+    assert.deepEqual(decision.creator_paths_sample, [name]);
+  }
+});
