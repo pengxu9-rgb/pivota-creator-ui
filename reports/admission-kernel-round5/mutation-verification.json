@@ -1,0 +1,32 @@
+{
+  "schema": "pot.admission.round5-mutation-verification.v1",
+  "source_head": "7fe4bc8c8bf2f2f64f1c2ec0f5473f07dd9457a5",
+  "input_sha256": "8f36b72cbcced1acad4b9bf9da72a7f8e228e5d26ae2be2ea3bbb3fb0b08d284",
+  "verified_source_test_input_hashes": 384,
+  "mutants": 90,
+  "complete_test_file_cells_and_syntax_checks": 2083,
+  "explicit_assertion_failures": 233,
+  "non_assertion_failure_cells": [
+    {
+      "log": "reports/admission-kernel-round5/attempts/21bc18b-normalized-length-survivor/mutation-logs/remove_commercial_complete/admission-generated.test.cjs.log",
+      "failing_tests": 2,
+      "used_as_sole_kill_proof": false
+    },
+    {
+      "log": "reports/admission-kernel-round5/attempts/21bc18b-normalized-length-survivor/mutation-logs/infer_ambiguous_currency_from_saved/admission-kernel.test.cjs.log",
+      "failing_tests": 1,
+      "used_as_sole_kill_proof": false
+    },
+    {
+      "log": "reports/admission-kernel-round5/attempts/21bc18b-normalized-length-survivor/mutation-logs/R4_drop_ask_grammar_branch/admission-adapter.test.cjs.log",
+      "failing_tests": 8,
+      "used_as_sole_kill_proof": false
+    }
+  ],
+  "verification_only_changes": [],
+  "verification_helper_sha256": "3fbd2d98b5b63256b8c7a725c2db04faa346d39cf8b8c81fd0d40c5c73966471",
+  "network_audit_count": 4164,
+  "network_attempts": 0,
+  "scratch_cleaned": true,
+  "passed": true
+}

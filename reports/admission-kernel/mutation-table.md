@@ -1,0 +1,35 @@
+| Mutant | admission-generated.test.cjs | admission-adapter.test.cjs | admission-architecture.test.cjs | admission-kernel.test.cjs | Killed |
+| --- | --- | --- | --- | --- | --- |
+| remove_brand | 0 | 1 | 0 | 0 | true |
+| remove_scope_binding | 0 | 1 | 0 | 0 | true |
+| remove_deadline | 0 | 1 | 0 | 0 | true |
+| remove_commerce_hold | 1 | 0 | 0 | 0 | true |
+| remove_commerce_subject | 1 | 0 | 0 | 0 | true |
+| remove_card_binding | 0 | 1 | 0 | 0 | true |
+| remove_language_complete | 1 | 0 | 0 | 1 | true |
+| remove_ambiguous_currency | 1 | 0 | 0 | 1 | true |
+| remove_identity_complete | 1 | 0 | 0 | 1 | true |
+| remove_commercial_complete | 1 | 0 | 0 | 1 | true |
+| remove_intent_complete | 1 | 0 | 0 | 0 | true |
+| remove_local_control | 1 | 0 | 0 | 1 | true |
+| remove_reply_binding | 1 | 0 | 0 | 1 | true |
+| remove_held_language | 1 | 0 | 0 | 0 | true |
+| remove_held_task | 1 | 0 | 0 | 0 | true |
+| remove_native_echo | 0 | 1 | 0 | 1 | true |
+| remove_money_signal_oracle | 1 | 0 | 0 | 1 | true |
+| remove_grade_signal_oracle | 1 | 0 | 0 | 1 | true |
+| remove_broad_language_detection | 1 | 0 | 0 | 1 | true |
+| remove_set_signal_oracle | 1 | 0 | 0 | 1 | true |
+| restore_generic_word_reply | 1 | 0 | 0 | 1 | true |
+| infer_ambiguous_currency_from_saved | 1 | 0 | 0 | 1 | true |
+| remove_single_use | 0 | 1 | 0 | 0 | true |
+| remove_typed_preference_values | 1 | 0 | 0 | 0 | true |
+| remove_native_scope_echo | 1 | 0 | 0 | 0 | true |
+| remove_native_preferences_echo | 1 | 1 | 0 | 0 | true |
+| remove_native_record_echo | 1 | 0 | 0 | 0 | true |
+| remove_prepublication_echo | 0 | 1 | 0 | 0 | true |
+| remove_plan_freeze | 1 | 0 | 0 | 0 | true |
+| workspace_bypass | 0 | 0 | 1 | 0 | true |
+| client_import_bypass | 0 | 0 | 1 | 0 | true |
+
+The ambiguous-currency and intent-completeness deletions are clarification-contract kills: the narrow currency compiler and positive local-control/refinement guards still prevent authority loss. The saved-currency policy-reversal negative control tests the actual unsafe inference. Initial equivalent-deletion evidence, including all-zero exit codes at 1af5966, is preserved in mutations-initial-1af5966.json.

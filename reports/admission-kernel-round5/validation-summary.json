@@ -1,0 +1,4460 @@
+{
+  "schema": "pot.admission.round5-validation-summary.v1",
+  "head": "7fe4bc8c8bf2f2f64f1c2ec0f5473f07dd9457a5",
+  "measured_head": "7fe4bc8c8bf2f2f64f1c2ec0f5473f07dd9457a5",
+  "base": "8d377d69855f8908a26c1f5a58d6e041a000b86e",
+  "branch": "codex/admission-kernel-20261028",
+  "source_test_equivalence": true,
+  "original_tests": {
+    "count": 291,
+    "passed": 291,
+    "exit_code": 0,
+    "head": "7fe4bc8c8bf2f2f64f1c2ec0f5473f07dd9457a5"
+  },
+  "full_suite": {
+    "count": 398,
+    "passed": 398,
+    "test_files": 33,
+    "exit_code": 0,
+    "head": "7fe4bc8c8bf2f2f64f1c2ec0f5473f07dd9457a5"
+  },
+  "mutations": {
+    "count": 90,
+    "caught": 85,
+    "equivalent": 5,
+    "groups": {
+      "legacy31": {
+        "mutants": 31,
+        "killed": 29,
+        "equivalent": 2
+      },
+      "round2_semantics": {
+        "mutants": 5,
+        "killed": 5,
+        "equivalent": 0
+      },
+      "claude_second_line": {
+        "mutants": 13,
+        "killed": 12,
+        "equivalent": 1
+      },
+      "round3_semantics": {
+        "mutants": 7,
+        "killed": 7,
+        "equivalent": 0
+      },
+      "claude_round4": {
+        "mutants": 15,
+        "killed": 13,
+        "equivalent": 2
+      },
+      "round4_stored_goals": {
+        "mutants": 6,
+        "killed": 6,
+        "equivalent": 0
+      },
+      "claude_round5": {
+        "mutants": 7,
+        "killed": 7,
+        "equivalent": 0
+      },
+      "round5_stored_replay": {
+        "mutants": 6,
+        "killed": 6,
+        "equivalent": 0
+      }
+    },
+    "worker_audits": 4164,
+    "exit_code": 0,
+    "scratch_cleaned": true,
+    "method": "documented per-file delta with hash-proved immutable retained cells",
+    "retained_execution_head": "21bc18b094aa5399082d657f3759e2e0dd525277",
+    "retained_cells": 1901,
+    "reexecuted_changed_file_cells": 91,
+    "reexecuted_syntax_checks": 90,
+    "fresh_full_suite": true,
+    "delta_provenance_sha256": "151ca1c315e2806d1857820ff46e39b030bcbfe9317cf6da82a2125925cd5044"
+  },
+  "mutation_verification": {
+    "schema": "pot.admission.round5-mutation-verification.v1",
+    "source_head": "7fe4bc8c8bf2f2f64f1c2ec0f5473f07dd9457a5",
+    "input_sha256": "8f36b72cbcced1acad4b9bf9da72a7f8e228e5d26ae2be2ea3bbb3fb0b08d284",
+    "verified_source_test_input_hashes": 384,
+    "mutants": 90,
+    "complete_test_file_cells_and_syntax_checks": 2083,
+    "explicit_assertion_failures": 233,
+    "non_assertion_failure_cells": [
+      {
+        "log": "reports/admission-kernel-round5/attempts/21bc18b-normalized-length-survivor/mutation-logs/remove_commercial_complete/admission-generated.test.cjs.log",
+        "failing_tests": 2,
+        "used_as_sole_kill_proof": false
+      },
+      {
+        "log": "reports/admission-kernel-round5/attempts/21bc18b-normalized-length-survivor/mutation-logs/infer_ambiguous_currency_from_saved/admission-kernel.test.cjs.log",
+        "failing_tests": 1,
+        "used_as_sole_kill_proof": false
+      },
+      {
+        "log": "reports/admission-kernel-round5/attempts/21bc18b-normalized-length-survivor/mutation-logs/R4_drop_ask_grammar_branch/admission-adapter.test.cjs.log",
+        "failing_tests": 8,
+        "used_as_sole_kill_proof": false
+      }
+    ],
+    "verification_only_changes": [],
+    "verification_helper_sha256": "3fbd2d98b5b63256b8c7a725c2db04faa346d39cf8b8c81fd0d40c5c73966471",
+    "network_audit_count": 4164,
+    "network_attempts": 0,
+    "scratch_cleaned": true,
+    "passed": true
+  },
+  "native_gates": [
+    {
+      "gate": "round4",
+      "file": "prior-round4-native/native-stored-goals.json",
+      "head": "7fe4bc8c8bf2f2f64f1c2ec0f5473f07dd9457a5",
+      "passed": true,
+      "exit_code": 0,
+      "node_network_attempts": 0,
+      "python_network_attempts": 0
+    },
+    {
+      "gate": "round3",
+      "file": "prior-round3-native/native-admitted-replay.json",
+      "head": "7fe4bc8c8bf2f2f64f1c2ec0f5473f07dd9457a5",
+      "passed": true,
+      "exit_code": 0,
+      "node_network_attempts": 0,
+      "python_network_attempts": 0
+    },
+    {
+      "gate": "round2",
+      "file": "prior-round2-native/native-admitted-replay.json",
+      "head": "7fe4bc8c8bf2f2f64f1c2ec0f5473f07dd9457a5",
+      "passed": true,
+      "exit_code": 0,
+      "node_network_attempts": 0,
+      "python_network_attempts": 0
+    },
+    {
+      "gate": "original",
+      "file": "prior-native15/native-replay.json",
+      "head": "7fe4bc8c8bf2f2f64f1c2ec0f5473f07dd9457a5",
+      "passed": true,
+      "exit_code": 0,
+      "node_network_attempts": 0,
+      "python_network_attempts": 0
+    },
+    {
+      "gate": "round5",
+      "file": "native-round5.json",
+      "head": "7fe4bc8c8bf2f2f64f1c2ec0f5473f07dd9457a5",
+      "passed": true,
+      "exit_code": 0,
+      "node_network_attempts": 0,
+      "python_network_attempts": 0
+    },
+    {
+      "gate": "round5_baseline",
+      "file": "native-round5-baseline-flows.json",
+      "head": "7fe4bc8c8bf2f2f64f1c2ec0f5473f07dd9457a5",
+      "passed": true,
+      "exit_code": 0,
+      "node_network_attempts": 0,
+      "python_network_attempts": 0
+    }
+  ],
+  "historical_native_counts": {
+    "round4_legacy": 24,
+    "round4_positive_space": {
+      "probes": 112,
+      "consistent_nonempty": 96,
+      "empty": 15,
+      "expected_native_rejection": 1,
+      "newly_rejected": 0,
+      "mismatches": 0
+    },
+    "round3": [
+      118,
+      14
+    ],
+    "round2": [
+      58,
+      7
+    ],
+    "original": 15
+  },
+  "new_native": {
+    "review_rows": 19,
+    "unique_unsafe_reply_texts": 7,
+    "unsafe_reply_source_rows": 15,
+    "generated_unsafe_reply_cells": 28,
+    "negative_ask_controls": 1,
+    "all_held_before_dispatch": 29,
+    "narrow_forms_replayed": 17,
+    "narrow_semantic_refusals": [],
+    "source_control_note": "The two source rows with inject:[] are baseline controls, not unsafe injected text. The source holo positive is represented in the finish controls; unsafe ask has its own control."
+  },
+  "multi_turn": {
+    "schema": "pot.admission.round5-multi-turn-comparison.v1",
+    "head": "7fe4bc8c8bf2f2f64f1c2ec0f5473f07dd9457a5",
+    "baseline_code": {
+      "base": "8d377d69855f8908a26c1f5a58d6e041a000b86e",
+      "file": "src/lib/pokemon/admission.cjs",
+      "executed_source_sha256": "ec1939f6224aa06cfd2fb7abb6569da577c343423e6e3dbf544b88078aafb76a",
+      "working_file_sha256": "0002b573bb37536316218890a56575e7eb50411a8de1b0b6bdaba3f9719eb551",
+      "method": "Exact Git blob compiled in memory before any production import. Other production files are asserted byte-identical to the baseline. No source file is edited."
+    },
+    "method": "Both phases execute the same ten real conversation/private workspace/native flows. Baseline imports the exact Git admission blob in memory, with every other production file asserted unchanged. No source file is edited.",
+    "cases": 10,
+    "before_false_restarts": 2,
+    "after_false_restarts": 0,
+    "false_restart_delta": -2,
+    "rows": [
+      {
+        "id": "L1_base_set_then_japanese",
+        "before_false_restart": true,
+        "after_false_restart": false
+      },
+      {
+        "id": "L1b_base_set_then_english",
+        "before_false_restart": false,
+        "after_false_restart": false
+      },
+      {
+        "id": "L2_plain_flow",
+        "before_false_restart": false,
+        "after_false_restart": false
+      },
+      {
+        "id": "L3_language_answer_then_search",
+        "before_false_restart": false,
+        "after_false_restart": false
+      },
+      {
+        "id": "L4_ex_then_japanese",
+        "before_false_restart": false,
+        "after_false_restart": false
+      },
+      {
+        "id": "L5_holo_then_japanese",
+        "before_false_restart": false,
+        "after_false_restart": false
+      },
+      {
+        "id": "L6_pokeball_then_english",
+        "before_false_restart": false,
+        "after_false_restart": false
+      },
+      {
+        "id": "L7_holon_then_english",
+        "before_false_restart": true,
+        "after_false_restart": false
+      },
+      {
+        "id": "L8_prefixed_base_then_japanese",
+        "before_false_restart": false,
+        "after_false_restart": false
+      },
+      {
+        "id": "L9_prefixed_holon_then_english",
+        "before_false_restart": false,
+        "after_false_restart": false
+      }
+    ]
+  },
+  "clarification": {
+    "schema": "pot.admission.round5-clarification-comparison.v1",
+    "head": "7fe4bc8c8bf2f2f64f1c2ec0f5473f07dd9457a5",
+    "baseline_head": "6d379283e174b6424480a2be14e2f74f75be790d",
+    "unchanged_original_corpus": true,
+    "unchanged_claude_labels": true,
+    "unchanged_per_text_outcomes": true,
+    "codex_all": {
+      "denominator": 150,
+      "clarifications": 132,
+      "rate": 0.88,
+      "clarifications_delta": 0,
+      "percentage_point_delta": 0
+    },
+    "codex_clear_supported": {
+      "denominator": 22,
+      "clarifications": 4,
+      "rate": 0.18181818181818182,
+      "clarifications_delta": 0,
+      "percentage_point_delta": 0
+    },
+    "codex_literal": {
+      "denominator": 146,
+      "clarifications": 128,
+      "rate": 0.8767123287671232,
+      "clarifications_delta": 0,
+      "percentage_point_delta": 0
+    },
+    "claude_expressible": {
+      "denominator": 34,
+      "clarifications": 16,
+      "rate": 0.47058823529411764,
+      "clarifications_delta": 0,
+      "percentage_point_delta": 0
+    },
+    "claude_required_holds": {
+      "denominator": 114,
+      "held": 114,
+      "missed": 0
+    },
+    "claude_off_topic": {
+      "denominator": 2,
+      "misrouted_to_catalog": 0
+    }
+  },
+  "resource_qualified_start_native_receipts": [
+    {
+      "phase": "baseline-flows",
+      "start": {
+        "time": "2026-10-29T10:14:30.692Z",
+        "logical_cpus": 10,
+        "load": [
+          9.77099609375,
+          23.33349609375,
+          30.08203125
+        ],
+        "idle_percent": 43.94394394394394
+      },
+      "end": {
+        "time": "2026-10-29T10:15:57.874Z",
+        "logical_cpus": 10,
+        "load": [
+          11.33154296875,
+          20.36767578125,
+          28.26123046875
+        ],
+        "idle_percent": 35.814889336016094
+      },
+      "execution_observations": [
+        {
+          "time": "2026-10-29T10:14:35.713Z",
+          "logical_cpus": 10,
+          "load": [
+            10.669921875,
+            23.29443359375,
+            30.02880859375
+          ],
+          "idle_percent": 19.191309595654797
+        },
+        {
+          "time": "2026-10-29T10:14:40.714Z",
+          "logical_cpus": 10,
+          "load": [
+            10.2158203125,
+            22.990234375,
+            29.8818359375
+          ],
+          "idle_percent": 31.432014460735086
+        },
+        {
+          "time": "2026-10-29T10:14:45.715Z",
+          "logical_cpus": 10,
+          "load": [
+            10.2783203125,
+            22.791015625,
+            29.77099609375
+          ],
+          "idle_percent": 36.085995579666466
+        },
+        {
+          "time": "2026-10-29T10:14:50.714Z",
+          "logical_cpus": 10,
+          "load": [
+            10.17578125,
+            22.56201171875,
+            29.64892578125
+          ],
+          "idle_percent": 35.389871382636656
+        },
+        {
+          "time": "2026-10-29T10:14:55.716Z",
+          "logical_cpus": 10,
+          "load": [
+            10.24169921875,
+            22.36962890625,
+            29.53955078125
+          ],
+          "idle_percent": 23.48561078687865
+        },
+        {
+          "time": "2026-10-29T10:15:00.717Z",
+          "logical_cpus": 10,
+          "load": [
+            10.30224609375,
+            22.1806640625,
+            29.4306640625
+          ],
+          "idle_percent": 17.940466613032985
+        },
+        {
+          "time": "2026-10-29T10:15:05.717Z",
+          "logical_cpus": 10,
+          "load": [
+            11.79931640625,
+            22.29345703125,
+            29.427734375
+          ],
+          "idle_percent": 18.721093907098332
+        },
+        {
+          "time": "2026-10-29T10:15:10.717Z",
+          "logical_cpus": 10,
+          "load": [
+            11.57470703125,
+            22.07275390625,
+            29.3076171875
+          ],
+          "idle_percent": 14.225437010247138
+        },
+        {
+          "time": "2026-10-29T10:15:15.717Z",
+          "logical_cpus": 10,
+          "load": [
+            11.5283203125,
+            21.888671875,
+            29.2001953125
+          ],
+          "idle_percent": 14.015304067660088
+        },
+        {
+          "time": "2026-10-29T10:15:20.719Z",
+          "logical_cpus": 10,
+          "load": [
+            11.56591796875,
+            21.72412109375,
+            29.09912109375
+          ],
+          "idle_percent": 10.204901566894335
+        },
+        {
+          "time": "2026-10-29T10:15:25.719Z",
+          "logical_cpus": 10,
+          "load": [
+            11.4404296875,
+            21.529296875,
+            28.98681640625
+          ],
+          "idle_percent": 16.328172129499297
+        },
+        {
+          "time": "2026-10-29T10:15:30.720Z",
+          "logical_cpus": 10,
+          "load": [
+            11.40478515625,
+            21.3544921875,
+            28.88134765625
+          ],
+          "idle_percent": 13.360160965794769
+        },
+        {
+          "time": "2026-10-29T10:15:35.721Z",
+          "logical_cpus": 10,
+          "load": [
+            10.9716796875,
+            21.09912109375,
+            28.7470703125
+          ],
+          "idle_percent": 17.84349225507946
+        },
+        {
+          "time": "2026-10-29T10:15:40.721Z",
+          "logical_cpus": 10,
+          "load": [
+            11.1337890625,
+            20.96435546875,
+            28.65478515625
+          ],
+          "idle_percent": 19.35289389067524
+        },
+        {
+          "time": "2026-10-29T10:15:45.724Z",
+          "logical_cpus": 10,
+          "load": [
+            10.962890625,
+            20.765625,
+            28.53955078125
+          ],
+          "idle_percent": 15.415576574763534
+        },
+        {
+          "time": "2026-10-29T10:15:50.725Z",
+          "logical_cpus": 10,
+          "load": [
+            10.8056640625,
+            20.56982421875,
+            28.4248046875
+          ],
+          "idle_percent": 28.921962992759454
+        },
+        {
+          "time": "2026-10-29T10:15:55.727Z",
+          "logical_cpus": 10,
+          "load": [
+            11.62158203125,
+            20.57666015625,
+            28.380859375
+          ],
+          "idle_percent": 33.782425095515784
+        }
+      ],
+      "resource_summary": {
+        "samples": 19,
+        "max_observed_load1": 11.79931640625,
+        "min_observed_idle_percent": 10.204901566894335,
+        "start_eligibility_met": true
+      },
+      "observation_interval_ms": 5000,
+      "continuous_quietness_proven": false,
+      "exit_code": 0,
+      "artifact_hashes_verified": true
+    },
+    {
+      "phase": "fixed",
+      "start": {
+        "time": "2026-10-29T10:42:58.470Z",
+        "logical_cpus": 10,
+        "load": [
+          9.18017578125,
+          14.95849609375,
+          19.4365234375
+        ],
+        "idle_percent": 50.354609929078016
+      },
+      "end": {
+        "time": "2026-10-29T10:49:14.858Z",
+        "logical_cpus": 10,
+        "load": [
+          12.77685546875,
+          13.298828125,
+          16.99951171875
+        ],
+        "idle_percent": 33.06532663316583
+      },
+      "execution_observations": [
+        {
+          "time": "2026-10-29T10:43:03.490Z",
+          "logical_cpus": 10,
+          "load": [
+            9.88623046875,
+            15.0087890625,
+            19.427734375
+          ],
+          "idle_percent": 28.441846401935095
+        },
+        {
+          "time": "2026-10-29T10:43:08.490Z",
+          "logical_cpus": 10,
+          "load": [
+            9.49462890625,
+            14.84228515625,
+            19.3427734375
+          ],
+          "idle_percent": 28.680611423974256
+        },
+        {
+          "time": "2026-10-29T10:43:13.492Z",
+          "logical_cpus": 10,
+          "load": [
+            9.93505859375,
+            14.8447265625,
+            19.31689453125
+          ],
+          "idle_percent": 29.533574587856855
+        },
+        {
+          "time": "2026-10-29T10:43:18.493Z",
+          "logical_cpus": 10,
+          "load": [
+            10.10009765625,
+            14.79736328125,
+            19.27392578125
+          ],
+          "idle_percent": 26.35393597745118
+        },
+        {
+          "time": "2026-10-29T10:43:23.493Z",
+          "logical_cpus": 10,
+          "load": [
+            9.771484375,
+            14.65087890625,
+            19.19580078125
+          ],
+          "idle_percent": 34.90338164251208
+        },
+        {
+          "time": "2026-10-29T10:43:28.493Z",
+          "logical_cpus": 10,
+          "load": [
+            9.62939453125,
+            14.5400390625,
+            19.1298828125
+          ],
+          "idle_percent": 39.690514469453376
+        },
+        {
+          "time": "2026-10-29T10:43:33.495Z",
+          "logical_cpus": 10,
+          "load": [
+            9.33837890625,
+            14.39794921875,
+            19.052734375
+          ],
+          "idle_percent": 44
+        },
+        {
+          "time": "2026-10-29T10:43:38.495Z",
+          "logical_cpus": 10,
+          "load": [
+            9.39111328125,
+            14.32470703125,
+            18.99951171875
+          ],
+          "idle_percent": 29.86908358509567
+        },
+        {
+          "time": "2026-10-29T10:43:43.497Z",
+          "logical_cpus": 10,
+          "load": [
+            9.19921875,
+            14.20263671875,
+            18.92919921875
+          ],
+          "idle_percent": 34.03741701870851
+        },
+        {
+          "time": "2026-10-29T10:43:48.498Z",
+          "logical_cpus": 10,
+          "load": [
+            8.86279296875,
+            14.0498046875,
+            18.84716796875
+          ],
+          "idle_percent": 38.030150753768844
+        },
+        {
+          "time": "2026-10-29T10:43:53.499Z",
+          "logical_cpus": 10,
+          "load": [
+            8.47314453125,
+            13.8828125,
+            18.759765625
+          ],
+          "idle_percent": 33.507642799678194
+        },
+        {
+          "time": "2026-10-29T10:43:58.499Z",
+          "logical_cpus": 10,
+          "load": [
+            8.19482421875,
+            13.73486328125,
+            18.6787109375
+          ],
+          "idle_percent": 30.826462899658154
+        },
+        {
+          "time": "2026-10-29T10:44:03.500Z",
+          "logical_cpus": 10,
+          "load": [
+            8.17919921875,
+            13.6396484375,
+            18.61572265625
+          ],
+          "idle_percent": 37.69106999195495
+        },
+        {
+          "time": "2026-10-29T10:44:08.501Z",
+          "logical_cpus": 10,
+          "load": [
+            8.40478515625,
+            13.595703125,
+            18.57080078125
+          ],
+          "idle_percent": 35.176991150442475
+        },
+        {
+          "time": "2026-10-29T10:44:13.502Z",
+          "logical_cpus": 10,
+          "load": [
+            9.4130859375,
+            13.71826171875,
+            18.5849609375
+          ],
+          "idle_percent": 32.18460298266828
+        },
+        {
+          "time": "2026-10-29T10:44:18.503Z",
+          "logical_cpus": 10,
+          "load": [
+            9.3798828125,
+            13.6396484375,
+            18.5283203125
+          ],
+          "idle_percent": 31.57894736842105
+        },
+        {
+          "time": "2026-10-29T10:44:23.504Z",
+          "logical_cpus": 10,
+          "load": [
+            9.34912109375,
+            13.5625,
+            18.47216796875
+          ],
+          "idle_percent": 28.999798752264038
+        },
+        {
+          "time": "2026-10-29T10:44:28.505Z",
+          "logical_cpus": 10,
+          "load": [
+            10.04150390625,
+            13.6357421875,
+            18.46923828125
+          ],
+          "idle_percent": 13.64185110663984
+        },
+        {
+          "time": "2026-10-29T10:44:33.505Z",
+          "logical_cpus": 10,
+          "load": [
+            11.0791015625,
+            13.791015625,
+            18.49560546875
+          ],
+          "idle_percent": 23.488045007032348
+        },
+        {
+          "time": "2026-10-29T10:44:38.507Z",
+          "logical_cpus": 10,
+          "load": [
+            10.83251953125,
+            13.69482421875,
+            18.43408203125
+          ],
+          "idle_percent": 25.87763289869609
+        },
+        {
+          "time": "2026-10-29T10:44:43.508Z",
+          "logical_cpus": 10,
+          "load": [
+            10.60546875,
+            13.60009765625,
+            18.37255859375
+          ],
+          "idle_percent": 22.7491961414791
+        },
+        {
+          "time": "2026-10-29T10:44:48.508Z",
+          "logical_cpus": 10,
+          "load": [
+            13.119140625,
+            14.0712890625,
+            18.5107421875
+          ],
+          "idle_percent": 12.402167369054787
+        },
+        {
+          "time": "2026-10-29T10:44:53.511Z",
+          "logical_cpus": 10,
+          "load": [
+            13.109375,
+            14.05322265625,
+            18.47802734375
+          ],
+          "idle_percent": 12.349397590361447
+        },
+        {
+          "time": "2026-10-29T10:44:58.518Z",
+          "logical_cpus": 10,
+          "load": [
+            16.3837890625,
+            14.71630859375,
+            18.68603515625
+          ],
+          "idle_percent": 12.248995983935743
+        },
+        {
+          "time": "2026-10-29T10:45:03.522Z",
+          "logical_cpus": 10,
+          "load": [
+            15.63232421875,
+            14.587890625,
+            18.6171875
+          ],
+          "idle_percent": 20.97551184263348
+        },
+        {
+          "time": "2026-10-29T10:45:08.526Z",
+          "logical_cpus": 10,
+          "load": [
+            16.14208984375,
+            14.7109375,
+            18.63671875
+          ],
+          "idle_percent": 11.14681662984535
+        },
+        {
+          "time": "2026-10-29T10:45:13.528Z",
+          "logical_cpus": 10,
+          "load": [
+            15.48974609375,
+            14.59912109375,
+            18.57421875
+          ],
+          "idle_percent": 19.128863910076273
+        },
+        {
+          "time": "2026-10-29T10:45:18.530Z",
+          "logical_cpus": 10,
+          "load": [
+            15.0498046875,
+            14.5224609375,
+            18.52392578125
+          ],
+          "idle_percent": 13.129893595663521
+        },
+        {
+          "time": "2026-10-29T10:45:23.532Z",
+          "logical_cpus": 10,
+          "load": [
+            14.72509765625,
+            14.4638671875,
+            18.4794921875
+          ],
+          "idle_percent": 24.128902316213495
+        },
+        {
+          "time": "2026-10-29T10:45:28.533Z",
+          "logical_cpus": 10,
+          "load": [
+            14.1064453125,
+            14.33984375,
+            18.412109375
+          ],
+          "idle_percent": 22.789389067524116
+        },
+        {
+          "time": "2026-10-29T10:45:33.534Z",
+          "logical_cpus": 10,
+          "load": [
+            13.6171875,
+            14.234375,
+            18.35107421875
+          ],
+          "idle_percent": 22.570281124497992
+        },
+        {
+          "time": "2026-10-29T10:45:38.535Z",
+          "logical_cpus": 10,
+          "load": [
+            13.2470703125,
+            14.1474609375,
+            18.2958984375
+          ],
+          "idle_percent": 21.65528324628365
+        },
+        {
+          "time": "2026-10-29T10:45:43.537Z",
+          "logical_cpus": 10,
+          "load": [
+            15.22900390625,
+            14.54296875,
+            18.4111328125
+          ],
+          "idle_percent": 20.208919244676576
+        },
+        {
+          "time": "2026-10-29T10:45:48.538Z",
+          "logical_cpus": 10,
+          "load": [
+            14.81005859375,
+            14.46728515625,
+            18.36181640625
+          ],
+          "idle_percent": 21.572175311620427
+        },
+        {
+          "time": "2026-10-29T10:45:53.540Z",
+          "logical_cpus": 10,
+          "load": [
+            14.1044921875,
+            14.32666015625,
+            18.2890625
+          ],
+          "idle_percent": 25.44176706827309
+        },
+        {
+          "time": "2026-10-29T10:45:58.540Z",
+          "logical_cpus": 10,
+          "load": [
+            14.65625,
+            14.43701171875,
+            18.3046875
+          ],
+          "idle_percent": 23.727108070034213
+        },
+        {
+          "time": "2026-10-29T10:46:03.541Z",
+          "logical_cpus": 10,
+          "load": [
+            14.5234375,
+            14.4130859375,
+            18.2734375
+          ],
+          "idle_percent": 25.251306795335747
+        },
+        {
+          "time": "2026-10-29T10:46:08.543Z",
+          "logical_cpus": 10,
+          "load": [
+            13.8408203125,
+            14.27294921875,
+            18.201171875
+          ],
+          "idle_percent": 23.271704180064308
+        },
+        {
+          "time": "2026-10-29T10:46:13.543Z",
+          "logical_cpus": 10,
+          "load": [
+            14.25390625,
+            14.35107421875,
+            18.20556640625
+          ],
+          "idle_percent": 27.155778894472363
+        },
+        {
+          "time": "2026-10-29T10:46:18.545Z",
+          "logical_cpus": 10,
+          "load": [
+            13.5927734375,
+            14.21240234375,
+            18.1337890625
+          ],
+          "idle_percent": 25.709683913831288
+        },
+        {
+          "time": "2026-10-29T10:46:23.545Z",
+          "logical_cpus": 10,
+          "load": [
+            13.384765625,
+            14.15869140625,
+            18.091796875
+          ],
+          "idle_percent": 26.019378280177634
+        },
+        {
+          "time": "2026-10-29T10:46:28.545Z",
+          "logical_cpus": 10,
+          "load": [
+            12.953125,
+            14.05615234375,
+            18.0322265625
+          ],
+          "idle_percent": 22.68704746580853
+        },
+        {
+          "time": "2026-10-29T10:46:33.546Z",
+          "logical_cpus": 10,
+          "load": [
+            12.39599609375,
+            13.92236328125,
+            17.96142578125
+          ],
+          "idle_percent": 27.632636655948552
+        },
+        {
+          "time": "2026-10-29T10:46:38.548Z",
+          "logical_cpus": 10,
+          "load": [
+            12.2041015625,
+            13.85693359375,
+            17.91455078125
+          ],
+          "idle_percent": 32.220434432823815
+        },
+        {
+          "time": "2026-10-29T10:46:43.548Z",
+          "logical_cpus": 10,
+          "load": [
+            12.107421875,
+            13.80908203125,
+            17.8740234375
+          ],
+          "idle_percent": 27.79790660225443
+        },
+        {
+          "time": "2026-10-29T10:46:48.553Z",
+          "logical_cpus": 10,
+          "load": [
+            14.1005859375,
+            14.19384765625,
+            17.98583984375
+          ],
+          "idle_percent": 25.55287494973864
+        },
+        {
+          "time": "2026-10-29T10:46:53.552Z",
+          "logical_cpus": 10,
+          "load": [
+            13.53173828125,
+            14.07421875,
+            17.92138671875
+          ],
+          "idle_percent": 16.163446054750402
+        },
+        {
+          "time": "2026-10-29T10:46:58.553Z",
+          "logical_cpus": 10,
+          "load": [
+            13.00830078125,
+            13.95654296875,
+            17.85693359375
+          ],
+          "idle_percent": 18.522246829071875
+        },
+        {
+          "time": "2026-10-29T10:47:03.554Z",
+          "logical_cpus": 10,
+          "load": [
+            12.76708984375,
+            13.890625,
+            17.810546875
+          ],
+          "idle_percent": 16.441668345758615
+        },
+        {
+          "time": "2026-10-29T10:47:08.554Z",
+          "logical_cpus": 10,
+          "load": [
+            13.18603515625,
+            13.95849609375,
+            17.8115234375
+          ],
+          "idle_percent": 5.514337276919992
+        },
+        {
+          "time": "2026-10-29T10:47:13.555Z",
+          "logical_cpus": 10,
+          "load": [
+            12.7705078125,
+            13.859375,
+            17.75390625
+          ],
+          "idle_percent": 18.591549295774648
+        },
+        {
+          "time": "2026-10-29T10:47:18.562Z",
+          "logical_cpus": 10,
+          "load": [
+            13.10888671875,
+            13.9111328125,
+            17.7490234375
+          ],
+          "idle_percent": 13.890559230306675
+        },
+        {
+          "time": "2026-10-29T10:47:23.563Z",
+          "logical_cpus": 10,
+          "load": [
+            12.77978515625,
+            13.82958984375,
+            17.69775390625
+          ],
+          "idle_percent": 16.188565697091274
+        },
+        {
+          "time": "2026-10-29T10:47:28.564Z",
+          "logical_cpus": 10,
+          "load": [
+            12.47705078125,
+            13.7490234375,
+            17.646484375
+          ],
+          "idle_percent": 16.529588766298897
+        },
+        {
+          "time": "2026-10-29T10:47:33.565Z",
+          "logical_cpus": 10,
+          "load": [
+            12.0380859375,
+            13.63671875,
+            17.583984375
+          ],
+          "idle_percent": 12.99638989169675
+        },
+        {
+          "time": "2026-10-29T10:47:38.566Z",
+          "logical_cpus": 10,
+          "load": [
+            11.79443359375,
+            13.5595703125,
+            17.533203125
+          ],
+          "idle_percent": 16.68337677962703
+        },
+        {
+          "time": "2026-10-29T10:47:43.567Z",
+          "logical_cpus": 10,
+          "load": [
+            11.890625,
+            13.5498046875,
+            17.50634765625
+          ],
+          "idle_percent": 18.71356783919598
+        },
+        {
+          "time": "2026-10-29T10:47:48.568Z",
+          "logical_cpus": 10,
+          "load": [
+            11.17822265625,
+            13.37451171875,
+            17.4208984375
+          ],
+          "idle_percent": 24.603015075376884
+        },
+        {
+          "time": "2026-10-29T10:47:53.569Z",
+          "logical_cpus": 10,
+          "load": [
+            10.84326171875,
+            13.2685546875,
+            17.359375
+          ],
+          "idle_percent": 28.47082494969819
+        },
+        {
+          "time": "2026-10-29T10:47:58.570Z",
+          "logical_cpus": 10,
+          "load": [
+            10.375,
+            13.130859375,
+            17.28662109375
+          ],
+          "idle_percent": 26.658624849215922
+        },
+        {
+          "time": "2026-10-29T10:48:03.571Z",
+          "logical_cpus": 10,
+          "load": [
+            9.9443359375,
+            12.99560546875,
+            17.21435546875
+          ],
+          "idle_percent": 22.023330651649236
+        },
+        {
+          "time": "2026-10-29T10:48:08.572Z",
+          "logical_cpus": 10,
+          "load": [
+            9.54833984375,
+            12.86279296875,
+            17.142578125
+          ],
+          "idle_percent": 19.56216107652139
+        },
+        {
+          "time": "2026-10-29T10:48:13.573Z",
+          "logical_cpus": 10,
+          "load": [
+            9.34423828125,
+            12.76513671875,
+            17.0830078125
+          ],
+          "idle_percent": 22.448157841755588
+        },
+        {
+          "time": "2026-10-29T10:48:18.575Z",
+          "logical_cpus": 10,
+          "load": [
+            11.958984375,
+            13.25,
+            17.22900390625
+          ],
+          "idle_percent": 16.324476650563607
+        },
+        {
+          "time": "2026-10-29T10:48:23.575Z",
+          "logical_cpus": 10,
+          "load": [
+            11.8017578125,
+            13.19580078125,
+            17.1865234375
+          ],
+          "idle_percent": 9.69490164592533
+        },
+        {
+          "time": "2026-10-29T10:48:28.577Z",
+          "logical_cpus": 10,
+          "load": [
+            13.4189453125,
+            13.5078125,
+            17.27294921875
+          ],
+          "idle_percent": 11.784782172254568
+        },
+        {
+          "time": "2026-10-29T10:48:33.578Z",
+          "logical_cpus": 10,
+          "load": [
+            13.14501953125,
+            13.44921875,
+            17.22998046875
+          ],
+          "idle_percent": 12.13338690237043
+        },
+        {
+          "time": "2026-10-29T10:48:38.582Z",
+          "logical_cpus": 10,
+          "load": [
+            13.93408203125,
+            13.607421875,
+            17.263671875
+          ],
+          "idle_percent": 9.58876629889669
+        },
+        {
+          "time": "2026-10-29T10:48:43.583Z",
+          "logical_cpus": 10,
+          "load": [
+            13.69873046875,
+            13.56396484375,
+            17.2265625
+          ],
+          "idle_percent": 16.053108026554014
+        },
+        {
+          "time": "2026-10-29T10:48:48.584Z",
+          "logical_cpus": 10,
+          "load": [
+            13.08203125,
+            13.43798828125,
+            17.16064453125
+          ],
+          "idle_percent": 9.371864338751756
+        },
+        {
+          "time": "2026-10-29T10:48:53.585Z",
+          "logical_cpus": 10,
+          "load": [
+            12.7548828125,
+            13.3642578125,
+            17.11279296875
+          ],
+          "idle_percent": 14.948764315852923
+        },
+        {
+          "time": "2026-10-29T10:48:58.585Z",
+          "logical_cpus": 10,
+          "load": [
+            12.2138671875,
+            13.24169921875,
+            17.04736328125
+          ],
+          "idle_percent": 14.242667738047409
+        },
+        {
+          "time": "2026-10-29T10:49:03.586Z",
+          "logical_cpus": 10,
+          "load": [
+            12.1162109375,
+            13.2041015625,
+            17.01171875
+          ],
+          "idle_percent": 16.365461847389557
+        },
+        {
+          "time": "2026-10-29T10:49:08.587Z",
+          "logical_cpus": 10,
+          "load": [
+            11.6259765625,
+            13.08447265625,
+            16.94677734375
+          ],
+          "idle_percent": 20.91713596138375
+        },
+        {
+          "time": "2026-10-29T10:49:13.588Z",
+          "logical_cpus": 10,
+          "load": [
+            12.77685546875,
+            13.298828125,
+            16.99951171875
+          ],
+          "idle_percent": 20.920418006430868
+        }
+      ],
+      "resource_summary": {
+        "samples": 77,
+        "max_observed_load1": 16.3837890625,
+        "min_observed_idle_percent": 5.514337276919992,
+        "start_eligibility_met": true
+      },
+      "observation_interval_ms": 5000,
+      "continuous_quietness_proven": false,
+      "exit_code": 0,
+      "artifact_hashes_verified": true
+    },
+    {
+      "phase": "round4",
+      "start": {
+        "time": "2026-10-29T10:50:18.195Z",
+        "logical_cpus": 10,
+        "load": [
+          9.60302734375,
+          12.23828125,
+          16.34619140625
+        ],
+        "idle_percent": 40.66265060240964
+      },
+      "end": {
+        "time": "2026-10-29T10:57:29.698Z",
+        "logical_cpus": 10,
+        "load": [
+          9.91162109375,
+          14.70166015625,
+          16.4794921875
+        ],
+        "idle_percent": 20.361083249749246
+      },
+      "execution_observations": [
+        {
+          "time": "2026-10-29T10:50:23.221Z",
+          "logical_cpus": 10,
+          "load": [
+            11.0283203125,
+            12.45947265625,
+            16.37646484375
+          ],
+          "idle_percent": 19.14722445695897
+        },
+        {
+          "time": "2026-10-29T10:50:28.222Z",
+          "logical_cpus": 10,
+          "load": [
+            13.82861328125,
+            13.01611328125,
+            16.5498046875
+          ],
+          "idle_percent": 13.636363636363637
+        },
+        {
+          "time": "2026-10-29T10:50:33.223Z",
+          "logical_cpus": 10,
+          "load": [
+            15.84423828125,
+            13.447265625,
+            16.68115234375
+          ],
+          "idle_percent": 10.258984139730977
+        },
+        {
+          "time": "2026-10-29T10:50:38.224Z",
+          "logical_cpus": 10,
+          "load": [
+            15.4560546875,
+            13.40625,
+            16.6474609375
+          ],
+          "idle_percent": 7.104154124021674
+        },
+        {
+          "time": "2026-10-29T10:50:43.225Z",
+          "logical_cpus": 10,
+          "load": [
+            17.98193359375,
+            13.9638671875,
+            16.8251953125
+          ],
+          "idle_percent": 7.83289817232376
+        },
+        {
+          "time": "2026-10-29T10:50:48.227Z",
+          "logical_cpus": 10,
+          "load": [
+            17.66259765625,
+            13.96435546875,
+            16.80859375
+          ],
+          "idle_percent": 10.518905872888174
+        },
+        {
+          "time": "2026-10-29T10:50:53.228Z",
+          "logical_cpus": 10,
+          "load": [
+            17.369140625,
+            13.96484375,
+            16.7919921875
+          ],
+          "idle_percent": 1.961961961961962
+        },
+        {
+          "time": "2026-10-29T10:50:58.229Z",
+          "logical_cpus": 10,
+          "load": [
+            17.25927734375,
+            13.99853515625,
+            16.787109375
+          ],
+          "idle_percent": 12.645523885989562
+        },
+        {
+          "time": "2026-10-29T10:51:03.230Z",
+          "logical_cpus": 10,
+          "load": [
+            16.357421875,
+            13.86572265625,
+            16.7236328125
+          ],
+          "idle_percent": 17.922443238898936
+        },
+        {
+          "time": "2026-10-29T10:51:08.231Z",
+          "logical_cpus": 10,
+          "load": [
+            16.00830078125,
+            13.83447265625,
+            16.69580078125
+          ],
+          "idle_percent": 21.2492468367142
+        },
+        {
+          "time": "2026-10-29T10:51:13.231Z",
+          "logical_cpus": 10,
+          "load": [
+            15.20654296875,
+            13.7041015625,
+            16.6328125
+          ],
+          "idle_percent": 18.718618196424984
+        },
+        {
+          "time": "2026-10-29T10:51:18.233Z",
+          "logical_cpus": 10,
+          "load": [
+            14.70947265625,
+            13.6259765625,
+            16.587890625
+          ],
+          "idle_percent": 21.398432790837855
+        },
+        {
+          "time": "2026-10-29T10:51:23.233Z",
+          "logical_cpus": 10,
+          "load": [
+            14.091796875,
+            13.515625,
+            16.53125
+          ],
+          "idle_percent": 18.234821069561722
+        },
+        {
+          "time": "2026-10-29T10:51:28.233Z",
+          "logical_cpus": 10,
+          "load": [
+            14.404296875,
+            13.58984375,
+            16.53955078125
+          ],
+          "idle_percent": 18.242022877784468
+        },
+        {
+          "time": "2026-10-29T10:51:33.233Z",
+          "logical_cpus": 10,
+          "load": [
+            13.97119140625,
+            13.51318359375,
+            16.4951171875
+          ],
+          "idle_percent": 11.244979919678714
+        },
+        {
+          "time": "2026-10-29T10:51:38.235Z",
+          "logical_cpus": 10,
+          "load": [
+            13.97314453125,
+            13.52099609375,
+            16.48046875
+          ],
+          "idle_percent": 14.858063217233743
+        },
+        {
+          "time": "2026-10-29T10:51:43.235Z",
+          "logical_cpus": 10,
+          "load": [
+            13.49462890625,
+            13.42919921875,
+            16.4306640625
+          ],
+          "idle_percent": 30.116606353035785
+        },
+        {
+          "time": "2026-10-29T10:51:48.236Z",
+          "logical_cpus": 10,
+          "load": [
+            13.85498046875,
+            13.5048828125,
+            16.439453125
+          ],
+          "idle_percent": 16.036217303822937
+        },
+        {
+          "time": "2026-10-29T10:51:53.237Z",
+          "logical_cpus": 10,
+          "load": [
+            13.8662109375,
+            13.5126953125,
+            16.4248046875
+          ],
+          "idle_percent": 18.26401446654611
+        },
+        {
+          "time": "2026-10-29T10:51:58.238Z",
+          "logical_cpus": 10,
+          "load": [
+            13.31591796875,
+            13.404296875,
+            16.369140625
+          ],
+          "idle_percent": 25.40736270368135
+        },
+        {
+          "time": "2026-10-29T10:52:03.239Z",
+          "logical_cpus": 10,
+          "load": [
+            13.21044921875,
+            13.380859375,
+            16.34326171875
+          ],
+          "idle_percent": 30.058385343265552
+        },
+        {
+          "time": "2026-10-29T10:52:08.240Z",
+          "logical_cpus": 10,
+          "load": [
+            13.033203125,
+            13.34130859375,
+            16.3115234375
+          ],
+          "idle_percent": 19.276381909547737
+        },
+        {
+          "time": "2026-10-29T10:52:13.242Z",
+          "logical_cpus": 10,
+          "load": [
+            14.5517578125,
+            13.65087890625,
+            16.4033203125
+          ],
+          "idle_percent": 16.106977679469132
+        },
+        {
+          "time": "2026-10-29T10:52:18.243Z",
+          "logical_cpus": 10,
+          "load": [
+            16.10888671875,
+            13.98828125,
+            16.50634765625
+          ],
+          "idle_percent": 16.2374245472837
+        },
+        {
+          "time": "2026-10-29T10:52:23.243Z",
+          "logical_cpus": 10,
+          "load": [
+            15.61962890625,
+            13.921875,
+            16.4677734375
+          ],
+          "idle_percent": 7.76173285198556
+        },
+        {
+          "time": "2026-10-29T10:52:28.243Z",
+          "logical_cpus": 10,
+          "load": [
+            15.24951171875,
+            13.873046875,
+            16.435546875
+          ],
+          "idle_percent": 16.78743961352657
+        },
+        {
+          "time": "2026-10-29T10:52:33.243Z",
+          "logical_cpus": 10,
+          "load": [
+            15.1494140625,
+            13.875,
+            16.4208984375
+          ],
+          "idle_percent": 10.682730923694779
+        },
+        {
+          "time": "2026-10-29T10:52:38.245Z",
+          "logical_cpus": 10,
+          "load": [
+            14.57666015625,
+            13.77734375,
+            16.37109375
+          ],
+          "idle_percent": 9.351796106762993
+        },
+        {
+          "time": "2026-10-29T10:52:43.246Z",
+          "logical_cpus": 10,
+          "load": [
+            15.8916015625,
+            14.06298828125,
+            16.45654296875
+          ],
+          "idle_percent": 8.837115886724241
+        },
+        {
+          "time": "2026-10-29T10:52:48.246Z",
+          "logical_cpus": 10,
+          "load": [
+            15.25927734375,
+            13.9619140625,
+            16.40673828125
+          ],
+          "idle_percent": 30.772325020112632
+        },
+        {
+          "time": "2026-10-29T10:52:53.247Z",
+          "logical_cpus": 10,
+          "load": [
+            15.25927734375,
+            13.9619140625,
+            16.40673828125
+          ],
+          "idle_percent": 25.015069318866786
+        },
+        {
+          "time": "2026-10-29T10:52:58.248Z",
+          "logical_cpus": 10,
+          "load": [
+            14.517578125,
+            13.82958984375,
+            16.345703125
+          ],
+          "idle_percent": 21.080104396707487
+        },
+        {
+          "time": "2026-10-29T10:53:03.249Z",
+          "logical_cpus": 10,
+          "load": [
+            13.75537109375,
+            13.6826171875,
+            16.27880859375
+          ],
+          "idle_percent": 19.145093317278747
+        },
+        {
+          "time": "2026-10-29T10:53:08.250Z",
+          "logical_cpus": 10,
+          "load": [
+            14.25537109375,
+            13.787109375,
+            16.30029296875
+          ],
+          "idle_percent": 17.586829953824534
+        },
+        {
+          "time": "2026-10-29T10:53:13.251Z",
+          "logical_cpus": 10,
+          "load": [
+            13.75439453125,
+            13.69091796875,
+            16.25146484375
+          ],
+          "idle_percent": 9.030704394942806
+        },
+        {
+          "time": "2026-10-29T10:53:18.253Z",
+          "logical_cpus": 10,
+          "load": [
+            16.25634765625,
+            14.21044921875,
+            16.41943359375
+          ],
+          "idle_percent": 8.221375576498897
+        },
+        {
+          "time": "2026-10-29T10:53:23.254Z",
+          "logical_cpus": 10,
+          "load": [
+            24.8837890625,
+            16.03271484375,
+            17.04931640625
+          ],
+          "idle_percent": 7.227464364585424
+        },
+        {
+          "time": "2026-10-29T10:53:28.256Z",
+          "logical_cpus": 10,
+          "load": [
+            23.45166015625,
+            15.88232421875,
+            16.990234375
+          ],
+          "idle_percent": 6.470352564102564
+        },
+        {
+          "time": "2026-10-29T10:53:33.257Z",
+          "logical_cpus": 10,
+          "load": [
+            25.2568359375,
+            16.38232421875,
+            17.16015625
+          ],
+          "idle_percent": 6.4043364786187515
+        },
+        {
+          "time": "2026-10-29T10:53:38.258Z",
+          "logical_cpus": 10,
+          "load": [
+            24.11474609375,
+            16.29296875,
+            17.1240234375
+          ],
+          "idle_percent": 3.605769230769231
+        },
+        {
+          "time": "2026-10-29T10:53:43.259Z",
+          "logical_cpus": 10,
+          "load": [
+            30.111328125,
+            17.666015625,
+            17.603515625
+          ],
+          "idle_percent": 13.326633165829145
+        },
+        {
+          "time": "2026-10-29T10:53:48.260Z",
+          "logical_cpus": 10,
+          "load": [
+            28.98095703125,
+            17.63818359375,
+            17.59375
+          ],
+          "idle_percent": 11.515273311897106
+        },
+        {
+          "time": "2026-10-29T10:53:53.261Z",
+          "logical_cpus": 10,
+          "load": [
+            28.26171875,
+            17.67724609375,
+            17.607421875
+          ],
+          "idle_percent": 9.837707874173512
+        },
+        {
+          "time": "2026-10-29T10:53:58.263Z",
+          "logical_cpus": 10,
+          "load": [
+            30.16259765625,
+            18.24658203125,
+            17.80859375
+          ],
+          "idle_percent": 6.757569681171045
+        },
+        {
+          "time": "2026-10-29T10:54:03.263Z",
+          "logical_cpus": 10,
+          "load": [
+            31.5107421875,
+            18.7236328125,
+            17.9794921875
+          ],
+          "idle_percent": 7.514567008237894
+        },
+        {
+          "time": "2026-10-29T10:54:08.265Z",
+          "logical_cpus": 10,
+          "load": [
+            30.5087890625,
+            18.72802734375,
+            17.9853515625
+          ],
+          "idle_percent": 12.218649517684888
+        },
+        {
+          "time": "2026-10-29T10:54:13.265Z",
+          "logical_cpus": 10,
+          "load": [
+            29.1064453125,
+            18.6328125,
+            17.9560546875
+          ],
+          "idle_percent": 4.331261279326248
+        },
+        {
+          "time": "2026-10-29T10:54:18.267Z",
+          "logical_cpus": 10,
+          "load": [
+            27.81640625,
+            18.5390625,
+            17.9267578125
+          ],
+          "idle_percent": 5.149268683630535
+        },
+        {
+          "time": "2026-10-29T10:54:23.268Z",
+          "logical_cpus": 10,
+          "load": [
+            26.5498046875,
+            18.43017578125,
+            17.8916015625
+          ],
+          "idle_percent": 7.960697814317225
+        },
+        {
+          "time": "2026-10-29T10:54:28.271Z",
+          "logical_cpus": 10,
+          "load": [
+            25.94482421875,
+            18.439453125,
+            17.89794921875
+          ],
+          "idle_percent": 5.377207062600321
+        },
+        {
+          "time": "2026-10-29T10:54:33.273Z",
+          "logical_cpus": 10,
+          "load": [
+            27.630859375,
+            18.91357421875,
+            18.068359375
+          ],
+          "idle_percent": 11.51685393258427
+        },
+        {
+          "time": "2026-10-29T10:54:38.273Z",
+          "logical_cpus": 10,
+          "load": [
+            26.21875,
+            18.76513671875,
+            18.02099609375
+          ],
+          "idle_percent": 12.11329851345922
+        },
+        {
+          "time": "2026-10-29T10:54:43.274Z",
+          "logical_cpus": 10,
+          "load": [
+            24.6796875,
+            18.5693359375,
+            17.9560546875
+          ],
+          "idle_percent": 12.680868167202572
+        },
+        {
+          "time": "2026-10-29T10:54:48.275Z",
+          "logical_cpus": 10,
+          "load": [
+            24.3046875,
+            18.5927734375,
+            17.9677734375
+          ],
+          "idle_percent": 6.96037014685174
+        },
+        {
+          "time": "2026-10-29T10:54:53.276Z",
+          "logical_cpus": 10,
+          "load": [
+            24.1201171875,
+            18.64892578125,
+            17.9912109375
+          ],
+          "idle_percent": 5.954536310601489
+        },
+        {
+          "time": "2026-10-29T10:54:58.277Z",
+          "logical_cpus": 10,
+          "load": [
+            22.6689453125,
+            18.4384765625,
+            17.9208984375
+          ],
+          "idle_percent": 18.364881192106324
+        },
+        {
+          "time": "2026-10-29T10:55:03.279Z",
+          "logical_cpus": 10,
+          "load": [
+            21.494140625,
+            18.26513671875,
+            17.8623046875
+          ],
+          "idle_percent": 13.482017279485634
+        },
+        {
+          "time": "2026-10-29T10:55:08.279Z",
+          "logical_cpus": 10,
+          "load": [
+            20.5732421875,
+            18.12744140625,
+            17.81591796875
+          ],
+          "idle_percent": 13.623595505617978
+        },
+        {
+          "time": "2026-10-29T10:55:13.280Z",
+          "logical_cpus": 10,
+          "load": [
+            19.64599609375,
+            17.9755859375,
+            17.76416015625
+          ],
+          "idle_percent": 13.41634866439044
+        },
+        {
+          "time": "2026-10-29T10:55:18.281Z",
+          "logical_cpus": 10,
+          "load": [
+            19.03369140625,
+            17.8759765625,
+            17.72998046875
+          ],
+          "idle_percent": 10.747944656105876
+        },
+        {
+          "time": "2026-10-29T10:55:23.282Z",
+          "logical_cpus": 10,
+          "load": [
+            18.79052734375,
+            17.8447265625,
+            17.7197265625
+          ],
+          "idle_percent": 11.690395027070384
+        },
+        {
+          "time": "2026-10-29T10:55:28.284Z",
+          "logical_cpus": 10,
+          "load": [
+            18.80712890625,
+            17.86376953125,
+            17.72705078125
+          ],
+          "idle_percent": 14.420566378790921
+        },
+        {
+          "time": "2026-10-29T10:55:33.284Z",
+          "logical_cpus": 10,
+          "load": [
+            18.1015625,
+            17.73291015625,
+            17.681640625
+          ],
+          "idle_percent": 17.950260730044125
+        },
+        {
+          "time": "2026-10-29T10:55:38.285Z",
+          "logical_cpus": 10,
+          "load": [
+            17.13232421875,
+            17.5380859375,
+            17.61279296875
+          ],
+          "idle_percent": 24.969818913480886
+        },
+        {
+          "time": "2026-10-29T10:55:43.286Z",
+          "logical_cpus": 10,
+          "load": [
+            16.48095703125,
+            17.39599609375,
+            17.56201171875
+          ],
+          "idle_percent": 22.485921158487532
+        },
+        {
+          "time": "2026-10-29T10:55:48.287Z",
+          "logical_cpus": 10,
+          "load": [
+            16.3623046875,
+            17.35595703125,
+            17.546875
+          ],
+          "idle_percent": 27.41351568785197
+        },
+        {
+          "time": "2026-10-29T10:55:53.288Z",
+          "logical_cpus": 10,
+          "load": [
+            15.5322265625,
+            17.1669921875,
+            17.47900390625
+          ],
+          "idle_percent": 26.314728994559744
+        },
+        {
+          "time": "2026-10-29T10:55:58.288Z",
+          "logical_cpus": 10,
+          "load": [
+            14.7685546875,
+            16.9814453125,
+            17.41162109375
+          ],
+          "idle_percent": 27.72516623010276
+        },
+        {
+          "time": "2026-10-29T10:56:03.289Z",
+          "logical_cpus": 10,
+          "load": [
+            14.22607421875,
+            16.83203125,
+            17.3564453125
+          ],
+          "idle_percent": 14.845319405383687
+        },
+        {
+          "time": "2026-10-29T10:56:08.290Z",
+          "logical_cpus": 10,
+          "load": [
+            14.04736328125,
+            16.75146484375,
+            17.32470703125
+          ],
+          "idle_percent": 17.23861127834638
+        },
+        {
+          "time": "2026-10-29T10:56:13.291Z",
+          "logical_cpus": 10,
+          "load": [
+            13.64306640625,
+            16.62255859375,
+            17.27587890625
+          ],
+          "idle_percent": 18.869442768054718
+        },
+        {
+          "time": "2026-10-29T10:56:18.292Z",
+          "logical_cpus": 10,
+          "load": [
+            13.03076171875,
+            16.44580078125,
+            17.20947265625
+          ],
+          "idle_percent": 10.818948213568849
+        },
+        {
+          "time": "2026-10-29T10:56:23.292Z",
+          "logical_cpus": 10,
+          "load": [
+            12.70751953125,
+            16.32177734375,
+            17.1611328125
+          ],
+          "idle_percent": 17.04225352112676
+        },
+        {
+          "time": "2026-10-29T10:56:28.294Z",
+          "logical_cpus": 10,
+          "load": [
+            12.650390625,
+            16.25,
+            17.130859375
+          ],
+          "idle_percent": 22.155207076799357
+        },
+        {
+          "time": "2026-10-29T10:56:33.295Z",
+          "logical_cpus": 10,
+          "load": [
+            12.11767578125,
+            16.07958984375,
+            17.0654296875
+          ],
+          "idle_percent": 20.71673042077713
+        },
+        {
+          "time": "2026-10-29T10:56:38.295Z",
+          "logical_cpus": 10,
+          "load": [
+            11.86767578125,
+            15.9619140625,
+            17.01806640625
+          ],
+          "idle_percent": 25.694164989939637
+        },
+        {
+          "time": "2026-10-29T10:56:43.296Z",
+          "logical_cpus": 10,
+          "load": [
+            11.4775390625,
+            15.81298828125,
+            16.958984375
+          ],
+          "idle_percent": 17.494470138749247
+        },
+        {
+          "time": "2026-10-29T10:56:48.297Z",
+          "logical_cpus": 10,
+          "load": [
+            11.59912109375,
+            15.76611328125,
+            16.935546875
+          ],
+          "idle_percent": 37.11298753518295
+        },
+        {
+          "time": "2026-10-29T10:56:53.297Z",
+          "logical_cpus": 10,
+          "load": [
+            11.310546875,
+            15.63671875,
+            16.8828125
+          ],
+          "idle_percent": 28.479485116653258
+        },
+        {
+          "time": "2026-10-29T10:56:58.297Z",
+          "logical_cpus": 10,
+          "load": [
+            10.88525390625,
+            15.4765625,
+            16.81884765625
+          ],
+          "idle_percent": 30.53435114503817
+        },
+        {
+          "time": "2026-10-29T10:57:03.298Z",
+          "logical_cpus": 10,
+          "load": [
+            10.49365234375,
+            15.31884765625,
+            16.75537109375
+          ],
+          "idle_percent": 32.71704180064309
+        },
+        {
+          "time": "2026-10-29T10:57:08.299Z",
+          "logical_cpus": 10,
+          "load": [
+            10.0537109375,
+            15.1474609375,
+            16.68603515625
+          ],
+          "idle_percent": 27.41351568785197
+        },
+        {
+          "time": "2026-10-29T10:57:13.300Z",
+          "logical_cpus": 10,
+          "load": [
+            9.88916015625,
+            15.0283203125,
+            16.634765625
+          ],
+          "idle_percent": 28.0659429030961
+        },
+        {
+          "time": "2026-10-29T10:57:18.300Z",
+          "logical_cpus": 10,
+          "load": [
+            9.81787109375,
+            14.92822265625,
+            16.58984375
+          ],
+          "idle_percent": 28.881737731295253
+        },
+        {
+          "time": "2026-10-29T10:57:23.301Z",
+          "logical_cpus": 10,
+          "load": [
+            9.83203125,
+            14.84619140625,
+            16.55078125
+          ],
+          "idle_percent": 30.496881915107625
+        },
+        {
+          "time": "2026-10-29T10:57:28.302Z",
+          "logical_cpus": 10,
+          "load": [
+            10.16552734375,
+            14.83203125,
+            16.53564453125
+          ],
+          "idle_percent": 22.622884770346495
+        }
+      ],
+      "resource_summary": {
+        "samples": 88,
+        "max_observed_load1": 31.5107421875,
+        "min_observed_idle_percent": 1.961961961961962,
+        "start_eligibility_met": true
+      },
+      "observation_interval_ms": 5000,
+      "continuous_quietness_proven": false,
+      "exit_code": 0,
+      "artifact_hashes_verified": true
+    },
+    {
+      "phase": "round3",
+      "start": {
+        "time": "2026-10-29T10:57:30.810Z",
+        "logical_cpus": 10,
+        "load": [
+          9.91162109375,
+          14.70166015625,
+          16.4794921875
+        ],
+        "idle_percent": 46.78714859437751
+      },
+      "end": {
+        "time": "2026-10-29T11:09:34.261Z",
+        "logical_cpus": 10,
+        "load": [
+          9.9755859375,
+          10.32177734375,
+          12.703125
+        ],
+        "idle_percent": 34.56175298804781
+      },
+      "execution_observations": [
+        {
+          "time": "2026-10-29T10:57:35.840Z",
+          "logical_cpus": 10,
+          "load": [
+            10.07861328125,
+            14.65673828125,
+            16.453125
+          ],
+          "idle_percent": 24.652567975830816
+        },
+        {
+          "time": "2026-10-29T10:57:40.840Z",
+          "logical_cpus": 10,
+          "load": [
+            10.072265625,
+            14.5791015625,
+            16.4150390625
+          ],
+          "idle_percent": 15.651999196302993
+        },
+        {
+          "time": "2026-10-29T10:57:45.841Z",
+          "logical_cpus": 10,
+          "load": [
+            10.2265625,
+            14.5361328125,
+            16.38916015625
+          ],
+          "idle_percent": 16.435603777375928
+        },
+        {
+          "time": "2026-10-29T10:57:50.843Z",
+          "logical_cpus": 10,
+          "load": [
+            10.2080078125,
+            14.46044921875,
+            16.3515625
+          ],
+          "idle_percent": 18.93954609359309
+        },
+        {
+          "time": "2026-10-29T10:57:55.843Z",
+          "logical_cpus": 10,
+          "load": [
+            13.63427734375,
+            15.10009765625,
+            16.56591796875
+          ],
+          "idle_percent": 13.160538476994173
+        },
+        {
+          "time": "2026-10-29T10:58:00.844Z",
+          "logical_cpus": 10,
+          "load": [
+            12.9423828125,
+            14.93212890625,
+            16.498046875
+          ],
+          "idle_percent": 23.91086127283678
+        },
+        {
+          "time": "2026-10-29T10:58:05.846Z",
+          "logical_cpus": 10,
+          "load": [
+            12.70654296875,
+            14.85009765625,
+            16.4599609375
+          ],
+          "idle_percent": 25.16596258298129
+        },
+        {
+          "time": "2026-10-29T10:58:10.847Z",
+          "logical_cpus": 10,
+          "load": [
+            12.24951171875,
+            14.7197265625,
+            16.404296875
+          ],
+          "idle_percent": 32.17373818620551
+        },
+        {
+          "time": "2026-10-29T10:58:15.848Z",
+          "logical_cpus": 10,
+          "load": [
+            12.2294921875,
+            14.67431640625,
+            16.37841796875
+          ],
+          "idle_percent": 27.984699013489028
+        },
+        {
+          "time": "2026-10-29T10:58:20.848Z",
+          "logical_cpus": 10,
+          "load": [
+            11.650390625,
+            14.513671875,
+            16.3115234375
+          ],
+          "idle_percent": 26.64255575647981
+        },
+        {
+          "time": "2026-10-29T10:58:25.848Z",
+          "logical_cpus": 10,
+          "load": [
+            11.59814453125,
+            14.455078125,
+            16.2802734375
+          ],
+          "idle_percent": 31.542949104807885
+        },
+        {
+          "time": "2026-10-29T10:58:30.849Z",
+          "logical_cpus": 10,
+          "load": [
+            11.3095703125,
+            14.34765625,
+            16.2314453125
+          ],
+          "idle_percent": 31.261315630657815
+        },
+        {
+          "time": "2026-10-29T10:58:35.850Z",
+          "logical_cpus": 10,
+          "load": [
+            10.96435546875,
+            14.2255859375,
+            16.17724609375
+          ],
+          "idle_percent": 31.364275668073137
+        },
+        {
+          "time": "2026-10-29T10:58:40.851Z",
+          "logical_cpus": 10,
+          "load": [
+            10.966796875,
+            14.171875,
+            16.146484375
+          ],
+          "idle_percent": 28.287492471391285
+        },
+        {
+          "time": "2026-10-29T10:58:45.852Z",
+          "logical_cpus": 10,
+          "load": [
+            10.64892578125,
+            14.052734375,
+            16.0927734375
+          ],
+          "idle_percent": 28.829552298735194
+        },
+        {
+          "time": "2026-10-29T10:58:50.854Z",
+          "logical_cpus": 10,
+          "load": [
+            10.4365234375,
+            13.9521484375,
+            16.044921875
+          ],
+          "idle_percent": 28.00080289040546
+        },
+        {
+          "time": "2026-10-29T10:58:55.855Z",
+          "logical_cpus": 10,
+          "load": [
+            12.8837890625,
+            14.40087890625,
+            16.19091796875
+          ],
+          "idle_percent": 21.3338690237043
+        },
+        {
+          "time": "2026-10-29T10:59:00.855Z",
+          "logical_cpus": 10,
+          "load": [
+            12.25244140625,
+            14.24462890625,
+            16.125
+          ],
+          "idle_percent": 25.914021695460026
+        },
+        {
+          "time": "2026-10-29T10:59:05.855Z",
+          "logical_cpus": 10,
+          "load": [
+            11.83154296875,
+            14.1240234375,
+            16.0712890625
+          ],
+          "idle_percent": 30.702637406885444
+        },
+        {
+          "time": "2026-10-29T10:59:10.856Z",
+          "logical_cpus": 10,
+          "load": [
+            11.5244140625,
+            14.02197265625,
+            16.02392578125
+          ],
+          "idle_percent": 24.210737985119646
+        },
+        {
+          "time": "2026-10-29T10:59:15.858Z",
+          "logical_cpus": 10,
+          "load": [
+            11.32177734375,
+            13.9384765625,
+            15.982421875
+          ],
+          "idle_percent": 32.978081640860644
+        },
+        {
+          "time": "2026-10-29T10:59:20.859Z",
+          "logical_cpus": 10,
+          "load": [
+            10.8154296875,
+            13.7900390625,
+            15.91796875
+          ],
+          "idle_percent": 22.13065326633166
+        },
+        {
+          "time": "2026-10-29T10:59:25.859Z",
+          "logical_cpus": 10,
+          "load": [
+            10.75,
+            13.72705078125,
+            15.8828125
+          ],
+          "idle_percent": 30.837359098228664
+        },
+        {
+          "time": "2026-10-29T10:59:30.861Z",
+          "logical_cpus": 10,
+          "load": [
+            10.20947265625,
+            13.5654296875,
+            15.81298828125
+          ],
+          "idle_percent": 29.722668810289388
+        },
+        {
+          "time": "2026-10-29T10:59:35.863Z",
+          "logical_cpus": 10,
+          "load": [
+            10.1923828125,
+            13.505859375,
+            15.77880859375
+          ],
+          "idle_percent": 25.90954773869347
+        },
+        {
+          "time": "2026-10-29T10:59:40.865Z",
+          "logical_cpus": 10,
+          "load": [
+            10.4169921875,
+            13.4970703125,
+            15.76220703125
+          ],
+          "idle_percent": 20.17279485633916
+        },
+        {
+          "time": "2026-10-29T10:59:45.867Z",
+          "logical_cpus": 10,
+          "load": [
+            10.38330078125,
+            13.43896484375,
+            15.72802734375
+          ],
+          "idle_percent": 28.861217111869852
+        },
+        {
+          "time": "2026-10-29T10:59:50.867Z",
+          "logical_cpus": 10,
+          "load": [
+            10.1123046875,
+            13.33203125,
+            15.6767578125
+          ],
+          "idle_percent": 33.18566250503423
+        },
+        {
+          "time": "2026-10-29T10:59:55.869Z",
+          "logical_cpus": 10,
+          "load": [
+            10.10302734375,
+            13.2763671875,
+            15.64306640625
+          ],
+          "idle_percent": 28.76684771675719
+        },
+        {
+          "time": "2026-10-29T11:00:00.871Z",
+          "logical_cpus": 10,
+          "load": [
+            9.9345703125,
+            13.1884765625,
+            15.59814453125
+          ],
+          "idle_percent": 33.37354242058705
+        },
+        {
+          "time": "2026-10-29T11:00:05.873Z",
+          "logical_cpus": 10,
+          "load": [
+            9.619140625,
+            13.06884765625,
+            15.54150390625
+          ],
+          "idle_percent": 33.88296802734768
+        },
+        {
+          "time": "2026-10-29T11:00:10.874Z",
+          "logical_cpus": 10,
+          "load": [
+            9.5693359375,
+            13.0009765625,
+            15.5029296875
+          ],
+          "idle_percent": 30.088495575221238
+        },
+        {
+          "time": "2026-10-29T11:00:15.876Z",
+          "logical_cpus": 10,
+          "load": [
+            9.443359375,
+            12.91748046875,
+            15.45849609375
+          ],
+          "idle_percent": 27.8681936909785
+        },
+        {
+          "time": "2026-10-29T11:00:20.878Z",
+          "logical_cpus": 10,
+          "load": [
+            9.00732421875,
+            12.76904296875,
+            15.39111328125
+          ],
+          "idle_percent": 38.339044547470266
+        },
+        {
+          "time": "2026-10-29T11:00:25.881Z",
+          "logical_cpus": 10,
+          "load": [
+            8.84619140625,
+            12.6728515625,
+            15.341796875
+          ],
+          "idle_percent": 44.17524732485362
+        },
+        {
+          "time": "2026-10-29T11:00:30.882Z",
+          "logical_cpus": 10,
+          "load": [
+            8.7783203125,
+            12.59521484375,
+            15.29833984375
+          ],
+          "idle_percent": 37.60597496972144
+        },
+        {
+          "time": "2026-10-29T11:00:35.884Z",
+          "logical_cpus": 10,
+          "load": [
+            8.5556640625,
+            12.4853515625,
+            15.24365234375
+          ],
+          "idle_percent": 39.05050505050505
+        },
+        {
+          "time": "2026-10-29T11:00:40.886Z",
+          "logical_cpus": 10,
+          "load": [
+            8.2705078125,
+            12.36083984375,
+            15.18359375
+          ],
+          "idle_percent": 39.006662628709876
+        },
+        {
+          "time": "2026-10-29T11:00:45.888Z",
+          "logical_cpus": 10,
+          "load": [
+            7.92822265625,
+            12.2216796875,
+            15.11767578125
+          ],
+          "idle_percent": 38.82828282828283
+        },
+        {
+          "time": "2026-10-29T11:00:50.888Z",
+          "logical_cpus": 10,
+          "load": [
+            7.7734375,
+            12.1181640625,
+            15.06396484375
+          ],
+          "idle_percent": 29.9939649969825
+        },
+        {
+          "time": "2026-10-29T11:00:55.889Z",
+          "logical_cpus": 10,
+          "load": [
+            8.11181640625,
+            12.11572265625,
+            15.0458984375
+          ],
+          "idle_percent": 19.79501607717042
+        },
+        {
+          "time": "2026-10-29T11:01:00.890Z",
+          "logical_cpus": 10,
+          "load": [
+            8.2626953125,
+            12.08056640625,
+            15.01611328125
+          ],
+          "idle_percent": 22.765700483091788
+        },
+        {
+          "time": "2026-10-29T11:01:05.891Z",
+          "logical_cpus": 10,
+          "load": [
+            8.4013671875,
+            12.0458984375,
+            14.986328125
+          ],
+          "idle_percent": 20.165189363416598
+        },
+        {
+          "time": "2026-10-29T11:01:10.892Z",
+          "logical_cpus": 10,
+          "load": [
+            8.2890625,
+            11.9619140625,
+            14.939453125
+          ],
+          "idle_percent": 25.64876282438141
+        },
+        {
+          "time": "2026-10-29T11:01:15.894Z",
+          "logical_cpus": 10,
+          "load": [
+            8.42578125,
+            11.92919921875,
+            14.91015625
+          ],
+          "idle_percent": 14.905584572117316
+        },
+        {
+          "time": "2026-10-29T11:01:20.894Z",
+          "logical_cpus": 10,
+          "load": [
+            9.0322265625,
+            11.99658203125,
+            14.91650390625
+          ],
+          "idle_percent": 13.944143058067109
+        },
+        {
+          "time": "2026-10-29T11:01:25.895Z",
+          "logical_cpus": 10,
+          "load": [
+            8.869140625,
+            11.91357421875,
+            14.8701171875
+          ],
+          "idle_percent": 28.2897384305835
+        },
+        {
+          "time": "2026-10-29T11:01:30.896Z",
+          "logical_cpus": 10,
+          "load": [
+            9.03955078125,
+            11.89794921875,
+            14.84716796875
+          ],
+          "idle_percent": 26.188557614826752
+        },
+        {
+          "time": "2026-10-29T11:01:35.898Z",
+          "logical_cpus": 10,
+          "load": [
+            9.1962890625,
+            11.8828125,
+            14.82421875
+          ],
+          "idle_percent": 24.758454106280194
+        },
+        {
+          "time": "2026-10-29T11:01:40.899Z",
+          "logical_cpus": 10,
+          "load": [
+            10.06103515625,
+            12.01708984375,
+            14.8544921875
+          ],
+          "idle_percent": 28.24074074074074
+        },
+        {
+          "time": "2026-10-29T11:01:45.902Z",
+          "logical_cpus": 10,
+          "load": [
+            10.4560546875,
+            12.06640625,
+            14.85498046875
+          ],
+          "idle_percent": 23.069187449718424
+        },
+        {
+          "time": "2026-10-29T11:01:50.904Z",
+          "logical_cpus": 10,
+          "load": [
+            10.17919921875,
+            11.98193359375,
+            14.80859375
+          ],
+          "idle_percent": 23.737678535505935
+        },
+        {
+          "time": "2026-10-29T11:01:55.905Z",
+          "logical_cpus": 10,
+          "load": [
+            10.08447265625,
+            11.93212890625,
+            14.7744140625
+          ],
+          "idle_percent": 27.55081505333065
+        },
+        {
+          "time": "2026-10-29T11:02:00.908Z",
+          "logical_cpus": 10,
+          "load": [
+            11.03857421875,
+            12.09912109375,
+            14.81640625
+          ],
+          "idle_percent": 19.9197592778335
+        },
+        {
+          "time": "2026-10-29T11:02:05.910Z",
+          "logical_cpus": 10,
+          "load": [
+            10.794921875,
+            12.03076171875,
+            14.7763671875
+          ],
+          "idle_percent": 27.06283878739209
+        },
+        {
+          "time": "2026-10-29T11:02:10.911Z",
+          "logical_cpus": 10,
+          "load": [
+            10.17041015625,
+            11.88037109375,
+            14.70703125
+          ],
+          "idle_percent": 27.51004016064257
+        },
+        {
+          "time": "2026-10-29T11:02:15.914Z",
+          "logical_cpus": 10,
+          "load": [
+            10.15673828125,
+            11.84912109375,
+            14.67919921875
+          ],
+          "idle_percent": 21.82730923694779
+        },
+        {
+          "time": "2026-10-29T11:02:20.916Z",
+          "logical_cpus": 10,
+          "load": [
+            9.90380859375,
+            11.7685546875,
+            14.6337890625
+          ],
+          "idle_percent": 23.986350863107187
+        },
+        {
+          "time": "2026-10-29T11:02:25.918Z",
+          "logical_cpus": 10,
+          "load": [
+            10.1513671875,
+            11.78857421875,
+            14.6240234375
+          ],
+          "idle_percent": 26.824854212748843
+        },
+        {
+          "time": "2026-10-29T11:02:30.921Z",
+          "logical_cpus": 10,
+          "load": [
+            9.89892578125,
+            11.708984375,
+            14.5791015625
+          ],
+          "idle_percent": 28.703703703703702
+        },
+        {
+          "time": "2026-10-29T11:02:35.922Z",
+          "logical_cpus": 10,
+          "load": [
+            9.74658203125,
+            11.64697265625,
+            14.54052734375
+          ],
+          "idle_percent": 28.476554638760312
+        },
+        {
+          "time": "2026-10-29T11:02:40.924Z",
+          "logical_cpus": 10,
+          "load": [
+            9.8466796875,
+            11.63623046875,
+            14.51953125
+          ],
+          "idle_percent": 26.190954773869347
+        },
+        {
+          "time": "2026-10-29T11:02:45.925Z",
+          "logical_cpus": 10,
+          "load": [
+            9.77880859375,
+            11.59228515625,
+            14.48681640625
+          ],
+          "idle_percent": 28.78147029204431
+        },
+        {
+          "time": "2026-10-29T11:02:50.928Z",
+          "logical_cpus": 10,
+          "load": [
+            10.91748046875,
+            11.7978515625,
+            14.54248046875
+          ],
+          "idle_percent": 25.537904685300624
+        },
+        {
+          "time": "2026-10-29T11:02:55.930Z",
+          "logical_cpus": 10,
+          "load": [
+            11.32421875,
+            11.8671875,
+            14.55078125
+          ],
+          "idle_percent": 25.558462467297243
+        },
+        {
+          "time": "2026-10-29T11:03:00.932Z",
+          "logical_cpus": 10,
+          "load": [
+            10.8974609375,
+            11.76953125,
+            14.50048828125
+          ],
+          "idle_percent": 31.584238037796542
+        },
+        {
+          "time": "2026-10-29T11:03:05.932Z",
+          "logical_cpus": 10,
+          "load": [
+            10.5849609375,
+            11.68994140625,
+            14.4560546875
+          ],
+          "idle_percent": 21.84857027788965
+        },
+        {
+          "time": "2026-10-29T11:03:10.934Z",
+          "logical_cpus": 10,
+          "load": [
+            10.2177734375,
+            11.59521484375,
+            14.40625
+          ],
+          "idle_percent": 29.215291750503017
+        },
+        {
+          "time": "2026-10-29T11:03:15.937Z",
+          "logical_cpus": 10,
+          "load": [
+            10.2802734375,
+            11.5849609375,
+            14.38623046875
+          ],
+          "idle_percent": 32.9037454691905
+        },
+        {
+          "time": "2026-10-29T11:03:20.939Z",
+          "logical_cpus": 10,
+          "load": [
+            9.857421875,
+            11.4755859375,
+            14.3310546875
+          ],
+          "idle_percent": 36.030595813204506
+        },
+        {
+          "time": "2026-10-29T11:03:25.940Z",
+          "logical_cpus": 10,
+          "load": [
+            9.54833984375,
+            11.38427734375,
+            14.2822265625
+          ],
+          "idle_percent": 28.168446504130568
+        },
+        {
+          "time": "2026-10-29T11:03:30.941Z",
+          "logical_cpus": 10,
+          "load": [
+            9.42431640625,
+            11.32763671875,
+            14.2451171875
+          ],
+          "idle_percent": 25.770082544795653
+        },
+        {
+          "time": "2026-10-29T11:03:35.942Z",
+          "logical_cpus": 10,
+          "load": [
+            9.14990234375,
+            11.23876953125,
+            14.19677734375
+          ],
+          "idle_percent": 37.4522036627088
+        },
+        {
+          "time": "2026-10-29T11:03:40.944Z",
+          "logical_cpus": 10,
+          "load": [
+            9.0576171875,
+            11.1845703125,
+            14.16015625
+          ],
+          "idle_percent": 33.31993569131833
+        },
+        {
+          "time": "2026-10-29T11:03:45.947Z",
+          "logical_cpus": 10,
+          "load": [
+            8.97265625,
+            11.13134765625,
+            14.1240234375
+          ],
+          "idle_percent": 32.20747889022919
+        },
+        {
+          "time": "2026-10-29T11:03:50.949Z",
+          "logical_cpus": 10,
+          "load": [
+            8.814453125,
+            11.0625,
+            14.08203125
+          ],
+          "idle_percent": 30.030150753768844
+        },
+        {
+          "time": "2026-10-29T11:03:55.949Z",
+          "logical_cpus": 10,
+          "load": [
+            8.9091796875,
+            11.04443359375,
+            14.05810546875
+          ],
+          "idle_percent": 16.037735849056602
+        },
+        {
+          "time": "2026-10-29T11:04:00.951Z",
+          "logical_cpus": 10,
+          "load": [
+            9.076171875,
+            11.04345703125,
+            14.0400390625
+          ],
+          "idle_percent": 31.75784392598552
+        },
+        {
+          "time": "2026-10-29T11:04:05.952Z",
+          "logical_cpus": 10,
+          "load": [
+            8.90966796875,
+            10.97607421875,
+            13.99853515625
+          ],
+          "idle_percent": 27.342333266169657
+        },
+        {
+          "time": "2026-10-29T11:04:10.953Z",
+          "logical_cpus": 10,
+          "load": [
+            8.67626953125,
+            10.89306640625,
+            13.95166015625
+          ],
+          "idle_percent": 25.41280708819976
+        },
+        {
+          "time": "2026-10-29T11:04:15.955Z",
+          "logical_cpus": 10,
+          "load": [
+            8.4619140625,
+            10.8115234375,
+            13.90478515625
+          ],
+          "idle_percent": 21.425694724124043
+        },
+        {
+          "time": "2026-10-29T11:04:20.956Z",
+          "logical_cpus": 10,
+          "load": [
+            8.6650390625,
+            10.814453125,
+            13.8876953125
+          ],
+          "idle_percent": 22.971612643446747
+        },
+        {
+          "time": "2026-10-29T11:04:25.957Z",
+          "logical_cpus": 10,
+          "load": [
+            8.611328125,
+            10.767578125,
+            13.85302734375
+          ],
+          "idle_percent": 24.42211055276382
+        },
+        {
+          "time": "2026-10-29T11:04:30.957Z",
+          "logical_cpus": 10,
+          "load": [
+            9.28271484375,
+            10.87060546875,
+            13.87109375
+          ],
+          "idle_percent": 15.641334941696824
+        },
+        {
+          "time": "2026-10-29T11:04:35.959Z",
+          "logical_cpus": 10,
+          "load": [
+            9.259765625,
+            10.83935546875,
+            13.84228515625
+          ],
+          "idle_percent": 21.531966224366705
+        },
+        {
+          "time": "2026-10-29T11:04:40.960Z",
+          "logical_cpus": 10,
+          "load": [
+            9.23876953125,
+            10.80859375,
+            13.8134765625
+          ],
+          "idle_percent": 16.616374974854153
+        },
+        {
+          "time": "2026-10-29T11:04:45.962Z",
+          "logical_cpus": 10,
+          "load": [
+            9.05908203125,
+            10.7451171875,
+            13.7734375
+          ],
+          "idle_percent": 13.17112406997788
+        },
+        {
+          "time": "2026-10-29T11:04:50.964Z",
+          "logical_cpus": 10,
+          "load": [
+            8.97412109375,
+            10.69921875,
+            13.7392578125
+          ],
+          "idle_percent": 16.495674914504125
+        },
+        {
+          "time": "2026-10-29T11:04:55.964Z",
+          "logical_cpus": 10,
+          "load": [
+            9.13623046875,
+            10.7041015625,
+            13.72314453125
+          ],
+          "idle_percent": 12.809169515383068
+        },
+        {
+          "time": "2026-10-29T11:05:00.965Z",
+          "logical_cpus": 10,
+          "load": [
+            8.96484375,
+            10.642578125,
+            13.68359375
+          ],
+          "idle_percent": 15.905891815805349
+        },
+        {
+          "time": "2026-10-29T11:05:05.967Z",
+          "logical_cpus": 10,
+          "load": [
+            9.04736328125,
+            10.6318359375,
+            13.66162109375
+          ],
+          "idle_percent": 11.394182547642929
+        },
+        {
+          "time": "2026-10-29T11:05:10.968Z",
+          "logical_cpus": 10,
+          "load": [
+            8.72314453125,
+            10.5380859375,
+            13.61083984375
+          ],
+          "idle_percent": 15.49748743718593
+        },
+        {
+          "time": "2026-10-29T11:05:15.971Z",
+          "logical_cpus": 10,
+          "load": [
+            9.0654296875,
+            10.57861328125,
+            13.60693359375
+          ],
+          "idle_percent": 14.613065326633166
+        },
+        {
+          "time": "2026-10-29T11:05:20.971Z",
+          "logical_cpus": 10,
+          "load": [
+            9.14013671875,
+            10.56884765625,
+            13.58544921875
+          ],
+          "idle_percent": 21.674381163211915
+        },
+        {
+          "time": "2026-10-29T11:05:25.973Z",
+          "logical_cpus": 10,
+          "load": [
+            9.369140625,
+            10.59228515625,
+            13.57568359375
+          ],
+          "idle_percent": 10.389089450461292
+        },
+        {
+          "time": "2026-10-29T11:05:30.974Z",
+          "logical_cpus": 10,
+          "load": [
+            9.57958984375,
+            10.615234375,
+            13.56640625
+          ],
+          "idle_percent": 9.539078156312625
+        },
+        {
+          "time": "2026-10-29T11:05:35.976Z",
+          "logical_cpus": 10,
+          "load": [
+            9.53271484375,
+            10.58837890625,
+            13.53955078125
+          ],
+          "idle_percent": 10.328920978740474
+        },
+        {
+          "time": "2026-10-29T11:05:40.977Z",
+          "logical_cpus": 10,
+          "load": [
+            9.72998046875,
+            10.611328125,
+            13.5302734375
+          ],
+          "idle_percent": 11.27382146439318
+        },
+        {
+          "time": "2026-10-29T11:05:45.978Z",
+          "logical_cpus": 10,
+          "load": [
+            9.99169921875,
+            10.65087890625,
+            13.52685546875
+          ],
+          "idle_percent": 10.497792051384986
+        },
+        {
+          "time": "2026-10-29T11:05:50.979Z",
+          "logical_cpus": 10,
+          "load": [
+            10.072265625,
+            10.65625,
+            13.51171875
+          ],
+          "idle_percent": 11.668003207698476
+        },
+        {
+          "time": "2026-10-29T11:05:55.982Z",
+          "logical_cpus": 10,
+          "load": [
+            10.06640625,
+            10.64501953125,
+            13.49072265625
+          ],
+          "idle_percent": 13.350732784581409
+        },
+        {
+          "time": "2026-10-29T11:06:00.984Z",
+          "logical_cpus": 10,
+          "load": [
+            9.82080078125,
+            10.58447265625,
+            13.45263671875
+          ],
+          "idle_percent": 16.204819277108435
+        },
+        {
+          "time": "2026-10-29T11:06:05.985Z",
+          "logical_cpus": 10,
+          "load": [
+            10.1552734375,
+            10.64111328125,
+            13.45556640625
+          ],
+          "idle_percent": 17.573810002008436
+        },
+        {
+          "time": "2026-10-29T11:06:10.987Z",
+          "logical_cpus": 10,
+          "load": [
+            9.822265625,
+            10.56396484375,
+            13.41162109375
+          ],
+          "idle_percent": 26.134993973483326
+        },
+        {
+          "time": "2026-10-29T11:06:15.988Z",
+          "logical_cpus": 10,
+          "load": [
+            9.67626953125,
+            10.52099609375,
+            13.3798828125
+          ],
+          "idle_percent": 24.823979078656205
+        },
+        {
+          "time": "2026-10-29T11:06:20.990Z",
+          "logical_cpus": 10,
+          "load": [
+            9.8623046875,
+            10.54541015625,
+            13.37158203125
+          ],
+          "idle_percent": 11.52073732718894
+        },
+        {
+          "time": "2026-10-29T11:06:25.993Z",
+          "logical_cpus": 10,
+          "load": [
+            9.79296875,
+            10.51953125,
+            13.345703125
+          ],
+          "idle_percent": 21.536295998391314
+        },
+        {
+          "time": "2026-10-29T11:06:30.994Z",
+          "logical_cpus": 10,
+          "load": [
+            10.04931640625,
+            10.560546875,
+            13.34326171875
+          ],
+          "idle_percent": 16.87424668541583
+        },
+        {
+          "time": "2026-10-29T11:06:35.996Z",
+          "logical_cpus": 10,
+          "load": [
+            9.96484375,
+            10.5341796875,
+            13.3173828125
+          ],
+          "idle_percent": 14.888487040385774
+        },
+        {
+          "time": "2026-10-29T11:06:40.999Z",
+          "logical_cpus": 10,
+          "load": [
+            10.20751953125,
+            10.57470703125,
+            13.3154296875
+          ],
+          "idle_percent": 12.214199759326114
+        },
+        {
+          "time": "2026-10-29T11:06:46.001Z",
+          "logical_cpus": 10,
+          "load": [
+            10.1904296875,
+            10.56494140625,
+            13.2958984375
+          ],
+          "idle_percent": 9.67935871743487
+        },
+        {
+          "time": "2026-10-29T11:06:51.002Z",
+          "logical_cpus": 10,
+          "load": [
+            10.4951171875,
+            10.62158203125,
+            13.2998046875
+          ],
+          "idle_percent": 12.878635907723169
+        },
+        {
+          "time": "2026-10-29T11:06:56.002Z",
+          "logical_cpus": 10,
+          "load": [
+            10.615234375,
+            10.64404296875,
+            13.2919921875
+          ],
+          "idle_percent": 23.62758898049467
+        },
+        {
+          "time": "2026-10-29T11:07:01.005Z",
+          "logical_cpus": 10,
+          "load": [
+            11.36669921875,
+            10.79931640625,
+            13.3310546875
+          ],
+          "idle_percent": 10.63701923076923
+        },
+        {
+          "time": "2026-10-29T11:07:06.006Z",
+          "logical_cpus": 10,
+          "load": [
+            11.6572265625,
+            10.86865234375,
+            13.3408203125
+          ],
+          "idle_percent": 14.893617021276595
+        },
+        {
+          "time": "2026-10-29T11:07:11.006Z",
+          "logical_cpus": 10,
+          "load": [
+            11.2841796875,
+            10.80419921875,
+            13.30322265625
+          ],
+          "idle_percent": 19.170358437374144
+        },
+        {
+          "time": "2026-10-29T11:07:16.007Z",
+          "logical_cpus": 10,
+          "load": [
+            11.10107421875,
+            10.77392578125,
+            13.27783203125
+          ],
+          "idle_percent": 28.155144694533764
+        },
+        {
+          "time": "2026-10-29T11:07:21.008Z",
+          "logical_cpus": 10,
+          "load": [
+            10.8525390625,
+            10.7275390625,
+            13.24658203125
+          ],
+          "idle_percent": 22.083918891788798
+        },
+        {
+          "time": "2026-10-29T11:07:26.010Z",
+          "logical_cpus": 10,
+          "load": [
+            10.5439453125,
+            10.66552734375,
+            13.2099609375
+          ],
+          "idle_percent": 20.38152610441767
+        },
+        {
+          "time": "2026-10-29T11:07:31.011Z",
+          "logical_cpus": 10,
+          "load": [
+            10.33984375,
+            10.62109375,
+            13.17919921875
+          ],
+          "idle_percent": 18.030485359005215
+        },
+        {
+          "time": "2026-10-29T11:07:36.012Z",
+          "logical_cpus": 10,
+          "load": [
+            10.47265625,
+            10.6435546875,
+            13.171875
+          ],
+          "idle_percent": 19.213009435856254
+        },
+        {
+          "time": "2026-10-29T11:07:41.014Z",
+          "logical_cpus": 10,
+          "load": [
+            10.4345703125,
+            10.6328125,
+            13.15283203125
+          ],
+          "idle_percent": 20.02008032128514
+        },
+        {
+          "time": "2026-10-29T11:07:46.017Z",
+          "logical_cpus": 10,
+          "load": [
+            10.3193359375,
+            10.60546875,
+            13.12841796875
+          ],
+          "idle_percent": 28.778426242704768
+        },
+        {
+          "time": "2026-10-29T11:07:51.017Z",
+          "logical_cpus": 10,
+          "load": [
+            9.97314453125,
+            10.52880859375,
+            13.08642578125
+          ],
+          "idle_percent": 27.46280659429031
+        },
+        {
+          "time": "2026-10-29T11:07:56.018Z",
+          "logical_cpus": 10,
+          "load": [
+            10.05517578125,
+            10.53662109375,
+            13.07373046875
+          ],
+          "idle_percent": 23.271704180064308
+        },
+        {
+          "time": "2026-10-29T11:08:01.019Z",
+          "logical_cpus": 10,
+          "load": [
+            10.21044921875,
+            10.560546875,
+            13.0673828125
+          ],
+          "idle_percent": 20.87691069991955
+        },
+        {
+          "time": "2026-10-29T11:08:06.021Z",
+          "logical_cpus": 10,
+          "load": [
+            10.033203125,
+            10.517578125,
+            13.03759765625
+          ],
+          "idle_percent": 26.29145728643216
+        },
+        {
+          "time": "2026-10-29T11:08:11.024Z",
+          "logical_cpus": 10,
+          "load": [
+            9.9501953125,
+            10.4921875,
+            13.013671875
+          ],
+          "idle_percent": 21.10865635669813
+        },
+        {
+          "time": "2026-10-29T11:08:16.026Z",
+          "logical_cpus": 10,
+          "load": [
+            9.9541015625,
+            10.48388671875,
+            12.99560546875
+          ],
+          "idle_percent": 26.88128772635815
+        },
+        {
+          "time": "2026-10-29T11:08:21.026Z",
+          "logical_cpus": 10,
+          "load": [
+            9.63720703125,
+            10.4091796875,
+            12.95458984375
+          ],
+          "idle_percent": 31.278952668680766
+        },
+        {
+          "time": "2026-10-29T11:08:26.028Z",
+          "logical_cpus": 10,
+          "load": [
+            9.42578125,
+            10.3525390625,
+            12.91943359375
+          ],
+          "idle_percent": 25.96018499899457
+        },
+        {
+          "time": "2026-10-29T11:08:31.029Z",
+          "logical_cpus": 10,
+          "load": [
+            9.0712890625,
+            10.263671875,
+            12.87255859375
+          ],
+          "idle_percent": 18.521494576134995
+        },
+        {
+          "time": "2026-10-29T11:08:36.030Z",
+          "logical_cpus": 10,
+          "load": [
+            9.1455078125,
+            10.25927734375,
+            12.85546875
+          ],
+          "idle_percent": 23.493854523473704
+        },
+        {
+          "time": "2026-10-29T11:08:41.033Z",
+          "logical_cpus": 10,
+          "load": [
+            9.1337890625,
+            10.23828125,
+            12.83251953125
+          ],
+          "idle_percent": 27.097163548581776
+        },
+        {
+          "time": "2026-10-29T11:08:46.033Z",
+          "logical_cpus": 10,
+          "load": [
+            9.603515625,
+            10.31689453125,
+            12.84521484375
+          ],
+          "idle_percent": 19.678068410462778
+        },
+        {
+          "time": "2026-10-29T11:08:51.034Z",
+          "logical_cpus": 10,
+          "load": [
+            10.67626953125,
+            10.52734375,
+            12.904296875
+          ],
+          "idle_percent": 20.27761013880507
+        },
+        {
+          "time": "2026-10-29T11:08:56.036Z",
+          "logical_cpus": 10,
+          "load": [
+            10.3017578125,
+            10.4521484375,
+            12.86376953125
+          ],
+          "idle_percent": 19.360032199637754
+        },
+        {
+          "time": "2026-10-29T11:09:01.037Z",
+          "logical_cpus": 10,
+          "load": [
+            10.037109375,
+            10.39453125,
+            12.8291015625
+          ],
+          "idle_percent": 29.362044676997385
+        },
+        {
+          "time": "2026-10-29T11:09:06.039Z",
+          "logical_cpus": 10,
+          "load": [
+            9.63330078125,
+            10.3046875,
+            12.783203125
+          ],
+          "idle_percent": 26.3802449307368
+        },
+        {
+          "time": "2026-10-29T11:09:11.041Z",
+          "logical_cpus": 10,
+          "load": [
+            9.58251953125,
+            10.28271484375,
+            12.7607421875
+          ],
+          "idle_percent": 23.603856970670954
+        },
+        {
+          "time": "2026-10-29T11:09:16.043Z",
+          "logical_cpus": 10,
+          "load": [
+            9.61572265625,
+            10.27783203125,
+            12.744140625
+          ],
+          "idle_percent": 21.874372867750353
+        },
+        {
+          "time": "2026-10-29T11:09:21.045Z",
+          "logical_cpus": 10,
+          "load": [
+            9.806640625,
+            10.30615234375,
+            12.73974609375
+          ],
+          "idle_percent": 25.236275889804947
+        },
+        {
+          "time": "2026-10-29T11:09:26.047Z",
+          "logical_cpus": 10,
+          "load": [
+            9.66162109375,
+            10.267578125,
+            12.7119140625
+          ],
+          "idle_percent": 24.54308093994778
+        },
+        {
+          "time": "2026-10-29T11:09:31.048Z",
+          "logical_cpus": 10,
+          "load": [
+            10.4091796875,
+            10.412109375,
+            12.74853515625
+          ],
+          "idle_percent": 24.869530309112807
+        }
+      ],
+      "resource_summary": {
+        "samples": 146,
+        "max_observed_load1": 13.63427734375,
+        "min_observed_idle_percent": 9.539078156312625,
+        "start_eligibility_met": true
+      },
+      "observation_interval_ms": 5000,
+      "continuous_quietness_proven": false,
+      "exit_code": 0,
+      "artifact_hashes_verified": true
+    },
+    {
+      "phase": "round2",
+      "start": {
+        "time": "2026-10-29T11:09:35.383Z",
+        "logical_cpus": 10,
+        "load": [
+          9.9755859375,
+          10.32177734375,
+          12.703125
+        ],
+        "idle_percent": 32.663316582914575
+      },
+      "end": {
+        "time": "2026-10-29T11:13:49.985Z",
+        "logical_cpus": 10,
+        "load": [
+          13.25,
+          15.1025390625,
+          14.4033203125
+        ],
+        "idle_percent": 34.33734939759036
+      },
+      "execution_observations": [
+        {
+          "time": "2026-10-29T11:09:40.414Z",
+          "logical_cpus": 10,
+          "load": [
+            10.2978515625,
+            10.3828125,
+            12.71044921875
+          ],
+          "idle_percent": 23.85450160771704
+        },
+        {
+          "time": "2026-10-29T11:09:45.416Z",
+          "logical_cpus": 10,
+          "load": [
+            9.79345703125,
+            10.2763671875,
+            12.6591796875
+          ],
+          "idle_percent": 30.232088799192734
+        },
+        {
+          "time": "2026-10-29T11:09:50.417Z",
+          "logical_cpus": 10,
+          "load": [
+            9.7294921875,
+            10.2548828125,
+            12.6376953125
+          ],
+          "idle_percent": 25.639991937109453
+        },
+        {
+          "time": "2026-10-29T11:09:55.419Z",
+          "logical_cpus": 10,
+          "load": [
+            9.9111328125,
+            10.28369140625,
+            12.6337890625
+          ],
+          "idle_percent": 25.79803252358964
+        },
+        {
+          "time": "2026-10-29T11:10:00.421Z",
+          "logical_cpus": 10,
+          "load": [
+            9.677734375,
+            10.22900390625,
+            12.6005859375
+          ],
+          "idle_percent": 21.19445003016288
+        },
+        {
+          "time": "2026-10-29T11:10:05.423Z",
+          "logical_cpus": 10,
+          "load": [
+            11.064453125,
+            10.50732421875,
+            12.6845703125
+          ],
+          "idle_percent": 22.824994976893713
+        },
+        {
+          "time": "2026-10-29T11:10:10.424Z",
+          "logical_cpus": 10,
+          "load": [
+            11.37939453125,
+            10.58154296875,
+            12.69775390625
+          ],
+          "idle_percent": 23.11406155703078
+        },
+        {
+          "time": "2026-10-29T11:10:15.426Z",
+          "logical_cpus": 10,
+          "load": [
+            11.0283203125,
+            10.52197265625,
+            12.6640625
+          ],
+          "idle_percent": 17.61866452131939
+        },
+        {
+          "time": "2026-10-29T11:10:20.428Z",
+          "logical_cpus": 10,
+          "load": [
+            11.02587890625,
+            10.52978515625,
+            12.654296875
+          ],
+          "idle_percent": 19.97189883580891
+        },
+        {
+          "time": "2026-10-29T11:10:25.430Z",
+          "logical_cpus": 10,
+          "load": [
+            10.783203125,
+            10.4873046875,
+            12.626953125
+          ],
+          "idle_percent": 26.050251256281406
+        },
+        {
+          "time": "2026-10-29T11:10:30.433Z",
+          "logical_cpus": 10,
+          "load": [
+            10.64013671875,
+            10.46240234375,
+            12.60546875
+          ],
+          "idle_percent": 26.109660574412533
+        },
+        {
+          "time": "2026-10-29T11:10:35.434Z",
+          "logical_cpus": 10,
+          "load": [
+            10.4287109375,
+            10.42138671875,
+            12.578125
+          ],
+          "idle_percent": 22.293762575452718
+        },
+        {
+          "time": "2026-10-29T11:10:40.437Z",
+          "logical_cpus": 10,
+          "load": [
+            10.63427734375,
+            10.4638671875,
+            12.58056640625
+          ],
+          "idle_percent": 16.067483430407712
+        },
+        {
+          "time": "2026-10-29T11:10:45.438Z",
+          "logical_cpus": 10,
+          "load": [
+            10.4228515625,
+            10.4228515625,
+            12.5537109375
+          ],
+          "idle_percent": 30.352467270896273
+        },
+        {
+          "time": "2026-10-29T11:10:50.438Z",
+          "logical_cpus": 10,
+          "load": [
+            10.068359375,
+            10.34912109375,
+            12.51513671875
+          ],
+          "idle_percent": 40.92190016103059
+        },
+        {
+          "time": "2026-10-29T11:10:55.440Z",
+          "logical_cpus": 10,
+          "load": [
+            9.822265625,
+            10.29345703125,
+            12.482421875
+          ],
+          "idle_percent": 38.2713567839196
+        },
+        {
+          "time": "2026-10-29T11:11:00.441Z",
+          "logical_cpus": 10,
+          "load": [
+            9.35595703125,
+            10.18896484375,
+            12.4326171875
+          ],
+          "idle_percent": 38.832028898254066
+        },
+        {
+          "time": "2026-10-29T11:11:05.443Z",
+          "logical_cpus": 10,
+          "load": [
+            9.0068359375,
+            10.1025390625,
+            12.388671875
+          ],
+          "idle_percent": 54.40320962888666
+        },
+        {
+          "time": "2026-10-29T11:11:10.443Z",
+          "logical_cpus": 10,
+          "load": [
+            18.615234375,
+            12.076171875,
+            13.07177734375
+          ],
+          "idle_percent": 11.522304460892178
+        },
+        {
+          "time": "2026-10-29T11:11:15.445Z",
+          "logical_cpus": 10,
+          "load": [
+            20.32763671875,
+            12.53955078125,
+            13.2294921875
+          ],
+          "idle_percent": 0
+        },
+        {
+          "time": "2026-10-29T11:11:20.447Z",
+          "logical_cpus": 10,
+          "load": [
+            26.78759765625,
+            14.0078125,
+            13.74365234375
+          ],
+          "idle_percent": 0
+        },
+        {
+          "time": "2026-10-29T11:11:25.447Z",
+          "logical_cpus": 10,
+          "load": [
+            28.24560546875,
+            14.52197265625,
+            13.9267578125
+          ],
+          "idle_percent": 0
+        },
+        {
+          "time": "2026-10-29T11:11:30.449Z",
+          "logical_cpus": 10,
+          "load": [
+            30.8681640625,
+            15.29345703125,
+            14.2021484375
+          ],
+          "idle_percent": 0.020004000800160033
+        },
+        {
+          "time": "2026-10-29T11:11:35.450Z",
+          "logical_cpus": 10,
+          "load": [
+            31.75927734375,
+            15.73681640625,
+            14.36474609375
+          ],
+          "idle_percent": 0
+        },
+        {
+          "time": "2026-10-29T11:11:40.452Z",
+          "logical_cpus": 10,
+          "load": [
+            34.5009765625,
+            16.57080078125,
+            14.6669921875
+          ],
+          "idle_percent": 0
+        },
+        {
+          "time": "2026-10-29T11:11:45.452Z",
+          "logical_cpus": 10,
+          "load": [
+            32.69873046875,
+            16.49462890625,
+            14.65087890625
+          ],
+          "idle_percent": 1.2810248198558847
+        },
+        {
+          "time": "2026-10-29T11:11:50.453Z",
+          "logical_cpus": 10,
+          "load": [
+            30.560546875,
+            16.3203125,
+            14.60009765625
+          ],
+          "idle_percent": 11.943887775551103
+        },
+        {
+          "time": "2026-10-29T11:11:55.454Z",
+          "logical_cpus": 10,
+          "load": [
+            30.35546875,
+            16.51416015625,
+            14.67822265625
+          ],
+          "idle_percent": 1.4417300760913097
+        },
+        {
+          "time": "2026-10-29T11:12:00.455Z",
+          "logical_cpus": 10,
+          "load": [
+            29.20556640625,
+            16.50537109375,
+            14.685546875
+          ],
+          "idle_percent": 0.6191332135010985
+        },
+        {
+          "time": "2026-10-29T11:12:05.458Z",
+          "logical_cpus": 10,
+          "load": [
+            29.74951171875,
+            16.82861328125,
+            14.81005859375
+          ],
+          "idle_percent": 0
+        },
+        {
+          "time": "2026-10-29T11:12:10.458Z",
+          "logical_cpus": 10,
+          "load": [
+            34.333984375,
+            17.9931640625,
+            15.23291015625
+          ],
+          "idle_percent": 0
+        },
+        {
+          "time": "2026-10-29T11:12:15.460Z",
+          "logical_cpus": 10,
+          "load": [
+            32.38525390625,
+            17.8603515625,
+            15.2021484375
+          ],
+          "idle_percent": 7.488986784140969
+        },
+        {
+          "time": "2026-10-29T11:12:20.461Z",
+          "logical_cpus": 10,
+          "load": [
+            30.35205078125,
+            17.6796875,
+            15.15380859375
+          ],
+          "idle_percent": 23.6144578313253
+        },
+        {
+          "time": "2026-10-29T11:12:25.462Z",
+          "logical_cpus": 10,
+          "load": [
+            28.72216796875,
+            17.5517578125,
+            15.12353515625
+          ],
+          "idle_percent": 29.528585757271816
+        },
+        {
+          "time": "2026-10-29T11:12:30.464Z",
+          "logical_cpus": 10,
+          "load": [
+            26.7421875,
+            17.32666015625,
+            15.05810546875
+          ],
+          "idle_percent": 35.98713309207881
+        },
+        {
+          "time": "2026-10-29T11:12:35.466Z",
+          "logical_cpus": 10,
+          "load": [
+            24.9208984375,
+            17.10498046875,
+            14.9931640625
+          ],
+          "idle_percent": 44.11764705882353
+        },
+        {
+          "time": "2026-10-29T11:12:40.467Z",
+          "logical_cpus": 10,
+          "load": [
+            23.9658203125,
+            17.03662109375,
+            14.9814453125
+          ],
+          "idle_percent": 51.32189707366297
+        },
+        {
+          "time": "2026-10-29T11:12:45.469Z",
+          "logical_cpus": 10,
+          "load": [
+            22.60693359375,
+            16.86962890625,
+            14.9345703125
+          ],
+          "idle_percent": 53.667407557082235
+        },
+        {
+          "time": "2026-10-29T11:12:50.471Z",
+          "logical_cpus": 10,
+          "load": [
+            21.03662109375,
+            16.63916015625,
+            14.8642578125
+          ],
+          "idle_percent": 54.89997979389776
+        },
+        {
+          "time": "2026-10-29T11:12:55.472Z",
+          "logical_cpus": 10,
+          "load": [
+            19.751953125,
+            16.44580078125,
+            14.80615234375
+          ],
+          "idle_percent": 46.75692059001818
+        },
+        {
+          "time": "2026-10-29T11:13:00.473Z",
+          "logical_cpus": 10,
+          "load": [
+            18.5703125,
+            16.25537109375,
+            14.74853515625
+          ],
+          "idle_percent": 38.475499092558984
+        },
+        {
+          "time": "2026-10-29T11:13:05.474Z",
+          "logical_cpus": 10,
+          "load": [
+            17.7236328125,
+            16.1181640625,
+            14.708984375
+          ],
+          "idle_percent": 20.584088620342396
+        },
+        {
+          "time": "2026-10-29T11:13:10.475Z",
+          "logical_cpus": 10,
+          "load": [
+            16.62451171875,
+            15.91650390625,
+            14.64599609375
+          ],
+          "idle_percent": 28.12877263581489
+        },
+        {
+          "time": "2026-10-29T11:13:15.477Z",
+          "logical_cpus": 10,
+          "load": [
+            15.853515625,
+            15.76806640625,
+            14.60107421875
+          ],
+          "idle_percent": 46.01005025125628
+        },
+        {
+          "time": "2026-10-29T11:13:20.479Z",
+          "logical_cpus": 10,
+          "load": [
+            15.224609375,
+            15.638671875,
+            14.56201171875
+          ],
+          "idle_percent": 41.320982682239226
+        },
+        {
+          "time": "2026-10-29T11:13:25.482Z",
+          "logical_cpus": 10,
+          "load": [
+            14.48583984375,
+            15.478515625,
+            14.51171875
+          ],
+          "idle_percent": 29.806918744971842
+        },
+        {
+          "time": "2026-10-29T11:13:30.483Z",
+          "logical_cpus": 10,
+          "load": [
+            14.12646484375,
+            15.38720703125,
+            14.48486328125
+          ],
+          "idle_percent": 15.636290646326776
+        },
+        {
+          "time": "2026-10-29T11:13:35.486Z",
+          "logical_cpus": 10,
+          "load": [
+            13.7158203125,
+            15.28076171875,
+            14.45263671875
+          ],
+          "idle_percent": 28.367797630997792
+        },
+        {
+          "time": "2026-10-29T11:13:40.487Z",
+          "logical_cpus": 10,
+          "load": [
+            13.818359375,
+            15.27587890625,
+            14.45556640625
+          ],
+          "idle_percent": 28.012048192771083
+        },
+        {
+          "time": "2026-10-29T11:13:45.489Z",
+          "logical_cpus": 10,
+          "load": [
+            13.27197265625,
+            15.13818359375,
+            14.41162109375
+          ],
+          "idle_percent": 25.22613065326633
+        }
+      ],
+      "resource_summary": {
+        "samples": 52,
+        "max_observed_load1": 34.5009765625,
+        "min_observed_idle_percent": 0,
+        "start_eligibility_met": true
+      },
+      "observation_interval_ms": 5000,
+      "continuous_quietness_proven": false,
+      "exit_code": 0,
+      "artifact_hashes_verified": true
+    },
+    {
+      "phase": "original",
+      "start": {
+        "time": "2026-10-29T11:16:26.651Z",
+        "logical_cpus": 10,
+        "load": [
+          8.71044921875,
+          12.771484375,
+          13.58349609375
+        ],
+        "idle_percent": 42.269076305220885
+      },
+      "end": {
+        "time": "2026-10-29T11:17:42.790Z",
+        "logical_cpus": 10,
+        "load": [
+          7.29833984375,
+          11.52197265625,
+          13.04296875
+        ],
+        "idle_percent": 51.41129032258065
+      },
+      "execution_observations": [
+        {
+          "time": "2026-10-29T11:16:31.673Z",
+          "logical_cpus": 10,
+          "load": [
+            8.6533203125,
+            12.69189453125,
+            13.55029296875
+          ],
+          "idle_percent": 29.45205479452055
+        },
+        {
+          "time": "2026-10-29T11:16:36.674Z",
+          "logical_cpus": 10,
+          "load": [
+            8.6005859375,
+            12.61376953125,
+            13.517578125
+          ],
+          "idle_percent": 32.20679943673305
+        },
+        {
+          "time": "2026-10-29T11:16:41.677Z",
+          "logical_cpus": 10,
+          "load": [
+            8.79248046875,
+            12.5869140625,
+            13.50244140625
+          ],
+          "idle_percent": 23.04601165360659
+        },
+        {
+          "time": "2026-10-29T11:16:46.678Z",
+          "logical_cpus": 10,
+          "load": [
+            8.96923828125,
+            12.560546875,
+            13.4873046875
+          ],
+          "idle_percent": 34.69879518072289
+        },
+        {
+          "time": "2026-10-29T11:16:51.677Z",
+          "logical_cpus": 10,
+          "load": [
+            8.8916015625,
+            12.484375,
+            13.455078125
+          ],
+          "idle_percent": 37.99678843837816
+        },
+        {
+          "time": "2026-10-29T11:16:56.672Z",
+          "logical_cpus": 10,
+          "load": [
+            8.81982421875,
+            12.40966796875,
+            13.4228515625
+          ],
+          "idle_percent": 41.74698795180723
+        },
+        {
+          "time": "2026-10-29T11:17:01.668Z",
+          "logical_cpus": 10,
+          "load": [
+            8.833984375,
+            12.35302734375,
+            13.396484375
+          ],
+          "idle_percent": 35.98393574297189
+        },
+        {
+          "time": "2026-10-29T11:17:06.666Z",
+          "logical_cpus": 10,
+          "load": [
+            8.68701171875,
+            12.263671875,
+            13.35888671875
+          ],
+          "idle_percent": 37.61799558144206
+        },
+        {
+          "time": "2026-10-29T11:17:11.664Z",
+          "logical_cpus": 10,
+          "load": [
+            8.4716796875,
+            12.15966796875,
+            13.3154296875
+          ],
+          "idle_percent": 38.907849829351534
+        },
+        {
+          "time": "2026-10-29T11:17:16.664Z",
+          "logical_cpus": 10,
+          "load": [
+            8.2734375,
+            12.05712890625,
+            13.2724609375
+          ],
+          "idle_percent": 40.54975922953451
+        },
+        {
+          "time": "2026-10-29T11:17:21.664Z",
+          "logical_cpus": 10,
+          "load": [
+            8.09130859375,
+            11.95654296875,
+            13.2294921875
+          ],
+          "idle_percent": 37.66051364365971
+        },
+        {
+          "time": "2026-10-29T11:17:26.665Z",
+          "logical_cpus": 10,
+          "load": [
+            7.763671875,
+            11.82421875,
+            13.17529296875
+          ],
+          "idle_percent": 38.53100541842264
+        },
+        {
+          "time": "2026-10-29T11:17:31.667Z",
+          "logical_cpus": 10,
+          "load": [
+            7.6220703125,
+            11.72705078125,
+            13.1328125
+          ],
+          "idle_percent": 50.39133052378085
+        },
+        {
+          "time": "2026-10-29T11:17:36.667Z",
+          "logical_cpus": 10,
+          "load": [
+            7.41162109375,
+            11.615234375,
+            13.0849609375
+          ],
+          "idle_percent": 51.19384864427357
+        },
+        {
+          "time": "2026-10-29T11:17:41.669Z",
+          "logical_cpus": 10,
+          "load": [
+            7.29833984375,
+            11.52197265625,
+            13.04296875
+          ],
+          "idle_percent": 52.08164915117219
+        }
+      ],
+      "resource_summary": {
+        "samples": 17,
+        "max_observed_load1": 8.96923828125,
+        "min_observed_idle_percent": 23.04601165360659,
+        "start_eligibility_met": true
+      },
+      "observation_interval_ms": 5000,
+      "continuous_quietness_proven": false,
+      "exit_code": 0,
+      "artifact_hashes_verified": true
+    },
+    {
+      "phase": "clarification",
+      "start": {
+        "time": "2026-10-29T11:17:43.882Z",
+        "logical_cpus": 10,
+        "load": [
+          7.29833984375,
+          11.52197265625,
+          13.04296875
+        ],
+        "idle_percent": 40.78156312625251
+      },
+      "end": {
+        "time": "2026-10-29T11:17:45.140Z",
+        "logical_cpus": 10,
+        "load": [
+          7.1142578125,
+          11.41357421875,
+          12.99560546875
+        ],
+        "idle_percent": 46.29258517034068
+      },
+      "execution_observations": [],
+      "resource_summary": {
+        "samples": 2,
+        "max_observed_load1": 7.29833984375,
+        "min_observed_idle_percent": 40.78156312625251,
+        "start_eligibility_met": true
+      },
+      "observation_interval_ms": 5000,
+      "continuous_quietness_proven": false,
+      "exit_code": 0,
+      "artifact_hashes_verified": true
+    }
+  ],
+  "resource_observation_note": "Each native phase met the unchanged start eligibility criteria. Start/end and five-second samples record actual observed capacity; they do not prove continuous quietness. Gate results are the actual native process exits.",
+  "typescript": {
+    "exit_code": 0,
+    "after_mutation_cleanup": true
+  },
+  "vocabulary": {
+    "passed": true,
+    "check": true,
+    "database_sha256": "a72ba074fdf13f426b5709f67926e631ad32f52e92d08ff3e1ab646ed3b8f204",
+    "output_sha256": "9cc544ce21232f9c729f22adbcb6d680bd12059338ea7df4a02020bad80410ec",
+    "source_counts": {
+      "catalog_set_localized_rows": 418,
+      "catalog_set_localized_nonempty_names": 416,
+      "catalog_vocabulary_rows": 42,
+      "catalog_vocabulary_alias_kinds": {
+        "printed_code": 21,
+        "set_name": 21
+      },
+      "collector_release_alias_records": 1,
+      "native_set_code_language_pairs": 544,
+      "unique_normalized_release_aliases": 932,
+      "finish_aliases": 26,
+      "native_finish_rules": 25,
+      "negated_taste_aliases": 31,
+      "casefold_overrides": 297,
+      "native_whitespace_codepoints": 29
+    },
+    "python_network_attempts": 0
+  },
+  "protected_files_unchanged": true,
+  "read_only_review_files_verified": 53,
+  "runtime_identity_echo_added": false,
+  "network_attempts": 0,
+  "passed": true
+}

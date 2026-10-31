@@ -1,0 +1,12 @@
+'use strict';
+const crypto=require('node:crypto'),fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const provenance=require('./review-provenance.json');
+for(const item of Object.values(provenance.files))assert.equal(crypto.createHash('sha256').update(fs.readFileSync(path.join(__dirname,item.fixture))).digest('hex'),item.sha256,'review fixture changed');
+const fixtures=Object.fromEntries(Object.entries(provenance.files).map(([name,item])=>[name,require('./'+item.fixture)]));
+const kernelProbes=[...fixtures['minimal-cases.json'].map(p=>({...p,source:'minimal-cases.json'})),...fixtures['kernel-cases-1.json'].filter(p=>/^(?:A|M)/.test(p.id)).map(p=>({...p,source:'kernel-cases-1.json'})),...fixtures['kernel-cases-3.json'].map(p=>({...p,source:'kernel-cases-3.json'}))];
+const probes=[1,2,3,4].flatMap(n=>fixtures['probes-r3-'+n+'.json'].map(p=>({...p,source:'probes-r3-'+n+'.json'})));
+const kernelReplayProbes=kernelProbes.map(p=>({...p,initial:(p.lang==='ja'?'Japanese':p.lang===null?'Find':'English')+' Charizard cards',ingress:'typed',prefs:{currency:'USD',budget_minor:100000,grade_company:'PSA',grade_value:'10'},kernel_fixture_field:p.field??null}));
+const fullwidth=require('../../admission-kernel-round2/evidence/probes.cjs').fullwidth;
+const mustHold=p=>/^(?:R3-|control-held-|T[12456]$|A(?!\dpos)|R2_recommend_not|M(?!_ctrl))/.test(p.id)&&!/^M(?:8(?:_|$)|9$|10$|11(?:_|$)|17$|34$|35$|37$)/.test(p.id);
+const positive=p=>/^(?:ctrl_en_charizard|M_ctrl_prefs|A3pos_ex|F1_holo_base|F4_holo_q|F33_seireikyu|seq_|T[37]$)/.test(p.id);
+module.exports={probes,kernelProbes,kernelReplayProbes,fullwidth,mustHold,positive,source_sha256:Object.fromEntries(Object.entries(provenance.files).map(([name,item])=>[name,item.sha256]))};

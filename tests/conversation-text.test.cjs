@@ -18,8 +18,8 @@ function harness(){
     const turns=[...(session?.turns||[]),action],goal=[...turns].reverse().find(t=>t.type==='ask')?.question||'';
     const card={card_id:goal.includes('Mew')?B:A,name:goal.includes('Mew')?'Mew':'Pikachu'};
     const selected=action.type==='select';
-    const result={...(goal.includes('Pikachu')||goal.includes('Mew')?results():missing()),catalog_revision:REV,turn_count:turns.length,goal_question:goal,preferences:{},card_selection_blockers:{},selection_blockers:[],selected_catalog_target:null,target_intent:null};
-    if(result.candidate_cards.length)result.candidate_cards=[card];
+    const result={...(goal.includes('Pikachu')||goal.includes('Mew')?results():missing()),scope_filters:{language:goal.startsWith('English')?'en':'ja'},catalog_revision:REV,turn_count:turns.length,goal_question:goal,preferences:{},card_selection_blockers:{},selection_blockers:[],selected_catalog_target:null,target_intent:null};
+    result.discovery.languages=[result.scope_filters.language];if(result.candidate_cards.length)result.candidate_cards=[{...card,language:result.scope_filters.language}];
     if(selected){result.status='catalog_target_selected';result.selected_catalog_target=card;result.target_intent={card_id:action.card_id,transaction_ready:false,physical_printing_verified:false,public_display_allowed:false,automatic_offer_join_allowed:false};}
     return {status:'accepted',session:{schema:'pokemon.pivota-collector-session.v1',turns,limit,expected_revision:REV},result,next_step:result.next_step};
   }};
@@ -50,66 +50,67 @@ test('explicit non-negated new questions accept optional colon without reclassif
   for(const negation of ["Don't",'Don’t','Don‘t','Donʼt',"Can't",'Can’t','Cannot','Shouldn’t'])for(const prefix of ['', 'New question: '])assert.equal(conversationText(prefix+negation+' recommend Pikachu cards',missing()).action.type,'reply',prefix+negation);
 });
 
-test('the conversation commits original spelling, visible correction and restored trace',async()=>{
+test('an unadmitted spelling correction keeps original text and cannot dispatch or publish cards',async()=>{
   const h=harness(),empty=await h.chats.create(h.ctx,{}),chat=await send(h,empty,'pikacu card');
-  assert.deepEqual(h.calls,[{type:'ask',question:'Pikachu card'}]);assert.equal(chat.id,empty.id);assert.equal(chat.version,2);
-  assert.equal(chat.messages[0].text,'pikacu card');assert.match(chat.messages[1].text,/interpreted “pikacu” as “Pikachu”/);assert.equal(chat.messages[1].cards.length,1);
+  assert.deepEqual(h.calls,[]);assert.equal(chat.id,empty.id);assert.equal(chat.version,2);
+  assert.equal(chat.messages[0].text,'pikacu card');assert.doesNotMatch(chat.messages[1].text,/interpreted/);assert.deepEqual(chat.messages[1].cards,[]);assert.equal(chat.workspace,null);
   const restored=await h.makeChats().get(h.ctx,{id:chat.id});assert.deepEqual(restored.messages,chat.messages);assert.equal(restored.target,null);
 });
 
-test('a legacy missing-subject chat recovers in the same conversation and workspace',async()=>{
-  const h=harness();let c=await h.chats.create(h.ctx,{});
-  c=await h.chats.action(h.ctx,{id:c.id,version:c.version,action:{type:'ask',question:'pikacu card'}});
-  assert.equal(c.workspace.result.discovery.task,'need_character_or_coordinates');assert.equal(c.messages.at(-1).cards.length,0);
-  const id=c.id,wid=c.workspace.id;c=await send(h,c,'Japanese Pikachu cards');
-  assert.equal(c.id,id);assert.equal(c.workspace.id,wid);assert.deepEqual(h.calls.at(-1),{type:'ask',question:'Japanese Pikachu cards'});assert.equal(c.messages.at(-1).cards.length,1);
-  assert.equal(c.messages[0].text,'pikacu card');assert.equal(c.messages[2].text,'Japanese Pikachu cards');
+test('an admitted explicit query recovers a held typo in the same chat through the workspace boundary',async()=>{
+  const h=harness();let c=await send(h,await h.chats.create(h.ctx,{}),'pikacu card');const id=c.id;
+  c=await send(h,c,'Find Japanese Pikachu cards');
+  assert.equal(c.id,id);assert.ok(c.workspace.id);assert.equal(h.calls.length,1);assert.match(h.calls[0].question,/Pikachu cards/);assert.equal(c.messages.at(-1).cards.length,1);
+  assert.equal(c.messages[0].text,'pikacu card');assert.equal(c.messages[2].text,'Find Japanese Pikachu cards');assert.equal(c.target,null);
 });
 
-test('an explicit new goal uses exact current workspace version and withdraws prior target authority',async()=>{
-  const h=harness();let c=await send(h,await h.chats.create(h.ctx,{}),'Recommend Japanese Pikachu cards');
+test('the legacy new-question prefix cannot bypass admission or retain a previous target',async()=>{
+  const h=harness();let c=await send(h,await h.chats.create(h.ctx,{}),'Find Japanese Pikachu cards');
   c=await h.chats.action(h.ctx,{id:c.id,version:c.version,action:{type:'select',card_id:A}});assert.equal(c.target.card_id,A);
-  const id=c.id,wid=c.workspace.id,oldVersion=c.version;
+  const id=c.id,wid=c.workspace.id,n=h.calls.length;
   c=await send(h,c,'New question Recommend Japanese Mew cards');
-  assert.equal(c.id,id);assert.equal(c.workspace.id,wid);assert.equal(c.version,oldVersion+2);assert.deepEqual(h.calls.at(-1),{type:'ask',question:'Recommend Japanese Mew cards'});
-  assert.equal(c.workspace.result.goal_question,'Recommend Japanese Mew cards');assert.equal(c.target,null);assert.equal(c.workspace.saved_decision,null);assert.equal(c.workspace.needs_reconfirmation,true);
+  assert.equal(c.id,id);assert.equal(c.workspace.id,wid);assert.equal(h.calls.length,n);assert.equal(c.target,null);assert.deepEqual(c.messages.at(-1).cards,[]);
   assert.equal(c.messages.at(-2).text,'New question Recommend Japanese Mew cards');
 });
 
-test('ordinary replies and structured actions retain existing 200-character boundaries',async()=>{
-  const h=harness();let c=await send(h,await h.chats.create(h.ctx,{}),'Pikachu card');
-  for(const text of ['Japanese','173/165','holo','PSA 10','yes']){c=await send(h,c,text);assert.deepEqual(h.calls.at(-1),{type:'reply',text});}
-  for(const text of ['x'.repeat(201),'New question Recommend '+ 'M'.repeat(180)+' cards','pikacu '+ 'x'.repeat(194)]){const n=h.calls.length;await assert.rejects(send(h,c,text),/chat_reply_too_long/);assert.equal(h.calls.length,n);}
-  const exactReply='pikacu '+ 'x'.repeat(193);c=await send(h,c,exactReply);assert.deepEqual(h.calls.at(-1),{type:'reply',text:exactReply});assert.doesNotMatch(c.messages.at(-1).text,/interpreted/);
-  c=await h.chats.action(h.ctx,{id:c.id,version:c.version,action:{type:'reply',text:'pikacu'}});assert.deepEqual(h.calls.at(-1),{type:'reply',text:'pikacu'});assert.doesNotMatch(c.messages.at(-1).text,/interpreted/);
-  const first=harness(),q='pikacu '+ 'x'.repeat(1993);const fresh=await send(first,await first.chats.create(first.ctx,{}),q);assert.equal(first.calls[0].question,q);assert.equal(fresh.messages[0].text,q);assert.doesNotMatch(fresh.messages[1].text,/interpreted/);
+test('long and unbound replies never reach native and request-size validation stays intact',async()=>{
+  const h=harness();let c=await send(h,await h.chats.create(h.ctx,{}),'Find Japanese Pikachu cards');
+  for(const text of ['x'.repeat(201),'New question Recommend '+'M'.repeat(180)+' cards','pikacu '+'x'.repeat(194)]){
+    const n=h.calls.length;c=await send(h,c,text);assert.equal(h.calls.length,n);assert.deepEqual(c.messages.at(-1).cards,[]);
+  }
+  await assert.rejects(send(h,c,'x'.repeat(2001)),/invalid_chat_request/);
+  const n=h.calls.length;await assert.rejects(h.chats.action(h.ctx,{id:c.id,version:c.version,action:{type:'reply',text:'pikacu'}}),/catalog_rejected_action/);assert.equal(h.calls.length,n);assert.deepEqual(c.messages.at(-1).cards,[]);
 });
 
-test('ownership, version and pending-commerce checks precede any new catalog work',async()=>{
-  const h=harness(),empty=await h.chats.create(h.ctx,{}),c=await send(h,empty,'Pikachu card'),n=h.calls.length;
-  await assert.rejects(h.chats.send({id:'other'},{id:c.id,version:c.version,text:'New question Recommend Mew cards'}),/chat_not_found/);
-  await assert.rejects(send(h,empty,'New question Recommend Mew cards'),/chat_version_conflict/);assert.equal(h.calls.length,n);
+test('ownership, version and pending-commerce checks precede any admitted catalog work',async()=>{
+  const h=harness(),empty=await h.chats.create(h.ctx,{}),c=await send(h,empty,'Find Japanese Pikachu cards'),n=h.calls.length;
+  await assert.rejects(h.chats.send({id:'other'},{id:c.id,version:c.version,text:'Find Japanese Mew cards'}),/chat_not_found/);
+  await assert.rejects(send(h,empty,'Find Japanese Mew cards'),/chat_version_conflict/);assert.equal(h.calls.length,n);
   const entry=[...h.records].find(([key])=>key.endsWith('/chats/'+c.id));entry[1].commercePending={id:randomUUID()};h.records.set(entry[0],entry[1]);
-  await assert.rejects(send(h,c,'New question Recommend Mew cards'),/logical_turn_in_progress/);assert.equal(h.calls.length,n);
+  await assert.rejects(send(h,c,'Find Japanese Mew cards'),/logical_turn_in_progress/);assert.equal(h.calls.length,n);
 });
 
-test('provider failure retains original spelling and correction on the failed and restored turn',async()=>{
+test('failure of an admitted query retains the original message and a persisted failed turn',async()=>{
   const h=harness(),empty=await h.chats.create(h.ctx,{});h.intercept(async()=>{throw Object.assign(Error('catalog_timeout'),{code:'catalog_timeout'});});
-  await assert.rejects(send(h,empty,'pikacu card'),/catalog_timeout/);
-  const restored=await h.makeChats().get(h.ctx,{id:empty.id});assert.equal(restored.messages[0].text,'pikacu card');assert.equal(restored.messages[1].status,'failed');assert.match(restored.messages[1].text,/interpreted “pikacu” as “Pikachu”/);assert.match(restored.messages[1].text,/timed out/);assert.equal(restored.target,null);
-  assert.equal([...h.records.values()].find(r=>r.id===empty.id).pendingTextNotice,null);
+  await assert.rejects(send(h,empty,'Find Japanese Pikachu cards'),/catalog_timeout/);
+  const restored=await h.makeChats().get(h.ctx,{id:empty.id});assert.equal(restored.messages[0].text,'Find Japanese Pikachu cards');assert.equal(restored.messages[1].status,'failed');assert.match(restored.messages[1].text,/timed out/);assert.equal(restored.target,null);
 });
 
-test('canceling a corrected turn cannot publish accepted cards or regain target authority',async()=>{
+test('canceling an admitted turn cannot publish accepted cards or regain target authority',async()=>{
   const h=harness(),empty=await h.chats.create(h.ctx,{});let entered,release;const waiting=new Promise(r=>entered=r),gate=new Promise(r=>release=r);h.intercept(async()=>{entered();await gate;});
-  const turn=send(h,empty,'pikacu card');await waiting;assert.equal((await h.chats.cancel(h.ctx,{id:empty.id})).cancellation_requested,true);release();await assert.rejects(turn,/catalog_cancelled/);
-  const restored=await h.makeChats().get(h.ctx,{id:empty.id});assert.equal(restored.target,null);assert.equal(restored.messages.at(-1).status,'failed');assert.deepEqual(restored.messages.at(-1).cards,[]);assert.match(restored.messages.at(-1).text,/interpreted/);
+  const turn=send(h,empty,'Find Japanese Pikachu cards');
+  await Promise.race([waiting,turn.then(
+    ()=>assert.fail('the admitted positive query settled before native entry'),
+    error=>assert.fail('the admitted positive query rejected before native entry: '+error.code))]);
+  assert.equal((await h.chats.cancel(h.ctx,{id:empty.id})).cancellation_requested,true);release();await assert.rejects(turn,/catalog_cancelled/);
+  const restored=await h.makeChats().get(h.ctx,{id:empty.id});assert.equal(restored.target,null);assert.equal(restored.messages.at(-1).status,'failed');assert.deepEqual(restored.messages.at(-1).cards,[]);
 });
 
-test('process-interrupted pending correction is disclosed once during persisted recovery',async()=>{
+test('a historical pending correction notice is disclosed once without replay during recovery',async()=>{
   const h=harness(),empty=await h.chats.create(h.ctx,{}),entry=[...h.records].find(([key])=>key.endsWith('/chats/'+empty.id));
   const notice=conversationText('pikacu card',null).notice;
   h.records.set(entry[0],{...entry[1],version:1,pending:true,pendingTextNotice:notice,messages:[{id:randomUUID(),role:'user',status:'submitted',text:'pikacu card',createdAt:Date.now()}]});
   const restored=await h.makeChats().get(h.ctx,{id:empty.id});assert.equal(h.calls.length,0);assert.equal(restored.messages.length,2);assert.equal(restored.messages[0].text,'pikacu card');assert.equal(restored.messages[1].status,'failed');assert.match(restored.messages[1].text,/interpreted “pikacu” as “Pikachu”/);assert.equal(restored.target,null);
   assert.deepEqual((await h.makeChats().get(h.ctx,{id:empty.id})).messages,restored.messages);
+  assert.equal([...h.records.values()].find(r=>r.id===empty.id).pendingTextNotice,null);
 });

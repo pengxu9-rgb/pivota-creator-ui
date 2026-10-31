@@ -4,7 +4,6 @@ import { demoRuntime, demoCookieName, validDemoSession, requestAllowed } from "@
 const { commerceConfiguration, validateCommerceRequest, validateCommerceResponse, validateCommerceMode,publicReadOperationAllowed } = require("@/lib/pokemon/commerceContract.cjs");
 const history=require("@/lib/pokemon/commerceHistory.cjs");
 const {runCommerce}=require("@/lib/pokemon/commerceRun.cjs");
-const {manualResearchEnabled}=require("@/lib/pokemon/syntheticDemo.cjs");
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const json = (status: number, value: unknown) => NextResponse.json(value, { status,
@@ -25,9 +24,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ ope
     } finally { reader.releaseLock(); }
     let payload; try { payload = JSON.parse(Buffer.concat(chunks).toString("utf8")); } catch { return json(400, { error: "invalid_commerce_request" }); }
     const conversation=payload?.conversation;
-    const localReadOnly=manualResearchEnabled()&&!conversation&&/^127\.0\.0\.1:[0-9]+$/.test(req.headers.get("host")||"");
-    if(localReadOnly&&!["research","psa"].includes(operation))return json(403,{error:"collector_caller_denied"});
-    if(!localReadOnly)history.context(conversation);payload={...payload};delete payload.conversation;
+    history.context(conversation);payload={...payload};delete payload.conversation;
     validateCommerceRequest(operation, payload);
     const invoke=async()=>{
     const config = commerceConfiguration();
@@ -52,7 +49,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ ope
     if(req.signal.aborted)throw Error("commerce_unavailable");
     return value;
     };
-    const value=localReadOnly?await invoke():await runCommerce({signal:req.signal,
+    const value=await runCommerce({signal:req.signal,
       begin:()=>service.chats.beginCommerce({demoSession:session},{id:conversation.id,version:conversation.version,request_id:conversation.request_id,operation,request:payload},{signal:req.signal,deadline:Date.now()+8000}),
       finish:(reservation:{event_id:string},result:{response?:unknown;error?:string})=>service.chats.finishCommerce({demoSession:session},{id:conversation.id,event_id:reservation.event_id,operation,request:payload,...result},{signal:AbortSignal.timeout(8000),deadline:Date.now()+8000}),invoke});
     return json(200,value);

@@ -1,0 +1,1409 @@
+{
+  "proof": {
+    "schema": "pot.admission.complete-pool-proof.v1",
+    "predicate": {
+      "languages": [
+        "ja"
+      ],
+      "scope": {
+        "variant": "reverse_pokeball"
+      },
+      "identity": {
+        "subject": "Pikachu",
+        "form": null
+      }
+    },
+    "provenance": {
+      "revision": "10cec52b1334e9f1abafb2508ead08a0ed063c47288e8af1b87df147984818cf",
+      "database_sha256": "a72ba074fdf13f426b5709f67926e631ad32f52e92d08ff3e1ab646ed3b8f204",
+      "database_mode": "read_only_query_only",
+      "runtime_source_files_verified": 69,
+      "runtime_source_hashes": {
+        "pokemon_index/__init__.py": "351ad29c6a2f3279c5f6d2dbb87dc3cef3652f862b076f2aa68f5f244605bf70",
+        "pokemon_index/__main__.py": "6d8b7d7846a845059d7a3107143f11131f63c5511d669b44085b15ec5e3d2279",
+        "pokemon_index/buyer_questions.py": "eb1197b7e811ab4dda25a6196f2c511eb74a4882a39a39d9adc2a312acc7fa54",
+        "pokemon_index/buyship_mercari.py": "26cce57779dc6ea3303fee64d4408e5046a3aa4eb8ff2d3947eff999d0e9fec8",
+        "pokemon_index/buyship_partner.py": "d50a22098844f66550c693e29f2c6974edfd565efca3aac22273f9bd83524974",
+        "pokemon_index/calibration.py": "25ba5559c2d4420ec5901115ce1f35364e309b8432857b6fc48b6ed9a3b4773a",
+        "pokemon_index/card_comparison.py": "dab0b93bb368d2e374fd0507f40fd6a3c5d282a6db19337b29b1b49f7d5e3089",
+        "pokemon_index/card_metadata.py": "f7dce50c493e28a90c9e7816a8b4f278639486fc92eab4e8df4d084159a20d55",
+        "pokemon_index/card_rarity.py": "dd207a5afbd44c7c2b8c8ea2288cbbf403ed6958db7ae401650af86f13f94feb",
+        "pokemon_index/catalog_database_storage.py": "e64e49da442308fac3eeda429a10162132a8fce02b2efccc38969b77b8f521b1",
+        "pokemon_index/catalog_locale.py": "27794c72def1df9e54f9b2276c70ddd909aea534d1aef47ade73ec6f2a6c3a70",
+        "pokemon_index/catalog_locale_indexes.py": "dfaffc89ac0c6f435f4e5ba3b5ee1762dd084680f0f37e699488109f07d120f9",
+        "pokemon_index/catalog_media.py": "7ab41b35800a8a196518a7eb9eed4dab4ca0249432041cabd7b53ad0f15512bc",
+        "pokemon_index/catalog_question_resolver.py": "407fec589340e7dd2c253e84b3dc9b1e543e70bb477e8db944887303d34a9efe",
+        "pokemon_index/catalog_question_resolver_v2.py": "8614c3ecb14569e290964c6b53d2e468e624509beb8f912996367805530dd84d",
+        "pokemon_index/catalog_read_model_artifact.py": "59c77ff91f1a665a7edf6dc49ef38f6a83201cf191ce30bdcdb8988127b073dd",
+        "pokemon_index/catalog_source_gif.py": "6c6ac10a8baa6bc7b39977e9a50f1e7327ef194063ea9a69262967225888aa75",
+        "pokemon_index/catalog_source_gif_xmp.py": "e77fb4379e98a89e07b2327e1051e8c37484ea305f0a94b396a65cc52cd2fe0e",
+        "pokemon_index/catalog_source_images.py": "9cd659be9966400290e09b6a78c734161033999cac67012049285a8aabad843c",
+        "pokemon_index/cli.py": "300f839b492ca65dbdf07dae888d4effc917dbe80042478ebd82b3d73f6a6088",
+        "pokemon_index/collector-character-affiliations-v1.json": "4e0b441ac1a1965275f44a26e848005bd2e2ea3eb6b935a2ec81bff9371228a1",
+        "pokemon_index/collector-release-name-aliases-v1.json": "9d4c3bdfb2965bb1a774288324f92ba099d28ce9df300c18adc065c8f6dbc651",
+        "pokemon_index/collector_character_affiliation.py": "46bc1848c5a6818bfc12af30a394028ed127b518b15a8e0197bab1665e2edbbc",
+        "pokemon_index/collector_discovery.py": "088d45030d98e41a414e2dec7da88082e858452569c4c3350987e77e201ac049",
+        "pokemon_index/collector_evidence.py": "8141e3fc187a31a8b28afe5ab0245f182a8ca6aff9a030be549021b75d62e8af",
+        "pokemon_index/collector_inventory.py": "4638c920be211f037a59e05bf83734224d3903e2181912a9e71096124a4aefed",
+        "pokemon_index/collector_journey.py": "ade5b1fc6fcf0533c404c826316d45b253cb987af89a67821acf69008006db86",
+        "pokemon_index/collector_recommendation.py": "73461a1f540b3f91ed217e3eb3a022772041475cfef7147c6cad52d6c459cbf0",
+        "pokemon_index/collector_release_alias.py": "6f1b2e2a6e6b07f359bf2ccebd78edc31020527cc24a5e6a397004814ad901a2",
+        "pokemon_index/collector_runtime.py": "0c6ed57b554e547ce07fb311b4ce018ad641b174f64528584e2efa189a6a2634",
+        "pokemon_index/coordinate_family.py": "b158c7750c0a8573b49ae9901867caecc89fecd22e5fb0c81323b2ca3d970057",
+        "pokemon_index/core.py": "e9481e85d2b82167d7cf2ef87f20aa98c721afd299935c49c539fcf1121c9dd6",
+        "pokemon_index/coverage_qualification.py": "834542717ea059d645b210e24c1ec1fcb82b7d5d16ddd94adffcde5442c14328",
+        "pokemon_index/discovery_graph.py": "d841e7268915ac710cbe19e8e2f4af9b21ad482b4ef8f64cde4882fcbcf0b4ca",
+        "pokemon_index/ebay_browse.py": "5d976c951536b78bb698fdb06e6b7772bf1833efc766b2f56685d031c621c520",
+        "pokemon_index/ingestion_worker.py": "019ede91ec90c68f4d631d8491ddb2de5e46fdff4f1f56561b281064faf20c1b",
+        "pokemon_index/languages.py": "754056020bd287bde2cf3b0ac34cf78564ed6ecef203a617a89bc76c45ac7d92",
+        "pokemon_index/listing_candidates.py": "c9c9362d8d7eb54c15afffe32156a20c6540a88a819c0d1cddff9b398a907b85",
+        "pokemon_index/metadata_views.sql": "2da58f31b8e656322da488ce9ad8e554bd0675ea6959efb3a8f6e5ecaff56cbf",
+        "pokemon_index/multi_record_scans.py": "ab6506f0e60f4be3b0f9aee7a859aba97d260748c08f4a665fd9f12498e6b8f1",
+        "pokemon_index/number_aliases.py": "de58a031c1fb33d8c91d02fb9804ac24b8d503f0a1868df16e6baa6449aeea19",
+        "pokemon_index/number_conflicts.py": "050f5096edaef71c6a21550f1127cd38682218f3cc0fed267c32209ae82d8a8d",
+        "pokemon_index/number_evidence.py": "cf101cc125d21382fa778f3c6951bfb423a51658dec8362bb3202fb114c1589f",
+        "pokemon_index/number_graph.py": "4b1d2e9c9452fc2f5aded181ea949b962eae9f73d6e7c3cf7a62bae7221edaa3",
+        "pokemon_index/offer_comparison.py": "40c391088ea4ca7fcbf48a9ce1943febd0f9241b3d41a3d04be640eeaea648e5",
+        "pokemon_index/official_anchored_details.py": "edbb2a4d90217574f55ec2c8358277057dadf313d8324d8841319523cbed50de",
+        "pokemon_index/pinned_publisher_metadata.py": "6bc558171d185dbd062c33339ae7559e8a292e66c5b74e0a78b1ebd24e8e5b23",
+        "pokemon_index/pivota.py": "eb0e979ec7a0d4802f020d00def384c9bdaf2de8e1a70b6f770d1f0575b090f6",
+        "pokemon_index/printing_evidence.py": "68515141fcae33bb21046ed6e2a838669870d1f8f6792fa7ff6b5f897873a4f1",
+        "pokemon_index/product_text.py": "6ca59fa5c2e59164bb4a60954e72d9b31887249421733b7265efda90dd17af57",
+        "pokemon_index/provider_card_metadata.py": "6e5d7cc7db3c2bb106b124c75ba25b1e29b41d2edf7338e8823e1833600a2998",
+        "pokemon_index/quality_warnings.py": "6fde44b0893f6771ec57984aee3b1b6ca72bf3737f0f2858a42c55bd1a2aa1c6",
+        "pokemon_index/question_routing.py": "67e1b05dcb744fedfe75261766920e16a03b48a2c78e3adce45e9114c5737095",
+        "pokemon_index/question_routing_v2.py": "34550278ba2d5f8399fa06a1ee6e7fd412c76523ac15019613e59e6dfc16d789",
+        "pokemon_index/question_routing_v3.py": "bb18be781c4f49b3a0b0a6fca716282c7a5810efeb80138d6a8591893996bfbd",
+        "pokemon_index/question_routing_v4.py": "17f67ef36a0c4905eac57038dc4f6228ce20e224deab8949332eec769d0d342c",
+        "pokemon_index/question_routing_v5.py": "2c278eab835d2d18d8a8b1274775db9d769a6fc45928c10178baf17ff05c6f79",
+        "pokemon_index/question_routing_v6.py": "e095d07c8bc55e9bf6541a1a0e1907c29cc58ca68a30fcacf699f64543a4427e",
+        "pokemon_index/question_routing_v7.py": "ac5f161f8a9a2f3de015a6c38facfb74d32e8919b572c6768a059057182e3986",
+        "pokemon_index/schema.sql": "c89487f096e29828419a2280393fd9e9e62fd5283da7280d4f737bd6676ec330",
+        "pokemon_index/source-family-admission-v1.json": "6d94fb97c7b74faddf61d12dc2bf3a753ab323a1a2fa06b9fb3b2040f14c133b",
+        "pokemon_index/source_corrections.py": "a6fc6b597a2f10f08aad463f103e67fe8bc923b8b5682df960a4364e548847bb",
+        "pokemon_index/source_family_advisory.py": "93034aa598d6ae25b5510a56e100e51aafc2be7a6f1c7f065e2b8410b1a21054",
+        "pokemon_index/source_image_facts.py": "c4dea7505c152445bfa8692ea5f593c587a275e6206a0658b2b878becbb64884",
+        "pokemon_index/source_mechanic.py": "47026853fcbc3293800e67b3456a2e9e337e40784d55e4f118f118c31e2fe596",
+        "pokemon_index/supported_catalog.py": "0e39bb491541a7b1e65306703b80b062a3ebbe89ce1ba913996bc03d0579ca51",
+        "pokemon_index/tcgdex.py": "738ba5a31cee8e67a6b9d9545689889ecd672687d528059fb6b77a248ca6535d",
+        "pokemon_index/tcgdex_source.py": "d474cd5d17df1e2b4c409cfbf546ddcdfe496082a6f509596e87050b24e5c2b5",
+        "pokemon_index/variant_dimension_hold.py": "294c7c7e38a2ec1bf139f9fae1312f9447bc3b41df75c3773545ef6552786913"
+      },
+      "runtime_roster_sha256": "4132f854278607843edd6cf2d923b783b0858011839644cfd1f8439fce03ac16"
+    },
+    "worker_sha256": "b48dfca8dba37c0670e58c8b9998a8c5fa5d14a9af0efed950ee6378892efc50",
+    "predicate_sha256": "10cb5f9b26e7499c8a84eaf590cff28904103bee5ad8c2c22f01a2c8f65fd982",
+    "pool": {
+      "predicate": {
+        "languages": [
+          "ja"
+        ],
+        "scope": {
+          "variant": "reverse_pokeball"
+        },
+        "identity": {
+          "subject": "Pikachu",
+          "form": null
+        }
+      },
+      "predicate_sha256": "10cb5f9b26e7499c8a84eaf590cff28904103bee5ad8c2c22f01a2c8f65fd982",
+      "raw_scope": {
+        "variant": "reverse_pokeball"
+      },
+      "normalized_scope": {
+        "variant": "reverse_pokeball"
+      },
+      "scope_normalization": "exact admitted values; no case, padding or alias expansion",
+      "sql": "WITH ids AS MATERIALIZED (SELECT DISTINCT card_id FROM discovery_card_facet WHERE facet_type='dex_id' AND CAST(value AS INTEGER)=?) SELECT c.card_id,c.language,c.set_code,c.collector_number,c.variant,c.name FROM card c JOIN ids ON ids.card_id=c.card_id WHERE c.language IN (?) AND c.variant=? ORDER BY c.card_id",
+      "sql_parameters": [
+        25,
+        "ja",
+        "reverse_pokeball"
+      ],
+      "sql_sha256": "cbbc60ab9bd07c5649776ddd1186f0c974d1461be2a9611d02b62907dc25b9f6",
+      "rows": [
+        {
+          "card_id": "ja:SV2A:025/165:reverse_pokeball",
+          "language": "ja",
+          "set_code": "SV2A",
+          "collector_number": "025/165",
+          "variant": "reverse_pokeball",
+          "name": "ピカチュウ"
+        }
+      ],
+      "card_ids": [
+        "ja:SV2A:025/165:reverse_pokeball"
+      ],
+      "card_count": 1,
+      "card_ids_sha256": "975b5a17dfde30c2c76dd16cadb70b3ffaa0bc13b7dbd5408942a10e4aa36ddb",
+      "values": {
+        "set_code": [
+          "SV2A"
+        ],
+        "variant": [
+          "reverse_pokeball"
+        ]
+      }
+    },
+    "counterfactuals": [
+      {
+        "omitted": "variant",
+        "predicate": {
+          "languages": [
+            "ja"
+          ],
+          "scope": {},
+          "identity": {
+            "subject": "Pikachu",
+            "form": null
+          }
+        },
+        "predicate_sha256": "0ddbbfec41be9d8d26821da958160e6577a5ae64119e26b5a269fc3f01c652a6",
+        "raw_scope": {},
+        "normalized_scope": {},
+        "scope_normalization": "exact admitted values; no case, padding or alias expansion",
+        "sql": "WITH ids AS MATERIALIZED (SELECT DISTINCT card_id FROM discovery_card_facet WHERE facet_type='dex_id' AND CAST(value AS INTEGER)=?) SELECT c.card_id,c.language,c.set_code,c.collector_number,c.variant,c.name FROM card c JOIN ids ON ids.card_id=c.card_id WHERE c.language IN (?) ORDER BY c.card_id",
+        "sql_parameters": [
+          25,
+          "ja"
+        ],
+        "sql_sha256": "69424e57b27275ba53d15774d829f0de0ff8a3d0185108ab179fe7c7ed9d27b4",
+        "rows": [
+          {
+            "card_id": "ja:BR:001/011:unverified",
+            "language": "ja",
+            "set_code": "BR",
+            "collector_number": "001/011",
+            "variant": "unverified",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:CP2:008/027:holo",
+            "language": "ja",
+            "set_code": "CP2",
+            "collector_number": "008/027",
+            "variant": "holo",
+            "name": "ピカチュウEX"
+          },
+          {
+            "card_id": "ja:E1:016/128:normal_1st_edition",
+            "language": "ja",
+            "set_code": "E1",
+            "collector_number": "016/128",
+            "variant": "normal_1st_edition",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:E1:016/128:normal_unlimited",
+            "language": "ja",
+            "set_code": "E1",
+            "collector_number": "016/128",
+            "variant": "normal_unlimited",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:E4:033/088:normal_1st_edition",
+            "language": "ja",
+            "set_code": "E4",
+            "collector_number": "033/088",
+            "variant": "normal_1st_edition",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:E4:033/088:normal_unlimited",
+            "language": "ja",
+            "set_code": "E4",
+            "collector_number": "033/088",
+            "variant": "normal_unlimited",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M-P:020/M-P:normal",
+            "language": "ja",
+            "set_code": "M-P",
+            "collector_number": "020/M-P",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M-P:131/M-P:normal",
+            "language": "ja",
+            "set_code": "M-P",
+            "collector_number": "131/M-P",
+            "variant": "normal",
+            "name": "ピカチュウex"
+          },
+          {
+            "card_id": "ja:M-P:132/M-P:normal",
+            "language": "ja",
+            "set_code": "M-P",
+            "collector_number": "132/M-P",
+            "variant": "normal",
+            "name": "ピカチュウex"
+          },
+          {
+            "card_id": "ja:M-P:133/M-P:normal",
+            "language": "ja",
+            "set_code": "M-P",
+            "collector_number": "133/M-P",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M2A:044/193:holo",
+            "language": "ja",
+            "set_code": "M2A",
+            "collector_number": "044/193",
+            "variant": "holo",
+            "name": "ピカチュウex"
+          },
+          {
+            "card_id": "ja:M2A:234/193:holo",
+            "language": "ja",
+            "set_code": "M2A",
+            "collector_number": "234/193",
+            "variant": "holo",
+            "name": "ピカチュウex"
+          },
+          {
+            "card_id": "ja:M6A:017/103:normal",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "017/103",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M6A:018/103:normal",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "018/103",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M6A:019/103:normal",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "019/103",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M6A:020/103:normal",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "020/103",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M6A:021/103:normal",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "021/103",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M6A:022/103:normal",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "022/103",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M6A:023/103:normal",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "023/103",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M6A:024/103:normal",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "024/103",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M6A:025/103:normal",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "025/103",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M6A:026/103:normal",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "026/103",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M6A:027/103:normal",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "027/103",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M6A:028/103:normal",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "028/103",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M6A:029/103:normal",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "029/103",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M6A:030/103:normal",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "030/103",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M6A:031/103:normal",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "031/103",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M6A:032/103:normal",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "032/103",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M6A:033/103:normal",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "033/103",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M6A:034/103:normal",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "034/103",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M6A:035/103:normal",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "035/103",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M6A:036/103:normal",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "036/103",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M6A:037/103:normal",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "037/103",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M6A:038/103:normal",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "038/103",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M6A:039/103:normal",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "039/103",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M6A:040/103:normal",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "040/103",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M6A:041/103:normal",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "041/103",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M6A:042/103:normal",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "042/103",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M6A:043/103:normal",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "043/103",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M6A:044/103:normal",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "044/103",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M6A:045/103:normal",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "045/103",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M6A:046/103:normal",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "046/103",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M6A:047/103:holo",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "047/103",
+            "variant": "holo",
+            "name": "ピカチュウex"
+          },
+          {
+            "card_id": "ja:M6A:048/103:holo",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "048/103",
+            "variant": "holo",
+            "name": "ピカチュウex"
+          },
+          {
+            "card_id": "ja:M6A:126/103:holo",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "126/103",
+            "variant": "holo",
+            "name": "ピカチュウex"
+          },
+          {
+            "card_id": "ja:M6A:127/103:holo",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "127/103",
+            "variant": "holo",
+            "name": "ピカチュウex"
+          },
+          {
+            "card_id": "ja:M6A:136/103:holo",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "136/103",
+            "variant": "holo",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:M6A:160/103:holo",
+            "language": "ja",
+            "set_code": "M6A",
+            "collector_number": "160/103",
+            "variant": "holo",
+            "name": "ピカチュウ&ゼクロムGX"
+          },
+          {
+            "card_id": "ja:MC:225/742:normal",
+            "language": "ja",
+            "set_code": "MC",
+            "collector_number": "225/742",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:MC:227/742:normal",
+            "language": "ja",
+            "set_code": "MC",
+            "collector_number": "227/742",
+            "variant": "normal",
+            "name": "ピカチュウex"
+          },
+          {
+            "card_id": "ja:MC:764/742:normal",
+            "language": "ja",
+            "set_code": "MC",
+            "collector_number": "764/742",
+            "variant": "normal",
+            "name": "ピカチュウex"
+          },
+          {
+            "card_id": "ja:NEO1:036/096:normal",
+            "language": "ja",
+            "set_code": "NEO1",
+            "collector_number": "036/096",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:PCG1:037/082:normal_1st_edition",
+            "language": "ja",
+            "set_code": "PCG1",
+            "collector_number": "037/082",
+            "variant": "normal_1st_edition",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:PCG1:037/082:normal_unlimited",
+            "language": "ja",
+            "set_code": "PCG1",
+            "collector_number": "037/082",
+            "variant": "normal_unlimited",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:PCG7:041/052:normal_1st_edition",
+            "language": "ja",
+            "set_code": "PCG7",
+            "collector_number": "041/052",
+            "variant": "normal_1st_edition",
+            "name": "ピカチュウ（デルタ種）"
+          },
+          {
+            "card_id": "ja:PCG7:041/052:normal_unlimited",
+            "language": "ja",
+            "set_code": "PCG7",
+            "collector_number": "041/052",
+            "variant": "normal_unlimited",
+            "name": "ピカチュウ（デルタ種）"
+          },
+          {
+            "card_id": "ja:PMCG1:035/102:normal",
+            "language": "ja",
+            "set_code": "PMCG1",
+            "collector_number": "035/102",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:PMCG1:035/102:normal_no_rarity",
+            "language": "ja",
+            "set_code": "PMCG1",
+            "collector_number": "035/102",
+            "variant": "normal_no_rarity",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:PMCG2:024/048:normal",
+            "language": "ja",
+            "set_code": "PMCG2",
+            "collector_number": "024/048",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:PMCG5:036/096:normal",
+            "language": "ja",
+            "set_code": "PMCG5",
+            "collector_number": "036/096",
+            "variant": "normal",
+            "name": "マチスのピカチュウ"
+          },
+          {
+            "card_id": "ja:S-P:001/S-P:normal",
+            "language": "ja",
+            "set_code": "S-P",
+            "collector_number": "001/S-P",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:S-P:002/S-P:normal",
+            "language": "ja",
+            "set_code": "S-P",
+            "collector_number": "002/S-P",
+            "variant": "normal",
+            "name": "シブヤのピカチュウ"
+          },
+          {
+            "card_id": "ja:S-P:024/S-P:normal",
+            "language": "ja",
+            "set_code": "S-P",
+            "collector_number": "024/S-P",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:S-P:036/S-P:normal",
+            "language": "ja",
+            "set_code": "S-P",
+            "collector_number": "036/S-P",
+            "variant": "normal",
+            "name": "救助隊DXのピカチュウ"
+          },
+          {
+            "card_id": "ja:S-P:099/S-P:normal",
+            "language": "ja",
+            "set_code": "S-P",
+            "collector_number": "099/S-P",
+            "variant": "normal",
+            "name": "名探偵ピカチュウ"
+          },
+          {
+            "card_id": "ja:S-P:105/S-P:normal",
+            "language": "ja",
+            "set_code": "S-P",
+            "collector_number": "105/S-P",
+            "variant": "normal",
+            "name": "まるのみされたピカチュウ"
+          },
+          {
+            "card_id": "ja:S-P:121/S-P:normal",
+            "language": "ja",
+            "set_code": "S-P",
+            "collector_number": "121/S-P",
+            "variant": "normal",
+            "name": "ピカチュウV"
+          },
+          {
+            "card_id": "ja:S-P:122/S-P:normal",
+            "language": "ja",
+            "set_code": "S-P",
+            "collector_number": "122/S-P",
+            "variant": "normal",
+            "name": "ピカチュウV"
+          },
+          {
+            "card_id": "ja:S-P:123/S-P:normal",
+            "language": "ja",
+            "set_code": "S-P",
+            "collector_number": "123/S-P",
+            "variant": "normal",
+            "name": "ピカチュウVMAX"
+          },
+          {
+            "card_id": "ja:S-P:124/S-P:normal",
+            "language": "ja",
+            "set_code": "S-P",
+            "collector_number": "124/S-P",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:S-P:125/S-P:normal",
+            "language": "ja",
+            "set_code": "S-P",
+            "collector_number": "125/S-P",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:S-P:126/S-P:normal",
+            "language": "ja",
+            "set_code": "S-P",
+            "collector_number": "126/S-P",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:S-P:132/S-P:normal",
+            "language": "ja",
+            "set_code": "S-P",
+            "collector_number": "132/S-P",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:S-P:144/S-P:normal",
+            "language": "ja",
+            "set_code": "S-P",
+            "collector_number": "144/S-P",
+            "variant": "normal",
+            "name": "カナザワのピカチュウ"
+          },
+          {
+            "card_id": "ja:S-P:147/S-P:normal",
+            "language": "ja",
+            "set_code": "S-P",
+            "collector_number": "147/S-P",
+            "variant": "normal",
+            "name": "カナザワのピカチュウ"
+          },
+          {
+            "card_id": "ja:S-P:208/S-P:normal",
+            "language": "ja",
+            "set_code": "S-P",
+            "collector_number": "208/S-P",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:S-P:227/S-P:normal",
+            "language": "ja",
+            "set_code": "S-P",
+            "collector_number": "227/S-P",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:S-P:265/S-P:normal",
+            "language": "ja",
+            "set_code": "S-P",
+            "collector_number": "265/S-P",
+            "variant": "normal",
+            "name": "ピカチュウVMAX"
+          },
+          {
+            "card_id": "ja:S-P:272/S-P:normal",
+            "language": "ja",
+            "set_code": "S-P",
+            "collector_number": "272/S-P",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:S10A:014/071:normal",
+            "language": "ja",
+            "set_code": "S10A",
+            "collector_number": "014/071",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:S10A:014/071:reverse",
+            "language": "ja",
+            "set_code": "S10A",
+            "collector_number": "014/071",
+            "variant": "reverse",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:S10A:073/071:holo",
+            "language": "ja",
+            "set_code": "S10A",
+            "collector_number": "073/071",
+            "variant": "holo",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:S12:024/098:normal",
+            "language": "ja",
+            "set_code": "S12",
+            "collector_number": "024/098",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:S12A:205/172:holo",
+            "language": "ja",
+            "set_code": "S12A",
+            "collector_number": "205/172",
+            "variant": "holo",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:S8B:045/184:holo",
+            "language": "ja",
+            "set_code": "S8B",
+            "collector_number": "045/184",
+            "variant": "holo",
+            "name": "ピカチュウV"
+          },
+          {
+            "card_id": "ja:S8B:046/184:holo",
+            "language": "ja",
+            "set_code": "S8B",
+            "collector_number": "046/184",
+            "variant": "holo",
+            "name": "ピカチュウVMAX"
+          },
+          {
+            "card_id": "ja:S8B:222/184:holo",
+            "language": "ja",
+            "set_code": "S8B",
+            "collector_number": "222/184",
+            "variant": "holo",
+            "name": "ピカチュウV"
+          },
+          {
+            "card_id": "ja:S8B:223/184:holo",
+            "language": "ja",
+            "set_code": "S8B",
+            "collector_number": "223/184",
+            "variant": "holo",
+            "name": "ピカチュウVMAX"
+          },
+          {
+            "card_id": "ja:S8B:279/184:holo",
+            "language": "ja",
+            "set_code": "S8B",
+            "collector_number": "279/184",
+            "variant": "holo",
+            "name": "ピカチュウVMAX"
+          },
+          {
+            "card_id": "ja:SM10A:009/054:normal",
+            "language": "ja",
+            "set_code": "SM10A",
+            "collector_number": "009/054",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:SM11B:016/049:normal",
+            "language": "ja",
+            "set_code": "SM11B",
+            "collector_number": "016/049",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:SM11B:054/049:holo",
+            "language": "ja",
+            "set_code": "SM11B",
+            "collector_number": "054/049",
+            "variant": "holo",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:SM12A:041/173:holo",
+            "language": "ja",
+            "set_code": "SM12A",
+            "collector_number": "041/173",
+            "variant": "holo",
+            "name": "ピカチュウ&ゼクロムGX"
+          },
+          {
+            "card_id": "ja:SM12A:221/173:holo",
+            "language": "ja",
+            "set_code": "SM12A",
+            "collector_number": "221/173",
+            "variant": "holo",
+            "name": "ピカチュウ&ゼクロムGX"
+          },
+          {
+            "card_id": "ja:SM3N:013/051:normal",
+            "language": "ja",
+            "set_code": "SM3N",
+            "collector_number": "013/051",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:SM3P:029/072:normal",
+            "language": "ja",
+            "set_code": "SM3P",
+            "collector_number": "029/072",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:SM4A:015/050:normal",
+            "language": "ja",
+            "set_code": "SM4A",
+            "collector_number": "015/050",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:SM4P:028/114:normal",
+            "language": "ja",
+            "set_code": "SM4P",
+            "collector_number": "028/114",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:SM9:031/095:holo",
+            "language": "ja",
+            "set_code": "SM9",
+            "collector_number": "031/095",
+            "variant": "holo",
+            "name": "ピカチュウ&ゼクロムGX"
+          },
+          {
+            "card_id": "ja:SM9:100/095:holo",
+            "language": "ja",
+            "set_code": "SM9",
+            "collector_number": "100/095",
+            "variant": "holo",
+            "name": "ピカチュウ&ゼクロムGX"
+          },
+          {
+            "card_id": "ja:SM9:101/095:holo",
+            "language": "ja",
+            "set_code": "SM9",
+            "collector_number": "101/095",
+            "variant": "holo",
+            "name": "ピカチュウ&ゼクロムGX"
+          },
+          {
+            "card_id": "ja:SM9:112/095:holo",
+            "language": "ja",
+            "set_code": "SM9",
+            "collector_number": "112/095",
+            "variant": "holo",
+            "name": "ピカチュウ&ゼクロムGX"
+          },
+          {
+            "card_id": "ja:SM9A:014/055:normal",
+            "language": "ja",
+            "set_code": "SM9A",
+            "collector_number": "014/055",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:SV-P:001/SV-P:normal",
+            "language": "ja",
+            "set_code": "SV-P",
+            "collector_number": "001/SV-P",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:SV-P:074/SV-P:normal",
+            "language": "ja",
+            "set_code": "SV-P",
+            "collector_number": "074/SV-P",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:SV-P:098/SV-P:normal",
+            "language": "ja",
+            "set_code": "SV-P",
+            "collector_number": "098/SV-P",
+            "variant": "normal",
+            "name": "名探偵ピカチュウ"
+          },
+          {
+            "card_id": "ja:SV-P:120/SV-P:normal",
+            "language": "ja",
+            "set_code": "SV-P",
+            "collector_number": "120/SV-P",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:SV-P:197/SV-P:normal",
+            "language": "ja",
+            "set_code": "SV-P",
+            "collector_number": "197/SV-P",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:SV-P:216/SV-P:normal",
+            "language": "ja",
+            "set_code": "SV-P",
+            "collector_number": "216/SV-P",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:SV-P:218/SV-P:normal",
+            "language": "ja",
+            "set_code": "SV-P",
+            "collector_number": "218/SV-P",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:SV-P:242/SV-P:normal",
+            "language": "ja",
+            "set_code": "SV-P",
+            "collector_number": "242/SV-P",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:SV-P:260/SV-P:normal",
+            "language": "ja",
+            "set_code": "SV-P",
+            "collector_number": "260/SV-P",
+            "variant": "normal",
+            "name": "トウホクのピカチュウ"
+          },
+          {
+            "card_id": "ja:SV-P:261/SV-P:normal",
+            "language": "ja",
+            "set_code": "SV-P",
+            "collector_number": "261/SV-P",
+            "variant": "normal",
+            "name": "ヒロシマのピカチュウ"
+          },
+          {
+            "card_id": "ja:SV-P:289/SV-P:normal",
+            "language": "ja",
+            "set_code": "SV-P",
+            "collector_number": "289/SV-P",
+            "variant": "normal",
+            "name": "フクオカのピカチュウ"
+          },
+          {
+            "card_id": "ja:SV2A:025/165:normal",
+            "language": "ja",
+            "set_code": "SV2A",
+            "collector_number": "025/165",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:SV2A:025/165:reverse_masterball",
+            "language": "ja",
+            "set_code": "SV2A",
+            "collector_number": "025/165",
+            "variant": "reverse_masterball",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:SV2A:025/165:reverse_pokeball",
+            "language": "ja",
+            "set_code": "SV2A",
+            "collector_number": "025/165",
+            "variant": "reverse_pokeball",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:SV2A:173/165:holo",
+            "language": "ja",
+            "set_code": "SV2A",
+            "collector_number": "173/165",
+            "variant": "holo",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:SV2D:017/071:normal",
+            "language": "ja",
+            "set_code": "SV2D",
+            "collector_number": "017/071",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:SV4A:055/190:normal",
+            "language": "ja",
+            "set_code": "SV4A",
+            "collector_number": "055/190",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:SV4A:055/190:reverse",
+            "language": "ja",
+            "set_code": "SV4A",
+            "collector_number": "055/190",
+            "variant": "reverse",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:SV4A:236/190:holo",
+            "language": "ja",
+            "set_code": "SV4A",
+            "collector_number": "236/190",
+            "variant": "holo",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:SV5M:023/071:normal",
+            "language": "ja",
+            "set_code": "SV5M",
+            "collector_number": "023/071",
+            "variant": "normal",
+            "name": "ピカチュウ"
+          },
+          {
+            "card_id": "ja:SV8:033/106:holo",
+            "language": "ja",
+            "set_code": "SV8",
+            "collector_number": "033/106",
+            "variant": "holo",
+            "name": "ピカチュウex"
+          },
+          {
+            "card_id": "ja:SV8:122/106:holo",
+            "language": "ja",
+            "set_code": "SV8",
+            "collector_number": "122/106",
+            "variant": "holo",
+            "name": "ピカチュウex"
+          },
+          {
+            "card_id": "ja:SV8:132/106:holo",
+            "language": "ja",
+            "set_code": "SV8",
+            "collector_number": "132/106",
+            "variant": "holo",
+            "name": "ピカチュウex"
+          },
+          {
+            "card_id": "ja:SV8:136/106:holo",
+            "language": "ja",
+            "set_code": "SV8",
+            "collector_number": "136/106",
+            "variant": "holo",
+            "name": "ピカチュウex"
+          },
+          {
+            "card_id": "ja:WCS23:001/030:standard",
+            "language": "ja",
+            "set_code": "WCS23",
+            "collector_number": "001/030",
+            "variant": "standard",
+            "name": "ピカチュウex"
+          },
+          {
+            "card_id": "ja:WEB1:025/048:normal",
+            "language": "ja",
+            "set_code": "WEB1",
+            "collector_number": "025/048",
+            "variant": "normal",
+            "name": "サーフィンピカチュ"
+          },
+          {
+            "card_id": "ja:WEB1:025/048:normal_1st_edition",
+            "language": "ja",
+            "set_code": "WEB1",
+            "collector_number": "025/048",
+            "variant": "normal_1st_edition",
+            "name": "サーフィンピカチュ"
+          }
+        ],
+        "card_ids": [
+          "ja:BR:001/011:unverified",
+          "ja:CP2:008/027:holo",
+          "ja:E1:016/128:normal_1st_edition",
+          "ja:E1:016/128:normal_unlimited",
+          "ja:E4:033/088:normal_1st_edition",
+          "ja:E4:033/088:normal_unlimited",
+          "ja:M-P:020/M-P:normal",
+          "ja:M-P:131/M-P:normal",
+          "ja:M-P:132/M-P:normal",
+          "ja:M-P:133/M-P:normal",
+          "ja:M2A:044/193:holo",
+          "ja:M2A:234/193:holo",
+          "ja:M6A:017/103:normal",
+          "ja:M6A:018/103:normal",
+          "ja:M6A:019/103:normal",
+          "ja:M6A:020/103:normal",
+          "ja:M6A:021/103:normal",
+          "ja:M6A:022/103:normal",
+          "ja:M6A:023/103:normal",
+          "ja:M6A:024/103:normal",
+          "ja:M6A:025/103:normal",
+          "ja:M6A:026/103:normal",
+          "ja:M6A:027/103:normal",
+          "ja:M6A:028/103:normal",
+          "ja:M6A:029/103:normal",
+          "ja:M6A:030/103:normal",
+          "ja:M6A:031/103:normal",
+          "ja:M6A:032/103:normal",
+          "ja:M6A:033/103:normal",
+          "ja:M6A:034/103:normal",
+          "ja:M6A:035/103:normal",
+          "ja:M6A:036/103:normal",
+          "ja:M6A:037/103:normal",
+          "ja:M6A:038/103:normal",
+          "ja:M6A:039/103:normal",
+          "ja:M6A:040/103:normal",
+          "ja:M6A:041/103:normal",
+          "ja:M6A:042/103:normal",
+          "ja:M6A:043/103:normal",
+          "ja:M6A:044/103:normal",
+          "ja:M6A:045/103:normal",
+          "ja:M6A:046/103:normal",
+          "ja:M6A:047/103:holo",
+          "ja:M6A:048/103:holo",
+          "ja:M6A:126/103:holo",
+          "ja:M6A:127/103:holo",
+          "ja:M6A:136/103:holo",
+          "ja:M6A:160/103:holo",
+          "ja:MC:225/742:normal",
+          "ja:MC:227/742:normal",
+          "ja:MC:764/742:normal",
+          "ja:NEO1:036/096:normal",
+          "ja:PCG1:037/082:normal_1st_edition",
+          "ja:PCG1:037/082:normal_unlimited",
+          "ja:PCG7:041/052:normal_1st_edition",
+          "ja:PCG7:041/052:normal_unlimited",
+          "ja:PMCG1:035/102:normal",
+          "ja:PMCG1:035/102:normal_no_rarity",
+          "ja:PMCG2:024/048:normal",
+          "ja:PMCG5:036/096:normal",
+          "ja:S-P:001/S-P:normal",
+          "ja:S-P:002/S-P:normal",
+          "ja:S-P:024/S-P:normal",
+          "ja:S-P:036/S-P:normal",
+          "ja:S-P:099/S-P:normal",
+          "ja:S-P:105/S-P:normal",
+          "ja:S-P:121/S-P:normal",
+          "ja:S-P:122/S-P:normal",
+          "ja:S-P:123/S-P:normal",
+          "ja:S-P:124/S-P:normal",
+          "ja:S-P:125/S-P:normal",
+          "ja:S-P:126/S-P:normal",
+          "ja:S-P:132/S-P:normal",
+          "ja:S-P:144/S-P:normal",
+          "ja:S-P:147/S-P:normal",
+          "ja:S-P:208/S-P:normal",
+          "ja:S-P:227/S-P:normal",
+          "ja:S-P:265/S-P:normal",
+          "ja:S-P:272/S-P:normal",
+          "ja:S10A:014/071:normal",
+          "ja:S10A:014/071:reverse",
+          "ja:S10A:073/071:holo",
+          "ja:S12:024/098:normal",
+          "ja:S12A:205/172:holo",
+          "ja:S8B:045/184:holo",
+          "ja:S8B:046/184:holo",
+          "ja:S8B:222/184:holo",
+          "ja:S8B:223/184:holo",
+          "ja:S8B:279/184:holo",
+          "ja:SM10A:009/054:normal",
+          "ja:SM11B:016/049:normal",
+          "ja:SM11B:054/049:holo",
+          "ja:SM12A:041/173:holo",
+          "ja:SM12A:221/173:holo",
+          "ja:SM3N:013/051:normal",
+          "ja:SM3P:029/072:normal",
+          "ja:SM4A:015/050:normal",
+          "ja:SM4P:028/114:normal",
+          "ja:SM9:031/095:holo",
+          "ja:SM9:100/095:holo",
+          "ja:SM9:101/095:holo",
+          "ja:SM9:112/095:holo",
+          "ja:SM9A:014/055:normal",
+          "ja:SV-P:001/SV-P:normal",
+          "ja:SV-P:074/SV-P:normal",
+          "ja:SV-P:098/SV-P:normal",
+          "ja:SV-P:120/SV-P:normal",
+          "ja:SV-P:197/SV-P:normal",
+          "ja:SV-P:216/SV-P:normal",
+          "ja:SV-P:218/SV-P:normal",
+          "ja:SV-P:242/SV-P:normal",
+          "ja:SV-P:260/SV-P:normal",
+          "ja:SV-P:261/SV-P:normal",
+          "ja:SV-P:289/SV-P:normal",
+          "ja:SV2A:025/165:normal",
+          "ja:SV2A:025/165:reverse_masterball",
+          "ja:SV2A:025/165:reverse_pokeball",
+          "ja:SV2A:173/165:holo",
+          "ja:SV2D:017/071:normal",
+          "ja:SV4A:055/190:normal",
+          "ja:SV4A:055/190:reverse",
+          "ja:SV4A:236/190:holo",
+          "ja:SV5M:023/071:normal",
+          "ja:SV8:033/106:holo",
+          "ja:SV8:122/106:holo",
+          "ja:SV8:132/106:holo",
+          "ja:SV8:136/106:holo",
+          "ja:WCS23:001/030:standard",
+          "ja:WEB1:025/048:normal",
+          "ja:WEB1:025/048:normal_1st_edition"
+        ],
+        "card_count": 130,
+        "card_ids_sha256": "e1cde26f6ff78356f05522601a6a7bc1291192f19d6ebedb3c6658f3fa8364ef",
+        "values": {
+          "set_code": [
+            "BR",
+            "CP2",
+            "E1",
+            "E4",
+            "M-P",
+            "M2A",
+            "M6A",
+            "MC",
+            "NEO1",
+            "PCG1",
+            "PCG7",
+            "PMCG1",
+            "PMCG2",
+            "PMCG5",
+            "S-P",
+            "S10A",
+            "S12",
+            "S12A",
+            "S8B",
+            "SM10A",
+            "SM11B",
+            "SM12A",
+            "SM3N",
+            "SM3P",
+            "SM4A",
+            "SM4P",
+            "SM9",
+            "SM9A",
+            "SV-P",
+            "SV2A",
+            "SV2D",
+            "SV4A",
+            "SV5M",
+            "SV8",
+            "WCS23",
+            "WEB1"
+          ],
+          "variant": [
+            "holo",
+            "normal",
+            "normal_1st_edition",
+            "normal_no_rarity",
+            "normal_unlimited",
+            "reverse",
+            "reverse_masterball",
+            "reverse_pokeball",
+            "standard",
+            "unverified"
+          ]
+        }
+      }
+    ],
+    "python_network_attempts": 0
+  },
+  "audit": {
+    "exit_code": 0,
+    "python_network_attempts": 0,
+    "worker_sha256": "b48dfca8dba37c0670e58c8b9998a8c5fa5d14a9af0efed950ee6378892efc50",
+    "stderr": "{\"python_network_attempts\": 0}\n"
+  }
+}

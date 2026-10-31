@@ -1,0 +1,219 @@
+{
+  "review_root": "<evidence>/admission-kernel-claude-review-round5-20261029",
+  "base": "8d377d69855f8908a26c1f5a58d6e041a000b86e",
+  "implementation_head": "21bc18b094aa5399082d657f3759e2e0dd525277",
+  "read_only_review_files": [
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/CODEX_BRIEF_ROUND5_FIXES.md",
+      "sha256": "0496cef1421a228beb83c37fa42c99406d0b0fade546b3b6b69aa0a704083262"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/findings.json",
+      "sha256": "e3be0894932d71c4937c033053dab230e10265201a5561ec7843301f929bcee3"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/kernel-cases-1.json",
+      "sha256": "20a9650d472db1df65d9c711e0eef1b0b6310e869efa7fac862777d98a167775"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/kernel-cases-2.json",
+      "sha256": "bf821bbd1e9b0f7dc6484ffb394e4af693721bce03533e879e81d0655c6df102"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/kernel-cases-3.json",
+      "sha256": "a3f75010c0512e4e9d825477218a0400758e4bce947bb6f0b412d6109e99166e"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/kernel-probe.cjs",
+      "sha256": "9be0690bd11f3d793fc97f3aa944b25878769fc1b040a2c300f5d28eb31f8b7a"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/legacy-goal-out.json",
+      "sha256": "91e8a520c9d50ef83d8a372f0eb4256db311d4fadaf09c7161ae8d2542e56991"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/legacy-goal-probe.cjs",
+      "sha256": "18ec7ed0c6bb4649322cb31d7469a7758c6be11f136192ad61304439fbb636aa"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/minimal-cases.json",
+      "sha256": "138770484c19d0083c178d4049e0890f281d7699a80f5ee4205ed3dd86ef7a87"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/native-probe-inject.cjs",
+      "sha256": "a25e9281907ad58f267149baddd248ba04f280ed3ddda6e38417e66535a4b440"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/native-probe.cjs",
+      "sha256": "38aab406b2db61a9874c1b1432a08b9b605ce47c21d78c6cdbe0e08566ec9ca2"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/native-worker-copy.py",
+      "sha256": "102bb41bb55c62d284693d213074dcafcb80272b0827c59c1762cce45453c5f6"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/out-r5-flows.json",
+      "sha256": "4b585ffd461357a285196c45da54da9b17a4d927432ed9b140b23ae6c1242c6d"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/out-r5-inject.json",
+      "sha256": "66d2c25aa28c5f7cb8dfa226143baef278135866aad35382296133910cbf562c"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/positive-space-check.cjs",
+      "sha256": "e421f2000ae8ed7dea70c7b1e28883cf9067e0d66feb1816efa4ca9e4bfebab1"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/probes-r3-1.json",
+      "sha256": "1b1fb7ce758bd7a2847f46678010d616b39bce840b7166ad04e5f01b342c270a"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/probes-r3-2.json",
+      "sha256": "8d7d06f7d0d46bec1c3865b8e46a5b523fa27f556322a4727f76d9510efdef92"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/probes-r3-3.json",
+      "sha256": "666a36560f2cf3c307d324a1dbade3968e6b8f2a68dea384a5fed83ff33b5a2b"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/probes-r3-4.json",
+      "sha256": "2a6b626b8044f7087cac39994acc1def8a948e7eee8fc26205c5a9a25510641d"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/probes-r4-1.json",
+      "sha256": "967eeca2d5de57584ab8d9dd14b43fa2180c72054793906e153a7e88f5bf571c"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/probes-r4-positive-space.json",
+      "sha256": "23f063ad33b5bc151e28a71241ae70ad1bf8f48a2470d0600c2eb99bd29f7d14"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/probes-r5-flows.json",
+      "sha256": "c1dab7bf97c75081c30a340d071e8d61b30e84686ced8164399b849b9998d156"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/probes-r5-inject.json",
+      "sha256": "0102a105093adb9d5a7c486ed94d593eb7060d0d2e225ba5afbcacde4aae705e"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/rerun-kernel-cases-1.json",
+      "sha256": "ef4414eb5d7ae250e3b2dfb33317fd8040a020c857ace83886534866d27f65ab"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/rerun-kernel-cases-2.json",
+      "sha256": "482c1de313bccc7e1a86338172d22e32b7fd4b2eed6a264945b92c9a6fc376c4"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/rerun-kernel-cases-3.json",
+      "sha256": "6a0b27315082843aaf69485c0997a1b47025a1c10dd5f46ac8bf2fb32d7d10eb"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/rerun-minimal-cases.json",
+      "sha256": "5be8e1f745168f66d64d8394fec6df278f9aca1baf05076880a4634e363c3fab"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/second-line-mutants-r5-attempt1-replace-bug.log",
+      "sha256": "a31059eb2ca42e816f04c326b9dcf765a70896954e2631fd054f6b32a8ce7b9e"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/second-line-mutants-r5.cjs",
+      "sha256": "a07aa4a1269b163c040f6910b8b9685965587c276510a8f38bebce2cb56998db"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/second-line-mutants-r5.json",
+      "sha256": "318ae25d4e6d04e24451c265b68f727341df556181bd6bbffc6cb5100987a3a6"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/second-line-mutants-r5.log",
+      "sha256": "6afabb816d50e0d535581aa1e9016919a07c7ce8c9c76a92c2fdfd04f4b81d93"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/stored-language-out.txt",
+      "sha256": "1efeb9fd0d143600500941d45cd52ec1c7067b2f7c9babf89c6613350f54e2bd"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/stored-language-probe.cjs",
+      "sha256": "8019268f7cecf8889f5e7b348a71b7b8e19bab404342d4e8d30a3c27bdeb787b"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/stored-survivor-out.txt",
+      "sha256": "147b5b67176698c30ecf2b81a20bd0ac4d00d9c6739eca3cbee57d93f7aa58c2"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/stored-survivor-probe.cjs",
+      "sha256": "591dc34716541f22842b278a87377244e4ee07f99e7109af1ec785d8e1019b7f"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/summarize.py",
+      "sha256": "111e619279720a12d992dec44602c062ab15a81e95631b8a340d1fc3312bf24e"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/survivor-cases.json",
+      "sha256": "d15a4aeb93f14711695263173cf3e2b186312ede399bb2941b9c3d4293c17fb3"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/repro/survivor-out.json",
+      "sha256": "4da81d54ff4dff63c0be4acbc36c2b2e52ad5cf826ea77994c21b6d10e77351c"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/REVIEW.md",
+      "sha256": "265a595980f0e5dea2e7578c6ca3c0574492da0016e7dd7c36658537c506569a"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/runs/exits.txt",
+      "sha256": "a72d992f2e448c8150530c1b8991838be49cbdcd8d8541495313931db0ea901f"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/runs/full-suite.tap",
+      "sha256": "b95bf3b071367dff149dc6ae39a370cb8bc462afe1623295eb54b5df5ca19981"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/runs/mutations-rerun.log",
+      "sha256": "2f1bd2eedc30a697dee3fad4cc26ce6db5b72b53fdda5db05f4c6caa200a5ef5"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/runs/native-stored-goals.log",
+      "sha256": "bdfa5019d63ebe83cb7c4401e77e42e0b3e6d4fd0bacf75dae89d707013c9e91"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/runs/original.tap",
+      "sha256": "36220e13769ba6121841e142f05ca2dc3b351bb22de72c955a930fff53d71c0d"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/runs/prior-clarification.log",
+      "sha256": "6103cd0cb4e7965ac4f603277271f45137db2073a30d243f76cf02972249eecc"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/runs/prior-original.log",
+      "sha256": "54b0cb97e17d9f79bfeda8f9aeefe0382fa0563bdc7be63ac58ce0d9ae4d5318"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/runs/prior-round2.log",
+      "sha256": "f44de635094274077a3cd4a81c539f2aee44fea51cd22b44b012ef37266a823e"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/runs/prior-round3-attempt1-under-load.log",
+      "sha256": "ff5798e9dcface7902e08ac3715cc9378f1c2c0085217310393aa3e7d1e24b5e"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/runs/prior-round3.log",
+      "sha256": "a11e66dec62bdaef5e0cee54cf85a26d2164254375d9a66bd368b4a1fa6cfcf1"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/runs/tsc-after-cleanup.txt",
+      "sha256": "a69992d23358c32b874e643fdf8821c5f1e9d073912f87e6168d91146db42d8a"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/runs/verify-mutations.log",
+      "sha256": "f837d89e73e038d274133ee246f968f2054429833c56da21f4f7edabe0b9993a"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/runs/vocabulary-regenerate.log",
+      "sha256": "60d57ee413defae30e5c54c54e9c6bc902fc1d0d4df5001a7cc648efa9d86786"
+    },
+    {
+      "file": "<evidence>/admission-kernel-claude-review-round5-20261029/SHA256SUMS",
+      "sha256": "91c708861bae2bd34dc6ed4ae696967d648b5928afda64e045d075d6864ef82d"
+    }
+  ]
+}

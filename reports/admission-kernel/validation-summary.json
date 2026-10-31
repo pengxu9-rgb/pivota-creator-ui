@@ -1,0 +1,85 @@
+{
+  "schema": "pot.admission.validation-summary.v1",
+  "tested_head": "0c6d883c7760e410767f8186a2fdf88b004d94bd",
+  "base": "b43278320f35d9aba92976d61524eefb1da22b07",
+  "production_source_head": "07e002e1a68eb54c5d9a8df5a988eea52ae91160",
+  "original": {
+    "exit_code": 0,
+    "tests": 291,
+    "passed": 291,
+    "failed": 0,
+    "worker_audits": 22,
+    "network_attempts": 0,
+    "log": "original-291.tap"
+  },
+  "full": {
+    "exit_code": 0,
+    "tests": 323,
+    "passed": 323,
+    "failed": 0,
+    "worker_audits": 26,
+    "network_attempts": 0,
+    "log": "full-suite.tap"
+  },
+  "typescript": {
+    "exit_code": 0,
+    "network_attempts": 0,
+    "log": "typescript.txt"
+  },
+  "cross_product": {
+    "kernel_cells": 7776,
+    "service_cells": 672,
+    "frames_per_language": 40
+  },
+  "mutations": {
+    "exit_code": 0,
+    "mutants": 31,
+    "killed": 31,
+    "network_attempts": 0
+  },
+  "native": {
+    "exit_code": 0,
+    "cases": 15,
+    "catalog_calls": 30,
+    "network_attempts": {
+      "node": 0,
+      "python": 0
+    },
+    "runtime_files_verified": 69
+  },
+  "clarification": {
+    "literal": {
+      "definition": "Clarifies despite a pre-labeled single clear meaning, INCLUDING clear unsupported requests. Conservative literal metric from the brief; required out-of-grammar refusals/holds are counted here and separately labeled.",
+      "denominator": 146,
+      "clarifications": 124,
+      "rate": 0.8493150684931506
+    },
+    "supported": {
+      "denominator": 22,
+      "clarifications": 2,
+      "rate": 0.09090909090909091
+    }
+  },
+  "source_equivalence": {
+    "production_07e002e_to_tested_head": true,
+    "tests_059f3d5_to_tested_head": true
+  },
+  "admission_sha256": "41720e85f9ad746920a7a921e6faea0fd771d5c0dd3b447587b0c37529d0cc77",
+  "artifact_sha256": {
+    "full-suite.tap": "811b92795c61f6e9cbe94791d10f43938719b2e550df31a45fa907a0b39cb54f",
+    "original-291.tap": "28386d33cb5cf313239eac26e8de44d7c542a0e1453efdd989dde0b83cacbc47",
+    "typescript.txt": "f0114624fd35398ebad056efcfcf4508780f5e27f2d672e1856f8234aa95859c",
+    "mutations.json": "b6ffd5df145d15f553be716985280220c6d74493496d1822b3c2d5ac63155446",
+    "native-replay.json": "c2b8524b812513ceb0ce8c3e9c9f6485bfc5068ea44bf3618003742d439b2a4a",
+    "clarification-rate.json": "88af114167950c7015827ed5f8d45dac36afa4195335748398e3a0e07dc2b2e9"
+  },
+  "commands": {
+    "guard": "NODE_OPTIONS=--require=<worktree>/tests/helpers/strict-network-guard.cjs",
+    "original": "node --test $(git ls-tree -r --name-only b4327832 tests/ | rg \"[.]test[.]cjs$\")",
+    "full": "node --test tests/*.test.cjs",
+    "typescript": "node node_modules/typescript/bin/tsc --noEmit --incremental false",
+    "mutation": "node reports/admission-kernel/evidence/mutations.cjs",
+    "native": "node reports/admission-kernel/evidence/native-replay.cjs",
+    "clarification": "node reports/admission-kernel/evidence/clarification-rate.cjs"
+  }
+}

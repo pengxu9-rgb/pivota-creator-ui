@@ -1,0 +1,409 @@
+{
+  "schema": "pot.admission.round5-final-resource-distribution.v1",
+  "created_at": "2026-10-29T11:19:50.732Z",
+  "head": "7fe4bc8c8bf2f2f64f1c2ec0f5473f07dd9457a5",
+  "logical_cpus": 10,
+  "native_first_start": "2026-10-29T10:14:30.692Z",
+  "native_last_end": "2026-10-29T11:17:45.140Z",
+  "all_seven_start_eligibility_checks_passed": true,
+  "all_seven_actual_exit_codes_zero": true,
+  "continuous_quietness_proven": false,
+  "method_note": "Phases ran sequentially after mutation cleanup with no simultaneous owned heavy jobs. The unchanged driver refused starts unless load1 <= 10 and one-second idle >= 30%. Five-second observations and start/end samples record actual capacity only. Count thresholds below are descriptive, do not introduce a new gate, and do not prove continuous quietness.",
+  "global_max_observed_load1": 34.5009765625,
+  "global_min_observed_idle_percent": 0,
+  "prestart_host_refusals": 71,
+  "phases": [
+    {
+      "phase": "baseline-flows",
+      "receipt_file": "quiet-baseline-flows-receipt.json",
+      "receipt_sha256": "404693d2f3bc7fd9b3bb4b2aab66bf2f2cd4404d03e24c5252ce63f89426e9a4",
+      "head": "7fe4bc8c8bf2f2f64f1c2ec0f5473f07dd9457a5",
+      "start": {
+        "time": "2026-10-29T10:14:30.692Z",
+        "logical_cpus": 10,
+        "load": [
+          9.77099609375,
+          23.33349609375,
+          30.08203125
+        ],
+        "idle_percent": 43.94394394394394
+      },
+      "end": {
+        "time": "2026-10-29T10:15:57.874Z",
+        "logical_cpus": 10,
+        "load": [
+          11.33154296875,
+          20.36767578125,
+          28.26123046875
+        ],
+        "idle_percent": 35.814889336016094
+      },
+      "elapsed_ms": 87182,
+      "start_eligibility_met": true,
+      "actual_exit_code": 0,
+      "resource_summary": {
+        "samples": 19,
+        "max_observed_load1": 11.79931640625,
+        "min_observed_idle_percent": 10.204901566894335,
+        "start_eligibility_met": true
+      },
+      "execution_samples": 17,
+      "descriptive_sample_counts": {
+        "load1_above_10": 17,
+        "load1_above_20": 0,
+        "idle_below_10": 0,
+        "joint_load1_above_20_idle_below_10": 0,
+        "longest_consecutive_joint_samples": 0
+      },
+      "joint_windows": []
+    },
+    {
+      "phase": "fixed",
+      "receipt_file": "quiet-fixed-receipt.json",
+      "receipt_sha256": "3d88425653857bcf35b86ec2f677e2bba66102edb91a7980179712545109fdd7",
+      "head": "7fe4bc8c8bf2f2f64f1c2ec0f5473f07dd9457a5",
+      "start": {
+        "time": "2026-10-29T10:42:58.470Z",
+        "logical_cpus": 10,
+        "load": [
+          9.18017578125,
+          14.95849609375,
+          19.4365234375
+        ],
+        "idle_percent": 50.354609929078016
+      },
+      "end": {
+        "time": "2026-10-29T10:49:14.858Z",
+        "logical_cpus": 10,
+        "load": [
+          12.77685546875,
+          13.298828125,
+          16.99951171875
+        ],
+        "idle_percent": 33.06532663316583
+      },
+      "elapsed_ms": 376388,
+      "start_eligibility_met": true,
+      "actual_exit_code": 0,
+      "resource_summary": {
+        "samples": 77,
+        "max_observed_load1": 16.3837890625,
+        "min_observed_idle_percent": 5.514337276919992,
+        "start_eligibility_met": true
+      },
+      "execution_samples": 75,
+      "descriptive_sample_counts": {
+        "load1_above_10": 56,
+        "load1_above_20": 0,
+        "idle_below_10": 4,
+        "joint_load1_above_20_idle_below_10": 0,
+        "longest_consecutive_joint_samples": 0
+      },
+      "joint_windows": []
+    },
+    {
+      "phase": "round4",
+      "receipt_file": "quiet-round4-receipt.json",
+      "receipt_sha256": "460cd440e5f91a62805e5f1f15788ccdddda9638dc924ec1b98d82c0f764eae6",
+      "head": "7fe4bc8c8bf2f2f64f1c2ec0f5473f07dd9457a5",
+      "start": {
+        "time": "2026-10-29T10:50:18.195Z",
+        "logical_cpus": 10,
+        "load": [
+          9.60302734375,
+          12.23828125,
+          16.34619140625
+        ],
+        "idle_percent": 40.66265060240964
+      },
+      "end": {
+        "time": "2026-10-29T10:57:29.698Z",
+        "logical_cpus": 10,
+        "load": [
+          9.91162109375,
+          14.70166015625,
+          16.4794921875
+        ],
+        "idle_percent": 20.361083249749246
+      },
+      "elapsed_ms": 431503,
+      "start_eligibility_met": true,
+      "actual_exit_code": 0,
+      "resource_summary": {
+        "samples": 88,
+        "max_observed_load1": 31.5107421875,
+        "min_observed_idle_percent": 1.961961961961962,
+        "start_eligibility_met": true
+      },
+      "execution_samples": 86,
+      "descriptive_sample_counts": {
+        "load1_above_10": 83,
+        "load1_above_20": 22,
+        "idle_below_10": 21,
+        "joint_load1_above_20_idle_below_10": 13,
+        "longest_consecutive_joint_samples": 4
+      },
+      "joint_windows": [
+        {
+          "first_sample_at": "2026-10-29T10:53:23.254Z",
+          "last_sample_at": "2026-10-29T10:53:38.258Z",
+          "samples": 4
+        },
+        {
+          "first_sample_at": "2026-10-29T10:53:53.261Z",
+          "last_sample_at": "2026-10-29T10:54:03.263Z",
+          "samples": 3
+        },
+        {
+          "first_sample_at": "2026-10-29T10:54:13.265Z",
+          "last_sample_at": "2026-10-29T10:54:28.271Z",
+          "samples": 4
+        },
+        {
+          "first_sample_at": "2026-10-29T10:54:48.275Z",
+          "last_sample_at": "2026-10-29T10:54:53.276Z",
+          "samples": 2
+        }
+      ]
+    },
+    {
+      "phase": "round3",
+      "receipt_file": "quiet-round3-receipt.json",
+      "receipt_sha256": "17dbfbbcd6daf007db7050913a6a59ce4e81ec125a0a5e71c2bf7a1777272fa6",
+      "head": "7fe4bc8c8bf2f2f64f1c2ec0f5473f07dd9457a5",
+      "start": {
+        "time": "2026-10-29T10:57:30.810Z",
+        "logical_cpus": 10,
+        "load": [
+          9.91162109375,
+          14.70166015625,
+          16.4794921875
+        ],
+        "idle_percent": 46.78714859437751
+      },
+      "end": {
+        "time": "2026-10-29T11:09:34.261Z",
+        "logical_cpus": 10,
+        "load": [
+          9.9755859375,
+          10.32177734375,
+          12.703125
+        ],
+        "idle_percent": 34.56175298804781
+      },
+      "elapsed_ms": 723451,
+      "start_eligibility_met": true,
+      "actual_exit_code": 0,
+      "resource_summary": {
+        "samples": 146,
+        "max_observed_load1": 13.63427734375,
+        "min_observed_idle_percent": 9.539078156312625,
+        "start_eligibility_met": true
+      },
+      "execution_samples": 144,
+      "descriptive_sample_counts": {
+        "load1_above_10": 69,
+        "load1_above_20": 0,
+        "idle_below_10": 2,
+        "joint_load1_above_20_idle_below_10": 0,
+        "longest_consecutive_joint_samples": 0
+      },
+      "joint_windows": []
+    },
+    {
+      "phase": "round2",
+      "receipt_file": "quiet-round2-receipt.json",
+      "receipt_sha256": "7fc57ff3596c6421744300d859f40a29b4260b0c7c68493788346fbfc55cdbbe",
+      "head": "7fe4bc8c8bf2f2f64f1c2ec0f5473f07dd9457a5",
+      "start": {
+        "time": "2026-10-29T11:09:35.383Z",
+        "logical_cpus": 10,
+        "load": [
+          9.9755859375,
+          10.32177734375,
+          12.703125
+        ],
+        "idle_percent": 32.663316582914575
+      },
+      "end": {
+        "time": "2026-10-29T11:13:49.985Z",
+        "logical_cpus": 10,
+        "load": [
+          13.25,
+          15.1025390625,
+          14.4033203125
+        ],
+        "idle_percent": 34.33734939759036
+      },
+      "elapsed_ms": 254602,
+      "start_eligibility_met": true,
+      "actual_exit_code": 0,
+      "resource_summary": {
+        "samples": 52,
+        "max_observed_load1": 34.5009765625,
+        "min_observed_idle_percent": 0,
+        "start_eligibility_met": true
+      },
+      "execution_samples": 50,
+      "descriptive_sample_counts": {
+        "load1_above_10": 43,
+        "load1_above_20": 20,
+        "idle_below_10": 12,
+        "joint_load1_above_20_idle_below_10": 12,
+        "longest_consecutive_joint_samples": 7
+      },
+      "joint_windows": [
+        {
+          "first_sample_at": "2026-10-29T11:11:15.445Z",
+          "last_sample_at": "2026-10-29T11:11:45.452Z",
+          "samples": 7
+        },
+        {
+          "first_sample_at": "2026-10-29T11:11:55.454Z",
+          "last_sample_at": "2026-10-29T11:12:15.460Z",
+          "samples": 5
+        }
+      ]
+    },
+    {
+      "phase": "original",
+      "receipt_file": "quiet-original-receipt.json",
+      "receipt_sha256": "61e55a23444ead88a77161f2e3e308e12dbaa1a5ea625633c3e0eba6c130cf61",
+      "head": "7fe4bc8c8bf2f2f64f1c2ec0f5473f07dd9457a5",
+      "start": {
+        "time": "2026-10-29T11:16:26.651Z",
+        "logical_cpus": 10,
+        "load": [
+          8.71044921875,
+          12.771484375,
+          13.58349609375
+        ],
+        "idle_percent": 42.269076305220885
+      },
+      "end": {
+        "time": "2026-10-29T11:17:42.790Z",
+        "logical_cpus": 10,
+        "load": [
+          7.29833984375,
+          11.52197265625,
+          13.04296875
+        ],
+        "idle_percent": 51.41129032258065
+      },
+      "elapsed_ms": 76139,
+      "start_eligibility_met": true,
+      "actual_exit_code": 0,
+      "resource_summary": {
+        "samples": 17,
+        "max_observed_load1": 8.96923828125,
+        "min_observed_idle_percent": 23.04601165360659,
+        "start_eligibility_met": true
+      },
+      "execution_samples": 15,
+      "descriptive_sample_counts": {
+        "load1_above_10": 0,
+        "load1_above_20": 0,
+        "idle_below_10": 0,
+        "joint_load1_above_20_idle_below_10": 0,
+        "longest_consecutive_joint_samples": 0
+      },
+      "joint_windows": []
+    },
+    {
+      "phase": "clarification",
+      "receipt_file": "quiet-clarification-receipt.json",
+      "receipt_sha256": "e6af498e05ab89748889ce9aa2ca473f44c4af75be7bdd77b8a8f9ff04991a5e",
+      "head": "7fe4bc8c8bf2f2f64f1c2ec0f5473f07dd9457a5",
+      "start": {
+        "time": "2026-10-29T11:17:43.882Z",
+        "logical_cpus": 10,
+        "load": [
+          7.29833984375,
+          11.52197265625,
+          13.04296875
+        ],
+        "idle_percent": 40.78156312625251
+      },
+      "end": {
+        "time": "2026-10-29T11:17:45.140Z",
+        "logical_cpus": 10,
+        "load": [
+          7.1142578125,
+          11.41357421875,
+          12.99560546875
+        ],
+        "idle_percent": 46.29258517034068
+      },
+      "elapsed_ms": 1258,
+      "start_eligibility_met": true,
+      "actual_exit_code": 0,
+      "resource_summary": {
+        "samples": 2,
+        "max_observed_load1": 7.29833984375,
+        "min_observed_idle_percent": 40.78156312625251,
+        "start_eligibility_met": true
+      },
+      "execution_samples": 0,
+      "descriptive_sample_counts": {
+        "load1_above_10": 0,
+        "load1_above_20": 0,
+        "idle_below_10": 0,
+        "joint_load1_above_20_idle_below_10": 0,
+        "longest_consecutive_joint_samples": 0
+      },
+      "joint_windows": []
+    }
+  ],
+  "cleanup": {
+    "controller_pid": 9461,
+    "controller_status": "complete",
+    "controller_finished_at": "2026-10-29T11:17:45.167Z",
+    "controller_state_sha256": "b1514c967218d5a2c07fa0c1dab48dcb850b44ad72dc34a6a0776f0059a92efe",
+    "controller_lock_removed": true,
+    "all_owned_native_gate_processes_closed": true,
+    "closure_evidence": "Each driver awaited actual native child close and recorded exit0/signal:null; all Python-backed gates recorded Python exit0 and zero audits. Controller completed all phases with active driver/native PIDs null. Resource watcher session29514 was collected with exit0.",
+    "watcher_pid": 30955,
+    "watcher_finished_at": "2026-10-29T11:17:45.553Z",
+    "watcher_receipt_sha256": "ab17d93a2edb0681fddd7d1bbbe6e828ed0c9b4fb4602a431763633143060c76",
+    "pause_resume_receipt_sha256": "11451eb6ac062a125a2f850f35be0f9a5d49bc68a5efd74f1603c300fcb54a3a",
+    "approved_pause_pids": [
+      21192,
+      21193,
+      21194,
+      21195
+    ],
+    "resume_identity_check_at": [
+      {
+        "pid": 21192,
+        "time": "2026-10-29T11:17:45.540Z",
+        "before": null,
+        "signal_sent": false,
+        "skipped": "gone_or_identity_changed"
+      },
+      {
+        "pid": 21193,
+        "time": "2026-10-29T11:17:45.545Z",
+        "before": null,
+        "signal_sent": false,
+        "skipped": "gone_or_identity_changed"
+      },
+      {
+        "pid": 21194,
+        "time": "2026-10-29T11:17:45.547Z",
+        "before": null,
+        "signal_sent": false,
+        "skipped": "gone_or_identity_changed"
+      },
+      {
+        "pid": 21195,
+        "time": "2026-10-29T11:17:45.549Z",
+        "before": null,
+        "signal_sent": false,
+        "skipped": "gone_or_identity_changed"
+      }
+    ],
+    "paused_survivors": 0,
+    "signals_to_parent_or_other_jobs": 0
+  },
+  "network_attempts": 0
+}

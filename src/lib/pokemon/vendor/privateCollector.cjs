@@ -5,7 +5,7 @@ const {workspaceFeedback}=require('../workspaceFeedback.cjs');
 const {randomUUID, createHash} = require('node:crypto');
 const fs = require('node:fs/promises');
 const path = require('node:path');
-const {CollectorCallError} = require('./collectorClient.cjs');
+const {CollectorCallError} = require('../collectorError.cjs');
 const copy = value => structuredClone(value);
 const exact = (value, keys) => value && typeof value === 'object' && !Array.isArray(value)
   && Object.keys(value).sort().join(',') === keys.sort().join(',');
@@ -102,7 +102,11 @@ function createPrivateCollectorWorkspace({client, authenticate, store=createMemo
     }
     lock.phase='committed';return record;
   }
-  async function operate(user,lock,record,action,signal) {
+  function invocation(token,user,id,version,phase='read',consume=false) {
+    return require('../catalogAdapter.cjs').validateInvocation(token,api,
+      {owner:user,workspaceId:id,workspaceVersion:version,phase},{consume});
+  }
+  async function operate(user,lock,record,action,signal,admission,scope) {
     const acceptedRecord=copy(record);
     if(signal!==undefined && !(signal instanceof AbortSignal))fail('invalid_cancellation_signal');
     const abort=()=>lock.controller.abort();signal?.addEventListener('abort',abort,{once:true});
@@ -114,6 +118,13 @@ function createPrivateCollectorWorkspace({client, authenticate, store=createMemo
       record={...record,savedDecision:null,needsReconfirmation:true};
       await store.put(user,record.id,record);active(lock);
       const call=await client.advance({session:record.session,action,limit:record.limit,signal:lock.controller.signal});
+      active(lock);
+      // The legacy parser can reinterpret text. Reject its interpretation while
+      // the result is still tentative, before any persisted replay or view can
+      // acquire the new candidate/selection authority.
+      if(call.status==='catalog_changed'&&call.result===null&&call.session===null)
+        require('../catalogAdapter.cjs').validateInvocation(admission,api,scope);
+      else require('../catalogAdapter.cjs').validateNativePublication(admission,api,scope,call.result);
       active(lock);
       const next={...record,version:record.version+1,session:call.session,result:call.result,next_step:call.next_step,
         // A retained selected transcript does not constitute a fresh choice
@@ -133,23 +144,28 @@ function createPrivateCollectorWorkspace({client, authenticate, store=createMemo
       throw error;
     } finally {signal?.removeEventListener('abort',abort);}
   }
-  return {
-    async start(context,payload,{signal}={}) {
+  const api={
+    async start(context,payload,{signal,admission}={}) {
       const user=await owner(context);
+      const plan=invocation(admission,user,null,null,'read',true);
       if(!exact(payload,['question','limit'])||typeof payload.question!=='string'||!payload.question.trim()||payload.question.length>2000||!Number.isInteger(payload.limit)||payload.limit<1||payload.limit>50)fail('invalid_private_workspace_request');
+      if(plan.action?.type!=='ask'||payload.question!==plan.action.question)fail('catalog_admission_scope_mismatch');
       const record={id:randomUUID(),version:0,expiresAt:now()+retentionMs,session:null,result:null,next_step:null,savedDecision:null,needsReconfirmation:true,limit:payload.limit};
       const lock=acquire(user,record.id);
       try {
         const records=await store.list(user);let retained=0;
         for(const old of records){if(old.expiresAt<=now())await store.delete(user,old.id);else retained++;}
         if(retained>=50)fail('workspace_retention_limit');active(lock);
-        return view(user,await operate(user,lock,record,{type:'ask',question:payload.question},signal),lock);
+        return view(user,await operate(user,lock,record,{type:'ask',question:payload.question},signal,admission,
+          {owner:user,workspaceId:null,workspaceVersion:null}),lock);
       } catch(error){await store.delete(user,record.id);throw error;}
       finally {release(user,lock);}
     },
-    async advance(context,payload,{signal}={}) {
+    async advance(context,payload,{signal,admission}={}) {
       const user=await owner(context);
       if(!exact(payload,['id','version','action']))fail('invalid_private_workspace_request');
+      const plan=invocation(admission,user,payload.id,payload.version,'read',true);
+      if(JSON.stringify(payload.action)!==JSON.stringify(plan.action))fail('catalog_admission_scope_mismatch');
       // Lock precedes every authoritative read and version check.
       const lock=acquire(user,payload.id);
       let record;
@@ -157,7 +173,13 @@ function createPrivateCollectorWorkspace({client, authenticate, store=createMemo
         record=await read(user,payload.id);active(lock);
         if(payload.version!==record.version)fail('workspace_version_conflict');
         if(record.session===null&&payload.action?.type!=='ask')fail('workspace_restart_required');
-        return view(user,await operate(user,lock,record,payload.action,signal),lock);
+        // RULE:stored_private_replay_admission
+        // get() deliberately hides session.turns. Re-admit every stored ask on
+        // the authoritative record under this lock, before operate can write
+        // or the client can replay even an earlier, superseded goal.
+        if(!require('../admission.cjs').storedGoalsAccepted(record))fail('catalog_stored_goal_requires_restart');
+        return view(user,await operate(user,lock,record,payload.action,signal,admission,
+          {owner:user,workspaceId:record.id,workspaceVersion:record.version}),lock);
       } catch(error) {
         if(record&&error.code==='catalog_cancelled'&&lock.phase!=='withdrawn'){
           await store.put(user,record.id,withdraw(record));lock.phase='withdrawn';
@@ -181,8 +203,10 @@ function createPrivateCollectorWorkspace({client, authenticate, store=createMemo
       try {const records=(await store.list(user)).filter(r=>r.expiresAt>now());for(const record of records)await family.admitStoredPresentation(record,admitPresentation);return records.map(r=>view(user,r,lock));}
       finally {release(user,lock);}
     },
-    async save(context,payload,{signal}={}) {
+    async save(context,payload,{signal,admission}={}) {
       const user=await owner(context);if(!exact(payload,['id','version']))fail('invalid_private_workspace_request');
+      const plan=invocation(admission,user,payload.id,payload.version,'save',true);
+      if(plan.action?.type!=='select')fail('catalog_admission_scope_mismatch');
       if(signal!==undefined&&!(signal instanceof AbortSignal))fail('invalid_cancellation_signal');
       const lock=acquire(user,payload.id);
       const abort=()=>lock.controller.abort();signal?.addEventListener('abort',abort,{once:true});if(signal?.aborted)abort();
@@ -190,6 +214,8 @@ function createPrivateCollectorWorkspace({client, authenticate, store=createMemo
       try {
         record=await read(user,payload.id);active(lock);
         if(payload.version!==record.version)fail('workspace_version_conflict');
+        require('../catalogAdapter.cjs').validateNativePublication(admission,api,
+          {owner:user,workspaceId:record.id,workspaceVersion:record.version,phase:'save'},record.result);
         const intent=record.result?.target_intent;
         if(record.needsReconfirmation||record.result?.status!=='catalog_target_selected'||!intent
           ||intent.transaction_ready!==false||intent.physical_printing_verified!==false||intent.public_display_allowed!==false||intent.automatic_offer_join_allowed!==false)fail('catalog_confirmation_required');
@@ -219,5 +245,6 @@ function createPrivateCollectorWorkspace({client, authenticate, store=createMemo
       finally {release(user,lock);}
     },
   };
+  return api;
 }
 module.exports={createPrivateCollectorWorkspace,createMemoryStore,createLocalDecisionStore};

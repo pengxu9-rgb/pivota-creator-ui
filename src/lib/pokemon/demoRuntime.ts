@@ -4,16 +4,16 @@ import { appendFile, mkdir, readFile, writeFile, stat } from "node:fs/promises";
 import path from "node:path";
 import type { Conversation, Workspace } from "./types";
 
-const { createCollectorClient } = require("./vendor/collectorClient.cjs");
+const { createCatalogWorkspace } = require("./catalogAdapter.cjs");
 const { CATALOG_CALL_MS } = require("./requestBudgets.cjs");
 const { catalogFetch } = require("./catalogReadAdmission.cjs");
 const {
-  createPrivateCollectorWorkspace,
   createLocalDecisionStore,
 } = require("./vendor/privateCollector.cjs");
 const { fixtureEnabled, cloudTestScope } = require("./cloudTestScope.cjs");
 const { createDurableState, stateConfiguration } = require("./googleState.cjs");
 const { betaScope } = require("./betaScope.cjs");
+const { createRuntimeModelRouter } = require("./modelRuntime.cjs");
 const {
   createConversationService,
   createConversationFileStore,
@@ -128,7 +128,7 @@ export function demoRuntime(): Runtime {
   if (!directory || (!durable && !path.isAbsolute(directory)))
     throw new Error("invalid_demo_configuration");
   if (durable) globalThis.pokemonCreatorGoogleState = durable;
-  const client = createCollectorClient({
+  const clientOptions = {
     baseUrl: config.baseUrl,
     fetchImpl: (input: string, options: RequestInit) =>
       catalogFetch(config.baseUrl, input, options),
@@ -141,17 +141,17 @@ export function demoRuntime(): Runtime {
       const binding = telemetry.getStore();
       void recordDemoEvent({ kind: "catalog_attempt", ...binding, ...attempt });
     },
-  });
+  };
   const admitPresentation = (value: unknown) => {
     const { liveCatalog } = require("./liveCatalog.cjs");
     const { currentOperation } = require("./sourceFamilyAdvisory.cjs");
     const operation = currentOperation();
     return liveCatalog().validateFamilyPresentation(value, operation?.signal, operation?.deadline);
   };
-  const workspace = createPrivateCollectorWorkspace({
+  const workspace = createCatalogWorkspace({
     ...(configuration?.scope==="beta"?{retentionMs:configuration.retentionMs}:{}),
     admitPresentation,
-    client,
+    clientOptions,
     authenticate: async (ctx: Context) => {
       if (!(await validDemoSession(directory, ctx?.demoSession))) return null;
       return { id: "owner-local-demo:" + ctx.demoSession };
@@ -163,6 +163,7 @@ export function demoRuntime(): Runtime {
       }),
   }) as Service;
   const rawChats = createConversationService({
+    interpretTurn: createRuntimeModelRouter(),
     ...(configuration?.scope==="beta"?{retentionMs:configuration.retentionMs}:{}),
     workspace,
     admitPresentation,

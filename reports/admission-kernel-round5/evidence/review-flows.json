@@ -1,0 +1,148 @@
+[
+ {
+  "id": "L1_base_set_then_japanese",
+  "initial": "Find Charizard cards from Base Set",
+  "actions": [
+   {
+    "type": "refine",
+    "scope": {
+     "language": "ja"
+    }
+   },
+   {
+    "type": "page",
+    "offset": 0
+   }
+  ]
+ },
+ {
+  "id": "L1b_base_set_then_english",
+  "initial": "Find Charizard cards from Base Set",
+  "actions": [
+   {
+    "type": "refine",
+    "scope": {
+     "language": "en"
+    }
+   },
+   {
+    "type": "page",
+    "offset": 0
+   }
+  ]
+ },
+ {
+  "id": "L2_plain_flow",
+  "initial": "Find Charizard cards",
+  "actions": [
+   {
+    "type": "refine",
+    "scope": {
+     "language": "en"
+    }
+   },
+   {
+    "type": "page",
+    "offset": 5
+   }
+  ],
+  "selectFirst": true
+ },
+ {
+  "id": "L3_language_answer_then_search",
+  "texts": [
+   "English",
+   "Find Charizard cards"
+  ],
+  "actions": [
+   {
+    "type": "page",
+    "offset": 5
+   }
+  ]
+ },
+ {
+  "id": "L4_ex_then_japanese",
+  "initial": "Find Charizard ex cards",
+  "actions": [
+   {
+    "type": "refine",
+    "scope": {
+     "language": "ja"
+    }
+   },
+   {
+    "type": "page",
+    "offset": 0
+   }
+  ]
+ },
+ {
+  "id": "L5_holo_then_japanese",
+  "initial": "Find Charizard holo cards",
+  "actions": [
+   {
+    "type": "refine",
+    "scope": {
+     "language": "ja"
+    }
+   },
+   {
+    "type": "page",
+    "offset": 0
+   }
+  ]
+ },
+ {
+  "id": "L6_pokeball_then_english",
+  "initial": "Find Pikachu 精灵球 cards",
+  "actions": [
+   {
+    "type": "refine",
+    "scope": {
+     "language": "en"
+    }
+   },
+   {
+    "type": "page",
+    "offset": 0
+   }
+  ]
+ },
+ {
+  "id": "J_anything_but_refine_rerun",
+  "initial": "Recommend Charizard cards",
+  "inject": [
+   {
+    "type": "reply",
+    "text": "anything but Charizard"
+   }
+  ],
+  "actions": [
+   {
+    "type": "refine",
+    "scope": {
+     "language": "en"
+    }
+   }
+  ]
+ },
+ {
+  "id": "J_by_arita_refine_rerun",
+  "initial": "Recommend Charizard cards",
+  "inject": [
+   {
+    "type": "reply",
+    "text": "Charizard cards by Mitsuhiro Arita"
+   }
+  ],
+  "actions": [
+   {
+    "type": "refine",
+    "scope": {
+     "language": "en"
+    }
+   }
+  ]
+ }
+]

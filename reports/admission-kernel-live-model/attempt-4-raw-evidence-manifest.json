@@ -1,0 +1,136 @@
+{
+  "schema": "pot.admission.attempt4-external-evidence-pointer.v1",
+  "root_hint": "<evidence>/admission-kernel-live-model-evidence/attempt-4",
+  "fix_commit": "01382ad6fd97afa816ed9e08bec9e2a055107ffd",
+  "harness_commit": "cef7d3598dc7fabb82f735677e03f8f7f8ba2046",
+  "file_count": 7187,
+  "total_bytes": 34585223,
+  "external_manifest": {
+    "path": "<evidence>/admission-kernel-live-model-evidence/attempt-4/raw-evidence-manifest.json",
+    "bytes": 1565154,
+    "sha256": "a064ee0af1c2abe01425db61645b38c51b1e9e54d764fbb9974fcde8690f8657"
+  },
+  "note": "One authorised detached collection; no restart. Full receipts, logs, gates and repro scripts are external. Root report, proposals and summary are committed.",
+  "critical_files": [
+    {
+      "path": "STATUS.json",
+      "bytes": 3732,
+      "sha256": "ea64680df700ba3c49d1c7b7a9bc2796707e20ee57a4c62c77d39eb319fe1bab"
+    },
+    {
+      "path": "comparison.json",
+      "bytes": 1330845,
+      "sha256": "5325ddd061c938ee24f2ab9578ab2f0247af3a47bbbb3466505653e140f73011"
+    },
+    {
+      "path": "detached-rehearsal-launch2/exit.json",
+      "bytes": 220,
+      "sha256": "a2d30c15b844605a42f7cb3fe1cb883a1f9c4683ef91557da7915daae2011298"
+    },
+    {
+      "path": "detached-rehearsal-result.json",
+      "bytes": 716,
+      "sha256": "85599211f079ac8bdf8f22b479d137cc4134ec40eb1907892badcd77648e37fb"
+    },
+    {
+      "path": "final-scope-proof.json",
+      "bytes": 700,
+      "sha256": "d80253a80ae32d89e6da6eaa917d0f80b7416e764d4e0bd39308d71a27d8478d"
+    },
+    {
+      "path": "gates/fresh93/mutation-table.md",
+      "bytes": 20043,
+      "sha256": "83aa80f05191dfd8de024c6f948aa3f983785bc3d0c55d6788ceb916d6485a49"
+    },
+    {
+      "path": "gates/fresh93/mutation-verification.json",
+      "bytes": 1842,
+      "sha256": "62624cbe839f98c1655084e676e57b494b4e05dfc2b621199b2414f12aa195e9"
+    },
+    {
+      "path": "gates/fresh93/mutations.json",
+      "bytes": 5654964,
+      "sha256": "154ae080f5a525706691ffe4c4d496f58e5842106032d1111025ac0025820527"
+    },
+    {
+      "path": "gates/gate-summary.json",
+      "bytes": 82037,
+      "sha256": "7f8464dcd35253a975d0c6fd88b9791544ffd7b17a48845625be26455a8291f9"
+    },
+    {
+      "path": "gates/input-binding.json",
+      "bytes": 1541,
+      "sha256": "a508b7c139126854df78b2d4655496b7273f8de29938c47f18e7b0b6b676a5d1"
+    },
+    {
+      "path": "live-launch/exit.json",
+      "bytes": 215,
+      "sha256": "bd038386a5bc986bb771d26acd92a97e92e53c9cf8f18b1c37fd7fd24c65d9d5"
+    },
+    {
+      "path": "live-launch/pid.json",
+      "bytes": 332,
+      "sha256": "ea9a99021bfb03c06eaa286236d593e9f877dd6170ae8e4e664e58eb0f002e1b"
+    },
+    {
+      "path": "modelTurn.diff",
+      "bytes": 7474,
+      "sha256": "1cfea8d925aedb1a524aa0944b6949208e1a2867c21d70a1819e9211cc462b18"
+    },
+    {
+      "path": "offline-proof.json",
+      "bytes": 3376,
+      "sha256": "f0448c724e7db3d295781d1cbbdaf5dabd87bfc7bd2601f282b3666009525c4e"
+    },
+    {
+      "path": "phase-a/collection-state.json",
+      "bytes": 1723448,
+      "sha256": "783c03ce45603bb9fa6177e3552d8304402229008010c301fc351a9631489fa3"
+    },
+    {
+      "path": "phase-a/collection-summary.json",
+      "bytes": 1580080,
+      "sha256": "e50e6032bd6df46fa6b2a0999ae6cd03ac8de11f2c8be62ff5d43c6c130ff6be"
+    },
+    {
+      "path": "phase-a/guard-receipt.json",
+      "bytes": 871848,
+      "sha256": "6c05ab0d0e32e2e0810b67e975a296df705eeccc363f9fff2126855331b6bda6"
+    },
+    {
+      "path": "phase-b1.log",
+      "bytes": 342,
+      "sha256": "e30ca9523189c1abd88c37f6d6c501ee93b95599392006ab1cd2606ffc64b545"
+    },
+    {
+      "path": "phase-b2.log",
+      "bytes": 342,
+      "sha256": "73e6928f3988608dbf83cda9eefdf21acc06ed7480b44aee496ffcab7dae75c1"
+    },
+    {
+      "path": "pre-live-validation.json",
+      "bytes": 550,
+      "sha256": "23a7c0f46177338a760e8a95b3f7a5a602b5957d1f64380832bc6f2e506622cb"
+    },
+    {
+      "path": "rehearsal-observation1.json",
+      "bytes": 347,
+      "sha256": "2163514f5af572cd5895571948f3a94a210f5a8225f24316f2e52e44446e52a0"
+    },
+    {
+      "path": "scope-proof.json",
+      "bytes": 444,
+      "sha256": "d9f7293180d6e83f02d5c11d8b6f1b74f76b6a5509d121f9169c1d51ec77df85"
+    },
+    {
+      "path": "scoring/run1/summary.json",
+      "bytes": 309194,
+      "sha256": "77ab2c392d1a88132270cf41c76f56fecccbecbda74c3567de582ed820af031b"
+    },
+    {
+      "path": "scoring/run2/summary.json",
+      "bytes": 309194,
+      "sha256": "77ab2c392d1a88132270cf41c76f56fecccbecbda74c3567de582ed820af031b"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+[
+ {"id":"R3-1a","text":"Find cards that are not Charizard"},
+ {"id":"R3-1b","text":"Find non-Charizard cards"},
+ {"id":"R3-1c","text":"Find anything but Pikachu cards"},
+ {"id":"R3-1d","text":"ピカチュウ以外のカードを探して","lang":"ja"},
+ {"id":"R3-1e","text":"Find Charizard cards that are not ex"},
+ {"id":"R3-2a","text":"リザードン 50ドル以下","lang":"ja"},
+ {"id":"R3-2b","text":"Find Charizard cards 50美元以内"},
+ {"id":"R3-2c","text":"Find Charizard cards not over ten"},
+ {"id":"R3-2d","text":"50ドル以下"},
+ {"id":"control-held-finish","text":"Find Charizard cards that are not holo"},
+ {"id":"control-held-release","text":"Find Charizard cards not from Base Set"},
+ {"id":"control-held-fullwidth-language","text":"Find Charizard cards without ＪＡＰＡＮＥＳＥ","lang":null}
+]

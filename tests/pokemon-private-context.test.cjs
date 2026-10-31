@@ -6,8 +6,10 @@ test('private gateway closure loads from only the composed creator/cloud paths w
   const directory=fs.mkdtempSync(path.join(os.tmpdir(),'pot-private-closure-'));t.after(()=>fs.rmSync(directory,{recursive:true,force:true}));
   fs.cpSync(path.join(root,'src/lib/pokemon'),path.join(directory,'creator/src/lib/pokemon'),{recursive:true});
   fs.cpSync(path.join(root,'cloud/pokemon/runtime'),path.join(directory,'cloud'),{recursive:true});
-  const result=spawnSync(process.execPath,['-e',"const assert=require('node:assert/strict');const c=require(process.argv[1]);assert.equal(c.configuration({}),null);require(process.argv[2]).validateOffer(require(process.argv[3]).offers[0]);",path.join(directory,'cloud/commerce-sidecar.cjs'),path.join(directory,'creator/src/lib/pokemon/commerceContract.cjs'),path.join(root,'tests/fixtures/official-ebay-research.offline.json')],{encoding:'utf8',env:{PATH:process.env.PATH,NODE_PATH:''}});
+  const result=spawnSync(process.execPath,['-e',"const assert=require('node:assert/strict');const c=require(process.argv[1]);assert.equal(c.configuration({}),null);require(process.argv[2]).validateOffer(require(process.argv[3]).offers[0]);",path.join(directory,'cloud/commerce-sidecar.cjs'),path.join(directory,'creator/src/lib/pokemon/commerceContract.cjs'),path.join(root,'tests/fixtures/official-ebay-research.offline.json')],{encoding:'utf8',env:{PATH:process.env.PATH,NODE_PATH:'',NODE_OPTIONS:process.env.NODE_OPTIONS}});
   assert.equal(result.status,0,result.stderr);
+  // Keep the inherited child's network audit visible to the evidence runner.
+  if(result.stderr)process.stderr.write(result.stderr);
 });
 test('context composer includes only reviewed build/runtime files and omits secrets/operator fixtures',()=>{
   const program=String.raw`
@@ -31,5 +33,5 @@ except ValueError:pass
 else:raise AssertionError('unsafe archive path accepted')
 print(json.dumps({'safe':True,'files':len(result)}))
 `;
-  const result=spawnSync('python3',['-I','-B','-c',program],{cwd:root,encoding:'utf8',env:{PATH:process.env.PATH}});assert.equal(result.status,0,result.stderr);assert.equal(JSON.parse(result.stdout).safe,true);
+  const result=spawnSync('python3',['-I','-B','-c',program],{cwd:root,encoding:'utf8',env:{PATH:process.env.PATH,NODE_OPTIONS:process.env.NODE_OPTIONS}});assert.equal(result.status,0,result.stderr);assert.equal(JSON.parse(result.stdout).safe,true);
 });

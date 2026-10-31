@@ -1,0 +1,379 @@
+{
+  "source_directory": "<evidence>/admission-kernel-claude-review-20261028/repro",
+  "source_sha256": {
+    "probes-1.json": "4a1915559b1b78502d9a4214e62ef19935cdc3d001089fd2731b788bd865d3ae",
+    "probes-2.json": "d1f26db03d0098a4bb0f334b0cdebd206fd0e5d43dc2f4b4e31475ffc0ea54de",
+    "probes-3.json": "0b7b57cbde73828995acfeafaad642f4a6636812e8770a0ec370ad3cb175ade4",
+    "probes-4.json": "058aa190622589d5e8c1d038bae27951150be414dfd38343bd2d68a9f618f3ec",
+    "probes-4b.json": "2d466735a200f0e827d35add65f6dd82184cef43b8cbcd7bbe55f3ccace21566",
+    "clarification-relabel.json": "d08bc038e21f4d7eee55e9090aab2a6687e1df4bc179afd28670cd440609c5eb"
+  },
+  "probes": [
+    {
+      "id": "ctrl_positive_holo",
+      "initial": "English Charizard cards",
+      "text": "Find Charizard holo cards",
+      "source": "probes-1.json"
+    },
+    {
+      "id": "V1_not_holo",
+      "initial": "English Charizard cards",
+      "text": "Find Charizard cards that are not holo",
+      "source": "probes-1.json"
+    },
+    {
+      "id": "V2_no_holo",
+      "initial": "English Charizard cards",
+      "text": "Find Charizard cards, no holo please",
+      "source": "probes-1.json"
+    },
+    {
+      "id": "V3_except_holo",
+      "initial": "English Charizard cards",
+      "text": "Find Charizard cards except holo",
+      "source": "probes-1.json"
+    },
+    {
+      "id": "V4_without_masterball",
+      "initial": "Japanese Pikachu cards",
+      "text": "Find Pikachu cards without the master ball pattern",
+      "source": "probes-1.json"
+    },
+    {
+      "id": "V5_not_reverse_holo_model_search",
+      "initial": "English Charizard cards",
+      "text": "Find Charizard cards but not reverse holo",
+      "intent": "search",
+      "source": "probes-1.json"
+    },
+    {
+      "id": "V6_holo_quoted",
+      "initial": "English Charizard cards",
+      "text": "Find Charizard cards; \"holo\" is just an example",
+      "source": "probes-1.json"
+    },
+    {
+      "id": "S1_release_only_from",
+      "initial": "English Charizard cards",
+      "text": "Find Charizard cards only from Base Set",
+      "source": "probes-1.json"
+    },
+    {
+      "id": "S2_release_not_from",
+      "initial": "English Charizard cards",
+      "text": "Find Charizard cards not from Base Set",
+      "source": "probes-1.json"
+    },
+    {
+      "id": "S3_release_other_than",
+      "initial": "English Charizard cards",
+      "text": "Find Charizard cards from any set other than Base Set only",
+      "source": "probes-1.json"
+    },
+    {
+      "id": "B1_bare_lucario_off",
+      "initial": "English Charizard cards",
+      "text": "Lucario",
+      "source": "probes-1.json"
+    },
+    {
+      "id": "B2_find_lucario_off",
+      "initial": "English Charizard cards",
+      "text": "Find Lucario cards",
+      "source": "probes-1.json"
+    },
+    {
+      "id": "B3_bare_lucario_reply",
+      "initial": "English Charizard cards",
+      "text": "Lucario",
+      "intent": "reply",
+      "source": "probes-1.json"
+    },
+    {
+      "id": "B4_bare_lucario_search",
+      "initial": "English Charizard cards",
+      "text": "Lucario",
+      "intent": "search",
+      "source": "probes-1.json"
+    },
+    {
+      "id": "U1_fullwidth_negated_japanese_nolang",
+      "initial": "Charizard cards",
+      "text": "Find Charizard cards without ＪＡＰＡＮＥＳＥ",
+      "source": "probes-2.json"
+    },
+    {
+      "id": "U2_fullwidth_negated_japanese_en",
+      "initial": "English Charizard cards",
+      "text": "Find Charizard cards without ＪＡＰＡＮＥＳＥ",
+      "source": "probes-2.json"
+    },
+    {
+      "id": "U3_fullwidth_english_positive_nolang",
+      "initial": "Charizard cards",
+      "text": "Find Ｅｎｇｌｉｓｈ Charizard cards",
+      "source": "probes-2.json"
+    },
+    {
+      "id": "U4_fullwidth_two_fractions",
+      "initial": "English Charizard cards",
+      "text": "Find Charizard ００６／１６５ or １９９／１６５",
+      "source": "probes-2.json"
+    },
+    {
+      "id": "M1_or_less_keeps_prior",
+      "initial": "English Charizard cards",
+      "prefs": {
+        "currency": "USD",
+        "budget_minor": 100000,
+        "grade_company": "PSA",
+        "grade_value": "10"
+      },
+      "text": "Find Charizard cards 50 or less",
+      "source": "probes-2.json"
+    },
+    {
+      "id": "M2_cheaper_than",
+      "initial": "English Charizard cards",
+      "prefs": {
+        "currency": "USD",
+        "budget_minor": 100000,
+        "grade_company": "PSA",
+        "grade_value": "10"
+      },
+      "text": "Find Charizard cards cheaper than 50",
+      "source": "probes-2.json"
+    },
+    {
+      "id": "M3_le_symbol",
+      "initial": "English Charizard cards",
+      "prefs": {
+        "currency": "USD",
+        "budget_minor": 100000,
+        "grade_company": "PSA",
+        "grade_value": "10"
+      },
+      "text": "Find Charizard cards ≤ 50",
+      "source": "probes-2.json"
+    },
+    {
+      "id": "M4_within",
+      "initial": "English Charizard cards",
+      "prefs": {
+        "currency": "USD",
+        "budget_minor": 100000,
+        "grade_company": "PSA",
+        "grade_value": "10"
+      },
+      "text": "Find Charizard cards within 50",
+      "source": "probes-2.json"
+    },
+    {
+      "id": "G1_ungraded",
+      "initial": "English Charizard cards",
+      "prefs": {
+        "currency": "USD",
+        "budget_minor": 100000,
+        "grade_company": "PSA",
+        "grade_value": "10"
+      },
+      "text": "Find Charizard cards, ungraded raw copies only",
+      "source": "probes-2.json"
+    },
+    {
+      "id": "G2_fullwidth_psa9",
+      "initial": "English Charizard cards",
+      "prefs": {
+        "currency": "USD",
+        "budget_minor": 100000,
+        "grade_company": "PSA",
+        "grade_value": "10"
+      },
+      "text": "Find Charizard cards ＰＳＡ９",
+      "source": "probes-2.json"
+    },
+    {
+      "id": "G3_slab_nine",
+      "initial": "English Charizard cards",
+      "prefs": {
+        "currency": "USD",
+        "budget_minor": 100000,
+        "grade_company": "PSA",
+        "grade_value": "10"
+      },
+      "text": "Find Charizard cards in a nine slab",
+      "source": "probes-2.json"
+    },
+    {
+      "id": "I1_two_names",
+      "initial": "English Charizard cards",
+      "text": "Find Charizard or Lucario cards",
+      "source": "probes-2.json"
+    },
+    {
+      "id": "I2_unknown_two_names",
+      "initial": "English Charizard cards",
+      "text": "Find Lucario and Vaporeon cards",
+      "source": "probes-2.json"
+    },
+    {
+      "id": "I3_status_with_unknown_name",
+      "initial": "English Charizard cards",
+      "text": "status of Lucario cards?",
+      "intent": "status",
+      "source": "probes-2.json"
+    },
+    {
+      "id": "I4_explain_with_unknown_name",
+      "initial": "English Charizard cards",
+      "text": "explain the current results for Lucario",
+      "intent": "explain",
+      "explanation_key": "current_results",
+      "source": "probes-2.json"
+    },
+    {
+      "id": "I5_status_exact",
+      "initial": "English Charizard cards",
+      "text": "status",
+      "intent": "status",
+      "source": "probes-2.json"
+    },
+    {
+      "id": "SEL_V4_masterball",
+      "initial": "Japanese Pikachu cards",
+      "text": "Find Pikachu cards without the master ball pattern",
+      "actions": [
+        {
+          "type": "select",
+          "card_id": "ja:SV2A:025/165:reverse_masterball"
+        }
+      ],
+      "source": "probes-3.json"
+    },
+    {
+      "id": "SEL_S2_not_base_set",
+      "initial": "English Charizard cards",
+      "text": "Find Charizard cards not from Base Set",
+      "actions": [
+        {
+          "type": "select",
+          "card_id": "en:BASE1:004/102:holo_shadowless"
+        }
+      ],
+      "source": "probes-3.json"
+    },
+    {
+      "id": "SEL_U1_fullwidth",
+      "initial": "Charizard cards",
+      "texts": [
+        "Find Charizard cards without ＪＡＰＡＮＥＳＥ",
+        "Find Charizard cards"
+      ],
+      "actions": [],
+      "source": "probes-3.json"
+    },
+    {
+      "id": "SEL_V1_not_holo_then_select",
+      "initial": "English Charizard cards",
+      "text": "Find Charizard cards that are not holo",
+      "actions": [
+        {
+          "type": "select",
+          "card_id": "en:BASE4:004/130:holo"
+        }
+      ],
+      "source": "probes-3.json"
+    },
+    {
+      "id": "E1_echo_fail_then_select_old",
+      "initial": "English Charizard cards",
+      "text": "Find Charizard cards without ＪＡＰＡＮＥＳＥ",
+      "actions": [
+        {
+          "type": "select",
+          "card_id": "en:BASE4:004/130:holo"
+        }
+      ],
+      "source": "probes-4.json"
+    },
+    {
+      "id": "E2_echo_fail_then_positive_ask",
+      "initial": "English Charizard cards",
+      "texts": [
+        "Find Charizard cards without ＪＡＰＡＮＥＳＥ",
+        "Find English Pikachu cards"
+      ],
+      "source": "probes-4.json"
+    },
+    {
+      "id": "E3_echo_fail_then_typed_refine",
+      "initial": "English Charizard cards",
+      "text": "Find Charizard cards without ＪＡＰＡＮＥＳＥ",
+      "actions": [
+        {
+          "type": "refine",
+          "scope": {
+            "language": "en"
+          }
+        }
+      ],
+      "source": "probes-4.json"
+    },
+    {
+      "id": "W1_weather_model_off",
+      "initial": "English Charizard cards",
+      "text": "What is the weather?",
+      "source": "probes-4.json"
+    },
+    {
+      "id": "W2_bare_holo_reply",
+      "initial": "English Charizard cards",
+      "text": "holo",
+      "source": "probes-4.json"
+    },
+    {
+      "id": "W3_reply_nonholo_to_variant_prompt",
+      "initial": "English Charizard cards",
+      "texts": [
+        "Find Charizard cards only from Base Set",
+        "non-holo"
+      ],
+      "source": "probes-4.json"
+    },
+    {
+      "id": "E1_echo_fail_then_select_old",
+      "initial": "English Charizard cards",
+      "text": "Find Charizard cards without ＪＡＰＡＮＥＳＥ",
+      "actions": [
+        {
+          "type": "select",
+          "card_id": "en:BASE4:004/130:holo"
+        }
+      ],
+      "source": "probes-4b.json"
+    },
+    {
+      "id": "E2_echo_fail_then_positive_ask",
+      "initial": "English Charizard cards",
+      "texts": [
+        "Find Charizard cards without ＪＡＰＡＮＥＳＥ",
+        "Find English Pikachu cards"
+      ],
+      "source": "probes-4b.json"
+    },
+    {
+      "id": "E3_echo_fail_then_typed_refine",
+      "initial": "English Charizard cards",
+      "text": "Find Charizard cards without ＪＡＰＡＮＥＳＥ",
+      "actions": [
+        {
+          "type": "refine",
+          "scope": {
+            "language": "en"
+          }
+        }
+      ],
+      "source": "probes-4b.json"
+    }
+  ]
+}

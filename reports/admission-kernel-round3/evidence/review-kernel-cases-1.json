@@ -1,0 +1,391 @@
+[
+{
+"id": "A1",
+"text": "Find Charizard cards not by Mitsuhiro Arita"
+},
+{
+"id": "A2",
+"text": "Find Charizard cards not illustrated by Mitsuhiro Arita"
+},
+{
+"id": "A3",
+"text": "Find Charizard cards that are not ex"
+},
+{
+"id": "A4",
+"text": "Find Charizard cards, no ex"
+},
+{
+"id": "A5",
+"text": "Find Pikachu cards except Charizard"
+},
+{
+"id": "A6",
+"text": "Find cards that are not Charizard"
+},
+{
+"id": "A7",
+"text": "Find Charizard cards except ones by Ken Sugimori"
+},
+{
+"id": "F1",
+"text": "Find Charizard holo cards from Base Set"
+},
+{
+"id": "F2",
+"text": "Find Charizard holo cards not from Base Set"
+},
+{
+"id": "F3",
+"text": "Find Charizard cards from Base Set, not holo"
+},
+{
+"id": "F4",
+"text": "Find Charizard holo cards?"
+},
+{
+"id": "F5",
+"text": "Is Charizard holo?"
+},
+{
+"id": "F6",
+"text": "Find Charizard cards like \"Base Set\""
+},
+{
+"id": "F7",
+"text": "Find Charizard cards e.g. holo"
+},
+{
+"id": "F8",
+"text": "Find Charizard cards from Base Set 2"
+},
+{
+"id": "F10",
+"text": "holo",
+"field": "release"
+},
+{
+"id": "F11",
+"text": "Base Set",
+"field": "variant"
+},
+{
+"id": "F12",
+"text": "holo",
+"field": null
+},
+{
+"id": "F12b",
+"text": "holo",
+"field": "variant"
+},
+{
+"id": "F13",
+"text": "Find Charizard ｈｏｌｏ cards"
+},
+{
+"id": "F14",
+"text": "Find Charizard cards ｎｏｔ ｈｏｌｏ"
+},
+{
+"id": "F15a",
+"text": "Find Charizard cards notholo"
+},
+{
+"id": "F15b",
+"text": "Find Charizard cards not\u001fholo"
+},
+{
+"id": "F15c",
+"text": "Find Charizard holocards"
+},
+{
+"id": "F15d",
+"text": "Find Charizard holo﻿cards"
+},
+{
+"id": "F15e",
+"text": "Find Charizard cardsnot holo"
+},
+{
+"id": "F16",
+"text": "Find Charizard cards sans holo"
+},
+{
+"id": "F17",
+"text": "Find Charizard cards, nicht holo"
+},
+{
+"id": "F18",
+"text": "Find Charizard nonholo cards"
+},
+{
+"id": "F19",
+"text": "Find Charizard non-foil cards"
+},
+{
+"id": "F20",
+"text": "Find Charizard ﾎﾛ cards"
+},
+{
+"id": "F21",
+"text": "Find Charizard cards excluding Base Set"
+},
+{
+"id": "F22",
+"text": "Find Charizard cards from Base Set or Jungle"
+},
+{
+"id": "F23",
+"text": "Find Charizard holo cards from 151"
+},
+{
+"id": "F24",
+"text": "Find Charizard holo cards from 151",
+"lang": null
+},
+{
+"id": "F25",
+"text": "リザードン ホロ以外"
+},
+{
+"id": "F26",
+"text": "Find Charizard un-holo cards"
+},
+{
+"id": "F27",
+"text": "Find Charizard cards that lack holo"
+},
+{
+"id": "F28",
+"text": "Find Charizard cards, holo excluded"
+},
+{
+"id": "F29",
+"text": "Find Charizard cards minus holo"
+},
+{
+"id": "F30",
+"text": "Find Charizard cards from Base Set — not"
+},
+{
+"id": "F31",
+"text": "Find Charizard mirror cards"
+},
+{
+"id": "F32",
+"text": "Find Charizard ミラー cards"
+},
+{
+"id": "F33",
+"text": "Find Charizard 精灵球 cards"
+},
+{
+"id": "F34",
+"text": "Find Charizard poke ball reverse cards"
+},
+{
+"id": "F35",
+"text": "Find Charizard cards from Base Set please"
+},
+{
+"id": "F36",
+"text": "Find Charizard cards strictly from Base Set"
+},
+{
+"id": "F37",
+"text": "Find Charizard cards rather than Base Set"
+},
+{
+"id": "N1",
+"text": "Find Charizard cards without ＪＡＰＡＮＥＳＥ",
+"lang": null
+},
+{
+"id": "N2",
+"text": "Find Charizard cards in Ｊａｐａｎｅｓｅ",
+"lang": null
+},
+{
+"id": "N3",
+"text": "Find Charizard cards without Englısh",
+"lang": null
+},
+{
+"id": "N4",
+"text": "Find Charizard cards without japaneſe",
+"lang": null
+},
+{
+"id": "N5",
+"text": "Find Charizard cardswithout Japanese",
+"lang": null
+},
+{
+"id": "N6",
+"text": "Find Charizard cards without\u001cJapanese",
+"lang": null
+},
+{
+"id": "N7",
+"text": "Find Charizard cards no English",
+"lang": null
+},
+{
+"id": "N8",
+"text": "Find Charizard cards ｗｉｔｈｏｕｔ English",
+"lang": null
+},
+{
+"id": "M1",
+"text": "Find Charizard cards for fifty"
+},
+{
+"id": "M2",
+"text": "Find Charizard cards at 50ish"
+},
+{
+"id": "M3",
+"text": "Find Charizard cards 50k"
+},
+{
+"id": "M4",
+"text": "Find Charizard cards for a fiver"
+},
+{
+"id": "M5",
+"text": "Find Charizard cards not over ten"
+},
+{
+"id": "M6",
+"text": "Find Charizard cards capped at ten"
+},
+{
+"id": "M7",
+"text": "Find Charizard cards ≦ ten"
+},
+{
+"id": "M8",
+"text": "Find Charizard cards under50"
+},
+{
+"id": "M9",
+"text": "Find Charizard cards max50"
+},
+{
+"id": "M10",
+"text": "Find Charizard cards budget50"
+},
+{
+"id": "M11",
+"text": "Find Charizard cards underusd50"
+},
+{
+"id": "M12",
+"text": "Find Charizard cards ٥٠"
+},
+{
+"id": "M13",
+"text": "Find Charizard cards ⑤⓪"
+},
+{
+"id": "M14",
+"text": "Find Charizard cards 五十円以下"
+},
+{
+"id": "M15",
+"text": "リザードン 50ドル以下"
+},
+{
+"id": "M16",
+"text": "Find Charizard cards ja:50"
+},
+{
+"id": "M17",
+"text": "Find Charizard cards 50/50"
+},
+{
+"id": "M18",
+"text": "Find Charizard cards 1/2 price"
+},
+{
+"id": "M19",
+"text": "Find Charizard cards ½ price"
+},
+{
+"id": "M20",
+"text": "Find Charizard cards at half price"
+},
+{
+"id": "M21",
+"text": "Find Charizard cards twelve bucks"
+},
+{
+"id": "M22",
+"text": "Find Charizard cards 10s"
+},
+{
+"id": "M23",
+"text": "Find Charizard cards slabbed"
+},
+{
+"id": "M24",
+"text": "Find Charizard cards unslabbed"
+},
+{
+"id": "M25",
+"text": "Find Charizard cards near mint"
+},
+{
+"id": "M26",
+"text": "Find Charizard cards NM"
+},
+{
+"id": "M27",
+"text": "Find Charizard cards PSA nine"
+},
+{
+"id": "M28",
+"text": "Find Charizard cards gem mint ten"
+},
+{
+"id": "M29",
+"text": "Find Charizard cards 9 slab"
+},
+{
+"id": "M30",
+"text": "Find Charizard cards in tens"
+},
+{
+"id": "M31",
+"text": "Find Charizard cards BGS9.5"
+},
+{
+"id": "M32",
+"text": "Find Charizard cards CGC-9"
+},
+{
+"id": "M33",
+"text": "Find Charizard cards in PSA"
+},
+{
+"id": "M34",
+"text": "Find Charizard cards 4/102"
+},
+{
+"id": "M35",
+"text": "Find Charizard SV03.5 cards"
+},
+{
+"id": "M36",
+"text": "Find Charizard cards from Base Set 2"
+},
+{
+"id": "M37",
+"text": "Find Charizard cards sv2a-50"
+},
+{
+"id": "M38",
+"text": "Find Charizard cards en:x:y:50"
+}
+]

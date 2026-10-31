@@ -1,0 +1,8 @@
+{
+  "schema": "pot.admission.independent-post-replay-integrity.v1",
+  "verified_after_evidence_head": "ee500fc507cdae5770ecdde2ddb5e8e200fab7bf",
+  "runtime_source_files_verified": 69,
+  "database_sha256": "a72ba074fdf13f426b5709f67926e631ad32f52e92d08ff3e1ab646ed3b8f204",
+  "network_attempts": 0,
+  "passed": true
+}

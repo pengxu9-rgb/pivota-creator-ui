@@ -1,0 +1,450 @@
+[
+ {
+  "id": "X_any_Charizard_plain",
+  "text": "Find Charizard cards"
+ },
+ {
+  "id": "X_Japanese_Charizard_plain",
+  "text": "Find Japanese Charizard cards"
+ },
+ {
+  "id": "X_English_Charizard_plain",
+  "text": "Find English Charizard cards"
+ },
+ {
+  "id": "X_any_Charizard_ex",
+  "text": "Find Charizard ex cards"
+ },
+ {
+  "id": "X_Japanese_Charizard_ex",
+  "text": "Find Japanese Charizard ex cards"
+ },
+ {
+  "id": "X_English_Charizard_ex",
+  "text": "Find English Charizard ex cards"
+ },
+ {
+  "id": "X_any_Pikachu_plain",
+  "text": "Find Pikachu cards"
+ },
+ {
+  "id": "X_Japanese_Pikachu_plain",
+  "text": "Find Japanese Pikachu cards"
+ },
+ {
+  "id": "X_English_Pikachu_plain",
+  "text": "Find English Pikachu cards"
+ },
+ {
+  "id": "X_any_Pikachu_ex",
+  "text": "Find Pikachu ex cards"
+ },
+ {
+  "id": "X_Japanese_Pikachu_ex",
+  "text": "Find Japanese Pikachu ex cards"
+ },
+ {
+  "id": "X_English_Pikachu_ex",
+  "text": "Find English Pikachu ex cards"
+ },
+ {
+  "id": "X_any_Mewtwo_plain",
+  "text": "Find Mewtwo cards"
+ },
+ {
+  "id": "X_Japanese_Mewtwo_plain",
+  "text": "Find Japanese Mewtwo cards"
+ },
+ {
+  "id": "X_English_Mewtwo_plain",
+  "text": "Find English Mewtwo cards"
+ },
+ {
+  "id": "X_any_Mewtwo_ex",
+  "text": "Find Mewtwo ex cards"
+ },
+ {
+  "id": "X_Japanese_Mewtwo_ex",
+  "text": "Find Japanese Mewtwo ex cards"
+ },
+ {
+  "id": "X_English_Mewtwo_ex",
+  "text": "Find English Mewtwo ex cards"
+ },
+ {
+  "id": "X_any_Mew_plain",
+  "text": "Find Mew cards"
+ },
+ {
+  "id": "X_Japanese_Mew_plain",
+  "text": "Find Japanese Mew cards"
+ },
+ {
+  "id": "X_English_Mew_plain",
+  "text": "Find English Mew cards"
+ },
+ {
+  "id": "X_any_Mew_ex",
+  "text": "Find Mew ex cards"
+ },
+ {
+  "id": "X_Japanese_Mew_ex",
+  "text": "Find Japanese Mew ex cards"
+ },
+ {
+  "id": "X_English_Mew_ex",
+  "text": "Find English Mew ex cards"
+ },
+ {
+  "id": "X_any_Eevee_plain",
+  "text": "Find Eevee cards"
+ },
+ {
+  "id": "X_Japanese_Eevee_plain",
+  "text": "Find Japanese Eevee cards"
+ },
+ {
+  "id": "X_English_Eevee_plain",
+  "text": "Find English Eevee cards"
+ },
+ {
+  "id": "X_any_Eevee_ex",
+  "text": "Find Eevee ex cards"
+ },
+ {
+  "id": "X_Japanese_Eevee_ex",
+  "text": "Find Japanese Eevee ex cards"
+ },
+ {
+  "id": "X_English_Eevee_ex",
+  "text": "Find English Eevee ex cards"
+ },
+ {
+  "id": "X_any_Bulbasaur_plain",
+  "text": "Find Bulbasaur cards"
+ },
+ {
+  "id": "X_Japanese_Bulbasaur_plain",
+  "text": "Find Japanese Bulbasaur cards"
+ },
+ {
+  "id": "X_English_Bulbasaur_plain",
+  "text": "Find English Bulbasaur cards"
+ },
+ {
+  "id": "X_any_Bulbasaur_ex",
+  "text": "Find Bulbasaur ex cards"
+ },
+ {
+  "id": "X_Japanese_Bulbasaur_ex",
+  "text": "Find Japanese Bulbasaur ex cards"
+ },
+ {
+  "id": "X_English_Bulbasaur_ex",
+  "text": "Find English Bulbasaur ex cards"
+ },
+ {
+  "id": "X_any_Squirtle_plain",
+  "text": "Find Squirtle cards"
+ },
+ {
+  "id": "X_Japanese_Squirtle_plain",
+  "text": "Find Japanese Squirtle cards"
+ },
+ {
+  "id": "X_English_Squirtle_plain",
+  "text": "Find English Squirtle cards"
+ },
+ {
+  "id": "X_any_Squirtle_ex",
+  "text": "Find Squirtle ex cards"
+ },
+ {
+  "id": "X_Japanese_Squirtle_ex",
+  "text": "Find Japanese Squirtle ex cards"
+ },
+ {
+  "id": "X_English_Squirtle_ex",
+  "text": "Find English Squirtle ex cards"
+ },
+ {
+  "id": "X_any_Charmander_plain",
+  "text": "Find Charmander cards"
+ },
+ {
+  "id": "X_Japanese_Charmander_plain",
+  "text": "Find Japanese Charmander cards"
+ },
+ {
+  "id": "X_English_Charmander_plain",
+  "text": "Find English Charmander cards"
+ },
+ {
+  "id": "X_any_Charmander_ex",
+  "text": "Find Charmander ex cards"
+ },
+ {
+  "id": "X_Japanese_Charmander_ex",
+  "text": "Find Japanese Charmander ex cards"
+ },
+ {
+  "id": "X_English_Charmander_ex",
+  "text": "Find English Charmander ex cards"
+ },
+ {
+  "id": "X_any_Umbreon_plain",
+  "text": "Find Umbreon cards"
+ },
+ {
+  "id": "X_Japanese_Umbreon_plain",
+  "text": "Find Japanese Umbreon cards"
+ },
+ {
+  "id": "X_English_Umbreon_plain",
+  "text": "Find English Umbreon cards"
+ },
+ {
+  "id": "X_any_Umbreon_ex",
+  "text": "Find Umbreon ex cards"
+ },
+ {
+  "id": "X_Japanese_Umbreon_ex",
+  "text": "Find Japanese Umbreon ex cards"
+ },
+ {
+  "id": "X_English_Umbreon_ex",
+  "text": "Find English Umbreon ex cards"
+ },
+ {
+  "id": "X_any_Gengar_plain",
+  "text": "Find Gengar cards"
+ },
+ {
+  "id": "X_Japanese_Gengar_plain",
+  "text": "Find Japanese Gengar cards"
+ },
+ {
+  "id": "X_English_Gengar_plain",
+  "text": "Find English Gengar cards"
+ },
+ {
+  "id": "X_any_Gengar_ex",
+  "text": "Find Gengar ex cards"
+ },
+ {
+  "id": "X_Japanese_Gengar_ex",
+  "text": "Find Japanese Gengar ex cards"
+ },
+ {
+  "id": "X_English_Gengar_ex",
+  "text": "Find English Gengar ex cards"
+ },
+ {
+  "id": "X_any_Lugia_plain",
+  "text": "Find Lugia cards"
+ },
+ {
+  "id": "X_Japanese_Lugia_plain",
+  "text": "Find Japanese Lugia cards"
+ },
+ {
+  "id": "X_English_Lugia_plain",
+  "text": "Find English Lugia cards"
+ },
+ {
+  "id": "X_any_Lugia_ex",
+  "text": "Find Lugia ex cards"
+ },
+ {
+  "id": "X_Japanese_Lugia_ex",
+  "text": "Find Japanese Lugia ex cards"
+ },
+ {
+  "id": "X_English_Lugia_ex",
+  "text": "Find English Lugia ex cards"
+ },
+ {
+  "id": "X_any_Rayquaza_plain",
+  "text": "Find Rayquaza cards"
+ },
+ {
+  "id": "X_Japanese_Rayquaza_plain",
+  "text": "Find Japanese Rayquaza cards"
+ },
+ {
+  "id": "X_English_Rayquaza_plain",
+  "text": "Find English Rayquaza cards"
+ },
+ {
+  "id": "X_any_Rayquaza_ex",
+  "text": "Find Rayquaza ex cards"
+ },
+ {
+  "id": "X_Japanese_Rayquaza_ex",
+  "text": "Find Japanese Rayquaza ex cards"
+ },
+ {
+  "id": "X_English_Rayquaza_ex",
+  "text": "Find English Rayquaza ex cards"
+ },
+ {
+  "id": "X_any_Snorlax_plain",
+  "text": "Find Snorlax cards"
+ },
+ {
+  "id": "X_Japanese_Snorlax_plain",
+  "text": "Find Japanese Snorlax cards"
+ },
+ {
+  "id": "X_English_Snorlax_plain",
+  "text": "Find English Snorlax cards"
+ },
+ {
+  "id": "X_any_Snorlax_ex",
+  "text": "Find Snorlax ex cards"
+ },
+ {
+  "id": "X_Japanese_Snorlax_ex",
+  "text": "Find Japanese Snorlax ex cards"
+ },
+ {
+  "id": "X_English_Snorlax_ex",
+  "text": "Find English Snorlax ex cards"
+ },
+ {
+  "id": "X_any_Greninja_plain",
+  "text": "Find Greninja cards"
+ },
+ {
+  "id": "X_Japanese_Greninja_plain",
+  "text": "Find Japanese Greninja cards"
+ },
+ {
+  "id": "X_English_Greninja_plain",
+  "text": "Find English Greninja cards"
+ },
+ {
+  "id": "X_any_Greninja_ex",
+  "text": "Find Greninja ex cards"
+ },
+ {
+  "id": "X_Japanese_Greninja_ex",
+  "text": "Find Japanese Greninja ex cards"
+ },
+ {
+  "id": "X_English_Greninja_ex",
+  "text": "Find English Greninja ex cards"
+ },
+ {
+  "id": "X_any_Dragonite_plain",
+  "text": "Find Dragonite cards"
+ },
+ {
+  "id": "X_Japanese_Dragonite_plain",
+  "text": "Find Japanese Dragonite cards"
+ },
+ {
+  "id": "X_English_Dragonite_plain",
+  "text": "Find English Dragonite cards"
+ },
+ {
+  "id": "X_any_Dragonite_ex",
+  "text": "Find Dragonite ex cards"
+ },
+ {
+  "id": "X_Japanese_Dragonite_ex",
+  "text": "Find Japanese Dragonite ex cards"
+ },
+ {
+  "id": "X_English_Dragonite_ex",
+  "text": "Find English Dragonite ex cards"
+ },
+ {
+  "id": "X_any_Blastoise_plain",
+  "text": "Find Blastoise cards"
+ },
+ {
+  "id": "X_Japanese_Blastoise_plain",
+  "text": "Find Japanese Blastoise cards"
+ },
+ {
+  "id": "X_English_Blastoise_plain",
+  "text": "Find English Blastoise cards"
+ },
+ {
+  "id": "X_any_Blastoise_ex",
+  "text": "Find Blastoise ex cards"
+ },
+ {
+  "id": "X_Japanese_Blastoise_ex",
+  "text": "Find Japanese Blastoise ex cards"
+ },
+ {
+  "id": "X_English_Blastoise_ex",
+  "text": "Find English Blastoise ex cards"
+ },
+ {
+  "id": "X_any_Venusaur_plain",
+  "text": "Find Venusaur cards"
+ },
+ {
+  "id": "X_Japanese_Venusaur_plain",
+  "text": "Find Japanese Venusaur cards"
+ },
+ {
+  "id": "X_English_Venusaur_plain",
+  "text": "Find English Venusaur cards"
+ },
+ {
+  "id": "X_any_Venusaur_ex",
+  "text": "Find Venusaur ex cards"
+ },
+ {
+  "id": "X_Japanese_Venusaur_ex",
+  "text": "Find Japanese Venusaur ex cards"
+ },
+ {
+  "id": "X_English_Venusaur_ex",
+  "text": "Find English Venusaur ex cards"
+ },
+ {
+  "id": "X_cjk_喷火龙",
+  "text": "喷火龙"
+ },
+ {
+  "id": "X_cjk_喷火龙_ex",
+  "text": "喷火龙 ex"
+ },
+ {
+  "id": "X_cjk_噴火龍",
+  "text": "噴火龍"
+ },
+ {
+  "id": "X_cjk_噴火龍_ex",
+  "text": "噴火龍 ex"
+ },
+ {
+  "id": "X_cjk_皮卡丘",
+  "text": "皮卡丘"
+ },
+ {
+  "id": "X_cjk_皮卡丘_ex",
+  "text": "皮卡丘 ex"
+ },
+ {
+  "id": "X_cjk_リザードン",
+  "text": "リザードン"
+ },
+ {
+  "id": "X_cjk_リザードン_ex",
+  "text": "リザードン ex"
+ },
+ {
+  "id": "X_cjk_ピカチュウ",
+  "text": "ピカチュウ"
+ },
+ {
+  "id": "X_cjk_ピカチュウ_ex",
+  "text": "ピカチュウ ex"
+ }
+]

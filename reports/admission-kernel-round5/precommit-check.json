@@ -1,0 +1,12 @@
+{
+  "head": "7fe4bc8c8bf2f2f64f1c2ec0f5473f07dd9457a5",
+  "branch": "codex/admission-kernel-20261028",
+  "report_links_verified": 20,
+  "report_sha256": "aa73f0bad156cc2f71dc83144f5851a285b864af59d46909e8772f1fd73941b2",
+  "final_validator_passed": true,
+  "frozen_source_test_evidence_worktree_unchanged": true,
+  "controller_complete": true,
+  "controller_lock_removed": true,
+  "uncommitted_tracked_files_outside_round5": [],
+  "network_attempts": 0
+}
