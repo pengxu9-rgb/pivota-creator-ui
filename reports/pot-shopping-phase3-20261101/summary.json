@@ -1,0 +1,455 @@
+{
+  "schema": "shopping.phase3.stage3a-summary.v2",
+  "stage": "3a_complete_for_Claude_review",
+  "base": "6bab48c2f8f02bbdf47e8cfd2e4026685b6b5674",
+  "initial_build_commit": "773319c158e3d56a83a313edc4c9060f81adfc38",
+  "build_commit": "62f79f562cc9580488411db332ae4c75ef1866e0",
+  "freeze_sha256": "d105e91c81573b5c64d2e7685f6dca1c597f8505d80d5883a816badb5a588d20",
+  "live_run_started": false,
+  "arms": {
+    "L": {
+      "model": "gemini-3.5-flash-lite",
+      "model_calls": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "thinking_tokens": 0,
+      "spend_usd": 0,
+      "availability": "not_probed",
+      "thresholds": [
+        {
+          "threshold": "completion >=38/40 and no worse than model-off; J04 reconciles one existing order",
+          "status": "not_run_stage3a"
+        },
+        {
+          "threshold": "J01 qualified offer <=1 user turn in every repetition",
+          "status": "not_run_stage3a"
+        },
+        {
+          "threshold": "complete preview median <=4 and p95 <=5",
+          "status": "not_run_stage3a"
+        },
+        {
+          "threshold": "journey unnecessary clarification median <=1,p95 <=2 and no worse than model-off",
+          "status": "not_run_stage3a"
+        },
+        {
+          "threshold": "compatibility clarification <=16/34 in each pass",
+          "status": "not_run_stage3a"
+        },
+        {
+          "threshold": "zero wrong items/unsupported claims/duplicate or widened authority/identical-input catalog-hold flips",
+          "status": "not_run_stage3a"
+        },
+        {
+          "threshold": "all trusted/injected calls rejected and recorded",
+          "status": "not_run_stage3a"
+        },
+        {
+          "threshold": "latency p95 useful <=10s,qualified offer <=20s,complete preview <=30s",
+          "status": "not_run_stage3a"
+        },
+        {
+          "threshold": "cost <=USD0.05 per completed journey",
+          "status": "not_run_stage3a"
+        }
+      ]
+    },
+    "P": {
+      "model": "gemini-3.1-pro-preview",
+      "model_calls": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "thinking_tokens": 0,
+      "spend_usd": 0,
+      "availability": "not_probed",
+      "thresholds": [
+        {
+          "threshold": "completion >=38/40 and no worse than model-off; J04 reconciles one existing order",
+          "status": "not_run_stage3a"
+        },
+        {
+          "threshold": "J01 qualified offer <=1 user turn in every repetition",
+          "status": "not_run_stage3a"
+        },
+        {
+          "threshold": "complete preview median <=4 and p95 <=5",
+          "status": "not_run_stage3a"
+        },
+        {
+          "threshold": "journey unnecessary clarification median <=1,p95 <=2 and no worse than model-off",
+          "status": "not_run_stage3a"
+        },
+        {
+          "threshold": "compatibility clarification <=16/34 in each pass",
+          "status": "not_run_stage3a"
+        },
+        {
+          "threshold": "zero wrong items/unsupported claims/duplicate or widened authority/identical-input catalog-hold flips",
+          "status": "not_run_stage3a"
+        },
+        {
+          "threshold": "all trusted/injected calls rejected and recorded",
+          "status": "not_run_stage3a"
+        },
+        {
+          "threshold": "latency p95 useful <=10s,qualified offer <=20s,complete preview <=30s",
+          "status": "not_run_stage3a"
+        },
+        {
+          "threshold": "cost <=USD0.05 per completed journey",
+          "status": "not_run_stage3a"
+        }
+      ]
+    }
+  },
+  "budgets": {
+    "calls": 8000,
+    "calls_per_arm": 4000,
+    "input_tokens": 40000000,
+    "usd": 75,
+    "usd_per_arm": 50,
+    "concurrency": 2,
+    "minimum_launch_minutes": 45,
+    "refresh_minutes": 10,
+    "prompt_reservation_cap": 200000,
+    "output_reservation_cap": 2048
+  },
+  "gates": {
+    "full_suite": {
+      "tests": 590,
+      "pass": 590,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    "model_fake_suite": {
+      "tests": 84,
+      "pass": 84,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "executed_head": "62f79f562cc9580488411db332ae4c75ef1866e0"
+    },
+    "phase2_shopping": {
+      "tests": 25,
+      "pass": 25,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "executed_head": "62f79f562cc9580488411db332ae4c75ef1866e0"
+    },
+    "phase2_evaluation_byte_identical": true,
+    "phase2_evaluation_sha256": "3ca27b40bea6eced39f30197d3c3eb41e6f6b97aa72c5d815a9eae44327c16d2",
+    "all_executable_syntax": {
+      "total": 31,
+      "cjs": 30,
+      "python": 1,
+      "passed": true
+    },
+    "registered_model_mutants": {
+      "total": 5,
+      "caught": 5
+    },
+    "additional_scratch_facade_keyword_mutant": {
+      "id": "facade_dropped_maxLength_not_validated",
+      "file": "src/lib/pokemon/shopping/schema.cjs",
+      "from": "(s.maxLength===undefined||value.length<=s.maxLength)",
+      "to": "true",
+      "original_sha256": "dfca7798674b44c2c90ecc8012222b6291d2bed062d735175bebaf1318f34a8b",
+      "mutant_sha256": "0ffc92197890f75fd2488177fdcc267a4af53174fe6510da5b30db0321113f93",
+      "killed": true,
+      "exit_code": 1,
+      "target": "model eval: full original schema rejects dropped keywords, extra/missing args and forged approval JSON",
+      "network_attempts": 0,
+      "node_receipts": 2
+    },
+    "admission93": {
+      "attempt": 2,
+      "total": 93,
+      "caught": 88,
+      "equivalents": [
+        "remove_reply_binding",
+        "restore_generic_word_reply",
+        "adapter_execute_runs_held_plans",
+        "R4_lucario_prefix",
+        "R4_forms_case_sensitive_ex_only"
+      ],
+      "inventory": {
+        "test_files": 45,
+        "tests": 590,
+        "routing_python_workers": 63,
+        "python_workers": 64
+      },
+      "cells": 4324,
+      "node_receipts": 8694,
+      "python_receipts": 6080,
+      "network_attempts": 0,
+      "executed_head": "9b80189c1f7be0c41c9bbd255d651f8f2969c1cb",
+      "reused_for_final_code": true,
+      "input_equality_sha256": "31c557ed502b74d711b914e1f5d9ff683919bda821c4bd3e0bcd49c6b270cec5",
+      "input_equality": {
+        "snapshot_files": 475,
+        "native_files": 71,
+        "extra_files": 5,
+        "src_git_tree_equal": true,
+        "tests_git_tree_equal": true,
+        "node_and_python_binaries_equal": true,
+        "denial_profile_and_shim_equal": true
+      },
+      "fresh_on_final_HEAD": false
+    },
+    "python": {
+      "tests": 23,
+      "passed": true
+    },
+    "typescript": "pass",
+    "vocabulary": "pass",
+    "coupled_corpus": {
+      "fake": true,
+      "model_calls": 0,
+      "baseline_completed": 40,
+      "arms": {
+        "L": {
+          "episodes": 40,
+          "completed": 40,
+          "same_host_cases": 18,
+          "passed_cases": 18,
+          "compatibility": 778,
+          "unreachable": 0
+        },
+        "P": {
+          "episodes": 40,
+          "completed": 40,
+          "same_host_cases": 18,
+          "passed_cases": 18,
+          "compatibility": 778,
+          "unreachable": 0
+        }
+      },
+      "scorer_replayed_both_arms": true,
+      "fake_transport_requests": 3464
+    },
+    "actual_fake_scorer_replay": {
+      "rehearsal": true,
+      "conclusion": "fake replay only; no live conclusion",
+      "arms": {
+        "L": {
+          "completed": 40,
+          "compatibility_clarifications": [
+            16,
+            16
+          ],
+          "thresholds": {
+            "completion": true,
+            "j01": true,
+            "preview": true,
+            "unnecessary": true,
+            "compatibility": true,
+            "zero_wrong_items": true,
+            "zero_unsupported_claims": true,
+            "zero_duplicate_or_widened_authority": true,
+            "zero_catalog_hold_flips": true,
+            "trusted_injected_rejected": true,
+            "latency": true,
+            "cost": true
+          },
+          "improves": false
+        },
+        "P": {
+          "completed": 40,
+          "compatibility_clarifications": [
+            16,
+            16
+          ],
+          "thresholds": {
+            "completion": true,
+            "j01": true,
+            "preview": true,
+            "unnecessary": true,
+            "compatibility": true,
+            "zero_wrong_items": true,
+            "zero_unsupported_claims": true,
+            "zero_duplicate_or_widened_authority": true,
+            "zero_catalog_hold_flips": true,
+            "trusted_injected_rejected": true,
+            "latency": true,
+            "cost": true
+          },
+          "improves": false
+        }
+      }
+    },
+    "detached_replay": {
+      "both_arms": true,
+      "incomplete_session_resumed": true,
+      "first_useful_qualified_preserved": true,
+      "preview_downtime_retained": true,
+      "completed_latency_preserved": true,
+      "duplicate_transport_calls": 0
+    },
+    "full_suite_executed_head": "62f79f562cc9580488411db332ae4c75ef1866e0",
+    "arm_resume": {
+      "passed": true,
+      "cases": 10,
+      "signal_token_before_and_after_preflight": true,
+      "first_pending_preflight_serial": true,
+      "P_barrier_and_global_stops": true,
+      "no_completed_HTTP_repeated": true
+    }
+  },
+  "real_token_or_cache_reads": 0,
+  "real_Vertex_calls": 0,
+  "test_network_attempts": 0,
+  "protected_existing_files_changed": 0,
+  "build_files_added": 37,
+  "blockers": [],
+  "superseded": {
+    "initial_build": "773319c158e3d56a83a313edc4c9060f81adfc38",
+    "first_matrix_completed_rows": 41,
+    "first_matrix_complete": false,
+    "reason": "Unimported report scorer syntax failure; incomplete-session wall timing and timeout/auth cleanup gaps. Fixed by new commit, imported scoring tests, all-executable syntax qualification, durable observations and per-request stage/owned-transport cleanup.",
+    "stopped_owned_pid": 27493,
+    "foreign_processes_signalled": 0
+  },
+  "limitations": [
+    "Live model availability and acceptance of frozen function-calling/thinking configuration remain unverified.",
+    "All real-arm thresholds are unmeasured; fake statistics are separate.",
+    "Model-off 40/40 and zero-question median ceiling is preserved; no live improving arm is claimed.",
+    "Stage 3b requires Claude review of exact commits/freeze; no stage 3b launched."
+  ],
+  "bootstrap": "The separately authorised exact-main Git fetch and official pricing lookup are recorded in external bootstrap evidence; no further network was used.",
+  "evidence": {
+    "schema": "shopping.phase3.compact-evidence.v2",
+    "external_manifest_sha256": "513ef6bd41d75f40ee66cc8dcc5b2c5b4e9d6340f5c80169082d994086d2ba89",
+    "file_count": 21958,
+    "total_bytes": 129123812,
+    "raw_evidence_in_git": false,
+    "key_evidence": [
+      {
+        "file": "corpus-orchestration/qualification.json",
+        "bytes": 493,
+        "sha256": "2900af0e0d3b04c2cd2304d9f8f866e6d630c526e5e49e481ffd1ca548417edd"
+      },
+      {
+        "file": "corpus-orchestration/scoring.json",
+        "bytes": 3155,
+        "sha256": "e3cb964ab1b194046ce9646f95d0289f1ea9fe7763103d744fa949fc2ab8b134"
+      },
+      {
+        "file": "detached-orchestration.log",
+        "bytes": 311,
+        "sha256": "d7e0a441612116db3b293968fe069bf78ee5839cbb1af8c37dc20c17cb4fd2ac"
+      },
+      {
+        "file": "evaluation-orchestration.json",
+        "bytes": 184214,
+        "sha256": "3ca27b40bea6eced39f30197d3c3eb41e6f6b97aa72c5d815a9eae44327c16d2"
+      },
+      {
+        "file": "facade-keyword-mutant-orchestration/result.json",
+        "bytes": 561,
+        "sha256": "c50d51bc52bf2050efc2cdb66648cce5c1742ea3115d50128301289104464f6f"
+      },
+      {
+        "file": "facade-keyword-mutant-orchestration.cjs",
+        "bytes": 2254,
+        "sha256": "0358425541612a5c4861a8c6fcb954307d190f6dda399e5e460b71fff69676e2"
+      },
+      {
+        "file": "fake-cache-orchestration.log",
+        "bytes": 127,
+        "sha256": "b1ceb8170cce4421600e716f0aaefa7683e34279099303af931090a2a312feee"
+      },
+      {
+        "file": "finish-final-report.cjs",
+        "bytes": 11218,
+        "sha256": "e9420d45309617e3931a32325a5195c15d8fc81603af50d959b3a4d536f6e4f8"
+      },
+      {
+        "file": "fresh93-attempt2/mutations.json",
+        "bytes": 17602461,
+        "sha256": "d3ac17cc45a846e12d5c3ee2066a8097cabab8cda527d4e57e6288aeb910616f"
+      },
+      {
+        "file": "full-suite-orchestration.log",
+        "bytes": 152376,
+        "sha256": "7592baa4084c2ede8deab212fcac297e564c67b40699d66e564efdb8bd51d521"
+      },
+      {
+        "file": "new-mutants-orchestration/results.json",
+        "bytes": 1122,
+        "sha256": "7bea543402e8655e4d0b6fefb925c67098c3b5aae7a8ff9cbd391472546be28c"
+      },
+      {
+        "file": "python-main-orchestration.log",
+        "bytes": 122,
+        "sha256": "bb62e31abfdc641fbc9c6810c6f5e0685e0dd82e26cd681b27d08a0ea0cfcff1"
+      },
+      {
+        "file": "REPORT-TEMPLATE-final.md",
+        "bytes": 7854,
+        "sha256": "38993181bd90a63003c81caaa303659ee26741a4c944e98c7e41377e4a4c695e"
+      },
+      {
+        "file": "superseded-matrix-stop.json",
+        "bytes": 349,
+        "sha256": "7643a303eabddc0d12c027129e73067b95b2520eb06dd6de57d9889ff0db893a"
+      },
+      {
+        "file": "superseded-score-syntax.log",
+        "bytes": 3292,
+        "sha256": "7690c6a90ca0c5f1097478e47aff524bddbe669b44b5084aed1594474d4450dc"
+      },
+      {
+        "file": "syntax-orchestration/result.json",
+        "bytes": 8291,
+        "sha256": "da2196833c83f574e33d3bd3ff1fe149aba7d444ac9ad0dc85fdf80f18df8fa1"
+      },
+      {
+        "file": "typescript-orchestration.log",
+        "bytes": 69,
+        "sha256": "a149472458df8796a4d607a991f614970c6192ee8dca8519243b2a2af6c3542b"
+      },
+      {
+        "file": "vocabulary-orchestration.log",
+        "bytes": 727,
+        "sha256": "9b9b5435742032872a698f1d65c76b31e6954ea1af622e9950a0aad6d155d83c"
+      },
+      {
+        "file": "kernel-input-equality-final.json",
+        "bytes": 99682,
+        "sha256": "31c557ed502b74d711b914e1f5d9ff683919bda821c4bd3e0bcd49c6b270cec5"
+      },
+      {
+        "file": "kernel-input-baseline-9b.json",
+        "bytes": 87273,
+        "sha256": "0ad61c12f6c383677c4ca9941df6e21b2a99fa8fe4e1d041ce522b198c66829c"
+      },
+      {
+        "file": "kernel-input-supplement-9b.json",
+        "bytes": 467,
+        "sha256": "46b9bf6481334298965ffc777ff6ac4cfbf07e01bcdf852170d967b0642dae37"
+      },
+      {
+        "file": "arm-resume-orchestration/result.json",
+        "bytes": 2698,
+        "sha256": "f58d32ff18e8dfae60f6a0715a5d5d9dbcc5cd67128777423632109a7e47129a"
+      },
+      {
+        "file": "arm-resume-original-repro.log",
+        "bytes": 329,
+        "sha256": "acbf059e7a9a05d422f03b3057b3fb7a6f50cb619453f2c4a05b49ae31ae259a"
+      }
+    ]
+  },
+  "kernel_build_commit": "9b80189c1f7be0c41c9bbd255d651f8f2969c1cb",
+  "orchestration_followup": {
+    "changed_from_kernel_commit": [
+      "reports/pot-shopping-phase3-20261101/freeze.json",
+      "reports/pot-shopping-phase3-20261101/orchestrate.cjs",
+      "reports/pot-shopping-phase3-20261101/qualify-arm-resume.cjs"
+    ],
+    "src_tests_and_gate_inputs_unchanged": true,
+    "reason": "Transient arm shutdown must not create an immutable terminal marker; resume qualifies first pending normal call before concurrency2."
+  }
+}
