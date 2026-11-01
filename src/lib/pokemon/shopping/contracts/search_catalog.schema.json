@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "shopping.v1/search_catalog",
+  "title": "search_catalog",
+  "description": "",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "task_ref": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.:-]{0,159}$"
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000
+    },
+    "proposed_filters": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "language": {
+          "enum": [
+            "en",
+            "ja"
+          ]
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "budget_minor": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]{0,11})$"
+        },
+        "budget_basis": {
+          "enum": [
+            "item",
+            "delivered"
+          ]
+        },
+        "grade_kind": {
+          "enum": [
+            "slab",
+            "raw"
+          ]
+        },
+        "grade_company": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "grade_value": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        }
+      },
+      "required": []
+    }
+  },
+  "required": [
+    "task_ref",
+    "text"
+  ],
+  "x-tool-name": "search_catalog",
+  "x-model-callable": true,
+  "x-callers": [
+    "model",
+    "ui"
+  ],
+  "x-effect": "read",
+  "x-response-schema": {
+    "$ref": "common.schema.json#/$defs/envelope"
+  }
+}

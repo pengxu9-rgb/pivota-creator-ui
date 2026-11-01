@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "shopping.v1/create_checkout_session",
+  "title": "create_checkout_session",
+  "description": "",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "task_ref": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.:-]{0,159}$"
+    },
+    "selection_ref": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.:-]{0,159}$"
+    },
+    "route": {
+      "enum": [
+        "direct",
+        "forwarder"
+      ]
+    },
+    "destination_ref": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.:-]{0,159}$"
+    },
+    "quantity": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1
+    },
+    "request_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.:-]{0,159}$"
+    },
+    "expected_version": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "cancellation_epoch": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "required": [
+    "task_ref",
+    "selection_ref",
+    "route",
+    "destination_ref",
+    "quantity",
+    "request_id",
+    "expected_version",
+    "cancellation_epoch"
+  ],
+  "x-tool-name": "create_checkout_session",
+  "x-model-callable": true,
+  "x-callers": [
+    "model",
+    "ui"
+  ],
+  "x-effect": "mutation",
+  "x-response-schema": {
+    "$ref": "common.schema.json#/$defs/envelope"
+  }
+}

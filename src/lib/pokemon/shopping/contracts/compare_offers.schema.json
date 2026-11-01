@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "shopping.v1/compare_offers",
+  "title": "compare_offers",
+  "description": "",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "task_ref": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.:-]{0,159}$"
+    },
+    "offer_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z][A-Za-z0-9_.:-]{0,159}$"
+      },
+      "maxItems": 100
+    },
+    "criterion": {
+      "enum": [
+        "item_price",
+        "delivered_price",
+        "seller_evidence"
+      ]
+    }
+  },
+  "required": [
+    "task_ref",
+    "offer_refs",
+    "criterion"
+  ],
+  "x-tool-name": "compare_offers",
+  "x-model-callable": true,
+  "x-callers": [
+    "model",
+    "ui"
+  ],
+  "x-effect": "read",
+  "x-response-schema": {
+    "$ref": "common.schema.json#/$defs/envelope"
+  }
+}

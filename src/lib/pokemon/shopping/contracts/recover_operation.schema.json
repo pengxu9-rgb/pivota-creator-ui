@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "shopping.v1/recover_operation",
+  "title": "recover_operation",
+  "description": "",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "task_ref": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.:-]{0,159}$"
+    },
+    "operation_ref": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.:-]{0,159}$"
+    },
+    "recovery_kind": {
+      "enum": [
+        "reconcile",
+        "forwarding_only"
+      ]
+    },
+    "human_action_ref": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.:-]{0,159}$"
+    },
+    "request_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.:-]{0,159}$"
+    },
+    "expected_version": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "cancellation_epoch": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "required": [
+    "task_ref",
+    "operation_ref",
+    "recovery_kind",
+    "human_action_ref",
+    "request_id",
+    "expected_version",
+    "cancellation_epoch"
+  ],
+  "x-tool-name": "recover_operation",
+  "x-model-callable": false,
+  "x-callers": [
+    "ui"
+  ],
+  "x-effect": "mutation",
+  "x-response-schema": {
+    "$ref": "common.schema.json#/$defs/envelope"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "schema": "shopping.frozen-fixtures.v1",
+  "synthetic": true,
+  "design_sha256": "49fc2d1ffd81f2bad03442de4561f2c0269506dbf8f1a5baabca9cac02be6527",
+  "base_head": "8a546642c68e22598c9c03015b9cb04f3c8d85df",
+  "freeze_before_first_evaluation": true,
+  "files": [
+    {
+      "path": "tests/fixtures/shopping/adversarial.json",
+      "bytes": 2710,
+      "sha256": "ee75c20d7a96b508c483844af11392073fa86595dd7d0f5ef3689b8129f77abb"
+    },
+    {
+      "path": "tests/fixtures/shopping/catalog.json",
+      "bytes": 7121,
+      "sha256": "d31449d7d2e10acf4ea76b4e5a7fa82e27d227d3a3487dba5c3011e0012fa841"
+    },
+    {
+      "path": "tests/fixtures/shopping/faults.json",
+      "bytes": 767,
+      "sha256": "73805c1bd629669eb45295bfab276b3b3bddb7a8ad351239bb1fe51125f91acf"
+    },
+    {
+      "path": "tests/fixtures/shopping/journeys.json",
+      "bytes": 7947,
+      "sha256": "4c4416d9e67de550323b53e99695b05f87a1952e595def7a45854a09ea4eea9c"
+    },
+    {
+      "path": "tests/fixtures/shopping/scripted-proposals.json",
+      "bytes": 4423,
+      "sha256": "b8aa81153222ae04c837da5b8652817e925e02ec107b9bd54e4a61802c0b3f17"
+    }
+  ],
+  "file_count": 5,
+  "total_bytes": 22968,
+  "clarifications": {
+    "P3_A": "reconciliation, same-key replay and human recovery are trusted-only",
+    "P3_B": "X01 returns only labelled Japanese results or none; never English; preserve native hold"
+  }
+}

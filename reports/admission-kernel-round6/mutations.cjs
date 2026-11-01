@@ -10,7 +10,7 @@ const hash=file=>sha(fs.readFileSync(file));
 const git=(...args)=>cp.execFileSync('git',args,{cwd:ROOT,encoding:'utf8',maxBuffer:64*1024*1024}).trim();
 const PYTHON_HELPER=path.join(__dirname,'python-guard.py');
 const CONTEXT_FILE='tests/pokemon-private-context.test.cjs';
-const ROUTING_FILE='tests/release-routing.test.cjs',ROUTING_PYTHON_WORKERS=51;
+const ROUTING_FILE='tests/release-routing.test.cjs';
 const once=(source,from,to)=>{assert.equal(source.split(from).length,2,'unique mutation target: '+from);return source.replace(from,()=>to);};
 const R6=[
   {id:'R6_reply_collector_unanchored',from:"/^\\d{1,3}\\/[a-z0-9-]{1,32}$/u.test(value)",to:"/\\d{1,3}\\/[a-z0-9-]{1,32}$/u.test(value)"},
@@ -83,6 +83,9 @@ function bindPython(shim,nodeAudits,cwd,programSha,expected,routingSha=null,expe
     const file=path.join(shim.audits,name);return {audit_file:name,audit_sha256:hash(file),...JSON.parse(fs.readFileSync(file))};
   }).filter(record=>pids.has(record.ppid)&&
     (record.mode==='-c'?record.cwd===cwd:record.source_file===path.join(cwd,'scripts/release-routing.py')));
+  // Only the pristine routing baseline discovers its worker inventory. Every
+  // full-suite/mutant execution must match that bound inventory exactly.
+  if(expectedRouting===null){expectedRouting=records.filter(record=>record.mode==='file').length;assert.ok(expectedRouting>0,'routing baseline must execute guarded workers');}
   assert.equal(records.length,expected+expectedRouting,'Python guard worker coverage');
   assert.equal(records.filter(record=>record.mode==='-c').length,expected,'context Python worker coverage');
   assert.equal(records.filter(record=>record.mode==='file').length,expectedRouting,'routing Python worker coverage');
@@ -111,7 +114,7 @@ async function main(candidate,expected){
   const out=freshDirectory(candidate),shim=preparePythonShim(path.join(out,'python-shim'));
   const program=fs.readFileSync(path.join(ROOT,CONTEXT_FILE),'utf8').match(/const program=String\.raw`([\s\S]*?)`;/)?.[1];assert.ok(program);
   const programSha=sha(program),routingSha=hash(path.join(ROOT,'scripts/release-routing.py')),all=definitions();assert.equal(all.length,93);assert.equal(new Set(all.map(m=>m.id)).size,93);
-  const output={schema:'pot.admission.fresh93-mutations.v1',source_head:expected,method:'fresh full 93-by-43 sweep, no deltas or subsets',
+  const output={schema:'pot.admission.fresh93-mutations.v1',source_head:expected,method:'fresh full 93-row sweep across the current test inventory, no deltas or subsets',
     root:ROOT,guard:GUARD,harness_sha256:hash(__filename),python_shim:shim,context_program_sha256:programSha,routing_program_sha256:routingSha,
     started_at:new Date().toISOString(),max_test_workers:4,test_files:[],source_manifest:[],baseline:null,baseline_full_suite:null,
     rows:[],complete:false,scratch_cleaned:false,signals_sent_to_own_children:0,signals_sent_to_foreign_processes:0,resource_observations:[]};
@@ -134,7 +137,7 @@ async function main(candidate,expected){
         fs.mkdirSync(path.dirname(log),{recursive:true});const raw=stdout+'\n'+stderr;fs.writeFileSync(log,raw);
         const audits=parseAudits(raw),python=bindPython(shim,audits,cwd,programSha,expectedPython,routingSha,expectedRouting);
         const cell={executed_head:expected,cwd,binary:process.execPath,args,child_pid:child.pid,exit_code:code,signal,error,timed_out:timedOut,
-          network_audits:audits,python_network_audits:python,expected_python_workers:expectedPython+expectedRouting,expected_context_workers:expectedPython,expected_routing_workers:expectedRouting,test_counts:counts(stdout),
+          network_audits:audits,python_network_audits:python,expected_python_workers:expectedPython+(expectedRouting??python.filter(r=>r.mode==='file').length),expected_context_workers:expectedPython,expected_routing_workers:expectedRouting??python.filter(r=>r.mode==='file').length,test_counts:counts(stdout),
           log:path.relative(out,log),log_sha256:sha(raw),explicit_assertion:explicitAssertion(raw),
           ...(testFile?{test_sha256:hash(path.join(cwd,testFile))}:{}),...(mutantHash?{mutant_source_sha256:mutantHash}:{})};
         fs.writeFileSync(log+'.cell.json',JSON.stringify(cell,null,2)+'\n');
@@ -144,10 +147,10 @@ async function main(candidate,expected){
       }catch(e){reject(e);}});
     });
   }
-  async function suite(directory,id,files,mutantHash){
+  async function suite(directory,id,files,mutantHash,{discover=false}={}){
     const queue=[...files],results={};
     const workers=await Promise.allSettled(Array.from({length:Math.min(4,files.length)},async()=>{
-      while(queue.length){const file=queue.shift();results[file]=await run(directory,['--test','--test-reporter=tap',file],path.join(out,'logs',id,path.basename(file)+'.log'),{minimumAudits:2,testFile:file,mutantHash,expectedPython:file===CONTEXT_FILE?1:0,expectedRouting:file===ROUTING_FILE?ROUTING_PYTHON_WORKERS:0});}
+      while(queue.length){const file=queue.shift();results[file]=await run(directory,['--test','--test-reporter=tap',file],path.join(out,'logs',id,path.basename(file)+'.log'),{minimumAudits:2,testFile:file,mutantHash,expectedPython:file===CONTEXT_FILE?1:0,expectedRouting:file===ROUTING_FILE?(discover?null:output.inventory.routing_python_workers):0});}
     }));for(const value of workers)if(value.status==='rejected')throw value.reason;
     return Object.fromEntries(files.map(file=>[file,results[file]]));
   }
@@ -155,11 +158,15 @@ async function main(candidate,expected){
   assert.equal(within(ROOT,scratch),false);output.scratch=scratch;
   try{
     snapshot(ROOT,base);output.source_manifest=manifest(base);
-    output.test_files=fs.readdirSync(path.join(base,'tests')).filter(f=>f.endsWith('.test.cjs')).sort().map(f=>'tests/'+f);assert.equal(output.test_files.length,43);
-    output.baseline_full_suite=await run(base,['--test','--test-concurrency=1','--test-reporter=tap',...output.test_files],path.join(out,'logs','baseline','full-suite.log'),{minimumAudits:44,limit:300000,expectedPython:1,expectedRouting:ROUTING_PYTHON_WORKERS});
-    assert.equal(output.baseline_full_suite.exit_code,0,'baseline full suite');assert.equal(output.baseline_full_suite.test_counts.pass,475);
-    output.baseline=await suite(base,'baseline',output.test_files);assert.ok(Object.values(output.baseline).every(c=>c.exit_code===0));write();
-    console.log(JSON.stringify({phase:'baseline_passed',tests:output.baseline_full_suite.test_counts,files:43}));
+    output.test_files=fs.readdirSync(path.join(base,'tests')).filter(f=>f.endsWith('.test.cjs')).sort().map(f=>'tests/'+f);
+    assert.ok(output.test_files.includes(CONTEXT_FILE));assert.ok(output.test_files.includes(ROUTING_FILE));
+    output.baseline=await suite(base,'baseline',output.test_files,null,{discover:true});
+    for(const cell of Object.values(output.baseline)){assert.equal(cell.exit_code,0,'baseline test file');assert.ok(cell.test_counts.tests>0);assert.equal(cell.test_counts.pass,cell.test_counts.tests);assert.equal(cell.test_counts.fail,0);assert.equal(cell.test_counts.skipped,0);assert.equal(cell.test_counts.cancelled,0);}
+    output.inventory={test_files:output.test_files.length,tests:Object.values(output.baseline).reduce((n,c)=>n+c.test_counts.tests,0),routing_python_workers:output.baseline[ROUTING_FILE].expected_routing_workers,python_workers:Object.values(output.baseline).reduce((n,c)=>n+c.python_network_audits.length,0)};
+    output.baseline_full_suite=await run(base,['--test','--test-concurrency=1','--test-reporter=tap',...output.test_files],path.join(out,'logs','baseline','full-suite.log'),{minimumAudits:output.test_files.length+1,limit:300000,expectedPython:1,expectedRouting:output.inventory.routing_python_workers});
+    assert.equal(output.baseline_full_suite.exit_code,0,'baseline full suite');assert.equal(output.baseline_full_suite.test_counts.tests,output.inventory.tests);assert.equal(output.baseline_full_suite.test_counts.pass,output.inventory.tests);assert.equal(output.baseline_full_suite.test_counts.skipped,0);assert.equal(output.baseline_full_suite.test_counts.cancelled,0);
+    assert.equal(output.baseline_full_suite.network_audits.length,Object.values(output.baseline).reduce((n,c)=>n+c.network_audits.length,0)-output.test_files.length+1,'full-suite Node worker coverage');write();
+    console.log(JSON.stringify({phase:'baseline_passed',tests:output.baseline_full_suite.test_counts,files:output.test_files.length,inventory:output.inventory}));
     for(const mutant of all){
       assert.equal(git('rev-parse','HEAD'),expected);const directory=path.join(scratch,mutant.id);snapshot(base,directory);
       try{
@@ -193,8 +200,8 @@ async function main(candidate,expected){
     output.python_network_audit_count=cells.reduce((n,c)=>n+c.python_network_audits.length,0);
     output.python_network_attempts=cells.reduce((n,c)=>n+c.python_network_audits.reduce((s,a)=>s+a.count,0),0);
     output.complete_test_file_cells_and_syntax_checks=cells.length;
-    if(output.complete){assert.equal(output.python_network_audit_count,4940);assert.equal(cells.length,4136);
-      assert.equal(fs.readdirSync(shim.audits).filter(f=>f.endsWith('.json')).length,4940,'unclaimed Python audit');}
+    if(output.complete){const expectedPythonAudits=output.inventory.python_workers*(all.length+2),expectedCells=(all.length+1)*(output.inventory.test_files+1);output.expected_totals={python_audits:expectedPythonAudits,cells:expectedCells};assert.equal(output.python_network_audit_count,expectedPythonAudits);assert.equal(cells.length,expectedCells);
+      assert.equal(fs.readdirSync(shim.audits).filter(f=>f.endsWith('.json')).length,expectedPythonAudits,'unclaimed Python audit');}
     write();
   }
   console.log(JSON.stringify({complete:output.complete,head:expected,mutants:output.rows.length,caught:output.rows.filter(r=>r.killed).length,equivalent:output.rows.filter(r=>r.equivalent_reason).length,
