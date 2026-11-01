@@ -52,7 +52,7 @@ function checkFreeze(freeze, artifactBytes) {
     }
     return hash(freeze);
 }
-function createCollector({ freeze, artifactBytes, checkpoint, transport, clock = Date.now, tokenExpiresAt, reviewGo = false, rehearsal = false }) {
+function createCollector({ freeze, artifactBytes, checkpoint, transport, clock = Date.now, tokenExpiresAt, reviewGo = false, rehearsal = false, timer = setTimeout, clearTimer = clearTimeout }) {
     if (typeof transport !== 'function')
         throw Error('transport_required');
     const freezeHash = checkFreeze(freeze, artifactBytes);
@@ -64,6 +64,7 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
         throw Error('resume_freeze_mismatch');
     if(fs.existsSync(checkpoint)&&state.rehearsal!==rehearsal)throw Error('resume_mode_mismatch');
     state.rehearsal=rehearsal;
+    state.sessions ||= {};
     if (state.records.some(r => r.status === 'reserved'))
         throw Error('uncertain_in_flight_requires_review');
     if (['received_SIGINT','received_SIGTERM','token_refresh_needed'].includes(state.stop_reason) && tokenExpiresAt-clock()>=45*60000) {
@@ -124,17 +125,24 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
         active.add(controller);
         const start = clock();
         let response;
-        let timeout, abortListener;
+        let timeout, abortListener, stageReader = () => ({tls_connected:false,stage_reached:'not_started'});
         abortListener = () => controller.abort();
         signal?.addEventListener('abort', abortListener, { once: true });
         try {
-            response = await Promise.race([transport({ arm, endpoint: endpoint(arm), request: copy(request), signal: controller.signal, timeoutMs: 8000 }), new Promise((_, reject) => { timeout = setTimeout(() => { controller.abort(); reject(Object.assign(Error('timeout'), { code: 'timeout' })); }, 8000); })]);
+            response = await Promise.race([
+                transport({ arm, endpoint: endpoint(arm), request: copy(request), signal: controller.signal, timeoutMs: 8000, onStageReader: reader => { if(typeof reader==='function')stageReader=reader; } }),
+                new Promise((_, reject) => { timeout = timer(() => {
+                    const reached=stageReader();
+                    controller.abort();
+                    reject(Object.assign(Error('timeout'),{code:'timeout',...reached}));
+                },8000); })
+            ]);
         }
         catch (e) {
-            response = { status: null, tls_connected: e.tls_connected === true, error: e.code === 'timeout' ? 'timeout' : 'transport_error' };
+            response = { status: e.http_status??null, tls_connected: e.tls_connected === true, stage_reached:e.stage_reached||'not_started', error: e.code === 'timeout' ? 'timeout' : 'transport_error' };
         }
         finally {
-            clearTimeout(timeout);
+            clearTimer(timeout);
             signal?.removeEventListener('abort', abortListener);
             active.delete(controller);
         }
@@ -162,7 +170,7 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
             stop('rate_limited', arm);
         else if (response.status === 404 || response.model_unavailable || response.function_calling_unsupported)
             stop('model_unavailable', arm);
-        else if (response.status === 200 && (!measured || overCap))
+        else if (response.status === 200 && !response.error && (!measured || overCap))
             stop('invalid_or_over_cap_usage', arm);
         save();
         return { record, response };
@@ -202,6 +210,26 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
         const transport = async (body, options) => request(arm, session + '/call-' + (++sequence), body, options);
         Object.defineProperty(transport, 'elapsedMs', { value: () => state.records.filter(r => r.arm === arm && r.id.startsWith(session + '/call-') && Number(r.id.slice((session + '/call-').length)) <= sequence).reduce((n,r)=>n+(r.latency_ms||0),0) });
         return transport;
+    }
+    function session(arm,id) {
+        if(!MODELS[arm])throw Error('unknown_arm');
+        const key=arm+'/'+id;
+        if(!state.sessions[key]) {
+            state.sessions[key]={started_at:clock(),last_elapsed_ms:0,observations:{}};
+            save();
+        }
+        const entry=state.sessions[key];
+        function elapsed() { return Math.max(entry.last_elapsed_ms,0,clock()-entry.started_at); }
+        function observe(kind,minimum=0) {
+            if(!['first_useful','qualified_offer','complete_preview'].includes(kind))throw Error('unknown_timing_observation');
+            if(!Object.hasOwn(entry.observations,kind)) {
+                entry.last_elapsed_ms=Math.max(elapsed(),minimum);
+                entry.observations[kind]=entry.last_elapsed_ms;
+                save();
+            }
+            return entry.observations[kind];
+        }
+        return Object.freeze({elapsed,observe,snapshot:()=>copy(entry)});
     }
     function outcome(arm, id, result) { const prior = state.outcomes.find(r => r.arm === arm && r.id === id); if (prior) {
         if (hash(prior.result) !== hash(result))
@@ -264,6 +292,6 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
         save();
         return copy(state);
     }
-    return Object.freeze({ run, request, channel, outcome, priorOutcome, state: () => copy(state), save, stop, close: () => { process.removeListener('SIGINT', onInt); process.removeListener('SIGTERM', onTerm); save(); } });
+    return Object.freeze({ run, request, channel, session, outcome, priorOutcome, state: () => copy(state), save, stop, close: () => { process.removeListener('SIGINT', onInt); process.removeListener('SIGTERM', onTerm); save(); } });
 }
 module.exports = { createCollector, checkFreeze, price, validUsage, atomic, MODELS, BUDGETS, endpoint, validateFrozenRequest };

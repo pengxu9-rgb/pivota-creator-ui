@@ -22,12 +22,13 @@ async function main(arm, raw, reviewHash) {
     process.env.POT_LIVE_PROJECT_ID = 'pivota-prod';
     process.env.POT_SHOPPING_MODEL_ARM = arm;
     const guard = require('./vertex-allowlist-guard.cjs'), { createVertexRequest } = require(ROOT + '/src/lib/pokemon/shopping/model/vertex-request.cjs'), { createCollector } = require(ROOT + '/src/lib/pokemon/shopping/model/collector.cjs'), { runArm } = require('./orchestrate.cjs');
-    const request = createVertexRequest({ arm, guard, token }), collector = createCollector({ freeze, artifactBytes: p => fs.readFileSync(ROOT + '/' + p), checkpoint: directory + '/checkpoint.json', tokenExpiresAt: expires, reviewGo: true, transport: ({ request: body, signal }) => request(body, { signal }) });
+    const request = createVertexRequest({ arm, guard, token }), collector = createCollector({ freeze, artifactBytes: p => fs.readFileSync(ROOT + '/' + p), checkpoint: directory + '/checkpoint.json', tokenExpiresAt: expires, reviewGo: true, transport: ({ request: body, signal, onStageReader }) => request(body, { signal, onStageReader }) });
     try {
         await runArm(collector, arm);
     }
     finally {
         collector.close();
+        guard.abortAll('collector_closed');
     }
 }
 if (require.main === module) {

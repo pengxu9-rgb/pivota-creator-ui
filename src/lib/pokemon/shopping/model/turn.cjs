@@ -9,6 +9,7 @@ const CONFIG = Object.freeze({ temperature: 0, topP: 1, maxOutputTokens: 1024, t
 function createModelPort(facadeCall, modelPrincipal) { if (typeof facadeCall !== 'function' || !modelPrincipal)
     throw Error('model_port_required'); const invoke = facadeCall; const principal = modelPrincipal; return Object.freeze({ call: (name, args) => invoke(principal, name, args) }); }
 function parseResponse(response) {
+    if(response?.error)throw Error(response.error==='timeout'?'timeout':'transport_error');
     if (response?.status !== 200)
         throw Error('http_' + (response?.status || 'invalid'));
     const body = response.body;
@@ -54,7 +55,7 @@ function createJourney({ transport, port, fallback, renderClaim, onUseful = () =
     async function turn({ text, task_ref, bindings = {}, initialResults = [], modelContext = null }) {
         const context = contexts.get(task_ref) || createContext(task_ref);
         contexts.set(task_ref, context);
-        let turnCalls = 0, turnTools = 0;
+        let turnCalls = 0, turnTools = 0, currentFunctionNames=[];
         const audit = [], contents = [{ role: 'user', parts: [{ text: JSON.stringify({ text, task_ref, context: context.snapshot(), accepted_context: safeValue(modelContext) }) }] }];
         try {
             if (privateText(text))
@@ -76,6 +77,7 @@ function createJourney({ transport, port, fallback, renderClaim, onUseful = () =
                 const extraAttempts=Math.max(0,(response.attempt_count||1)-1);turnCalls+=extraAttempts;journeyCalls+=extraAttempts;
                 if(turnCalls>LIMITS.calls_per_turn||journeyCalls>LIMITS.calls_per_journey)throw Error('call_limit');
                 const parts = parseResponse(response), functions = parts.filter(p => Object.hasOwn(p, 'functionCall'));
+                currentFunctionNames=functions.map(p=>p.functionCall?.name).filter(n=>typeof n==='string').slice(0,128);
                 if (!functions.length)
                     return { fallback: false, ...answer(parts, context, renderClaim), audit, turn_calls: turnCalls, journey_calls: journeyCalls };
                 if (functions.length !== parts.length)
@@ -116,7 +118,7 @@ function createJourney({ transport, port, fallback, renderClaim, onUseful = () =
         }
         catch (e) {
             const reason = String(e.message || 'invalid_output').slice(0, 120);
-            audit.push({ rejected: true, reason });
+            audit.push({ rejected: true, reason, rejected_functions:currentFunctionNames });
             const result = await fallback({ text, task_ref, reason });
             return { fallback: true, reason, result, audit, turn_calls: turnCalls, journey_calls: journeyCalls };
         }
