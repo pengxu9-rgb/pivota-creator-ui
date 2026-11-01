@@ -566,7 +566,7 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/orchestrate.cjs",
-      "sha256": "bba9a96c934e955ffc536ebed758a71a7a99d16787e87eb0fedf969c57b663f6"
+      "sha256": "07f9a80cd8e4557c80994d904a17d647e10e55d68a770fd5cabc7bd30f5cb1a4"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/prepare-freeze.cjs",
@@ -583,6 +583,10 @@
     {
       "path": "reports/pot-shopping-phase3-20261101/published-prices.json",
       "sha256": "b39291eab4bf92055b6b1ecff4dcb6a8504820daf320cb4b5270da888a9dc45e"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/qualify-arm-resume.cjs",
+      "sha256": "e4fea09718674f998488d0bb642ed0e749ef9c50366a78e0862c93cd43a8757d"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/qualify-corpus.cjs",

@@ -206,10 +206,11 @@ async function runCompatibility(collector, arm) {
         // Topological scheduling: two contexts maximum, and actual predecessors must
         // be durably stored before a C successor can become runnable.
         while (pending.size || active.size) {
-            if (stopped(collector, arm))
-                break;
+            const current=collector.state();
+            if(current.stop_reason||current.arms[arm].stop_reason)break;
+            const capacity=current.arms[arm].preflight?2:1;
             for (const e of [...pending.values()]) {
-                if (active.size >= 2)
+                if (active.size >= capacity)
                     break;
                 if (!(e.depends_on || []).every(id => done.has(id)))
                     continue;
@@ -226,9 +227,18 @@ async function runCompatibility(collector, arm) {
     }
 }
 async function runArm(collector, arm) {
-    if(stopped(collector,arm))return collector.state();
-    if (arm === 'P' && !collector.priorOutcome('L', 'arm_finished'))
-        throw Error('L_arm_must_finish_first');
+    const before=collector.state();
+    if(before.stop_reason)return before;
+    if(arm==='P'){
+        const first=collector.priorOutcome('L','arm_finished');
+        const completed=first?.status==='completed';
+        const terminal=first?.status==='arm_stopped'&&first.reason===before.arms.L.stop_reason&&!!first.reason;
+        if(!completed&&!terminal)throw Error('L_arm_must_finish_first');
+    }
+    if(before.arms[arm].stop_reason){
+        collector.outcome(arm,'arm_finished',{status:'arm_stopped',reason:before.arms[arm].stop_reason});
+        return collector.state();
+    }
     const cases = [];
     for (let repeat = 1; repeat <= 10; repeat++)
         for (const j of journeys.journeys)
@@ -242,7 +252,8 @@ async function runArm(collector, arm) {
         collector.outcome(arm, c.id, { id: c.id, journey: c.j.id, completed: false, error: String(e.message).slice(0, 100) });
     } }
     // First normal corpus call is the preflight; subsequent sessions concurrency2.
-    if (cases.length && !collector.state().arms[arm].preflight)
+    // Skip completed cases, but qualify the first pending normal call serially.
+    while(cursor<cases.length&&!collector.state().arms[arm].preflight&&!stopped(collector,arm))
         await one(cases[cursor++]);
     async function worker() { while (cursor < cases.length && !stopped(collector, arm))
         await one(cases[cursor++]); }
@@ -251,7 +262,11 @@ async function runArm(collector, arm) {
         await boundedCases(collector, arm);
     if (!stopped(collector, arm))
         await runCompatibility(collector, arm);
-    collector.outcome(arm, 'arm_finished', { stopped: stopped(collector, arm) });
+    const after=collector.state();
+    // Global shutdowns are checkpoints, never terminal arm outcomes.
+    if(after.stop_reason)return after;
+    const reason=after.arms[arm].stop_reason;
+    collector.outcome(arm,'arm_finished',reason?{status:'arm_stopped',reason}:{status:'completed'});
     return collector.state();
 }
 async function runBaseline() { const rows = []; for (let repeat = 1; repeat <= 10; repeat++)
