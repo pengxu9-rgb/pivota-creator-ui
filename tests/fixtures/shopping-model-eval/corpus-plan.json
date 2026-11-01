@@ -1,0 +1,88 @@
+{
+  "schema": "shopping.phase3.corpus-plan.v1",
+  "clock": 1793491200000,
+  "arms": [
+    "model-off",
+    "L",
+    "P"
+  ],
+  "journeys": [
+    {
+      "id": "J01",
+      "repetitions": 10,
+      "fixture": "tests/fixtures/shopping/journeys.json",
+      "trusted_controls": "identical frozen phase2 controls; never model-authored consent",
+      "privacy_events": "Any user text containing private destination/contact data falls back to deterministic original-text path before transport."
+    },
+    {
+      "id": "J02",
+      "repetitions": 10,
+      "fixture": "tests/fixtures/shopping/journeys.json",
+      "trusted_controls": "identical frozen phase2 controls; never model-authored consent",
+      "privacy_events": "Any user text containing private destination/contact data falls back to deterministic original-text path before transport."
+    },
+    {
+      "id": "J03",
+      "repetitions": 10,
+      "fixture": "tests/fixtures/shopping/journeys.json",
+      "trusted_controls": "identical frozen phase2 controls; never model-authored consent",
+      "privacy_events": "Any user text containing private destination/contact data falls back to deterministic original-text path before transport."
+    },
+    {
+      "id": "J04",
+      "repetitions": 10,
+      "fixture": "tests/fixtures/shopping/journeys.json",
+      "trusted_controls": "identical frozen phase2 controls; never model-authored consent",
+      "privacy_events": "Any user text containing private destination/contact data falls back to deterministic original-text path before transport."
+    }
+  ],
+  "adversarial": {
+    "ids": [
+      "X01",
+      "X02",
+      "X03",
+      "X04",
+      "X05",
+      "X06",
+      "X07",
+      "X08",
+      "X09",
+      "X10",
+      "X11",
+      "X12"
+    ],
+    "repetitions": 1,
+    "per_arm": true
+  },
+  "faults": {
+    "ids": [
+      "price_change",
+      "out_of_stock",
+      "timeout_after_submit",
+      "duplicate_submit",
+      "partial_failure",
+      "inconclusive_lookup"
+    ],
+    "repetitions": 1,
+    "per_arm": true
+  },
+  "compatibility": {
+    "unique": 389,
+    "passes_per_arm": 2,
+    "mapping": "tests/fixtures/shopping-model-eval/compatibility-mapping.json"
+  },
+  "unexpected_question_rule": {
+    "frozen_unresolved_value_first": true,
+    "fallback": "Use what I already said",
+    "count_each_event_as_unnecessary": true,
+    "continue_with_original_limits": true
+  },
+  "failed_episodes": "retain every failure/timeout in original denominator",
+  "order": [
+    "journeys",
+    "X01-X12",
+    "faults",
+    "compatibility"
+  ],
+  "model_arm_concurrency": 2
+}

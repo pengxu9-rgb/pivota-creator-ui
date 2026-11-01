@@ -1,0 +1,907 @@
+{
+  "declarations": [
+    {
+      "name": "compare_offers",
+      "description": "compare_offers",
+      "parameters": {
+        "description": "",
+        "type": "object",
+        "properties": {
+          "task_ref": {
+            "type": "string"
+          },
+          "offer_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100
+          },
+          "criterion": {
+            "enum": [
+              "item_price",
+              "delivered_price",
+              "seller_evidence"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "task_ref",
+          "offer_refs",
+          "criterion"
+        ]
+      }
+    },
+    {
+      "name": "create_checkout_session",
+      "description": "create_checkout_session",
+      "parameters": {
+        "description": "",
+        "type": "object",
+        "properties": {
+          "task_ref": {
+            "type": "string"
+          },
+          "selection_ref": {
+            "type": "string"
+          },
+          "route": {
+            "enum": [
+              "direct",
+              "forwarder"
+            ],
+            "type": "string"
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1
+          },
+          "request_id": {
+            "type": "string"
+          },
+          "expected_version": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "cancellation_epoch": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "task_ref",
+          "selection_ref",
+          "route",
+          "quantity",
+          "request_id",
+          "expected_version",
+          "cancellation_epoch"
+        ]
+      }
+    },
+    {
+      "name": "get_alternatives",
+      "description": "get_alternatives",
+      "parameters": {
+        "description": "",
+        "type": "object",
+        "properties": {
+          "task_ref": {
+            "type": "string"
+          },
+          "printing_ref": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "task_ref",
+          "printing_ref"
+        ]
+      }
+    },
+    {
+      "name": "get_checkout_session",
+      "description": "get_checkout_session",
+      "parameters": {
+        "description": "",
+        "type": "object",
+        "properties": {
+          "task_ref": {
+            "type": "string"
+          },
+          "preview_ref": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "task_ref",
+          "preview_ref"
+        ]
+      }
+    },
+    {
+      "name": "get_offers",
+      "description": "get_offers",
+      "parameters": {
+        "description": "",
+        "type": "object",
+        "properties": {
+          "task_ref": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "printing_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100
+          },
+          "proposed_filters": {
+            "type": "object",
+            "properties": {
+              "language": {
+                "enum": [
+                  "en",
+                  "ja"
+                ],
+                "type": "string"
+              },
+              "currency": {
+                "type": "string"
+              },
+              "budget_minor": {
+                "type": "string"
+              },
+              "budget_basis": {
+                "enum": [
+                  "item",
+                  "delivered"
+                ],
+                "type": "string"
+              },
+              "grade_kind": {
+                "enum": [
+                  "slab",
+                  "raw"
+                ],
+                "type": "string"
+              },
+              "grade_company": {
+                "type": "string"
+              },
+              "grade_value": {
+                "type": "string"
+              }
+            },
+            "required": []
+          }
+        },
+        "required": [
+          "task_ref",
+          "printing_refs"
+        ]
+      }
+    },
+    {
+      "name": "get_operation",
+      "description": "get_operation",
+      "parameters": {
+        "description": "",
+        "type": "object",
+        "properties": {
+          "task_ref": {
+            "type": "string"
+          },
+          "operation_ref": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "task_ref",
+          "operation_ref"
+        ]
+      }
+    },
+    {
+      "name": "get_order",
+      "description": "get_order",
+      "parameters": {
+        "description": "",
+        "type": "object",
+        "properties": {
+          "task_ref": {
+            "type": "string"
+          },
+          "operation_ref": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "task_ref",
+          "operation_ref"
+        ]
+      }
+    },
+    {
+      "name": "get_product",
+      "description": "get_product",
+      "parameters": {
+        "description": "",
+        "type": "object",
+        "properties": {
+          "task_ref": {
+            "type": "string"
+          },
+          "printing_ref": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "task_ref",
+          "printing_ref"
+        ]
+      }
+    },
+    {
+      "name": "lookup_certificate",
+      "description": "lookup_certificate",
+      "parameters": {
+        "description": "",
+        "type": "object",
+        "properties": {
+          "task_ref": {
+            "type": "string"
+          },
+          "certificate_ref": {
+            "type": "string"
+          },
+          "offer_ref": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "task_ref",
+          "certificate_ref",
+          "offer_ref"
+        ]
+      }
+    },
+    {
+      "name": "request_refresh",
+      "description": "request_refresh",
+      "parameters": {
+        "description": "",
+        "type": "object",
+        "properties": {
+          "task_ref": {
+            "type": "string"
+          },
+          "refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100
+          },
+          "kind": {
+            "enum": [
+              "offer",
+              "seller",
+              "certificate",
+              "pre_approval_preview"
+            ],
+            "type": "string"
+          },
+          "request_id": {
+            "type": "string"
+          },
+          "expected_version": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "cancellation_epoch": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "task_ref",
+          "refs",
+          "kind",
+          "request_id",
+          "expected_version",
+          "cancellation_epoch"
+        ]
+      }
+    },
+    {
+      "name": "search_catalog",
+      "description": "search_catalog",
+      "parameters": {
+        "description": "",
+        "type": "object",
+        "properties": {
+          "task_ref": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "proposed_filters": {
+            "type": "object",
+            "properties": {
+              "language": {
+                "enum": [
+                  "en",
+                  "ja"
+                ],
+                "type": "string"
+              },
+              "currency": {
+                "type": "string"
+              },
+              "budget_minor": {
+                "type": "string"
+              },
+              "budget_basis": {
+                "enum": [
+                  "item",
+                  "delivered"
+                ],
+                "type": "string"
+              },
+              "grade_kind": {
+                "enum": [
+                  "slab",
+                  "raw"
+                ],
+                "type": "string"
+              },
+              "grade_company": {
+                "type": "string"
+              },
+              "grade_value": {
+                "type": "string"
+              }
+            },
+            "required": []
+          }
+        },
+        "required": [
+          "task_ref",
+          "text"
+        ]
+      }
+    },
+    {
+      "name": "select_offer",
+      "description": "select_offer",
+      "parameters": {
+        "description": "",
+        "type": "object",
+        "properties": {
+          "task_ref": {
+            "type": "string"
+          },
+          "offer_ref": {
+            "type": "string"
+          },
+          "requirements": {
+            "type": "object",
+            "properties": {
+              "printing_ref": {
+                "type": "string"
+              },
+              "language": {
+                "enum": [
+                  "en",
+                  "ja"
+                ],
+                "type": "string"
+              },
+              "finish": {
+                "type": "string"
+              },
+              "grade_kind": {
+                "enum": [
+                  "slab",
+                  "raw"
+                ],
+                "type": "string"
+              },
+              "grade_company": {},
+              "grade_value": {},
+              "condition_bucket": {
+                "type": "string"
+              },
+              "quantity": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1
+              },
+              "currency": {
+                "type": "string"
+              },
+              "budget_minor": {
+                "type": "string"
+              },
+              "budget_basis": {
+                "enum": [
+                  "item",
+                  "delivered"
+                ],
+                "type": "string"
+              },
+              "route": {
+                "enum": [
+                  "direct",
+                  "forwarder"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "printing_ref",
+              "language",
+              "finish",
+              "grade_kind",
+              "grade_company",
+              "grade_value",
+              "condition_bucket",
+              "quantity",
+              "currency",
+              "budget_minor",
+              "budget_basis",
+              "route"
+            ]
+          },
+          "request_id": {
+            "type": "string"
+          },
+          "expected_version": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "cancellation_epoch": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "task_ref",
+          "offer_ref",
+          "requirements",
+          "request_id",
+          "expected_version",
+          "cancellation_epoch"
+        ]
+      }
+    }
+  ],
+  "privacy_projection": [
+    {
+      "tool": "create_checkout_session",
+      "path": "/properties/destination_ref",
+      "reason": "private_host_binding",
+      "schema_sha256": "6c07dbbcb9599924a09502740e2585895c1a658bb5e9102d1446f0ddd18608ec"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/human_action_ref",
+      "reason": "private_host_binding",
+      "schema_sha256": "6c07dbbcb9599924a09502740e2585895c1a658bb5e9102d1446f0ddd18608ec"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/requirements/properties/destination_ref",
+      "reason": "private_host_binding",
+      "schema_sha256": "6c07dbbcb9599924a09502740e2585895c1a658bb5e9102d1446f0ddd18608ec"
+    }
+  ],
+  "dropped_keywords": [
+    {
+      "tool": "compare_offers",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "compare_offers",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "compare_offers",
+      "path": "/properties/offer_refs/items",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "create_checkout_session",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "create_checkout_session",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "create_checkout_session",
+      "path": "/properties/selection_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "create_checkout_session",
+      "path": "/properties/request_id",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_alternatives",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "get_alternatives",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_alternatives",
+      "path": "/properties/printing_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_checkout_session",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "get_checkout_session",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_checkout_session",
+      "path": "/properties/preview_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_offers",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "get_offers",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_offers",
+      "path": "/properties/text",
+      "keyword": "maxLength",
+      "value_sha256": "81a83544cf93c245178cbc1620030f1123f435af867c79d87135983c52ab39d9"
+    },
+    {
+      "tool": "get_offers",
+      "path": "/properties/printing_refs/items",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_offers",
+      "path": "/properties/proposed_filters",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "get_offers",
+      "path": "/properties/proposed_filters/properties/currency",
+      "keyword": "pattern",
+      "value_sha256": "43e30b328479ac6996bef63ea838cf0ff276d8c9736f9a423f1f601123b62ebb"
+    },
+    {
+      "tool": "get_offers",
+      "path": "/properties/proposed_filters/properties/budget_minor",
+      "keyword": "pattern",
+      "value_sha256": "70d409a72469c95f8d20d1b57a1d3a718aaa414e0102b3c6ac6dc8f8053ffcde"
+    },
+    {
+      "tool": "get_offers",
+      "path": "/properties/proposed_filters/properties/grade_company",
+      "keyword": "minLength",
+      "value_sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+    },
+    {
+      "tool": "get_offers",
+      "path": "/properties/proposed_filters/properties/grade_company",
+      "keyword": "maxLength",
+      "value_sha256": "6af1f692e9496c6d0b668316eccb93276ae6b6774fa728aac31ff40a38318760"
+    },
+    {
+      "tool": "get_offers",
+      "path": "/properties/proposed_filters/properties/grade_value",
+      "keyword": "minLength",
+      "value_sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+    },
+    {
+      "tool": "get_offers",
+      "path": "/properties/proposed_filters/properties/grade_value",
+      "keyword": "maxLength",
+      "value_sha256": "6af1f692e9496c6d0b668316eccb93276ae6b6774fa728aac31ff40a38318760"
+    },
+    {
+      "tool": "get_operation",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "get_operation",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_operation",
+      "path": "/properties/operation_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_order",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "get_order",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_order",
+      "path": "/properties/operation_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_product",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "get_product",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_product",
+      "path": "/properties/printing_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "lookup_certificate",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "lookup_certificate",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "lookup_certificate",
+      "path": "/properties/certificate_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "lookup_certificate",
+      "path": "/properties/offer_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "request_refresh",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "request_refresh",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "request_refresh",
+      "path": "/properties/refs/items",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "request_refresh",
+      "path": "/properties/request_id",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "search_catalog",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "search_catalog",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "search_catalog",
+      "path": "/properties/text",
+      "keyword": "minLength",
+      "value_sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+    },
+    {
+      "tool": "search_catalog",
+      "path": "/properties/text",
+      "keyword": "maxLength",
+      "value_sha256": "81a83544cf93c245178cbc1620030f1123f435af867c79d87135983c52ab39d9"
+    },
+    {
+      "tool": "search_catalog",
+      "path": "/properties/proposed_filters",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "search_catalog",
+      "path": "/properties/proposed_filters/properties/currency",
+      "keyword": "pattern",
+      "value_sha256": "43e30b328479ac6996bef63ea838cf0ff276d8c9736f9a423f1f601123b62ebb"
+    },
+    {
+      "tool": "search_catalog",
+      "path": "/properties/proposed_filters/properties/budget_minor",
+      "keyword": "pattern",
+      "value_sha256": "70d409a72469c95f8d20d1b57a1d3a718aaa414e0102b3c6ac6dc8f8053ffcde"
+    },
+    {
+      "tool": "search_catalog",
+      "path": "/properties/proposed_filters/properties/grade_company",
+      "keyword": "minLength",
+      "value_sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+    },
+    {
+      "tool": "search_catalog",
+      "path": "/properties/proposed_filters/properties/grade_company",
+      "keyword": "maxLength",
+      "value_sha256": "6af1f692e9496c6d0b668316eccb93276ae6b6774fa728aac31ff40a38318760"
+    },
+    {
+      "tool": "search_catalog",
+      "path": "/properties/proposed_filters/properties/grade_value",
+      "keyword": "minLength",
+      "value_sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+    },
+    {
+      "tool": "search_catalog",
+      "path": "/properties/proposed_filters/properties/grade_value",
+      "keyword": "maxLength",
+      "value_sha256": "6af1f692e9496c6d0b668316eccb93276ae6b6774fa728aac31ff40a38318760"
+    },
+    {
+      "tool": "select_offer",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/offer_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/requirements",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/requirements/properties/printing_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/requirements/properties/finish",
+      "keyword": "minLength",
+      "value_sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/requirements/properties/finish",
+      "keyword": "maxLength",
+      "value_sha256": "6af1f692e9496c6d0b668316eccb93276ae6b6774fa728aac31ff40a38318760"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/requirements/properties/grade_company",
+      "keyword": "anyOf",
+      "value_sha256": "93bd8e459c4273d5a7edf21900e8b48f127a9a54daefc9f6cc9aaab5a2ff2a9c"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/requirements/properties/grade_value",
+      "keyword": "anyOf",
+      "value_sha256": "93bd8e459c4273d5a7edf21900e8b48f127a9a54daefc9f6cc9aaab5a2ff2a9c"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/requirements/properties/condition_bucket",
+      "keyword": "minLength",
+      "value_sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/requirements/properties/condition_bucket",
+      "keyword": "maxLength",
+      "value_sha256": "6af1f692e9496c6d0b668316eccb93276ae6b6774fa728aac31ff40a38318760"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/requirements/properties/currency",
+      "keyword": "pattern",
+      "value_sha256": "43e30b328479ac6996bef63ea838cf0ff276d8c9736f9a423f1f601123b62ebb"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/requirements/properties/budget_minor",
+      "keyword": "pattern",
+      "value_sha256": "70d409a72469c95f8d20d1b57a1d3a718aaa414e0102b3c6ac6dc8f8053ffcde"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/request_id",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    }
+  ],
+  "declaration_sha256": "24f020f8ee926579a81eba2d81a4c8c9136ff39ff9703ac98c3fab33a4388ede",
+  "privacy_projection_sha256": "62c8c182deebdf56494d8f0a3dcce314c5266308bdca6c57f067cd5c4524400d",
+  "dropped_keywords_sha256": "1c93e02ff76d80407125dcd52c33698b2287d7cd4eeac28613b4a3db3806e756"
+}

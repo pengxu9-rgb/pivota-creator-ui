@@ -1,0 +1,681 @@
+{
+  "schema": "shopping.phase3.freeze.v1",
+  "stage": "3a",
+  "live_run_enabled": false,
+  "base": "6bab48c2f8f02bbdf47e8cfd2e4026685b6b5674",
+  "models": {
+    "L": "gemini-3.5-flash-lite",
+    "P": "gemini-3.1-pro-preview"
+  },
+  "endpoints": {
+    "L": "https://aiplatform.googleapis.com/v1/projects/pivota-prod/locations/global/publishers/google/models/gemini-3.5-flash-lite:generateContent",
+    "P": "https://aiplatform.googleapis.com/v1/projects/pivota-prod/locations/global/publishers/google/models/gemini-3.1-pro-preview:generateContent"
+  },
+  "generationConfig": {
+    "temperature": 0,
+    "topP": 1,
+    "maxOutputTokens": 1024,
+    "thinkingConfig": {
+      "includeThoughts": false,
+      "thinkingBudget": 128
+    }
+  },
+  "toolConfig": {
+    "functionCallingConfig": {
+      "mode": "AUTO"
+    }
+  },
+  "sampling_reason": "Temperature zero/topP one; bounded 1024 output and 128 thinking budget minimise sampling and reserve reasoning. Identical across arms; exact-model acceptance unverified until separately reviewed preflight. Unsupported configuration stops an arm; no substitution.",
+  "system_instruction_sha256": "4373c591866e9df7170dcc0e1f7cfcc5566ed21ba764dc12ee7f22cc0de3415b",
+  "declaration_set_sha256": "24f020f8ee926579a81eba2d81a4c8c9136ff39ff9703ac98c3fab33a4388ede",
+  "dropped_schema_keywords": [
+    {
+      "tool": "compare_offers",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "compare_offers",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "compare_offers",
+      "path": "/properties/offer_refs/items",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "create_checkout_session",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "create_checkout_session",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "create_checkout_session",
+      "path": "/properties/selection_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "create_checkout_session",
+      "path": "/properties/request_id",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_alternatives",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "get_alternatives",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_alternatives",
+      "path": "/properties/printing_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_checkout_session",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "get_checkout_session",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_checkout_session",
+      "path": "/properties/preview_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_offers",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "get_offers",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_offers",
+      "path": "/properties/text",
+      "keyword": "maxLength",
+      "value_sha256": "81a83544cf93c245178cbc1620030f1123f435af867c79d87135983c52ab39d9"
+    },
+    {
+      "tool": "get_offers",
+      "path": "/properties/printing_refs/items",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_offers",
+      "path": "/properties/proposed_filters",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "get_offers",
+      "path": "/properties/proposed_filters/properties/currency",
+      "keyword": "pattern",
+      "value_sha256": "43e30b328479ac6996bef63ea838cf0ff276d8c9736f9a423f1f601123b62ebb"
+    },
+    {
+      "tool": "get_offers",
+      "path": "/properties/proposed_filters/properties/budget_minor",
+      "keyword": "pattern",
+      "value_sha256": "70d409a72469c95f8d20d1b57a1d3a718aaa414e0102b3c6ac6dc8f8053ffcde"
+    },
+    {
+      "tool": "get_offers",
+      "path": "/properties/proposed_filters/properties/grade_company",
+      "keyword": "minLength",
+      "value_sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+    },
+    {
+      "tool": "get_offers",
+      "path": "/properties/proposed_filters/properties/grade_company",
+      "keyword": "maxLength",
+      "value_sha256": "6af1f692e9496c6d0b668316eccb93276ae6b6774fa728aac31ff40a38318760"
+    },
+    {
+      "tool": "get_offers",
+      "path": "/properties/proposed_filters/properties/grade_value",
+      "keyword": "minLength",
+      "value_sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+    },
+    {
+      "tool": "get_offers",
+      "path": "/properties/proposed_filters/properties/grade_value",
+      "keyword": "maxLength",
+      "value_sha256": "6af1f692e9496c6d0b668316eccb93276ae6b6774fa728aac31ff40a38318760"
+    },
+    {
+      "tool": "get_operation",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "get_operation",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_operation",
+      "path": "/properties/operation_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_order",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "get_order",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_order",
+      "path": "/properties/operation_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_product",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "get_product",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_product",
+      "path": "/properties/printing_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "lookup_certificate",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "lookup_certificate",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "lookup_certificate",
+      "path": "/properties/certificate_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "lookup_certificate",
+      "path": "/properties/offer_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "request_refresh",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "request_refresh",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "request_refresh",
+      "path": "/properties/refs/items",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "request_refresh",
+      "path": "/properties/request_id",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "search_catalog",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "search_catalog",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "search_catalog",
+      "path": "/properties/text",
+      "keyword": "minLength",
+      "value_sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+    },
+    {
+      "tool": "search_catalog",
+      "path": "/properties/text",
+      "keyword": "maxLength",
+      "value_sha256": "81a83544cf93c245178cbc1620030f1123f435af867c79d87135983c52ab39d9"
+    },
+    {
+      "tool": "search_catalog",
+      "path": "/properties/proposed_filters",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "search_catalog",
+      "path": "/properties/proposed_filters/properties/currency",
+      "keyword": "pattern",
+      "value_sha256": "43e30b328479ac6996bef63ea838cf0ff276d8c9736f9a423f1f601123b62ebb"
+    },
+    {
+      "tool": "search_catalog",
+      "path": "/properties/proposed_filters/properties/budget_minor",
+      "keyword": "pattern",
+      "value_sha256": "70d409a72469c95f8d20d1b57a1d3a718aaa414e0102b3c6ac6dc8f8053ffcde"
+    },
+    {
+      "tool": "search_catalog",
+      "path": "/properties/proposed_filters/properties/grade_company",
+      "keyword": "minLength",
+      "value_sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+    },
+    {
+      "tool": "search_catalog",
+      "path": "/properties/proposed_filters/properties/grade_company",
+      "keyword": "maxLength",
+      "value_sha256": "6af1f692e9496c6d0b668316eccb93276ae6b6774fa728aac31ff40a38318760"
+    },
+    {
+      "tool": "search_catalog",
+      "path": "/properties/proposed_filters/properties/grade_value",
+      "keyword": "minLength",
+      "value_sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+    },
+    {
+      "tool": "search_catalog",
+      "path": "/properties/proposed_filters/properties/grade_value",
+      "keyword": "maxLength",
+      "value_sha256": "6af1f692e9496c6d0b668316eccb93276ae6b6774fa728aac31ff40a38318760"
+    },
+    {
+      "tool": "select_offer",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/offer_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/requirements",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/requirements/properties/printing_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/requirements/properties/finish",
+      "keyword": "minLength",
+      "value_sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/requirements/properties/finish",
+      "keyword": "maxLength",
+      "value_sha256": "6af1f692e9496c6d0b668316eccb93276ae6b6774fa728aac31ff40a38318760"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/requirements/properties/grade_company",
+      "keyword": "anyOf",
+      "value_sha256": "93bd8e459c4273d5a7edf21900e8b48f127a9a54daefc9f6cc9aaab5a2ff2a9c"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/requirements/properties/grade_value",
+      "keyword": "anyOf",
+      "value_sha256": "93bd8e459c4273d5a7edf21900e8b48f127a9a54daefc9f6cc9aaab5a2ff2a9c"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/requirements/properties/condition_bucket",
+      "keyword": "minLength",
+      "value_sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/requirements/properties/condition_bucket",
+      "keyword": "maxLength",
+      "value_sha256": "6af1f692e9496c6d0b668316eccb93276ae6b6774fa728aac31ff40a38318760"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/requirements/properties/currency",
+      "keyword": "pattern",
+      "value_sha256": "43e30b328479ac6996bef63ea838cf0ff276d8c9736f9a423f1f601123b62ebb"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/requirements/properties/budget_minor",
+      "keyword": "pattern",
+      "value_sha256": "70d409a72469c95f8d20d1b57a1d3a718aaa414e0102b3c6ac6dc8f8053ffcde"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/request_id",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    }
+  ],
+  "privacy_projection_sha256": "62c8c182deebdf56494d8f0a3dcce314c5266308bdca6c57f067cd5c4524400d",
+  "privacy_policy": {
+    "version": "shopping.model-privacy.v1",
+    "private_event": "fail_closed_before_transport",
+    "synthetic_private_values": [
+      "dest_hk",
+      "dest_us",
+      "Hong Kong",
+      "United States"
+    ],
+    "patterns": [
+      "email",
+      "phone",
+      "destination labels",
+      "contact/address fields"
+    ],
+    "native_text": "original only; never feed a redacted model view to native admission"
+  },
+  "privacy_policy_sha256": "d01b739968adc79e6fcd3d58bea9bb2285686aae3a5d20fcbca5ac1b3a35e07b",
+  "fixture_manifest_sha256": "bd4258fb31b197a64dc8d7b445c4b03dca8b9bce0d9f11aa7cf6fc3bce54ae79",
+  "compatibility_mapping_sha256": "d8ec53756811d301ec4f03a70a1b4a865276ec7186832e18ae39088f1fbb731f",
+  "prices": {
+    "schema": "shopping.vertex.published-price-observation.v1",
+    "retrieved_on": "2026-11-01",
+    "document_title": "Agent Platform Pricing | Google Cloud",
+    "requested_url": "https://cloud.google.com/vertex-ai/generative-ai/pricing",
+    "resolved_official_url": "https://cloud.google.com/model-garden/pricing",
+    "evidence_kind": "factual extraction from the official page; not a raw HTML snapshot",
+    "billing_mode": "standard online",
+    "location": "global",
+    "currency": "USD",
+    "rate_unit": "per million tokens",
+    "input_context_threshold_tokens": 200000,
+    "models": {
+      "gemini-3.5-flash-lite": {
+        "official_display_name": "Gemini 3.5 Flash-Lite",
+        "source_lines": [
+          149,
+          150,
+          152
+        ],
+        "up_to_200k": {
+          "input": 0.3,
+          "output_including_reasoning": 2.5
+        },
+        "above_200k": {
+          "input": 0.3,
+          "output_including_reasoning": 2.5
+        }
+      },
+      "gemini-3.1-pro-preview": {
+        "official_display_name": "Gemini 3.1 Pro Preview",
+        "source_lines": [
+          112,
+          113
+        ],
+        "up_to_200k": {
+          "input": 2,
+          "output_including_reasoning": 12
+        },
+        "above_200k": {
+          "input": 4,
+          "output_including_reasoning": 18
+        }
+      }
+    },
+    "thinking_separately_priced": false,
+    "thinking_basis": "Official output rows include response and reasoning.",
+    "long_context_basis_line": 88,
+    "long_context_rule": "For inputs longer than 200K, both input and output use the long-context rate.",
+    "cache_discounts_assumed": false,
+    "priority_or_batch_rates_used": false,
+    "availability_and_function_calling_verified": false,
+    "model_requests": 0,
+    "credential_reads": 0
+  },
+  "price_evidence_sha256": "b39291eab4bf92055b6b1ecff4dcb6a8504820daf320cb4b5270da888a9dc45e",
+  "pricing_rule": "Standard global; sum candidate and reasoning output, no separate thought rate or discounts. Both input tiers frozen. Prompt UTF8 bytes <=200000 before transport; over-cap reported usage is still charged using actual high-tier input/output before hard stop. Missing metadata retains maximum reservation.",
+  "budgets": {
+    "calls": 8000,
+    "calls_per_arm": 4000,
+    "input_tokens": 40000000,
+    "usd": 75,
+    "usd_per_arm": 50,
+    "concurrency": 2,
+    "minimum_launch_minutes": 45,
+    "refresh_minutes": 10,
+    "prompt_reservation_cap": 200000,
+    "output_reservation_cap": 2048
+  },
+  "turn_limits": {
+    "timeout_ms": 8000,
+    "calls_per_turn": 4,
+    "calls_per_journey": 12,
+    "sources": 3,
+    "listings_per_source": 3
+  },
+  "artifacts": [
+    {
+      "path": "reports/admission-kernel-live-model/corpus.json",
+      "sha256": "c1c9912e16c7a491387f8d3e24c59493bfce5fd4f6437a72eaecaa9f26dafd73"
+    },
+    {
+      "path": "reports/admission-kernel-live-model/holdout-e.json",
+      "sha256": "dc63d42daf62ddd6ca0a643eb0ddad42a9dcf5fa591f9708b84ac91234bd4997"
+    },
+    {
+      "path": "reports/admission-kernel-live-model/live-allowlist-guard.cjs",
+      "sha256": "623aec6125d41f53416b16fdbf3be2d2715a4d34a70b8130dc45c24f5d05d202"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/MAPPING.md",
+      "sha256": "7a77af45e9027ca6be3756fa060fd0255a4d1717fae70482a03166f4b2d69bf0"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/declarations.json",
+      "sha256": "19a824a213583ffe7a4ecac6ae808293e3a07bdeb0fd4a35bcf33b1936e3ae3b"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/declarations.json",
+      "sha256": "19a824a213583ffe7a4ecac6ae808293e3a07bdeb0fd4a35bcf33b1936e3ae3b"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/detached-launch.cjs",
+      "sha256": "ada0cee4a38163d465be58d072dfc9c3a959146e6ce09d8b264e3c5f0f0c1e5f"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/fake-worker.cjs",
+      "sha256": "e6e3edbe53ec3e38b29c8a4b04217627580e749d290d60f10e6e24892f4e59f5"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/live-host.cjs",
+      "sha256": "789e20951dce3926c7260fea9b2787beccd1236e7a59b0aedbd1babbe78fe38d"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/mutations.cjs",
+      "sha256": "b479cfc051e4879002af078b3499bfa8bddda588152a5ad1924b1f04263861ae"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/orchestrate.cjs",
+      "sha256": "62896a93329a3692b7266a1cdbb4afddfecf3cd676a5aa7742ae3ecd369534ed"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/prepare-freeze.cjs",
+      "sha256": "a2d21e94476518e843272cb51b1381fe41843e9e869a1fcd787889e4e20d762d"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/prepare-scenarios.cjs",
+      "sha256": "261ad096b40bf23cbf2e8483bab0444b33e73430563ae598b35d500f6dcc18f4"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/published-prices.json",
+      "sha256": "b39291eab4bf92055b6b1ecff4dcb6a8504820daf320cb4b5270da888a9dc45e"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/published-prices.json",
+      "sha256": "b39291eab4bf92055b6b1ecff4dcb6a8504820daf320cb4b5270da888a9dc45e"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/qualify-corpus.cjs",
+      "sha256": "137028415e729798249fc215e92fd339b557ff7c35f59100300e69f38fc40547"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/qualify-detached.cjs",
+      "sha256": "998c1785389e4d0017c5ebba1d77e459308b1256a8baecee6f3f84e3c7bea686"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/qualify-guard.cjs",
+      "sha256": "f278b246a22b402304f840b3c79f1d1050c22890583d3c2ede0a9c3a82dbc461"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/qualify-mapping.cjs",
+      "sha256": "c20e271a6a099ac46bb5ba1e406b88ef95fedb9ba1ccbee0bb82286d5705c640"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/score.cjs",
+      "sha256": "39f10df493c463a2f8709abc1c2d54b1bbc20c04f68235a9bb13578425a668eb"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/token-launch.py",
+      "sha256": "2804beb313127f927953802860260a1a95c98c60fcbfd53a4bd6af1156d416ca"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/vertex-allowlist-guard.cjs",
+      "sha256": "22bed7de98206197108592f1f597ca5fb68312f8d288d97c1ab21b489ad68020"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/model/collector.cjs",
+      "sha256": "d2bcabfb9c79aade372edd26d759f03f80d78cce9739acac7c428179807aec32"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/model/compatibility.cjs",
+      "sha256": "a75778557e9982eb0eacadce51802d79b9499d8eb95f1ef420d5814adbb52298"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/model/context.cjs",
+      "sha256": "2e267b5936300f0317c2a4d5e6630eb7803efb6f207244c2f42e8d7205907a5c"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/model/declarations.cjs",
+      "sha256": "a3e14cb9f5694f853f52f462831f37bdce446ffff4ce909e00cc979a2b54db54"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/model/privacy.cjs",
+      "sha256": "a652e55b8f8eb4a10ebcb0995c9c7f8213a124969862aad5f5187bd49028ad69"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/model/turn.cjs",
+      "sha256": "11eae8dde42970bc92f4cf6e9cc64be816dc1619514eded92442e3de4f171d64"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/model/vertex-request.cjs",
+      "sha256": "84ede59a510eecce5169afc158dd7c43542779122c932f451edb6d014f608680"
+    },
+    {
+      "path": "tests/fixtures/shopping-model-eval/compatibility-mapping.json",
+      "sha256": "d8ec53756811d301ec4f03a70a1b4a865276ec7186832e18ae39088f1fbb731f"
+    },
+    {
+      "path": "tests/fixtures/shopping-model-eval/corpus-plan.json",
+      "sha256": "6dc8ea91714770785ed4fb34d6e93926f938eebbb655ce63a66d4b3e2c086784"
+    },
+    {
+      "path": "tests/fixtures/shopping/frozen-manifest.json",
+      "sha256": "bd4258fb31b197a64dc8d7b445c4b03dca8b9bce0d9f11aa7cf6fc3bce54ae79"
+    },
+    {
+      "path": "tests/shopping-model-eval.test.cjs",
+      "sha256": "0802611745f4068679a7e04a23c167f8954ace2939baeffe9cd6e0a2e6071201"
+    },
+    {
+      "path": "tests/shopping/model/collector.test.cjs",
+      "sha256": "348e30250f54cc02f6e5cee61dcf9c98e46644af1565e469d0f76c52d12a7f4f"
+    },
+    {
+      "path": "tests/shopping/model/compatibility.test.cjs",
+      "sha256": "eb68794adadae14eb67f0ce90b0ffe0e41dd907ab241868f6cbb0bfa844b9890"
+    },
+    {
+      "path": "tests/shopping/model/scenarios.cjs",
+      "sha256": "ac9a26e62fd6b7dddb7638ee49382a240a52d2e5bb3b63b447c1d001abd10234"
+    },
+    {
+      "path": "tests/shopping/model/scenarios.test.cjs",
+      "sha256": "2371112de562f47faaa86e98d2829f940bc12accf1e8cf9e9a6061e9766548f0"
+    },
+    {
+      "path": "tests/shopping/model/transport.test.cjs",
+      "sha256": "f35302655ce897bbb3e59a1c549aabdeb967093d0ea4f26a9d64618d089c3a9d"
+    }
+  ],
+  "review_required": "Stop after3a commit; Claude reviews exact freeze and code. No3b in this stage."
+}
