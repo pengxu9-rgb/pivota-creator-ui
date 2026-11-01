@@ -1,144 +1,219 @@
 {
-  "schema": "shopping.phase2.harness-fix.report.v1",
-  "complete": false,
+  "schema": "shopping.phase2.complete.v2",
+  "complete": true,
   "approved": false,
   "base_main": "8a546642c68e22598c9c03015b9cb04f3c8d85df",
-  "prior_head": "922fb3100db72a1115083856082df4a2d048aa47",
-  "runner_fix_commit": "0226c92d7dd6db3962ef6e3a217394f2165cfb12",
-  "changed_code_files": [
-    "tests/shopping/mutations.cjs"
-  ],
-  "gates": [
-    {
-      "name": "01-shopping-tests",
-      "status": "passed",
-      "exit_code": 0,
-      "test_counts": {
-        "tests": 25,
-        "pass": 25,
-        "fail": 0
+  "validated_code_commit": "e791602744ef36fe6a8205ba623b8a78b9b80af3",
+  "review": {
+    "sha256": "c31552a71023b3ae077d0c9aa5f0f39a67c135cb5afd3cb4db9327c86665a214",
+    "p1": 0,
+    "p2": 0,
+    "p3_1": "fixed: dynamic gate inventory and derived audit/cell totals",
+    "p3_2": "test host issues principals; a future backend must exclude this from every model transport"
+  },
+  "inventory": {
+    "test_files": 44,
+    "tests": 506,
+    "routing_python_workers": 63,
+    "python_workers": 64
+  },
+  "coverage": {
+    "rows": 93,
+    "caught": 88,
+    "equivalents": [
+      {
+        "id": "remove_reply_binding",
+        "reason": "The final whole-text reply boundary independently binds exact text and the current prompt. Removing its preliminary recognizer grants no additional reply authority."
       },
-      "guarded_node_processes": 2,
-      "network_attempts": 0
+      {
+        "id": "restore_generic_word_reply",
+        "reason": "The final exact bound-reply check remains. A bare-subject ask can become a safe hold; identical UI behavior is not claimed."
+      },
+      {
+        "id": "adapter_execute_runs_held_plans",
+        "reason": "Every held plan is localOnly=true, so the retained check rejects it. Private frozen plan membership prevents changing that invariant."
+      },
+      {
+        "id": "R4_lucario_prefix",
+        "reason": "The separate complete raw-text regex still controls explicitLegacySubject. Prefix matching inside catalogSyntax grants no additional literal ask authority."
+      },
+      {
+        "id": "R4_forms_case_sensitive_ex_only",
+        "reason": "The whole catalogSyntax input is already folded before the regex captures the ASCII form. Removing the second toLowerCase changes no captured form."
+      }
+    ],
+    "cells": 4230,
+    "node_audits": 8505,
+    "python_audits": 6080,
+    "expected_totals": {
+      "python_audits": 6080,
+      "cells": 4230
     },
-    {
-      "name": "02-evaluation",
-      "status": "passed",
+    "unclaimed_python_audits": 0,
+    "network_attempts": 0
+  },
+  "gates": {
+    "full_suite": {
       "exit_code": 0,
-      "episodes": 80,
-      "adversarial": 12,
-      "faults": 6,
-      "guarded_node_processes": 1,
-      "network_attempts": 0
-    },
-    {
-      "name": "03-mutants",
-      "status": "passed",
-      "exit_code": 0,
-      "rows": 15,
-      "caught": 15,
-      "guarded_node_processes": 46,
-      "network_attempts": 0
-    },
-    {
-      "name": "04-full-suite",
-      "exit_code": 0,
-      "signal": null,
-      "test_counts": {
+      "counts": {
         "tests": 506,
         "pass": 506,
         "fail": 0,
         "cancelled": 0,
         "skipped": 0
-      },
-      "guarded_node_processes": 46,
-      "guarded_python_processes": 64,
-      "network_attempts": 0,
-      "python_network_attempts": 0,
-      "log": {
-        "file": "04-full-suite.log",
-        "bytes": 134002,
-        "sha256": "627e11ad5cbe4538045f03fdb7e4f513e0e1a5eb34a59d58b1b0225dd184507f"
-      },
-      "status": "passed"
+      }
     },
-    {
-      "name": "05-original-names",
+    "fresh93": {
       "exit_code": 0,
-      "signal": null,
-      "test_counts": {
-        "tests": 292,
-        "pass": 292,
-        "fail": 0,
-        "cancelled": 0,
-        "skipped": 0
-      },
-      "guarded_node_processes": 23,
-      "guarded_python_processes": 1,
-      "network_attempts": 0,
-      "python_network_attempts": 0,
-      "log": {
-        "file": "05-original-names.log",
-        "bytes": 72512,
-        "sha256": "195791049010f5b0d6928e811517c9c956c7da5e8764108752f4ba93a96c673d"
-      },
-      "status": "passed"
+      "complete": true,
+      "caught": 88,
+      "equivalents": 5,
+      "network_attempts": 0
     },
-    {
-      "name": "06-main-pot-node",
+    "python": {
       "exit_code": 0,
-      "signal": null,
-      "test_counts": {
-        "tests": 481,
-        "pass": 481,
-        "fail": 0,
-        "cancelled": 0,
-        "skipped": 0
-      },
-      "guarded_node_processes": 45,
-      "guarded_python_processes": 64,
-      "network_attempts": 0,
-      "python_network_attempts": 0,
-      "log": {
-        "file": "06-main-pot-node.log",
-        "bytes": 128083,
-        "sha256": "1a12fb834eafebddeba05a88b86a2d9febb557e06a1bfe9dcecc38bdeb268e68"
-      },
-      "status": "passed"
+      "tests": 23,
+      "passed": 23,
+      "network_attempts": 0
     },
-    {
-      "name": "07-main-pot-python",
-      "exit_code": 5,
-      "signal": null,
-      "test_counts": {
-        "tests": 0,
-        "pass": 0,
-        "fail": 0,
-        "cancelled": 0,
-        "skipped": 0
+    "typescript": {
+      "exit_code": 0,
+      "network_attempts": 0
+    },
+    "vocabulary": {
+      "exit_code": 0,
+      "network_attempts": 0
+    },
+    "phase_b": [
+      {
+        "name": "phase-b-1",
+        "exit_code": 0,
+        "summary_sha256": "77ab2c392d1a88132270cf41c76f56fecccbecbda74c3567de582ed820af031b",
+        "node_audits": 1,
+        "network_attempts": 0
       },
-      "guarded_node_processes": 0,
-      "guarded_python_processes": 1,
-      "network_attempts": 0,
-      "python_network_attempts": 0,
-      "log": {
-        "file": "07-main-pot-python.log",
-        "bytes": 109,
-        "sha256": "cdc22d61d52d46b47a8cd7b75f0e9d5a69a359ca8b466c40b7ff2a89bd5ea70a"
-      },
-      "status": "failed"
+      {
+        "name": "phase-b-2",
+        "exit_code": 0,
+        "summary_sha256": "77ab2c392d1a88132270cf41c76f56fecccbecbda74c3567de582ed820af031b",
+        "node_audits": 1,
+        "network_attempts": 0
+      }
+    ],
+    "shopping_and_15_mutants": {
+      "source": "unchanged implementation and tests; independently reproduced by Claude on 3dfbc07",
+      "shopping_tests": 25,
+      "mutants": 15,
+      "mutation_table": [
+        {
+          "id": "non_atomic_approval",
+          "target_test": "shopping: failed transaction exposes neither approval, reservation nor outbox",
+          "failure_reason": "Approval, operation and outbox state leaked after the injected transaction failure.",
+          "exit_code": 1,
+          "target_error_code": "ERR_ASSERTION"
+        },
+        {
+          "id": "model_complete",
+          "target_test": "shopping: valid approvals do not confer model execution, payment, case or recovery capabilities",
+          "failure_reason": "Completion crossed the model boundary: principal_denied was returned instead of model_principal_denied.",
+          "exit_code": 1,
+          "target_error_code": "ERR_ASSERTION"
+        },
+        {
+          "id": "payload_hash_in_key",
+          "target_test": "shopping: two same-key approvals reserve and dispatch once; changed payload conflicts",
+          "failure_reason": "Changed payload produced version_conflict instead of idempotency_conflict.",
+          "exit_code": 1,
+          "target_error_code": "ERR_ASSERTION"
+        },
+        {
+          "id": "unknown_resubmit",
+          "target_test": "shopping: unknown outcome cannot be replaced or resubmitted by chat, UI or ordinary worker dispatch",
+          "failure_reason": "Ordinary dispatch changed the unknown operation: later approval returned approval_consumed instead of execution_read_only.",
+          "exit_code": 1,
+          "target_error_code": "ERR_ASSERTION"
+        },
+        {
+          "id": "expiry_inclusive",
+          "target_test": "shopping: admission alone enforces strict expiry and cancellation epoch",
+          "failure_reason": "The exact-expiry approval did not throw the required rejection.",
+          "exit_code": 1,
+          "target_error_code": "ERR_ASSERTION"
+        },
+        {
+          "id": "ignore_cancellation_epoch",
+          "target_test": "shopping: admission alone enforces strict expiry and cancellation epoch",
+          "failure_reason": "A stale cancellation epoch did not throw the required rejection.",
+          "exit_code": 1,
+          "target_error_code": "ERR_ASSERTION"
+        },
+        {
+          "id": "jpy_times_100",
+          "target_test": "shopping: money uses integer strings with JPY exponent zero and USD exponent two",
+          "failure_reason": "JPY 28000 became 2800000 instead of 28000.",
+          "exit_code": 1,
+          "target_error_code": "ERR_ASSERTION"
+        },
+        {
+          "id": "persist_assumption",
+          "target_test": "shopping: both frozen arms complete all eighty episodes, twelve adversaries and six faults",
+          "failure_reason": "Read-only exploration had accepted JPY/item assumptions where accepted state must be null.",
+          "exit_code": 1,
+          "target_error_code": "ERR_ASSERTION"
+        },
+        {
+          "id": "rewritten_native",
+          "target_test": "shopping: read exploration neither binds assumptions nor rewrites native text",
+          "failure_reason": "The native probe received the original and corrected query strings instead of no calls.",
+          "exit_code": 1,
+          "target_error_code": "ERR_ASSERTION"
+        },
+        {
+          "id": "negated_english",
+          "target_test": "shopping: negated English cannot be returned even with an explicit English printing ref",
+          "failure_reason": "The result set included English despite the negative language constraint.",
+          "exit_code": 1,
+          "target_error_code": "ERR_ASSERTION"
+        },
+        {
+          "id": "model_recovery",
+          "target_test": "shopping: inconclusive lookup remains unknown; only trusted recovery schedules another lookup",
+          "failure_reason": "A model recovery call succeeded where the target required denial.",
+          "exit_code": 1,
+          "target_error_code": "ERR_ASSERTION"
+        },
+        {
+          "id": "ignore_owner",
+          "target_test": "shopping: cross-app refs and cross-user reads reveal no task or evidence",
+          "failure_reason": "A cross-app preview read succeeded where the target required scope denial.",
+          "exit_code": 1,
+          "target_error_code": "ERR_ASSERTION"
+        },
+        {
+          "id": "render_stale",
+          "target_test": "shopping: renderer rejects missing, injected, superseded and expired evidence",
+          "failure_reason": "Expired preview evidence did not throw the required rendering rejection.",
+          "exit_code": 1,
+          "target_error_code": "ERR_ASSERTION"
+        },
+        {
+          "id": "ignore_source_permission",
+          "target_test": "shopping: source permission, lot, grade, finish and stale observations qualify independently",
+          "failure_reason": "An offer with source_permission=false remained in qualified results.",
+          "exit_code": 1,
+          "target_error_code": "ERR_ASSERTION"
+        },
+        {
+          "id": "suppress_changed_terms",
+          "target_test": "shopping: both frozen arms complete all eighty episodes, twelve adversaries and six faults",
+          "failure_reason": "J04 returned complete instead of terms_changed after the price change.",
+          "exit_code": 1,
+          "target_error_code": "ERR_ASSERTION"
+        }
+      ]
     }
-  ],
-  "not_run": [
-    "08-typescript",
-    "09-vocabulary",
-    "10-phase-b-1",
-    "10-phase-b-2",
-    "11-fresh93",
-    "12-protected-hash-gate"
-  ],
-  "stop_reason": "07-main-pot-python\n\n5 !== 0\n",
-  "model_evaluation": {
+  },
+  "evaluation": {
     "arms": {
       "model-off": {
         "episodes": 40,
@@ -171,613 +246,871 @@
     },
     "failures": 0
   },
-  "mutation_table": [
+  "protected_files": [
     {
-      "id": "non_atomic_approval",
-      "target_test": "shopping: failed transaction exposes neither approval, reservation nor outbox",
-      "killed": true,
-      "status": "killed_by_target_assertion",
-      "exit_code": 1,
-      "precheck_exit_code": 0,
-      "target_error_code": "ERR_ASSERTION",
-      "failure_reason": "Approval, operation and outbox state leaked after the injected transaction failure.",
-      "other_failing_tests": [],
-      "forbidden_failing_errors": 0,
-      "guarded_node_processes": 3,
-      "network_attempts": 0
+      "file": "src/lib/pokemon/admission.cjs",
+      "sha256": "0002b573bb37536316218890a56575e7eb50411a8de1b0b6bdaba3f9719eb551",
+      "unchanged": true
     },
     {
-      "id": "model_complete",
-      "target_test": "shopping: valid approvals do not confer model execution, payment, case or recovery capabilities",
-      "killed": true,
-      "status": "killed_by_target_assertion",
-      "exit_code": 1,
-      "precheck_exit_code": 0,
-      "target_error_code": "ERR_ASSERTION",
-      "failure_reason": "Completion crossed the model boundary: principal_denied was returned instead of model_principal_denied.",
-      "other_failing_tests": [
-        {
-          "name": "shopping: both frozen arms complete all eighty episodes, twelve adversaries and six faults",
-          "code": "ERR_ASSERTION"
-        }
-      ],
-      "forbidden_failing_errors": 0,
-      "guarded_node_processes": 3,
-      "network_attempts": 0
+      "file": "src/lib/pokemon/chatTextIntent.cjs",
+      "sha256": "3880370526ba45ae1fb5822b4cea21f2032fe1a006c27363986ac60030f1d813",
+      "unchanged": true
     },
     {
-      "id": "payload_hash_in_key",
-      "target_test": "shopping: two same-key approvals reserve and dispatch once; changed payload conflicts",
-      "killed": true,
-      "status": "killed_by_target_assertion",
-      "exit_code": 1,
-      "precheck_exit_code": 0,
-      "target_error_code": "ERR_ASSERTION",
-      "failure_reason": "Changed payload produced version_conflict instead of idempotency_conflict.",
-      "other_failing_tests": [
-        {
-          "name": "shopping: both frozen arms complete all eighty episodes, twelve adversaries and six faults",
-          "code": "ERR_ASSERTION"
-        }
-      ],
-      "forbidden_failing_errors": 0,
-      "guarded_node_processes": 3,
-      "network_attempts": 0
+      "file": "src/lib/pokemon/catalogAdapter.cjs",
+      "sha256": "9b7acc3a75cffce2bcb7dad11356a0f6920b34c1591a271a49403bf61a85bf52",
+      "unchanged": true
     },
     {
-      "id": "unknown_resubmit",
-      "target_test": "shopping: unknown outcome cannot be replaced or resubmitted by chat, UI or ordinary worker dispatch",
-      "killed": true,
-      "status": "killed_by_target_assertion",
-      "exit_code": 1,
-      "precheck_exit_code": 0,
-      "target_error_code": "ERR_ASSERTION",
-      "failure_reason": "Ordinary dispatch changed the unknown operation: later approval returned approval_consumed instead of execution_read_only.",
-      "other_failing_tests": [],
-      "forbidden_failing_errors": 0,
-      "guarded_node_processes": 3,
-      "network_attempts": 0
+      "file": "src/lib/pokemon/modelTurn.cjs",
+      "sha256": "432b0a6b5060eb97caf318d399fd9acb7c4ca8960099e5ef3581b73765378b63",
+      "unchanged": true
     },
     {
-      "id": "expiry_inclusive",
-      "target_test": "shopping: admission alone enforces strict expiry and cancellation epoch",
-      "killed": true,
-      "status": "killed_by_target_assertion",
-      "exit_code": 1,
-      "precheck_exit_code": 0,
-      "target_error_code": "ERR_ASSERTION",
-      "failure_reason": "The exact-expiry approval did not throw the required rejection.",
-      "other_failing_tests": [],
-      "forbidden_failing_errors": 0,
-      "guarded_node_processes": 3,
-      "network_attempts": 0
-    },
-    {
-      "id": "ignore_cancellation_epoch",
-      "target_test": "shopping: admission alone enforces strict expiry and cancellation epoch",
-      "killed": true,
-      "status": "killed_by_target_assertion",
-      "exit_code": 1,
-      "precheck_exit_code": 0,
-      "target_error_code": "ERR_ASSERTION",
-      "failure_reason": "A stale cancellation epoch did not throw the required rejection.",
-      "other_failing_tests": [],
-      "forbidden_failing_errors": 0,
-      "guarded_node_processes": 3,
-      "network_attempts": 0
-    },
-    {
-      "id": "jpy_times_100",
-      "target_test": "shopping: money uses integer strings with JPY exponent zero and USD exponent two",
-      "killed": true,
-      "status": "killed_by_target_assertion",
-      "exit_code": 1,
-      "precheck_exit_code": 0,
-      "target_error_code": "ERR_ASSERTION",
-      "failure_reason": "JPY 28000 became 2800000 instead of 28000.",
-      "other_failing_tests": [],
-      "forbidden_failing_errors": 0,
-      "guarded_node_processes": 3,
-      "network_attempts": 0
-    },
-    {
-      "id": "persist_assumption",
-      "target_test": "shopping: both frozen arms complete all eighty episodes, twelve adversaries and six faults",
-      "killed": true,
-      "status": "killed_by_target_assertion",
-      "exit_code": 1,
-      "precheck_exit_code": 0,
-      "target_error_code": "ERR_ASSERTION",
-      "failure_reason": "Read-only exploration had accepted JPY/item assumptions where accepted state must be null.",
-      "other_failing_tests": [
-        {
-          "name": "shopping: unknown fields and self-declared roles fail closed",
-          "code": "ERR_ASSERTION"
-        },
-        {
-          "name": "shopping: refresh is bounded to read evidence and cannot create a recovery or order job",
-          "code": "ERR_ASSERTION"
-        }
-      ],
-      "forbidden_failing_errors": 0,
-      "guarded_node_processes": 3,
-      "network_attempts": 0
-    },
-    {
-      "id": "rewritten_native",
-      "target_test": "shopping: read exploration neither binds assumptions nor rewrites native text",
-      "killed": true,
-      "status": "killed_by_target_assertion",
-      "exit_code": 1,
-      "precheck_exit_code": 0,
-      "target_error_code": "ERR_ASSERTION",
-      "failure_reason": "The native probe received the original and corrected query strings instead of no calls.",
-      "other_failing_tests": [
-        {
-          "name": "shopping: both frozen arms complete all eighty episodes, twelve adversaries and six faults",
-          "code": "ERR_ASSERTION"
-        }
-      ],
-      "forbidden_failing_errors": 0,
-      "guarded_node_processes": 3,
-      "network_attempts": 0
-    },
-    {
-      "id": "negated_english",
-      "target_test": "shopping: negated English cannot be returned even with an explicit English printing ref",
-      "killed": true,
-      "status": "killed_by_target_assertion",
-      "exit_code": 1,
-      "precheck_exit_code": 0,
-      "target_error_code": "ERR_ASSERTION",
-      "failure_reason": "The result set included English despite the negative language constraint.",
-      "other_failing_tests": [
-        {
-          "name": "shopping: both frozen arms complete all eighty episodes, twelve adversaries and six faults",
-          "code": "ERR_ASSERTION"
-        }
-      ],
-      "forbidden_failing_errors": 0,
-      "guarded_node_processes": 3,
-      "network_attempts": 0
-    },
-    {
-      "id": "model_recovery",
-      "target_test": "shopping: inconclusive lookup remains unknown; only trusted recovery schedules another lookup",
-      "killed": true,
-      "status": "killed_by_target_assertion",
-      "exit_code": 1,
-      "precheck_exit_code": 0,
-      "target_error_code": "ERR_ASSERTION",
-      "failure_reason": "A model recovery call succeeded where the target required denial.",
-      "other_failing_tests": [
-        {
-          "name": "shopping: valid approvals do not confer model execution, payment, case or recovery capabilities",
-          "code": "ERR_ASSERTION"
-        },
-        {
-          "name": "shopping: both frozen arms complete all eighty episodes, twelve adversaries and six faults",
-          "code": "ERR_ASSERTION"
-        }
-      ],
-      "forbidden_failing_errors": 0,
-      "guarded_node_processes": 3,
-      "network_attempts": 0
-    },
-    {
-      "id": "ignore_owner",
-      "target_test": "shopping: cross-app refs and cross-user reads reveal no task or evidence",
-      "killed": true,
-      "status": "killed_by_target_assertion",
-      "exit_code": 1,
-      "precheck_exit_code": 0,
-      "target_error_code": "ERR_ASSERTION",
-      "failure_reason": "A cross-app preview read succeeded where the target required scope denial.",
-      "other_failing_tests": [
-        {
-          "name": "shopping: both frozen arms complete all eighty episodes, twelve adversaries and six faults",
-          "code": "ERR_ASSERTION"
-        }
-      ],
-      "forbidden_failing_errors": 0,
-      "guarded_node_processes": 3,
-      "network_attempts": 0
-    },
-    {
-      "id": "render_stale",
-      "target_test": "shopping: renderer rejects missing, injected, superseded and expired evidence",
-      "killed": true,
-      "status": "killed_by_target_assertion",
-      "exit_code": 1,
-      "precheck_exit_code": 0,
-      "target_error_code": "ERR_ASSERTION",
-      "failure_reason": "Expired preview evidence did not throw the required rendering rejection.",
-      "other_failing_tests": [],
-      "forbidden_failing_errors": 0,
-      "guarded_node_processes": 3,
-      "network_attempts": 0
-    },
-    {
-      "id": "ignore_source_permission",
-      "target_test": "shopping: source permission, lot, grade, finish and stale observations qualify independently",
-      "killed": true,
-      "status": "killed_by_target_assertion",
-      "exit_code": 1,
-      "precheck_exit_code": 0,
-      "target_error_code": "ERR_ASSERTION",
-      "failure_reason": "An offer with source_permission=false remained in qualified results.",
-      "other_failing_tests": [],
-      "forbidden_failing_errors": 0,
-      "guarded_node_processes": 3,
-      "network_attempts": 0
-    },
-    {
-      "id": "suppress_changed_terms",
-      "target_test": "shopping: both frozen arms complete all eighty episodes, twelve adversaries and six faults",
-      "killed": true,
-      "status": "killed_by_target_assertion",
-      "exit_code": 1,
-      "precheck_exit_code": 0,
-      "target_error_code": "ERR_ASSERTION",
-      "failure_reason": "J04 returned complete instead of terms_changed after the price change.",
-      "other_failing_tests": [],
-      "forbidden_failing_errors": 0,
-      "guarded_node_processes": 3,
-      "network_attempts": 0
+      "file": "src/lib/pokemon/modelRuntime.cjs",
+      "sha256": "5da6101468d86b01788c97878b838d628fd111b9ec5596170c78bf9111f66bf3",
+      "unchanged": true
     }
   ],
-  "original_names": {
-    "required": 291,
-    "matched": 291,
-    "additional_names": [
-      "browsing beta exposes a passive seller-access journey without source or quote controls"
-    ],
-    "frozen_log_sha256": "f61a644e44329a2b05e430e5c9af313ae64fa242ffadd9f4a78a699dfce65488",
-    "executed_files": [
-      "tests/bns-url-preview.test.cjs",
-      "tests/chat-clarification-recovery.test.cjs",
-      "tests/chat-routing-guards.test.cjs",
-      "tests/gemini-conversation.test.cjs",
-      "tests/gemini-vertex-transport.test.cjs",
-      "tests/grade-evidence-contract.test.cjs",
-      "tests/history-target-binding.test.cjs",
-      "tests/listing-evidence.test.cjs",
-      "tests/marketplace-affiliate.test.cjs",
-      "tests/mobile-price-research.test.cjs",
-      "tests/model-adversary-regressions.test.cjs",
-      "tests/model-runtime.test.cjs",
-      "tests/model-turn-contract.test.cjs",
-      "tests/native-comparison-render.test.cjs",
-      "tests/offer-evidence-binding.test.cjs",
-      "tests/offer-evidence.test.cjs",
-      "tests/pokemon-private-context.test.cjs",
-      "tests/research-grade-context.test.cjs",
-      "tests/seller-comparison.test.cjs",
-      "tests/stop-recovery.test.cjs",
-      "tests/target-selection-guard.test.cjs"
-    ]
+  "scope": {
+    "source_unchanged_since_review": true,
+    "fixture_manifest_unchanged": true,
+    "pins_workflows_cloud_router_unchanged": true
   },
-  "phase_b": null,
-  "fresh93": null,
-  "source_identity": {
-    "src_tree": "c72bc05b4445ac808c58c081cc86918cefaa21bf",
-    "prior_src_tree": "c72bc05b4445ac808c58c081cc86918cefaa21bf",
-    "protected_files": [
-      {
-        "file": "src/lib/pokemon/admission.cjs",
-        "sha256": "0002b573bb37536316218890a56575e7eb50411a8de1b0b6bdaba3f9719eb551",
-        "reviewed_sha256": "0002b573bb37536316218890a56575e7eb50411a8de1b0b6bdaba3f9719eb551",
-        "unchanged": true
-      },
-      {
-        "file": "src/lib/pokemon/chatTextIntent.cjs",
-        "sha256": "3880370526ba45ae1fb5822b4cea21f2032fe1a006c27363986ac60030f1d813",
-        "reviewed_sha256": "3880370526ba45ae1fb5822b4cea21f2032fe1a006c27363986ac60030f1d813",
-        "unchanged": true
-      },
-      {
-        "file": "src/lib/pokemon/catalogAdapter.cjs",
-        "sha256": "9b7acc3a75cffce2bcb7dad11356a0f6920b34c1591a271a49403bf61a85bf52",
-        "reviewed_sha256": "9b7acc3a75cffce2bcb7dad11356a0f6920b34c1591a271a49403bf61a85bf52",
-        "unchanged": true
-      },
-      {
-        "file": "src/lib/pokemon/modelTurn.cjs",
-        "sha256": "432b0a6b5060eb97caf318d399fd9acb7c4ca8960099e5ef3581b73765378b63",
-        "reviewed_sha256": "432b0a6b5060eb97caf318d399fd9acb7c4ca8960099e5ef3581b73765378b63",
-        "unchanged": true
-      },
-      {
-        "file": "src/lib/pokemon/modelRuntime.cjs",
-        "sha256": "5da6101468d86b01788c97878b838d628fd111b9ec5596170c78bf9111f66bf3",
-        "reviewed_sha256": "5da6101468d86b01788c97878b838d628fd111b9ec5596170c78bf9111f66bf3",
-        "unchanged": true
-      }
-    ],
-    "dedicated_protected_hash_gate_ran": false,
-    "fixture_manifest_sha256": "bd4258fb31b197a64dc8d7b445c4b03dca8b9bce0d9f11aa7cf6fc3bce54ae79"
+  "public_scan": {
+    "files": 46,
+    "violations": []
   },
-  "code_inventory": {
-    "file_count": 43,
-    "bytes": 161435,
-    "excluding_frozen_file_count": 37,
-    "excluding_frozen_bytes": 137071,
-    "files": [
-      {
-        "file": "src/lib/pokemon/shopping/README.md",
-        "bytes": 3911,
-        "sha256": "c06c5e920920a09d5aeb80ab9ce49fb74cd8d3cae2433ca09e980049cd43eb73",
-        "frozen": false
-      },
-      {
-        "file": "src/lib/pokemon/shopping/contracts/approve_purchase.schema.json",
-        "bytes": 1154,
-        "sha256": "9804f1483095a645095314ce0e034a2ba63216f5436ae26caaa3f4ef5b1bd539",
-        "frozen": false
-      },
-      {
-        "file": "src/lib/pokemon/shopping/contracts/common.schema.json",
-        "bytes": 20720,
-        "sha256": "d8cbefd4bf1cc5328efcf00615e450801498dff2cfa78f737886d9359ecd0fd3",
-        "frozen": false
-      },
-      {
-        "file": "src/lib/pokemon/shopping/contracts/compare_offers.schema.json",
-        "bytes": 911,
-        "sha256": "8d34763f0d16c914b78bad17d20a992287ad7009df3c7bf31b98bc34989c6bd2",
-        "frozen": false
-      },
-      {
-        "file": "src/lib/pokemon/shopping/contracts/complete_checkout_session.schema.json",
-        "bytes": 1056,
-        "sha256": "25813080b199daa99050e2e0be963cd8533d2889f2f0576c5926fcf0a64a394a",
-        "frozen": false
-      },
-      {
-        "file": "src/lib/pokemon/shopping/contracts/create_checkout_session.schema.json",
-        "bytes": 1391,
-        "sha256": "d40d53acd5c0c3e4e7227db0de4a36f52b06806711b2052bec8e3446ffda9250",
-        "frozen": false
-      },
-      {
-        "file": "src/lib/pokemon/shopping/contracts/create_payment_link.schema.json",
-        "bytes": 1038,
-        "sha256": "d00d72bf481cc1d973c101cba0f57de490a4330a9db5360d5d5ee84f8ce61e6d",
-        "frozen": false
-      },
-      {
-        "file": "src/lib/pokemon/shopping/contracts/get_alternatives.schema.json",
-        "bytes": 704,
-        "sha256": "c101ac45714f49308a5177fcec5cf5303b3df4afd68bf49ea7abb75ac1f46fde",
-        "frozen": false
-      },
-      {
-        "file": "src/lib/pokemon/shopping/contracts/get_checkout_session.schema.json",
-        "bytes": 714,
-        "sha256": "477c116b87bfff9c592b9c37d694a7f2a5236255516dce19dcc80048b78dfe11",
-        "frozen": false
-      },
-      {
-        "file": "src/lib/pokemon/shopping/contracts/get_offers.schema.json",
-        "bytes": 1737,
-        "sha256": "bc69c57dbc3f347d82c18d3ca00c93b716152ad712a727698fe4a397f176d32e",
-        "frozen": false
-      },
-      {
-        "file": "src/lib/pokemon/shopping/contracts/get_operation.schema.json",
-        "bytes": 697,
-        "sha256": "ba4e8a1992b290f8b6931a63edfc0694ffa39e64da218ff3fe49a5c9c238db63",
-        "frozen": false
-      },
-      {
-        "file": "src/lib/pokemon/shopping/contracts/get_order.schema.json",
-        "bytes": 685,
-        "sha256": "adccb4f094ca9b0fdeea555eb39ab211f8a005f8cdecccbbb54fccd9a7748067",
-        "frozen": false
-      },
-      {
-        "file": "src/lib/pokemon/shopping/contracts/get_product.schema.json",
-        "bytes": 689,
-        "sha256": "dd3e1e769cf95acf608bcacf5e8184e8da27e06ccb0c81a2be9f36a44e9a30af",
-        "frozen": false
-      },
-      {
-        "file": "src/lib/pokemon/shopping/contracts/lookup_certificate.schema.json",
-        "bytes": 835,
-        "sha256": "e95a600c921b6132e6fca7cac343b618fb4bd99ea1ecad808f1fde906e2e8aa3",
-        "frozen": false
-      },
-      {
-        "file": "src/lib/pokemon/shopping/contracts/reconcile_operation.schema.json",
-        "bytes": 1038,
-        "sha256": "c162e618bdce1c994203c4ea366f0a9b53104125bdcc940812d3933b75e6b2e8",
-        "frozen": false
-      },
-      {
-        "file": "src/lib/pokemon/shopping/contracts/recover_operation.schema.json",
-        "bytes": 1283,
-        "sha256": "a6fa8c0e3adbddb12e8aeab3c6d3ae2472f9257acb1537c486f2ea70bf87085a",
-        "frozen": false
-      },
-      {
-        "file": "src/lib/pokemon/shopping/contracts/replay_same_key.schema.json",
-        "bytes": 1026,
-        "sha256": "53a99a72ca94b5ae6ccc21bbbd8f7cffbce3aee7a7f83da94ada561d8764a21f",
-        "frozen": false
-      },
-      {
-        "file": "src/lib/pokemon/shopping/contracts/request_after_sales.schema.json",
-        "bytes": 1287,
-        "sha256": "4a923aaf5c5f882b879f987d55dc499989225d8e78198ad97807a363287d5aff",
-        "frozen": false
-      },
-      {
-        "file": "src/lib/pokemon/shopping/contracts/request_refresh.schema.json",
-        "bytes": 1237,
-        "sha256": "272a2010f2ec1aec27027bc268997432a43b95df217209f436d7e6cd3fb4c83e",
-        "frozen": false
-      },
-      {
-        "file": "src/lib/pokemon/shopping/contracts/search_catalog.schema.json",
-        "bytes": 1581,
-        "sha256": "45291d276c86a2b614e353feb5b66648e7e2355438e4db5a00e4d14d2db7e528",
-        "frozen": false
-      },
-      {
-        "file": "src/lib/pokemon/shopping/contracts/select_offer.schema.json",
-        "bytes": 1254,
-        "sha256": "287a30c7751e87d407eb86f1bd3b95443db9c8cfafaeafbe493d277f2b207ab9",
-        "frozen": false
-      },
-      {
-        "file": "src/lib/pokemon/shopping/evidence.cjs",
-        "bytes": 3690,
-        "sha256": "8dddb218e0e4e241675ab8d9dd5e6beaec049ee577dd153c550d448aa20b54bb",
-        "frozen": false
-      },
-      {
-        "file": "src/lib/pokemon/shopping/exploration.cjs",
-        "bytes": 2546,
-        "sha256": "41d2b747723f4848e42b7b3e9d47abe8a4076b073de0627f0a479c827f111d08",
-        "frozen": false
-      },
-      {
-        "file": "src/lib/pokemon/shopping/facade.cjs",
-        "bytes": 7592,
-        "sha256": "d43a2e5012917bf78de4e283097a2aeb45af526e356734487467ff14d87b51a1",
-        "frozen": false
-      },
-      {
-        "file": "src/lib/pokemon/shopping/ledger.cjs",
-        "bytes": 9577,
-        "sha256": "59a706d39bc617ba174c2d2f286b8ff6da520883b3dde76fef93e259839e81b4",
-        "frozen": false
-      },
-      {
-        "file": "src/lib/pokemon/shopping/render.cjs",
-        "bytes": 2015,
-        "sha256": "c49f20ef0935847281bb4d15163577b5e2eb1b2d3f414a8fb7346316516c14c0",
-        "frozen": false
-      },
-      {
-        "file": "src/lib/pokemon/shopping/schema.cjs",
-        "bytes": 4750,
-        "sha256": "dfca7798674b44c2c90ecc8012222b6291d2bed062d735175bebaf1318f34a8b",
-        "frozen": false
-      },
-      {
-        "file": "src/lib/pokemon/shopping/shoppingAdmission.cjs",
-        "bytes": 4123,
-        "sha256": "901b565c6d57b9ca231feb6a62178bcc691343f674ded3a669039287c271ba29",
-        "frozen": false
-      },
-      {
-        "file": "src/lib/pokemon/shopping/simulators.cjs",
-        "bytes": 3960,
-        "sha256": "cbd2dad0880b0a420a5dd42ede1c17d826966d1d70c8be708a0f3445c49e2c9a",
-        "frozen": false
-      },
-      {
-        "file": "src/lib/pokemon/shopping/worker.cjs",
-        "bytes": 5451,
-        "sha256": "e0e535d05fa233774c432dcaf3fc6abb9a124b8ded342432c3779bca561b808c",
-        "frozen": false
-      },
-      {
-        "file": "tests/fixtures/shopping/adversarial.json",
-        "bytes": 2710,
-        "sha256": "ee75c20d7a96b508c483844af11392073fa86595dd7d0f5ef3689b8129f77abb",
-        "frozen": true
-      },
-      {
-        "file": "tests/fixtures/shopping/catalog.json",
-        "bytes": 7121,
-        "sha256": "d31449d7d2e10acf4ea76b4e5a7fa82e27d227d3a3487dba5c3011e0012fa841",
-        "frozen": true
-      },
-      {
-        "file": "tests/fixtures/shopping/faults.json",
-        "bytes": 767,
-        "sha256": "73805c1bd629669eb45295bfab276b3b3bddb7a8ad351239bb1fe51125f91acf",
-        "frozen": true
-      },
-      {
-        "file": "tests/fixtures/shopping/frozen-manifest.json",
-        "bytes": 1396,
-        "sha256": "bd4258fb31b197a64dc8d7b445c4b03dca8b9bce0d9f11aa7cf6fc3bce54ae79",
-        "frozen": true
-      },
-      {
-        "file": "tests/fixtures/shopping/journeys.json",
-        "bytes": 7947,
-        "sha256": "4c4416d9e67de550323b53e99695b05f87a1952e595def7a45854a09ea4eea9c",
-        "frozen": true
-      },
-      {
-        "file": "tests/fixtures/shopping/scripted-proposals.json",
-        "bytes": 4423,
-        "sha256": "b8aa81153222ae04c837da5b8652817e925e02ec107b9bd54e4a61802c0b3f17",
-        "frozen": true
-      },
-      {
-        "file": "tests/shopping-offline.test.cjs",
-        "bytes": 138,
-        "sha256": "9887777051c1b385f581eee4e636f76e55b6f10c9ceee8f3d0002d6a25a2c812",
-        "frozen": false
-      },
-      {
-        "file": "tests/shopping/contracts.test.cjs",
-        "bytes": 9050,
-        "sha256": "45b4499bcb96a2d41339965042bb115050ec93426d3445eecca85b6b0c617e7e",
-        "frozen": false
-      },
-      {
-        "file": "tests/shopping/evaluate.cjs",
-        "bytes": 16551,
-        "sha256": "e098a15b1c1448e5908ec3f903a7eea94f2143464cd2d11d1f68d3fc82ee8c53",
-        "frozen": false
-      },
-      {
-        "file": "tests/shopping/helpers.cjs",
-        "bytes": 2462,
-        "sha256": "11f3dcd88619c7ed67018a215b725426cfa6a12b311b02bee32584c99f9359b7",
-        "frozen": false
-      },
-      {
-        "file": "tests/shopping/journeys.test.cjs",
-        "bytes": 265,
-        "sha256": "89bdf11712a107c8df35c63aa9ed09c8b6bd186f01194d39afe687c8b3886f36",
-        "frozen": false
-      },
-      {
-        "file": "tests/shopping/mutations.cjs",
-        "bytes": 10774,
-        "sha256": "fa281d5df775aa1a1ce24e6592ed70683f7722dc4df2871e43b6fd3ddff8e834",
-        "frozen": false
-      },
-      {
-        "file": "tests/shopping/security.test.cjs",
-        "bytes": 9179,
-        "sha256": "a78195dbbe9e532424cdac89593728b38a04b5deaa59163d52ed4c55bbabe5b5",
-        "frozen": false
-      }
-    ]
+  "raw_evidence": {
+    "bundle": "pot-shopping-gate-counts-20261101",
+    "manifest_sha256": "81b513e54b5921215a4ac63d6edc893e84dc9812c9ba6a77ce28e4b736780860",
+    "files": 14566,
+    "bytes": 57507232
   },
-  "external_evidence": {
-    "bundle": "pot-shopping-phase2-harness-fix-20261031",
-    "manifest": "raw-manifest.json",
-    "manifest_sha256": "9aa22222bfaebe96e400623113f65a5583dccdc67e6d321a06846acd6f557ac7",
-    "files": 179,
-    "bytes": 1085954
-  },
-  "constraints": {
-    "push": false,
-    "pr": false,
-    "merge": false,
-    "deploy": false,
+  "mutation_rows": [
+    {
+      "id": "remove_brand",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-adapter.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_scope_binding",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-adapter.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_deadline",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-adapter.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_commerce_hold",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-generated.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_commerce_subject",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-generated.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_card_binding",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-adapter.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_language_complete",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-kernel.test.cjs",
+        "tests/model-adversary-regressions.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_ambiguous_currency",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-generated.test.cjs",
+        "tests/admission-kernel.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_identity_complete",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round3-mutations.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_commercial_complete",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-kernel.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_intent_complete",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-generated.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_local_control",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-generated.test.cjs",
+        "tests/admission-kernel.test.cjs",
+        "tests/admission-round3-parity.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_reply_binding",
+      "killed": false,
+      "assertion_files": [],
+      "equivalent_reason": "The final whole-text reply boundary independently binds exact text and the current prompt. Removing its preliminary recognizer grants no additional reply authority."
+    },
+    {
+      "id": "remove_held_language",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-generated.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_held_task",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-generated.test.cjs",
+        "tests/gemini-conversation.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_native_echo",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-adapter.test.cjs",
+        "tests/admission-kernel.test.cjs",
+        "tests/admission-second-line.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_money_signal_oracle",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-kernel.test.cjs",
+        "tests/admission-round3-mutations.test.cjs",
+        "tests/admission-round3-parity.test.cjs",
+        "tests/admission-round5.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_grade_signal_oracle",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-kernel.test.cjs",
+        "tests/admission-parity.test.cjs",
+        "tests/admission-round3-parity.test.cjs",
+        "tests/admission-round5.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_broad_language_detection",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-kernel.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_set_signal_oracle",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-kernel.test.cjs",
+        "tests/admission-parity.test.cjs",
+        "tests/admission-round3-mutations.test.cjs",
+        "tests/admission-round4-stored-goals.test.cjs",
+        "tests/admission-second-line.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "restore_generic_word_reply",
+      "killed": false,
+      "assertion_files": [],
+      "equivalent_reason": "The final exact bound-reply check remains. A bare-subject ask can become a safe hold; identical UI behavior is not claimed."
+    },
+    {
+      "id": "infer_ambiguous_currency_from_saved",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-generated.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_single_use",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-adapter.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_typed_preference_values",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-generated.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_native_scope_echo",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-generated.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_native_preferences_echo",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-adapter.test.cjs",
+        "tests/admission-generated.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_native_record_echo",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-generated.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_prepublication_echo",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-adapter.test.cjs",
+        "tests/admission-second-line.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_plan_freeze",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-generated.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "workspace_bypass",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-architecture.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "client_import_bypass",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-architecture.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_nfkc_boundary",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-parity.test.cjs",
+        "tests/admission-round3-parity.test.cjs",
+        "tests/admission-round4-direct.test.cjs",
+        "tests/admission-round4-stored-goals.test.cjs",
+        "tests/admission-round5.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_finish_signal_oracle",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-parity.test.cjs",
+        "tests/admission-round4-direct.test.cjs",
+        "tests/admission-round4-stored-goals.test.cjs",
+        "tests/admission-vocabulary.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_release_signal_oracle",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-parity.test.cjs",
+        "tests/admission-round5.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_bare_amount_word_completion",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round3-mutations.test.cjs",
+        "tests/admission-round3-parity.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_native_echo_complete",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-parity.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "adapter_execute_runs_held_plans",
+      "killed": false,
+      "assertion_files": [],
+      "equivalent_reason": "Every held plan is localOnly=true, so the retained check rejects it. Private frozen plan membership prevents changing that invariant."
+    },
+    {
+      "id": "adapter_execute_owner_check",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-second-line.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "adapter_token_reuse",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-second-line.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "adapter_token_binding",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-second-line.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "adapter_save_twice",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-adapter.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "adapter_commerce_version",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-second-line.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "adapter_commerce_request_equality",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-adapter.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "pc_advance_action_equality",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-second-line.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "pc_start_question_equality",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-second-line.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "pc_publication_echo_removed",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-adapter.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "pc_save_publication_echo_removed",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-second-line.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "kernel_final_typed_validation",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round5.test.cjs",
+        "tests/admission-second-line.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "kernel_echo_candidate_language",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-kernel.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_whole_text_positive_grammar",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round3-mutations.test.cjs",
+        "tests/admission-round3-parity.test.cjs",
+        "tests/admission-round4-direct.test.cjs",
+        "tests/admission-round4-stored-goals.test.cjs",
+        "tests/conversation-text.test.cjs",
+        "tests/shopping-offline.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_residual_digit_completion",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round3-mutations.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_cjk_comparison_family",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round3-mutations.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_english_comparison_family",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round3-mutations.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_extended_symbol_family",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round3-mutations.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_cjk_numeral_amount_family",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round3-mutations.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "remove_grade_wording_family",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round3-mutations.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R4_allow_non_ex_forms",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round4-direct.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R4_reply_text_mismatch_allowed",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round3-parity.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R4_reply_unbound_allowed",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round4-direct.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R4_confirmation_any_field",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round4-direct.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R4_printed_set_any_token",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round4-stored-goals.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R4_valuable_card_prefix",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round4-direct.test.cjs",
+        "tests/admission-round4-stored-goals.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R4_lucario_prefix",
+      "killed": false,
+      "assertion_files": [],
+      "equivalent_reason": "The separate complete raw-text regex still controls explicitLegacySubject. Prefix matching inside catalogSyntax grants no additional literal ask authority."
+    },
+    {
+      "id": "R4_language_only_any_text",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round3-mutations.test.cjs",
+        "tests/admission-round3-parity.test.cjs",
+        "tests/admission-round4-direct.test.cjs",
+        "tests/admission-round4-stored-goals.test.cjs",
+        "tests/conversation-text.test.cjs",
+        "tests/shopping-offline.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R4_set_token_without_digit",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-parity.test.cjs",
+        "tests/admission-round3-mutations.test.cjs",
+        "tests/admission-round3-parity.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R4_subject_any_word",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round3-mutations.test.cjs",
+        "tests/admission-round3-parity.test.cjs",
+        "tests/admission-round4-direct.test.cjs",
+        "tests/admission-round5.test.cjs",
+        "tests/conversation-text.test.cjs",
+        "tests/shopping-offline.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R4_drop_ask_grammar_branch",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-kernel.test.cjs",
+        "tests/admission-parity.test.cjs",
+        "tests/admission-round3-mutations.test.cjs",
+        "tests/admission-round3-parity.test.cjs",
+        "tests/admission-round4-direct.test.cjs",
+        "tests/admission-round4-stored-goals.test.cjs",
+        "tests/admission-round5.test.cjs",
+        "tests/admission-round6.test.cjs",
+        "tests/admission-second-line.test.cjs",
+        "tests/chat-clarification-recovery.test.cjs",
+        "tests/conversation-text.test.cjs",
+        "tests/gemini-conversation.test.cjs",
+        "tests/model-adversary-regressions.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R4_drop_reply_grammar_branch",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round3-parity.test.cjs",
+        "tests/admission-round4-direct.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R4_residual_digit_ascii_only",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round3-mutations.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R4_drop_prior_question_identity",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round3-parity.test.cjs",
+        "tests/admission-round5.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R4_forms_case_sensitive_ex_only",
+      "killed": false,
+      "assertion_files": [],
+      "equivalent_reason": "The whole catalogSyntax input is already folded before the regex captures the ASCII form. Removing the second toLowerCase changes no captured form."
+    },
+    {
+      "id": "R4_remove_stored_workspace_admission",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round4-stored-goals.test.cjs",
+        "tests/admission-round5.test.cjs",
+        "tests/admission-round6.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R4_remove_stored_goal_positive",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round4-stored-goals.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R4_remove_stored_ask_history_positive",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round4-stored-goals.test.cjs",
+        "tests/admission-round5.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R4_only_latest_stored_ask",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round4-stored-goals.test.cjs",
+        "tests/admission-round5.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R4_remove_stored_server_record_exception",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round4-stored-goals.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R4_remove_private_replay_admission",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round4-stored-goals.test.cjs",
+        "tests/admission-round5.test.cjs",
+        "tests/admission-round6.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R5_server_record_unanchored",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round4-stored-goals.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R5_server_record_case_insensitive",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round4-stored-goals.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R5_stored_ignores_commercial",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round5.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R5_stored_allows_non_ex_forms",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round4-stored-goals.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R5_stored_language_answer_any",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round4-stored-goals.test.cjs",
+        "tests/admission-round5.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R5_stored_check_skips_refine",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round4-stored-goals.test.cjs",
+        "tests/admission-round5.test.cjs",
+        "tests/admission-round6.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R5_stored_unaccepted_language_ignored",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round5.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R5_stored_uses_current_language",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round5.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R5_skip_stored_reply_readmission",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round5.test.cjs",
+        "tests/admission-round6.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R5_stored_reply_accepts_any_text",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round5.test.cjs",
+        "tests/admission-round6.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R5_stored_ignores_trim_parity",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round5.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R5_stored_ignores_normalized_length_parity",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round5.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R5_stored_forwarding_ignores_length_parity",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round5.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R6_reply_collector_unanchored",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round6.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R6_reply_set_unanchored",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round6.test.cjs"
+      ],
+      "equivalent_reason": null
+    },
+    {
+      "id": "R6_reply_confirm_unanchored",
+      "killed": true,
+      "assertion_files": [
+        "tests/admission-round6.test.cjs"
+      ],
+      "equivalent_reason": null
+    }
+  ],
+  "limits": {
+    "production_entry_point": false,
     "live_calls": false,
-    "dependency_install": false,
-    "credential_reads": false,
-    "foreign_process_signals": false
+    "model_transport": false,
+    "real_orders": false,
+    "payments": false,
+    "deployment": false,
+    "pins_changed": false,
+    "backend_durable_ledger_required_for_phase4": true
+  },
+  "routing": {
+    "creator_path_count": 0,
+    "creator_paths_sample": [],
+    "deploy_creator": false,
+    "path_count": 46,
+    "reason": "only Pot/release/test paths changed or no changes"
   }
 }

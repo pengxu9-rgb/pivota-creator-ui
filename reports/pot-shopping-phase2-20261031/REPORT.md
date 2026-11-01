@@ -1,68 +1,35 @@
-# Phase-2 harness fix: offline gate report
+# Offline shopping build: completed validation
 
-Stopped at the first failed required gate. No repair, retry or later gate followed that failure. This work remains incomplete and unapproved.
+This report supersedes the earlier stopped-run report; its raw evidence and commits remain preserved. No P1/P2 findings remain in Claude's independent review (31 October 2026, review SHA-256 `c31552a71023b3ae077d0c9aa5f0f39a67c135cb5afd3cb4db9327c86665a214`). Review is not merge, deployment or live-phase approval.
 
-Base main: `8a546642c68e22598c9c03015b9cb04f3c8d85df`. Prior implementation: `922fb3100db72a1115083856082df4a2d048aa47`. Runner-fix commit: `0226c92d7dd6db3962ef6e3a217394f2165cfb12` on `codex/pot-shopping-offline-slice-20261031`. The fix commit changes only `tests/shopping/mutations.cjs`; source, fixtures, manifest and every other test remain byte-identical. This report is the only additional commit.
+Base main: `8a546642c68e22598c9c03015b9cb04f3c8d85df`. Validated gate fix: `e791602744ef36fe6a8205ba623b8a78b9b80af3`. The count fix changes only the round-6 test tool. All shopping source, fixtures and tests match the independently reviewed build; all five protected kernel files match main. Pins, workflows, cloud, Docker and routing policy are unchanged.
 
-The audit parser now combines stdout/stderr and strips TAP comments. The valid non-atomic edit publishes the draft inside mutate before validation/beforeCommit, matching exactly once; the unused source comment is untouched. Each mutant has a named target. Mutated modules are loaded and checked for syntax/unbound names before testing. Each kill requires exit 1, target ERR_ASSERTION and no failing test with internal_error, ReferenceError or SyntaxError. Every test run requires at least two zero-attempt receipts.
+## Tooling findings
 
-## Gates, in execution order
+P3-1 is fixed. The gate discovers the current root test files, runs each pristine file, derives its test/guarded-worker inventory and cross-checks a complete-suite run. Routing worker counts are discovered only in the pristine routing baseline, then checked exactly for all subsequent executions. Cell/audit totals are derived from that inventory and the fixed matrix. No mutation definition, target, kill rule, source hash binding or 93/88/five-equivalent assertion changed. Missing/skipped/cancelled baseline tests, missing audits, unclaimed Python audits and any network attempt still fail.
 
-| Gate | Result | Exit | Counts | Node / Python audit receipts | Network attempts |
-| --- | --- | ---: | --- | ---: | ---: |
-| 01-shopping-tests | passed | 0 | 25/25 tests | 2 / 0 | 0 |
-| 02-evaluation | passed | 0 | 40/40 per arm; 12/12 adversaries; 6/6 faults | 1 / 0 | 0 |
-| 03-mutants | passed | 0 | 15/15 target assertions | 46 / 0 | 0 |
-| 04-full-suite | passed | 0 | 506/506 tests | 46 / 64 | 0 |
-| 05-original-names | passed | 0 | 292/292 tests | 23 / 1 | 0 |
-| 06-main-pot-node | passed | 0 | 481/481 tests | 45 / 64 | 0 |
-| 07-main-pot-python | failed | 5 | 0 tests discovered; NO TESTS RAN | 0 / 1 | 0 |
+P3-2 is an offline-host boundary: issuePrincipal is accessible only to the test host. The backend port must never expose principal issuance to a model transport. A backend-owned durable task/approval/operation ledger remains a hard prerequisite for phase 4 and later.
 
-All gates ran inside sandbox-exec `(deny network*)`; every Node child inherited the strict guard. Python workers ran through a separate pre-execution network-denial shim. No dependency installation, credentials, cloud/provider/model calls or process signalling was used. Exit 1 for an expected mutant test is assertion-kill evidence, not a failed gate; a runner failure stops the sequence.
+## Validation
 
-## Evaluation
+| Gate | Result | Exit | Network attempts |
+| --- | --- | ---: | ---: |
+| Full suite | 506/506 | 0 | 0 |
+| Fresh admission mutation sweep | 93 rows; 88 caught; same five equivalents | 0 | 0 |
+| Main Pot Python | 23/23, correct module discovery | 0 | 0 |
+| TypeScript | pass | 0 | 0 |
+| Vocabulary --check | pass | 0 | 0 |
+| Phase B, twice | both byte-identical to 77ab2c392d1a88132270cf41c76f56fecccbecbda74c3567de582ed820af031b | 0, 0 | 0 |
+| Protected kernel and fixture hashes | unchanged | 0 | 0 |
 
-The unchanged frozen evaluation completed 40/40 episodes in both arms, J01 first qualified offer on turn 1 in all repetitions. Complete-preview median/p95: model-off 3.5/4, scripted 4/4 (limits 4/5). Unnecessary clarification median/p95: 0/0 and 0/1 (limits 1/2). All 12 adversarial cases and six faults passed; 320 scripted trusted/injected calls were rejected and recorded. J04 reconciled one existing merchant order. No safety assertion failed. These are synthetic offline results, not live-source/model qualification.
+The updated matrix has **44 test files**, **506 baseline tests**, **63 routing Python workers**, **4230 cells**, **8505 Node receipts** and **6080 Python receipts**. Every worker is guarded, all expected Python receipts are claimed, and no foreign process was signalled. Node and Python guards ran under sandbox-exec network denial.
 
-## Fifteen-row mutation table
+Claude independently reproduced the unchanged shopping tests (25/25), all 15 named-target mutants, and the frozen evaluation: 40/40 episodes per arm, 12/12 adversaries, six/six faults and 320 trusted/injected call rejections. Its evaluation is byte-identical to the previous local run. J01 offers arrive on turn 1 in every repetition. Preview median/p95 is 3.5/4 model-off and 4/4 scripted; unnecessary-question median/p95 is 0/0 and 0/1. The public summary retains the complete 15-row target/reason table and the fresh 93-row outcomes.
 
-Every row below passed its module precheck, exited 1 in the test process and was caught by its named ERR_ASSERTION. No failing test contained a forbidden code error. Full target names are retained for reproducibility.
+## Release boundary and evidence
 
-| Mutant | Target test | Target failure reason |
-| --- | --- | --- |
-| `non_atomic_approval` | shopping: failed transaction exposes neither approval, reservation nor outbox | Approval, operation and outbox state leaked after the injected transaction failure. |
-| `model_complete` | shopping: valid approvals do not confer model execution, payment, case or recovery capabilities | Completion crossed the model boundary: principal_denied was returned instead of model_principal_denied. |
-| `payload_hash_in_key` | shopping: two same-key approvals reserve and dispatch once; changed payload conflicts | Changed payload produced version_conflict instead of idempotency_conflict. |
-| `unknown_resubmit` | shopping: unknown outcome cannot be replaced or resubmitted by chat, UI or ordinary worker dispatch | Ordinary dispatch changed the unknown operation: later approval returned approval_consumed instead of execution_read_only. |
-| `expiry_inclusive` | shopping: admission alone enforces strict expiry and cancellation epoch | The exact-expiry approval did not throw the required rejection. |
-| `ignore_cancellation_epoch` | shopping: admission alone enforces strict expiry and cancellation epoch | A stale cancellation epoch did not throw the required rejection. |
-| `jpy_times_100` | shopping: money uses integer strings with JPY exponent zero and USD exponent two | JPY 28000 became 2800000 instead of 28000. |
-| `persist_assumption` | shopping: both frozen arms complete all eighty episodes, twelve adversaries and six faults | Read-only exploration had accepted JPY/item assumptions where accepted state must be null. |
-| `rewritten_native` | shopping: read exploration neither binds assumptions nor rewrites native text | The native probe received the original and corrected query strings instead of no calls. |
-| `negated_english` | shopping: negated English cannot be returned even with an explicit English printing ref | The result set included English despite the negative language constraint. |
-| `model_recovery` | shopping: inconclusive lookup remains unknown; only trusted recovery schedules another lookup | A model recovery call succeeded where the target required denial. |
-| `ignore_owner` | shopping: cross-app refs and cross-user reads reveal no task or evidence | A cross-app preview read succeeded where the target required scope denial. |
-| `render_stale` | shopping: renderer rejects missing, injected, superseded and expired evidence | Expired preview evidence did not throw the required rendering rejection. |
-| `ignore_source_permission` | shopping: source permission, lot, grade, finish and stale observations qualify independently | An offer with source_permission=false remained in qualified results. |
-| `suppress_changed_terms` | shopping: both frozen arms complete all eighty episodes, twelve adversaries and six faults | J04 returned complete instead of terms_changed after the price change. |
+The prototype has no production route or UI import. All listings, prices, quotes, certificates, merchants, forwarders and receipts are synthetic; URLs use example.invalid. The model arm is scripted and has no live transport. No live calls, real orders, payments, deployment, source/permission changes or release repins occurred.
 
-## Stop or completion status
+The external raw-evidence bundle is bound by manifest SHA-256 `81b513e54b5921215a4ac63d6edc893e84dc9812c9ba6a77ce28e4b736780860` (14566 files, 57507232 bytes). Large logs and local paths stay outside Git. The prior stopped reports remain in commit history. Docker/source-pair checks run in PR CI; they were not rerun locally for this offline tooling fix.
 
-First failure: `07-main-pot-python  5 !== 0`.
-
-The Python release-controller gate printed “Ran 0 tests” and “NO TESTS RAN”, then exited 5 under Python 3.14. The validation launcher used the round-6 Python guard’s detached exec globals; unittest.main() discovers sys.modules["__main__"], which still identifies the launcher rather than the executed test module. This is a validation setup defect: no Python release-controller tests were qualified. The separate Python denial receipt records zero attempts. The launcher was not repaired or retried after failure.
-
-- 08-typescript: not run after the first failure.
-- 09-vocabulary: not run after the first failure.
-- 10-phase-b-1: not run after the first failure.
-- 10-phase-b-2: not run after the first failure.
-- 11-fresh93: not run after the first failure.
-- 12-protected-hash-gate: not run after the first failure.
-
-The original-name check matched all 291 frozen test names in the current 292-test subset; its one additional test is main’s passive browsing-beta seller-access test. Dedicated protected-file gate status is recorded separately; the report’s read-only blob inventory shows all five protected files still hash-match the reviewed head. Both source-tree IDs match and the frozen manifest remains `bd4258fb31b197a64dc8d7b445c4b03dca8b9bce0d9f11aa7cf6fc3bce54ae79`. Pins, workflows, holds, Docker/cloud/router files and backend were not changed.
-
-## Evidence and size
-
-The public summary binds the external raw-manifest SHA-256 `9aa22222bfaebe96e400623113f65a5583dccdc67e6d321a06846acd6f557ac7` (179 files, 1085954 bytes). Raw logs, prechecks, individual assertion failures, Python audit receipts, frozen evaluation output and replay results stay outside Git. The manifest uses bundle-relative paths. No raw local paths or account addresses are included here.
-
-Before these two compact report files: 43 files / 161435 bytes added by the offline slice; excluding frozen fixture/manifest files: 37 files / 137071 bytes. The summary lists every code/test file and size. No push or PR. Stop for Claude review of the exact local commits.
+Open the build PR for review; merge only after GitHub CI is green and Peng separately authorises merging. Every later live phase requires separate authorisation.
