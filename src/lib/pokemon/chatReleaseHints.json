@@ -1,0 +1,10 @@
+{
+  "schema": "pokemon.chat-release-question-hints.v1",
+  "scope": "Explicit alternate question only; no card identity or selection authority",
+  "catalog_revision": "10cec52b1334e9f1abafb2508ead08a0ed063c47288e8af1b87df147984818cf",
+  "database_sha256": "a72ba074fdf13f426b5709f67926e631ad32f52e92d08ff3e1ab646ed3b8f204",
+  "review_basis": "Read-only native discovery against the pinned catalog resolved English Charizard cards from set 151 to SV03.5; exact coordinate and set requests were tested separately.",
+  "releases": [
+    {"language": "en", "user_alias": "151", "set_code": "SV03.5", "name": "Pokémon 151"}
+  ]
+}

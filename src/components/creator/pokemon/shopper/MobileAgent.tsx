@@ -27,6 +27,7 @@ export default function MobileAgent({browsingBeta=false}:{browsingBeta?:boolean}
   const availableForwarders=f.research?.forwarders.filter(p=>p.quote_available||p.manual_handoff_available)||[];
   const priceOnly=!!f.research&&(syntheticResearch||availableForwarders.length===0);
   const canMutate=mutationReady({ready:a.ready,pending:busy,conversationBusy:a.thread?.busy,bookmarkUnverified:a.bookmarkUnverified});
+  const latestAssistant=[...a.messages].reverse().find(m=>m.role==="assistant");
   useEffect(()=>{if(a.sheet)dialog.current?.showModal();else dialog.current?.close();},[a.sheet]);
   useEffect(()=>{if(follow.current)end.current?.scrollIntoView({behavior:"smooth",block:"end"});},[a.messages.length,a.draft,a.pending]);
   useEffect(()=>{if(a.sheet==="preferences"){const draft=budgetFormDraft(a.budget,a.budgetCurrency);setBudgetDraft(draft.amount);setCurrencyDraft(draft.currency);setGradeDraft(a.gradePreference);setCountryDraft(f.country);setRegionDraft(f.region);}},[a.sheet,a.budget,a.budgetCurrency,a.gradePreference,f.country,f.region]);
@@ -58,6 +59,7 @@ export default function MobileAgent({browsingBeta=false}:{browsingBeta?:boolean}
         {a.messages.map(m=><div key={m.id} className={m.role==="user"?s.userMessage:s.agentMessage}>
           {m.role==="assistant"&&<div className={s.messageByline}><Avatar small/><span>Pot</span><small>{m.commerce?"Action event":"Catalog agent"}</small></div>}
           <p className={m.status==="failed"?s.failedMessage:undefined}>{m.text}</p>
+          {!!m.clarificationSuggestions?.length&&<div className={s.cardActions} aria-label="Clarify the catalog request">{m.clarificationSuggestions.map(choice=><button key={choice.question} disabled={!canMutate||m.id!==latestAssistant?.id} onClick={()=>void submit(choice.question)}>{choice.label}</button>)}</div>}
           {m.commerce&&<div className={s.historyEvent}><span>{time(m.commerce.recorded_at)}</span><strong>{m.commerce.status.replaceAll("_"," ")}</strong>{m.commerce.offer_count!==undefined&&<p>{m.commerce.offer_count} seller observations returned.</p>}<small>{m.commerce.status==="pending"?"Check in progress; no result confirmed.":"History only · fresh evidence and choices are required after reopening."}</small>{m.id===latestEvent?.id&&f.research?<button disabled={busy} onClick={()=>a.setSheet(f.receipt?"handoff":"compare")}>Open current check<ArrowRight size={13}/></button>:m.commerce.card_id&&m.commerce.status!=="pending"?<button disabled={!canMutate} onClick={()=>void a.historicalResearch(m.commerce!.card_id!)}>Research again<RefreshCw size={13}/></button>:null}</div>}
           {m.coverage?.matched_catalog_records!==undefined&&<p className={s.coverageNote}>Showing {m.cards?.length||0} of {m.coverage.matched_catalog_records.toLocaleString()} matching catalog records.</p>}
           {m.cards?.map(c=>product(c,m))}{comparison(m)}

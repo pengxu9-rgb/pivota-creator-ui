@@ -52,4 +52,7 @@ function sameEvidence(a, b) {
   return a.url === b.url && a.source === b.source && a.price_minor === b.price_minor &&
     a.currency === b.currency && a.grade?.company === b.grade?.company && a.grade?.value === b.grade?.value;
 }
-module.exports = { savedBudget, hasBudget, budgetFormDraft, budgetMinorFromDraft, nativePsaGrade, requestedResearchGrade, gradeForResearch, urlsForResearch, mutationReady, visibleOffers, money, selectionRequest, sameEvidence, commerceIntent, catalogQuery, cardResearchQuery };
+function latestCatalogMessage(messages){
+  return [...messages].reverse().find(m=>m.role==='assistant'&&!m.commerce&&m.status==='accepted'&&!m.catalogStatusOnly);
+}
+module.exports = { latestCatalogMessage, savedBudget, hasBudget, budgetFormDraft, budgetMinorFromDraft, nativePsaGrade, requestedResearchGrade, gradeForResearch, urlsForResearch, mutationReady, visibleOffers, money, selectionRequest, sameEvidence, commerceIntent, catalogQuery, cardResearchQuery };

@@ -2,6 +2,7 @@
 const family = require('./sourceFamilyAdvisory.cjs');
 const commerceHistory=require('./commerceHistory.cjs');
 const {comparisonRecords}=require('./comparisonRecords.cjs');
+const {routeChatText,releaseSuggestions}=require('./chatTextIntent.cjs');
 const fs=require('node:fs/promises');
 const path=require('node:path');
 const {randomUUID,createHash}=require('node:crypto');
@@ -47,14 +48,30 @@ function recommendationReasons(result,cardId) {
 }
 function assistantReply(workspace,action,now) {
   const r=workspace.result;let text;
+  const prompt=r?.next_step?.prompt||workspace.next_step?.prompt||r?.discovery?.next_question;
   const comparisonNeedsRefresh=action?.type==='preferences'&&!!r?.discovery?.comparison;
-  if(r?.status==='catalog_target_selected')text='You’ve set '+r.selected_catalog_target.name+' as your current catalog target. Physical copy, price and availability remain unverified.';
+  if(action?.type==='language_clarification')return {id:randomUUID(),role:'assistant',status:'accepted',
+    text:'Which language should I use? Please choose English or Japanese, or restate the collection question with the languages you want.',
+    createdAt:now,workspaceVersion:workspace.version,catalogRevision:r?.catalog_revision||null,
+    cards:[],reasons:{},comparison:null,selectionAllowed:false};
+  if(action?.type==='recommendation_status'){
+    const count=r?.candidate_cards?.length||0;
+    text=count?`I’ve shown ${count} catalog option${count===1?'':'s'} for this request. Review the cards above, or ask for a different card.`:
+      'I haven’t recommended any cards for this request yet. '+(prompt||'Which character, illustrator or printed set would you like to explore?');
+    return {id:randomUUID(),role:'assistant',status:'accepted',text,createdAt:now,workspaceVersion:workspace.version,
+      catalogRevision:r?.catalog_revision||null,cards:[],reasons:{},comparison:null,selectionAllowed:false,catalogStatusOnly:true,
+      clarificationSuggestions:releaseSuggestions(r)};
+  }
+  if(!r)text=prompt||'Start a collection question to continue; a catalog target needs a fresh confirmation.';
+  else if(r?.status==='catalog_target_selected')text='You’ve set '+r.selected_catalog_target.name+' as your current catalog target. Physical copy, price and availability remain unverified.';
   else if(comparisonNeedsRefresh)text='I’ve updated your preferences. Your saved cards stay in place. '+(r?.next_step?.prompt||'Refresh the comparison before inspecting a side and setting a target again.');
   else if(r?.discovery?.comparison)text='Here are the recorded differences between these two cards. Open Details to inspect an exact record before deciding.';
-  else if(r?.selection_blockers?.length)text=r.next_step.prompt;
+  else if(r?.selection_blockers?.length)text=prompt||'Clarify the requested catalog scope before choosing a target.';
   else if(action?.type==='preferences')text='I’ve updated your preferences. Your saved cards stay in place. Review these options before setting a target again.';
   else if(r?.candidate_cards?.length)text='Here '+(r.candidate_cards.length===1?'is one source-backed option':'are '+r.candidate_cards.length+' source-backed options')+' for your collection. Save any you want to revisit, or tell me what to change.';
-  else text=r?.next_step?.prompt||'Tell me what you would like to explore next.';
+  else text=prompt||'Which character, illustrator or printed set would you like to explore?';
+  if(r?.discovery?.task==='exact_coordinates'&&r?.discovery?.status==='no_match')
+    text='No catalog record matches that name, release and number together. Check the card name and printed number, or ask to browse that release without the number.';
   const messages=[text];
   if(r?.constraint_acknowledgement?.explanation&&['ask','preferences'].includes(action?.type)&&Object.keys(r.preferences||{}).some(k=>k!=='collecting'))messages.push(r.constraint_acknowledgement.explanation);
   for(const p of r?.discovery?.preference_match_summary||[])if(!p.matched_qualified_records)messages.push(p.explanation);
@@ -63,7 +80,8 @@ function assistantReply(workspace,action,now) {
     workspaceVersion:workspace.version,catalogRevision:r?.catalog_revision||null,cards:copy(r?.candidate_cards||[]),
     reasons:Object.fromEntries((r?.candidate_cards||[]).map(c=>[c.card_id,recommendationReasons(r,c.card_id)])),
     comparison:copy(r?.discovery?.comparison||null),comparisonNeedsRefresh,coverage:copy(r?.discovery?.coverage||null),
-    blockers:copy(r?.card_selection_blockers||{}),selectionAllowed:r?.selection_allowed===true};
+    blockers:copy(r?.card_selection_blockers||{}),selectionAllowed:r?.selection_allowed===true,
+    clarificationSuggestions:releaseSuggestions(r)};
 }
 function actionText(action) {
   if(action.type==='reply')return action.text;
@@ -96,9 +114,11 @@ function createConversationService({workspace,authenticate,store,now=Date.now,re
     current=copy(current);
     if(current&&(busy||doc.pending)){current.result=null;current.saved_decision=null;current.needs_reconfirmation=true;}
     else if(current&&doc.requiresReconfirmation){current.saved_decision=null;current.needs_reconfirmation=true;}
+    if(current&&doc.languageClarificationPending){current.saved_decision=null;current.needs_reconfirmation=true;}
     return {id:doc.id,version:doc.version,title:doc.title,createdAt:doc.createdAt,updatedAt:doc.updatedAt,expiresAt:doc.expiresAt,
       messages:commerceHistory.publicMessages(copy(doc.messages)),busy,workspace:current,requiresRestart:!busy&&!current?.result&&!!doc.workspaceId,
-      target:!busy&&!doc.pending&&!doc.requiresReconfirmation?copy(current?.saved_decision||null):null};
+      languageClarificationPending:doc.languageClarificationPending===true,
+      target:!busy&&!doc.pending&&!doc.requiresReconfirmation&&!doc.languageClarificationPending?copy(current?.saved_decision||null):null};
   }
   async function create(context){
     const user=await owner(context),held=lock(user,null);
@@ -122,20 +142,33 @@ function createConversationService({workspace,authenticate,store,now=Date.now,re
     try {
       doc=await read(user,payload.id);if(doc.commercePending)fail('logical_turn_in_progress');if(doc.version!==payload.version)fail('chat_version_conflict');
       current=doc.workspaceId?await workspace.get(context,doc.workspaceId):null;
-      const action=textMode?{type:!current||!current.result?'ask':'reply',...(current?.result?{text:payload.text.trim()}:{question:payload.text.trim()})}:copy(payload.action);
+      const routingState={languagePreference:doc.languagePreference,languageClarificationPending:doc.languageClarificationPending===true};
+      const routed=textMode?routeChatText(payload.text,current,routingState):null;
+      const action=textMode?routed.action:copy(payload.action);
+      const languageChoice=action.type==='refine'&&['en','ja'].includes(action.scope?.language)||
+        action.type==='ask'&&doc.languageClarificationPending&&routeChatText(action.question,current,routingState).action.type==='ask';
+      if(doc.languageClarificationPending&&!textMode&&!languageChoice)fail('catalog_rejected_action');
+      const statusOnly=action.type==='recommendation_status';
       if(action.type==='reply'&&action.text.length>200)fail('chat_reply_too_long');
       const text=textMode?payload.text.trim():actionText(action);
-      const time=now();doc={...doc,version:doc.version+1,updatedAt:time,title:doc.messages.length?doc.title:text.slice(0,100),requiresReconfirmation:true,pending:true,commerceAnchor:null,
+      const time=now();doc={...doc,...(routed?{languagePreference:routed.languagePreference}:{}),...(action.type==='language_clarification'?{languageClarificationPending:true}:{}),version:doc.version+1,updatedAt:time,title:doc.messages.length?doc.title:text.slice(0,100),requiresReconfirmation:statusOnly?doc.requiresReconfirmation:true,pending:true,...(!statusOnly?{commerceAnchor:null}:{}),
         messages:[...doc.messages,{id:randomUUID(),role:'user',status:'submitted',text,createdAt:time}]};
       // The pending marker survives a process interruption and never confers target authority.
       await store.put(user,'chats',doc.id,doc);
       if(held.controller.signal.aborted)fail('catalog_cancelled');
-      if(!current){current=await workspace.start(context,{question:action.question,limit:5},{signal:held.controller.signal});doc.workspaceId=current.id;}
+      if(statusOnly||action.type==='language_clarification'){
+        // A status question reads accepted context; it cannot replay a search
+        // or create new card/selection authority.
+      }else if(!current){current=await workspace.start(context,{question:action.question,limit:5},{signal:held.controller.signal});doc.workspaceId=current.id;}
       else current=await workspace.advance(context,{id:current.id,version:current.version,action},{signal:held.controller.signal});
       if(action.type==='select')current=await workspace.save(context,{id:current.id,version:current.version},{signal:held.controller.signal});
       current=await workspace.get(context,current.id);
       if(held.controller.signal.aborted)fail('catalog_cancelled');
-      doc={...doc,version:doc.version+1,updatedAt:now(),pending:null,requiresReconfirmation:action.type!=='select'||current.needs_reconfirmation,
+      const acceptedLanguage=current?.result?.scope_filters?.language;
+      if(languageChoice)doc.languageClarificationPending=false;
+      if(action.type==='refine'&&Object.hasOwn(action.scope,'language'))doc.languagePreference=action.scope.language;
+      else if(['en','ja'].includes(acceptedLanguage))doc.languagePreference=acceptedLanguage;
+      doc={...doc,version:doc.version+1,updatedAt:now(),pending:null,requiresReconfirmation:statusOnly?doc.requiresReconfirmation:action.type!=='select'||current.needs_reconfirmation,
         messages:[...doc.messages,assistantReply(current,action,now())]};
       await store.put(user,'chats',doc.id,doc);return view(await read(user,doc.id),current);
     } catch(error) {
