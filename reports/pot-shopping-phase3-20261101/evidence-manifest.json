@@ -1,48 +1,44 @@
 {
-  "schema": "shopping.reduced.evidence.v1",
-  "raw_manifest_sha256": "b37326c7aa710ea2691e18cadc9b0698f388c9bb38df6a2b9e992fc38ac863f3",
-  "raw_files": 15235,
-  "raw_bytes": 58660528,
+  "schema": "shopping.reduced.live.evidence.v1",
+  "manifest_sha256": "808dd174be8a0cc781f1a8cfd8bb016ceeeeae928b4d4ac394867e18e6c9ab1a",
+  "files": 16,
+  "bytes": 725596,
   "key_evidence": [
     {
-      "file": "kernel-input-equality.json",
-      "sha256": "9a6a8311aa210d8a75cd83de93234c3f9daec12d83d66b5c92e01f32cf143280"
+      "file": "raw/checkpoint.json",
+      "sha256": "a49bc4edcc204a3065ba5abcd2e220d6b55f48df06085a13535fa1997fa7223e"
     },
     {
-      "file": "kernel-final/mutations.json",
-      "sha256": "56d650725c7580b9cdf456c29d0d48ae3984d4dc6eaf1a2478494cfe9b7a865e"
+      "file": "raw/token-worker.log",
+      "sha256": "0fdab33d76f47db5f404561eec39abec72d532f3058b5e0679a9f6f07ec6d21d"
     },
     {
-      "file": "corpus-current/qualification.json",
-      "sha256": "2ec4a1a1c01a2526021b3f45faa81284b848ffc0e1afd4a57120c2bb04ac8967"
+      "file": "launch/L-1-launch.json",
+      "sha256": "1678853409f1699cee6c89fe84ddd5cef1625d4ede7c78c5769d05b35e0354ab"
     },
     {
-      "file": "corpus-current/scoring.json",
-      "sha256": "071567d071a8416d6bb63d61f1f73dfdc838ad8ca916a1a676fc8aa28e2ac6f2"
+      "file": "launch/L-1-result.json",
+      "sha256": "282672f377074fbd546367b127be117dfbe853e463e6fcc41d51069c0d3a722f"
     },
     {
-      "file": "mutants-current/results.json",
-      "sha256": "c5995afd69e5418d20e0ccd63aaf250b72126ebd17187caa64f85a8149e4d3f7"
+      "file": "scoring.json",
+      "sha256": "117659696d23b4a65be7a1ef2967ad1e7df2f8f6e513489ea3237b406a63d9a8"
     },
     {
-      "file": "syntax-current/result.json",
-      "sha256": "f937f28d0bd026820e5f1e58857c4f17d4c82fa86f16e455075ae04242129e67"
+      "file": "inspection.json",
+      "sha256": "fbeb576537363838037a2bba6a5125f6bb06d74847637e46a72bec5eeaab4d3f"
     },
     {
-      "file": "invariants-current.json",
-      "sha256": "02cb6a072de67f7156bacee6ff52ac1af572b0ab490ae5d44f575807239c5697"
+      "file": "launch.py",
+      "sha256": "da69bf424a92c80ab184e3df48af9927228aa4e634d4e0238080cfa21226f2ad"
     },
     {
-      "file": "detached-current.log",
-      "sha256": "c9ca227b5a217e53c36697440e7a2c22f972354e7129b0017ce8569014cf932f"
+      "file": "proxy-only.sb",
+      "sha256": "c3308c8618c5d73b78c5afa06580b792548dea23acf371169f74363843528eea"
     },
     {
-      "file": "arm-resume-current.log",
-      "sha256": "ec2348110063c68c148e3ed9efaef07a1ba48b277e57c9b8236da96b48f23b33"
-    },
-    {
-      "file": "facade-keyword-mutant-orchestration/result.json",
-      "sha256": "c50d51bc52bf2050efc2cdb66648cce5c1742ea3115d50128301289104464f6f"
+      "file": "report.py",
+      "sha256": "344810aee1013af7c001dc5b2f2d5288562fdbd52b363113b869ca7911f3737e"
     }
   ]
 }
