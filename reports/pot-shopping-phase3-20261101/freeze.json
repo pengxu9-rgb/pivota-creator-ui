@@ -693,12 +693,24 @@
       "sha256": "8475d66d6fe9aa83237951c731f209c5b760c1422193dbbab2d7bbbf89c944cb"
     },
     {
+      "path": "reports/pot-shopping-phase3-20261101/guard-child.cjs",
+      "sha256": "53e468c8a8adb5029280c18ca84b8b23d31a3aac4a6cb94f85add4c613e51889"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/guard.test.cjs",
+      "sha256": "c85b6c06bbcd139ef8632710d2db59fa4cc69f1a2da32753902ee002100cbb14"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/launch-go.test.cjs",
+      "sha256": "e1180ca2cb2e48a72b9c29a5a23de7c5f5186758f57ab9ab6c6cf6d5f8109e3f"
+    },
+    {
       "path": "reports/pot-shopping-phase3-20261101/live-host.cjs",
       "sha256": "2531596f034a3c762b878c53a93933b8e3b9019041bbbb37adaf233da723143e"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/mutations.cjs",
-      "sha256": "4e9711047f70647933fe7f8697adf648a830c56dad77586b4b3e4a2ca232522c"
+      "sha256": "8d3d7ee08aedaa02003cdeb7cd4096e9b04dc28cc949f213604aec4a82657511"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/orchestrate.cjs",
@@ -810,7 +822,7 @@
     },
     {
       "path": "tests/shopping-model-eval.test.cjs",
-      "sha256": "9e8dda43814d1c06529090cefb39ab8d7c66371a9126598ac85dde0fcc852e7f"
+      "sha256": "b048da9d053b47b3b5dfff44056d248e1e911e00c1a3b1eefe955d16647ade9c"
     },
     {
       "path": "tests/shopping/model/collector.test.cjs",
@@ -821,16 +833,8 @@
       "sha256": "b6114b601af1533fe2909a886d5caef9ce7ae10aa68e34042b12bb18979fcf1f"
     },
     {
-      "path": "tests/shopping/model/guard-child.cjs",
-      "sha256": "4bac671728e7bbf73aef753e0db0a917edfe028466279e23976c13df92a008e3"
-    },
-    {
-      "path": "tests/shopping/model/guard.test.cjs",
-      "sha256": "c85b6c06bbcd139ef8632710d2db59fa4cc69f1a2da32753902ee002100cbb14"
-    },
-    {
       "path": "tests/shopping/model/harness-fix.test.cjs",
-      "sha256": "cfdaee77d52d9b3be079cb7e2fb8e8e1fa9b0fb0d5f62b376ce9a3a7babe9e94"
+      "sha256": "bf4be7fbcb7a71a785a66cf1759da75ab0d5bb39aa39ca4fa1d19db96be34491"
     },
     {
       "path": "tests/shopping/model/reduced.test.cjs",

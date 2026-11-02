@@ -1,5 +1,5 @@
 'use strict';
-// Child fixture for guard.test.cjs. Installs in-memory socket, TLS and HTTPS fakes
+// Child fixture for guard.test.cjs (phase-3 harness tests, run beside tests/shopping-model-eval.test.cjs). Installs in-memory socket, TLS and HTTPS fakes
 // before loading the guard, so no byte reaches a network. Prints one JSON result line.
 const { EventEmitter } = require('node:events'), { Readable } = require('node:stream');
 const net = require('node:net'), tls = require('node:tls'), https = require('node:https');
@@ -58,7 +58,7 @@ https.request = (options, onResponse) => {
     };
     return request;
 };
-const guard = require('../../../reports/pot-shopping-phase3-20261101/vertex-allowlist-guard.cjs');
+const guard = require('./vertex-allowlist-guard.cjs');
 const options = signal => ({ method: 'POST', redirect: 'error', body: '{}', headers: { authorization: 'Bearer fixturetokenvalue', 'content-type': 'application/json' }, signal });
 const later = ms => new Promise(resolve => setTimeout(resolve, ms));
 function print(result) { process.stdout.write(JSON.stringify(result) + '\n'); }

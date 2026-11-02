@@ -6,4 +6,3 @@ require('./shopping/model/scenarios.test.cjs');
 require('./shopping/model/scoring.test.cjs');
 require('./shopping/model/reduced.test.cjs');
 require('./shopping/model/harness-fix.test.cjs');
-require('./shopping/model/guard.test.cjs');
