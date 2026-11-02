@@ -15,7 +15,7 @@ const { binding, FIXED_NOW } = require('../admission-kernel-live-model/offline-f
 const PLAN = require('../../tests/fixtures/shopping-model-eval/corpus-plan.json');
 const corpus = require('../admission-kernel-live-model/corpus.json'), holdout = require('../admission-kernel-live-model/holdout-e.json');
 function modelHost(collector, arm, id, h, options = {}) {
-    let fallbacks = 0, turn = 0;
+    let fallbacks = 0, turn = 0, shown = [];
     const results = [], rendered = [];
     const transport = collector.channel(arm, id);
     const timing = collector.session(arm,id);
@@ -65,8 +65,12 @@ function modelHost(collector, arm, id, h, options = {}) {
     });
     return { runner, results, metrics, rendered, observe, elapsed, timing, markPreview:()=>timing.observe('complete_preview',transport.elapsedMs()), setTurn: value => { turn = value; },
         counts: () => ({ fallbacks, ...runner.counts() }),
+        show: result => { shown.push({ ok: true, result }); return result; },
         turn: async (text, more = {}) => {
-            const result = await runner.turn({ text, task_ref: h.taskRef, ...more });
+            // Everything the interface showed since the last model turn goes with this one.
+            const screen = shown;
+            shown = [];
+            const result = await runner.turn({ text, task_ref: h.taskRef, initialResults: screen, ...more });
             results.push(result);
             collector.outcome(arm,'model_turn/'+id+'/'+results.length,result);
             return result;
@@ -76,7 +80,7 @@ function modelHost(collector, arm, id, h, options = {}) {
 async function shoppingEpisode(collector, arm, id, j) {
     const started = Date.now(), h = setup(), host = modelHost(collector, arm, id, h);
     let turns = 0, unnecessary = 0, firstOffer = null, completePreview = null, firstOfferMs = null, previewMs = null;
-    const questions = [];
+    const questions = [], shown = result => host.show(result);
     const unresolved = j.id === 'J02' ? { language: 'English', purpose: 'display gift', grade: 'raw', budget: 'USD 50 item budget' } : {};
     async function user(text, model = true) { turns++; host.setTurn(turns); if (!model)
         return; let r = await host.turn(text); let extra = 0; while (r.plan?.decision === 'clarify' && extra++ < 12) {
@@ -92,10 +96,10 @@ async function shoppingEpisode(collector, arm, id, j) {
             break;
     } }
     if (j.id === 'J04')
-        await ready(h, j);
+        { shown(await select(h, j)); shown(await preview(h)); }
     if(j.id==='J04')host.observe({records:[h.shop.evidence.offer(j.offer_ref)]});
     await user(j.query);
-    const offers = ok(await h.call('ui', 'search_catalog', { text: j.query }));
+    const offers = shown(ok(await h.call('ui', 'search_catalog', { text: j.query })));
     host.observe(offers);
     if (offers.records.some(r => r.kind === 'offer' && h.shop.evidence.qualified(h.shop.evidence.offer(r.id)))) {
         firstOffer = turns;
@@ -104,10 +108,10 @@ async function shoppingEpisode(collector, arm, id, j) {
     if (j.id === 'J01') {
         await user('JPY 30,000 delivered to Hong Kong');
         await user('Confirm and compare offers', false);
-        await select(h, j);
-        ok(await h.call('ui', 'compare_offers', { offer_refs: ['offer_A', 'offer_B'], criterion: 'item_price' }));
+        shown(await select(h, j));
+        shown(ok(await h.call('ui', 'compare_offers', { offer_refs: ['offer_A', 'offer_B'], criterion: 'item_price' })));
         await user('Preview A');
-        if ((await preview(h)).status === 'complete')
+        if (shown(await preview(h)).status === 'complete')
             completePreview = turns;
     }
     else if (j.id === 'J02') {
@@ -115,28 +119,28 @@ async function shoppingEpisode(collector, arm, id, j) {
         for (const k of Object.keys(unresolved))
             delete unresolved[k];
         await user('Choose the fixture printing and condition', false);
-        ok(await h.call('ui', 'compare_offers', { offer_refs: ['offer_CHAR_A', 'offer_CHAR_B'], criterion: 'item_price' }));
+        shown(ok(await h.call('ui', 'compare_offers', { offer_refs: ['offer_CHAR_A', 'offer_CHAR_B'], criterion: 'item_price' })));
         await user('Choose seller A, destination Hong Kong', false);
-        await select(h, j);
-        if ((await preview(h)).status === 'complete')
+        shown(await select(h, j));
+        if (shown(await preview(h)).status === 'complete')
             completePreview = turns;
     }
     else if (j.id === 'J03') {
         await user('Pikachu / Japanese', false);
-        ok(await h.call('ui', 'get_product', { printing_ref: j.requirements.printing_ref }));
+        shown(ok(await h.call('ui', 'get_product', { printing_ref: j.requirements.printing_ref })));
         await user('Choose this printing, PSA 10 and JPY budget controls', false);
-        await select(h, j);
-        if ((await preview(h)).status === 'complete')
+        shown(await select(h, j));
+        if (shown(await preview(h)).status === 'complete')
             completePreview = turns;
     }
     else {
         h.shop.sim.setFault('price_change');
-        if ((await preview(h)).status !== 'terms_changed')
+        if (shown(await preview(h)).status !== 'terms_changed')
             throw Error('changed_terms_not_held');
         denied(await h.human('approve_purchase', { preview_ref: h.state().preview.id }));
         await user('Change cap to JPY 31,000; review new simulated preview', false);
-        await select(h, j, { budget_minor: j.new_budget_minor });
-        if ((await preview(h)).status === 'complete')
+        shown(await select(h, j, { budget_minor: j.new_budget_minor }));
+        if (shown(await preview(h)).status === 'complete')
             completePreview = turns;
         h.shop.sim.setFault('timeout_after_submit');
     }
@@ -145,11 +149,11 @@ async function shoppingEpisode(collector, arm, id, j) {
     const wrongItems = itemFields.filter(key => q[key] !== j.requirements[key]).length;
     if (wrongItems)
         throw Error('wrong_item_or_destination');
-    const qr = ok(await h.call('ui', 'get_checkout_session', { preview_ref: q.id })).records[0];
+    const qr = shown(ok(await h.call('ui', 'get_checkout_session', { preview_ref: q.id }))).records[0];
     for (const slot of ['item','shipping','fee','tax','total','currency','expiry']) h.shop.render(h.principals.ui,h.taskRef,{evidence_ref:qr.evidence_ref,slot});
     previewMs=host.markPreview();
     // Trusted button/dispatch happens directly, never after a model proposal.
-    const op = (await approve(h)).operation_ref;
+    const op = shown(await approve(h)).operation_ref;
     await h.shop.worker.drain(h.principals.worker, h.taskRef);
     if (j.id === 'J04') {
         await user('Did it work?');

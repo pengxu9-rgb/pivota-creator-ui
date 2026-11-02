@@ -1,3 +1,22 @@
+# Round 2: root-cause fixes after the reduced run (post-hoc)
+
+Peng asked to continue until the registered thresholds pass. Every change below was made **after seeing the reduced run's data**, at the cause rather than the symptom. Not changed: thresholds, the scorer, the corpus and scripted user, the 8-second call limit, the turn and journey call limits, budgets, the parser's field list, models, endpoints and prices. Iterating on the same four scripted journeys risks fitting to them; an out-of-sample check is required before any claim beyond these journeys.
+
+| Failed threshold | Root cause found in the recorded responses | Fix |
+| --- | --- | --- |
+| Unnecessary questions (L p95 1; P median 2, p95 10) and P's preview turns | **The model never saw the screen.** Interface searches, selections, comparisons and previews reached only the host's metrics, never the model, so P asked "printing" 80 times in J04 ("Preview selected listing A") and "language" 37 times in J03. | The host passes each interface result to the next model turn through the existing privacy projection (`context.project`, explicit scalars only), tagged `shown_in_interface`. It is projected before the privacy check, so it survives a privacy turn without reaching the network. |
+| P's repeated questions | **`temperature: 0` on Gemini 3.** Google warns that values below 1.0 can loop. | No temperature or topP: vendor defaults. |
+| P latency and cost (40 timeouts, each charged the worst case) | **`thinkingBudget: 128` is deprecated for Gemini 3** (it can 400, and P's default level is HIGH). | `thinkingLevel: LOW` on both arms: the lowest level both accept, so the configuration stays identical across arms. |
+| Same | The model did not know the product's interaction policy. | Instruction: search rather than asking the user to pick a printing, listing, seller or condition; never ask for destination or contact details; call `select_offer` / `create_checkout_session` only when listed in `interface_actions_attached`, now sent each turn. |
+| L fallbacks: 18 of 25 `search_not_called` came after `get_offers` | **My own rule was too narrow.** | A "search" plan counts any catalog read: `search_catalog`, `get_offers`, `get_product`, `get_alternatives`, `compare_offers`. A plan claiming "search" with no catalog read still falls back. |
+| `unsupported_claim` | Slot-to-record rules were enforced but never stated. | Instruction states them, mirroring `render.cjs`. |
+
+**Deliberately not changed:** a `clarify` without a field, or one about a field the policy forbids, still counts as an unnecessary question rather than being turned into a fallback, so the measure stays honest.
+
+**Tests:** 4 new model tests and 2 new host tests (`host-screen.test.cjs`), plus 5 new mutants: screen not passed, screen dropped on a privacy turn, search tools narrowed, `thinkingBudget` restored, attached actions unfiltered. The mutant runner now copies `reports/admission-kernel-live-model/`, which the host needs. All 28 mutants are killed.
+
+---
+
 # Reduced run results (L, then P)
 
 Run on 2 November 2026 at `f523645` with freeze `295eb720…`, after Peng's go in chat. L ran 13:01:55–13:04:42 UTC. P attempt 1 (13:18) stopped before any call with `token_refresh_needed` (43 minutes left, under the 45-minute rule). P attempt 2 ran 14:42:59–15:00:02 UTC after Peng refreshed the token. No retries otherwise, no stops, no refresh by the harness. Raw evidence and the offline scorer output stay outside Git (manifest `60d116e30e8ff8f46f1f0ef6f2e59e708a05568a9776b68841a461b94a712f52`). Scores come from the frozen scorer replaying recorded responses offline, with network denied.

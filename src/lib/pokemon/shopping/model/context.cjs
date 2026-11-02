@@ -7,7 +7,8 @@ const REF = /^(?:id|.*_ref)$/;
 function createContext(taskRef) {
     const known = new Set([taskRef]), sources = new Set(), listingIds = new Map(), retained = [];
     const scalar = v => v === null || ['string', 'number', 'boolean'].includes(typeof v);
-    function project(reply) {
+    // origin 'interface' marks what the user already sees on screen (their own searches, selections, previews).
+    function project(reply, origin = 'tool') {
         if (reply?.ok !== true)
             return safeValue({ synthetic: true, ok: false, error: { code: String(reply?.error?.code || 'invalid_tool_result').slice(0, 100), retry_class: 'none' } });
         const result = reply.result, records = [];
@@ -36,7 +37,7 @@ function createContext(taskRef) {
             records.push(row);
         }
         // Register only references present in the bounded response, never hidden fields.
-        const out = { synthetic: true, ok: true, tool: result.tool, status: String(result.status).slice(0, 100), state_version: result.state_version, records,
+        const out = { synthetic: true, ok: true, ...(origin === 'interface' ? { shown_in_interface: true } : {}), tool: result.tool, status: String(result.status).slice(0, 100), state_version: result.state_version, records,
             assumptions: (result.assumptions || []).slice(0, 8).map(a => ({ field: String(a.field).slice(0, 100), value: String(a.value).slice(0, 160), label: String(a.label).slice(0, 240), confirmed: false })) };
         const safe = safeValue(out);
         for (const r of safe.records)

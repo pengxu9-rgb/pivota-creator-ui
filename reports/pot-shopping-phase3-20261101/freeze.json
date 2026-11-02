@@ -130,8 +130,8 @@
     "smoke": "claude_3c_smoke_go",
     "reduced": "claude_3c_reduced_go"
   },
-  "harness_fix": "Post-hoc harness fix of 2 November 2026 after run 1 (3403bc9): fenced answer plans accepted, original user text bound by the server for search_catalog and get_offers, search_not_called rule, guard error listeners and sanitized fatal record. Run 1 stays in the record, unscored.",
-  "sampling_limitation": "Temperature 0 and thinking budget 128 were selected for stability. Google advises temperature 1.0 and thinking levels for Gemini 3 models; preflight proves acceptance only, not suitability.",
+  "harness_fix": "Post-hoc harness fix of 2 November 2026 after run 1 (3403bc9): fenced answer plans accepted, original user text bound by the server for search_catalog and get_offers, search_not_called rule, guard error listeners and sanitized fatal record. Run 1 stays in the record, unscored. Round 2 after the reduced run: the model sees interface results (shown_in_interface) through the privacy projection, a search plan counts any catalog read, the instruction states interface and privacy policy and slot-to-record rules, and sampling follows Gemini 3 guidance. The reduced run stays in the record.",
+  "sampling_limitation": "Round 2 (2 November 2026, after the reduced run): temperature, topP and thinkingBudget removed and thinkingLevel LOW set on both arms, following Google guidance for Gemini 3 (thinkingBudget deprecated and can 400; temperature below 1.0 can loop; 3.5 Flash-Lite ignores custom sampling). LOW is the lowest level both models accept. Preflight proves acceptance only, not suitability.",
   "schema": "shopping.phase3.freeze.v1",
   "stage": "3a",
   "live_run_enabled": false,
@@ -145,12 +145,10 @@
     "P": "https://aiplatform.googleapis.com/v1/projects/pivota-prod/locations/global/publishers/google/models/gemini-3.1-pro-preview:generateContent"
   },
   "generationConfig": {
-    "temperature": 0,
-    "topP": 1,
     "maxOutputTokens": 1024,
     "thinkingConfig": {
       "includeThoughts": false,
-      "thinkingBudget": 128
+      "thinkingLevel": "LOW"
     }
   },
   "toolConfig": {
@@ -158,8 +156,8 @@
       "mode": "AUTO"
     }
   },
-  "sampling_reason": "Temperature zero/topP one; bounded 1024 output and 128 thinking budget minimise sampling and reserve reasoning. Identical across arms; exact-model acceptance unverified until separately reviewed preflight. Unsupported configuration stops an arm; no substitution.",
-  "system_instruction_sha256": "6fe6ada58c007fe45abb4afb0ac111571f07ddb5e144e6a265c7875abdab4d2c",
+  "sampling_reason": "Vendor-default sampling, bounded 1024 output tokens and thinkingLevel LOW. Identical across arms; exact-model acceptance unverified until preflight. Unsupported configuration stops an arm; no substitution.",
+  "system_instruction_sha256": "696179a56235b197f7989040b793540ed2a5c23113465a73922dbeda91c48666",
   "declaration_set_sha256": "0d41c5cd491e9f941813761f1b82fdb742c8421983f6c5fef662da5ac9a3ea58",
   "dropped_schema_keywords": [
     {
@@ -698,7 +696,11 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/harness-fix-runtime.patch",
-      "sha256": "7dcb02d43ff97ff6f0ce4c3a08bf118cacc8d785efcaab737e73ae17b134aa8c"
+      "sha256": "bb8baa9f4f907ebae861edc174909764fdb7e2c27df38a44572ab766c75af82b"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/host-screen.test.cjs",
+      "sha256": "f021e33eb50fb04a9209e3e310b1f08caaca27e3992be0ee5aa708e7aa06bbb1"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/launch-go.test.cjs",
@@ -710,15 +712,15 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/mutations.cjs",
-      "sha256": "9581b6b2ae7e89e4cb82580e1bffd3f3aefc46feccf4b64784b19a408c11f724"
+      "sha256": "8f1cba7cb14227f535e5ce57105eecc46b769c99984a4a2004c82b2096bb8e69"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/orchestrate.cjs",
-      "sha256": "03794d8d4e4bad9b47250355b032dea3f3dd9b27962285060d630c8f6ab71b51"
+      "sha256": "82d84e26be1f188d1b07f592067d40a30f779582fe8647754f35ad8421d2bedb"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/prepare-freeze.cjs",
-      "sha256": "5534b32dee5a194dd7228382f4f29483b2c8c756f72b9c84ed3de4694d22a13a"
+      "sha256": "5d50762a0ee3c5ea0a2b8310b3d74b4c3abb777ab1f45c761ccfd32ab4c754d7"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/prepare-scenarios.cjs",
@@ -750,7 +752,7 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/qualify-reduced-plan.cjs",
-      "sha256": "4bf474d44f2d77fc2f5955f5951f8ebf3dfe702be2598a3107b5f583fa892f17"
+      "sha256": "6cea417b3c7deddebeb58119e606c134eb4856499caf4fc95389459018ee7fc9"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/qualify-smoke.cjs",
@@ -898,7 +900,7 @@
     },
     {
       "path": "src/lib/pokemon/shopping/model/context.cjs",
-      "sha256": "2e267b5936300f0317c2a4d5e6630eb7803efb6f207244c2f42e8d7205907a5c"
+      "sha256": "870e25f7af0a5e45370684b8494493ab917c828a6d1e4ca8387de08b5ca3b028"
     },
     {
       "path": "src/lib/pokemon/shopping/model/declarations.cjs",
@@ -914,7 +916,7 @@
     },
     {
       "path": "src/lib/pokemon/shopping/model/turn.cjs",
-      "sha256": "6fea5cd0d83c7341e365d308dbce0b76e5b1eb369d5a6546985ec9ec7b18ec71"
+      "sha256": "c7edad154b0a8fb785753b211be6856dcb6d8a33be57b42cb3de996792ed272d"
     },
     {
       "path": "src/lib/pokemon/shopping/model/vertex-request.cjs",
@@ -994,7 +996,7 @@
     },
     {
       "path": "tests/shopping/model/harness-fix.test.cjs",
-      "sha256": "22398556c84abfa4aa94b19e3fcb385ce726e3d7e6b5605ef5444e8088154983"
+      "sha256": "113fb14f6d5c10e3b1540da3e587ea76aab93fe39e323c2416dc81971bdebf07"
     },
     {
       "path": "tests/shopping/model/reduced.test.cjs",
