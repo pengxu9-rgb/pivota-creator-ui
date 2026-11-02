@@ -48,6 +48,10 @@ Run on 2 November 2026, 11:03:50–11:04:15 UTC, at `c6250b3` with freeze `14beb
 
 The harness now records real model behaviour. Three fallbacks come from an interface gap: the parser and renderer enforce field and slot vocabularies (`language, budget, grade, printing, condition, purpose, quantity, destination`; `price, total, item, shipping, fee, tax, currency, status, expiry, url`) that the model is never shown.
 
+## Vocabulary fix after the smoke run (post-hoc)
+
+Peng chose to fix the interface gap before the full run. The instruction now lists the allowed plan fields and claim slots. `PLAN_FIELDS` and `CLAIM_SLOTS` in `turn.cjs` are the single source. A test requires the instruction to name exactly those words, and the slots to equal the renderer's cases in `render.cjs`. Two mutants (a slot dropped from the instruction, a field added only to the parser) are killed. Nothing else changed: the `search_not_called` rule and every frozen setting stay as they were. This is another change made after seeing data. The first smoke run stays in the record.
+
 ## Independent adversarial review
 
 An independent agent reviewed `ef172b8` and `58e18f9` read-only and offline. **No P1.** Four P2s, all addressed:

@@ -159,7 +159,7 @@
     }
   },
   "sampling_reason": "Temperature zero/topP one; bounded 1024 output and 128 thinking budget minimise sampling and reserve reasoning. Identical across arms; exact-model acceptance unverified until separately reviewed preflight. Unsupported configuration stops an arm; no substitution.",
-  "system_instruction_sha256": "056c964f87f01ead3246a05b02272824a3ebe830da60b83c7ddfbbf3e238e2c8",
+  "system_instruction_sha256": "6fe6ada58c007fe45abb4afb0ac111571f07ddb5e144e6a265c7875abdab4d2c",
   "declaration_set_sha256": "0d41c5cd491e9f941813761f1b82fdb742c8421983f6c5fef662da5ac9a3ea58",
   "dropped_schema_keywords": [
     {
@@ -698,7 +698,7 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/harness-fix-runtime.patch",
-      "sha256": "eb1dfdda7494196fe4374be424cfb84b75436fb692c0d039706ebdcf06bd2dba"
+      "sha256": "7dcb02d43ff97ff6f0ce4c3a08bf118cacc8d785efcaab737e73ae17b134aa8c"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/launch-go.test.cjs",
@@ -710,7 +710,7 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/mutations.cjs",
-      "sha256": "cd7f9e814e3f392b8fa5fb2324f622d8ba6ae51a026c765c1bfea6f8a0b33c02"
+      "sha256": "9581b6b2ae7e89e4cb82580e1bffd3f3aefc46feccf4b64784b19a408c11f724"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/orchestrate.cjs",
@@ -750,7 +750,7 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/qualify-reduced-plan.cjs",
-      "sha256": "01b9ef8cfacf91138a3c4ad952d96f604130c78ece98c21f0807e18e2d9d761d"
+      "sha256": "4bf474d44f2d77fc2f5955f5951f8ebf3dfe702be2598a3107b5f583fa892f17"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/qualify-smoke.cjs",
@@ -914,7 +914,7 @@
     },
     {
       "path": "src/lib/pokemon/shopping/model/turn.cjs",
-      "sha256": "22500f428094f2dfb4f03e80937badf10135dabc927384093c2dbd9914f060a5"
+      "sha256": "6fea5cd0d83c7341e365d308dbce0b76e5b1eb369d5a6546985ec9ec7b18ec71"
     },
     {
       "path": "src/lib/pokemon/shopping/model/vertex-request.cjs",
@@ -994,7 +994,7 @@
     },
     {
       "path": "tests/shopping/model/harness-fix.test.cjs",
-      "sha256": "34ae10965ac8df4c7812912978ad7134b6967887bca2f3a36f5ef72ccba51e00"
+      "sha256": "22398556c84abfa4aa94b19e3fcb385ce726e3d7e6b5605ef5444e8088154983"
     },
     {
       "path": "tests/shopping/model/reduced.test.cjs",

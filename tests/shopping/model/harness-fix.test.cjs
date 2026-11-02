@@ -138,3 +138,13 @@ test('model eval harness fix: the smoke plan enforces its own caps, not the redu
     assert.equal(p.seen.length, 1);
     arm.close();
 });
+test('model eval harness fix: the instruction lists exactly the fields the parser accepts and the slots the renderer supports', () => {
+    const fs = require('node:fs'), path = require('node:path');
+    const { PLAN_FIELDS, CLAIM_SLOTS } = require('../../../src/lib/pokemon/shopping/model/turn.cjs');
+    const listed = label => SYSTEM_INSTRUCTION.split(label)[1].split('.')[0].split(',').map(s => s.trim());
+    assert.deepEqual(listed('The fields list may only name: '), [...PLAN_FIELDS]);
+    assert.deepEqual(listed('slot is one of: '), [...CLAIM_SLOTS]);
+    const render = fs.readFileSync(path.join(__dirname, '../../../src/lib/pokemon/shopping/render.cjs'), 'utf8');
+    assert.deepEqual([...new Set([...render.matchAll(/case '([a-z_]+)'/g)].map(m => m[1]))].sort(), [...CLAIM_SLOTS].sort());
+    for (const field of ['printing_ref', 'offer']) assert.equal(PLAN_FIELDS.includes(field), false);
+});
