@@ -230,8 +230,12 @@ async function runCompatibility(collector, arm) {
         await Promise.all(active.values());
     }
 }
-async function runArm(collector, arm) {
+async function runArm(collector, arm, { plan = 'reduced' } = {}) {
     const before=collector.state();
+    if((before.plan||'reduced')!==plan)throw Error('collector_plan_mismatch');
+    if(plan!=='reduced'&&plan!=='smoke')throw Error('unknown_plan');
+    // The smoke plan checks the harness on L only; it is never scored.
+    if(plan==='smoke'&&arm!=='L')throw Error('smoke_is_L_only');
     if(before.stop_reason)return before;
     if(arm==='P'){
         const first=collector.priorOutcome('L','arm_finished');
@@ -243,8 +247,8 @@ async function runArm(collector, arm) {
         collector.outcome(arm,'arm_finished',{status:'arm_stopped',reason:before.arms[arm].stop_reason});
         return collector.state();
     }
-    const cases = [];
-    for (let repeat = 1; repeat <= 10; repeat++)
+    const cases = [], repetitions = plan === 'smoke' ? PLAN.smoke.journey_repetitions : 10;
+    for (let repeat = 1; repeat <= repetitions; repeat++)
         for (const j of journeys.journeys)
             cases.push({ repeat, j, id: 'journey/' + j.id + '/' + repeat });
     let cursor = 0;
@@ -262,9 +266,9 @@ async function runArm(collector, arm) {
     async function worker() { while (cursor < cases.length && !stopped(collector, arm))
         await one(cases[cursor++]); }
     await Promise.all([worker(), worker()]);
-    if (!stopped(collector, arm))
+    if (!stopped(collector, arm) && plan === 'reduced')
         await boundedCases(collector, arm);
-    if (!stopped(collector, arm) && PLAN.compatibility.enabled !== false)
+    if (!stopped(collector, arm) && plan === 'reduced' && PLAN.compatibility.enabled !== false)
         await runCompatibility(collector, arm);
     const after=collector.state();
     // Global shutdowns are checkpoints, never terminal arm outcomes.

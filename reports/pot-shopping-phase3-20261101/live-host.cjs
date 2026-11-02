@@ -2,9 +2,13 @@
 // Lazy, disabled stage3b host. Stage3a never invokes main or reads token stdin.
 const fs = require('node:fs'), path = require('node:path');
 const ROOT = path.resolve(__dirname, '../..');
-async function main(arm, raw, reviewHash) {
+// Each plan has its own go; a go for one plan never launches the other.
+const REVIEW_GO = Object.freeze({ smoke: 'claude_3c_smoke_go', reduced: 'claude_3c_reduced_go' });
+async function main(arm, raw, reviewHash, plan) {
     const { hash } = require(ROOT + '/src/lib/pokemon/shopping/schema.cjs'), bytes = fs.readFileSync(__dirname + '/freeze.json', 'utf8'), freeze = JSON.parse(bytes);
-    if (process.env.POT_SHOPPING_REVIEW_GO !== 'claude_3a_go' || reviewHash !== hash(bytes))
+    if (!Object.hasOwn(REVIEW_GO, plan) || freeze.review_go?.[plan] !== REVIEW_GO[plan])
+        throw Error('exact_plan_required');
+    if (process.env.POT_SHOPPING_REVIEW_GO !== REVIEW_GO[plan] || reviewHash !== hash(bytes))
         throw Error('claude_exact_freeze_review_required');
     if (!['L', 'P'].includes(arm))
         throw Error('exact_arm_required');
@@ -22,9 +26,9 @@ async function main(arm, raw, reviewHash) {
     process.env.POT_LIVE_PROJECT_ID = 'pivota-prod';
     process.env.POT_SHOPPING_MODEL_ARM = arm;
     const guard = require('./vertex-allowlist-guard.cjs'), { createVertexRequest } = require(ROOT + '/src/lib/pokemon/shopping/model/vertex-request.cjs'), { createCollector } = require(ROOT + '/src/lib/pokemon/shopping/model/collector.cjs'), { runArm } = require('./orchestrate.cjs');
-    const request = createVertexRequest({ arm, guard, token }), collector = createCollector({ freeze, artifactBytes: p => fs.readFileSync(ROOT + '/' + p), checkpoint: directory + '/checkpoint.json', tokenExpiresAt: expires, reviewGo: true, transport: ({ request: body, signal, onStageReader }) => request(body, { signal, onStageReader }) });
+    const request = createVertexRequest({ arm, guard, token }), collector = createCollector({ freeze, artifactBytes: p => fs.readFileSync(ROOT + '/' + p), checkpoint: directory + '/checkpoint.json', tokenExpiresAt: expires, reviewGo: true, plan, transport: ({ request: body, signal, onStageReader }) => request(body, { signal, onStageReader }) });
     try {
-        await runArm(collector, arm);
+        await runArm(collector, arm, { plan });
     }
     finally {
         collector.close();
@@ -34,6 +38,6 @@ async function main(arm, raw, reviewHash) {
 if (require.main === module) {
     if (process.argv[2] !== '--live')
         throw Error('explicit_reviewed_live_mode_required');
-    main(process.argv[3], process.argv[4], process.argv[5]).catch(() => { process.stderr.write('evaluation_host_stopped\n'); process.exitCode = 1; });
+    main(process.argv[3], process.argv[4], process.argv[5], process.argv[6]).catch(() => { process.stderr.write('evaluation_host_stopped\n'); process.exitCode = 1; });
 }
-module.exports = { main };
+module.exports = { main, REVIEW_GO };

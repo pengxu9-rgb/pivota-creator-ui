@@ -1,4 +1,4 @@
-"""Disabled until exact 3a review; same read-only cached-token helper as attempt4."""
+"""Disabled until Claude's go for the exact plan and freeze; same read-only cached-token helper as attempt4."""
 import argparse
 from datetime import datetime, timezone
 import hashlib
@@ -11,12 +11,17 @@ import subprocess
 import sys
 
 
+# Each plan has its own go; a go for one plan never launches the other.
+REVIEW_GO = {'smoke': 'claude_3c_smoke_go', 'reduced': 'claude_3c_reduced_go'}
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--mode', choices=['fake', 'live'], required=True)
     parser.add_argument('--arm', choices=['L', 'P'], required=True)
     parser.add_argument('--raw', required=True)
     parser.add_argument('--freeze-sha', required=True)
+    parser.add_argument('--plan', choices=['smoke', 'reduced'], required=True)
     parser.add_argument('--fake-cache')
     args = parser.parse_args()
     here = Path(__file__).resolve().parent
@@ -24,7 +29,7 @@ def main():
     actual = hashlib.sha256((here / 'freeze.json').read_bytes()).hexdigest()
     if actual != args.freeze_sha:
         raise RuntimeError('freeze_mismatch')
-    if args.mode == 'live' and os.environ.get('POT_SHOPPING_REVIEW_GO') != 'claude_3a_go':
+    if args.mode == 'live' and os.environ.get('POT_SHOPPING_REVIEW_GO') != REVIEW_GO[args.plan]:
         raise RuntimeError('claude_exact_freeze_review_required')
     raw = Path(args.raw).resolve(strict=True)
     if raw == root or root in raw.parents:
@@ -51,7 +56,7 @@ def main():
         command = [shutil.which('node'), str(here / 'fake-worker.cjs'), str(raw)]
     else:
         environment.pop('NODE_OPTIONS', None)
-        command = [shutil.which('node'), str(here / 'live-host.cjs'), '--live', args.arm, str(raw), actual]
+        command = [shutil.which('node'), str(here / 'live-host.cjs'), '--live', args.arm, str(raw), actual, args.plan]
     child = None
     try:
         with (raw / 'token-worker.log').open('ab') as log:

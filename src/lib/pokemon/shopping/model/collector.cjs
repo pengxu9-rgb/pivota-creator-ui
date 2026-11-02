@@ -7,6 +7,9 @@ const { declarationSet } = require('./declarations.cjs');
 const MODELS = Object.freeze({ L: 'gemini-3.5-flash-lite', P: 'gemini-3.1-pro-preview' });
 const endpoint = arm => 'https://aiplatform.googleapis.com/v1/projects/pivota-prod/locations/global/publishers/google/models/' + MODELS[arm] + ':generateContent';
 const BUDGETS = Object.freeze({ calls: 1500, calls_per_arm: 750, input_tokens: 15000000, usd: 25, usd_per_arm: Object.freeze({L:5,P:20}), concurrency: 2, minimum_launch_minutes: 45, refresh_minutes: 10, prompt_reservation_cap: 200000, output_reservation_cap: 2048 });
+// Harness check only: L alone, never scored.
+const SMOKE_BUDGETS = Object.freeze({ ...BUDGETS, calls: 80, calls_per_arm: 80, input_tokens: 2000000, usd: 1, usd_per_arm: Object.freeze({ L: 1, P: 0 }) });
+const PLANS = Object.freeze({ reduced: BUDGETS, smoke: SMOKE_BUDGETS });
 const STOP_RULES = Object.freeze({request_rejected:Object.freeze({consecutive_non_429_4xx:3,scope:'arm'}),access_denied:Object.freeze({statuses:Object.freeze([401,403]),scope:'global'})});
 function price(freeze, arm, input, output, thoughts = 0) {
     if (![input, output, thoughts].every(n => Number.isSafeInteger(n) && n >= 0))
@@ -38,7 +41,7 @@ function checkFreeze(freeze, artifactBytes) {
     if (freeze.stage !== '3a' || freeze.live_run_enabled !== false)
         throw Error('invalid_freeze');
     if (hash(freeze.stop_rules) !== hash(STOP_RULES)) throw Error('frozen_stop_rules_mismatch');
-    if (hash(freeze.budgets) !== hash(BUDGETS) || hash(freeze.models) !== hash(MODELS))
+    if (hash(freeze.budgets) !== hash(BUDGETS) || hash(freeze.smoke_budgets) !== hash(SMOKE_BUDGETS) || hash(freeze.models) !== hash(MODELS))
         throw Error('frozen_limits_mismatch');
     for (const [arm, id] of Object.entries(MODELS)) {
         if (freeze.endpoints?.[arm] !== endpoint(arm))
@@ -54,10 +57,13 @@ function checkFreeze(freeze, artifactBytes) {
     }
     return hash(freeze);
 }
-function createCollector({ freeze, artifactBytes, checkpoint, transport, clock = Date.now, tokenExpiresAt, reviewGo = false, rehearsal = false, timer = setTimeout, clearTimer = clearTimeout }) {
+function createCollector({ freeze, artifactBytes, checkpoint, transport, clock = Date.now, tokenExpiresAt, reviewGo = false, rehearsal = false, plan = 'reduced', timer = setTimeout, clearTimer = clearTimeout }) {
     if (typeof transport !== 'function')
         throw Error('transport_required');
     const freezeHash = checkFreeze(freeze, artifactBytes);
+    const B = PLANS[plan];
+    if (!Object.hasOwn(PLANS, plan))
+        throw Error('unknown_plan');
     // Stage 3a cannot accidentally launch a live adapter, even if credentials exist.
     if (!rehearsal && !reviewGo)
         throw Error('claude_3a_review_required');
@@ -65,6 +71,8 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
     if (state.freeze_sha256 !== freezeHash)
         throw Error('resume_freeze_mismatch');
     if(fs.existsSync(checkpoint)&&state.rehearsal!==rehearsal)throw Error('resume_mode_mismatch');
+    if(fs.existsSync(checkpoint)&&(state.plan||'reduced')!==plan)throw Error('resume_plan_mismatch');
+    state.plan=plan;
     state.rehearsal=rehearsal;
     state.sessions ||= {};
     if (state.records.some(r => r.status === 'reserved'))
@@ -96,14 +104,14 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
     process.on('SIGTERM', onTerm);
     function reserve(arm, job, attempt, request) {
         validateFrozenRequest(freeze, request);
-        const a = state.arms[arm], t = totals(), input = BUDGETS.prompt_reservation_cap, usd = price(freeze, arm, input, BUDGETS.output_reservation_cap);
+        const a = state.arms[arm], t = totals(), input = B.prompt_reservation_cap, usd = price(freeze, arm, input, B.output_reservation_cap);
         if (stopping || state.stop_reason || a.stop_reason)
             throw Error('collector_stopped');
         if (tokenExpiresAt - clock() < 10 * 60000) {
             stop('token_refresh_needed');
             throw Error('token_refresh_needed');
         }
-        if (t.calls + 1 > BUDGETS.calls || a.calls + 1 > BUDGETS.calls_per_arm || t.input + input > BUDGETS.input_tokens || t.usd + usd > BUDGETS.usd || a.usd + a.reserved_usd + usd > BUDGETS.usd_per_arm[arm]) {
+        if (t.calls + 1 > B.calls || a.calls + 1 > B.calls_per_arm || t.input + input > B.input_tokens || t.usd + usd > B.usd || a.usd + a.reserved_usd + usd > B.usd_per_arm[arm]) {
             stop('budget_exhausted', arm);
             throw Error('budget_exhausted');
         }
@@ -150,8 +158,8 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
         }
         const usage = response.body?.usageMetadata;
         const measured = validUsage(usage);
-        const input = measured ? usage.promptTokenCount : record.reserved_input, output = measured ? usage.candidatesTokenCount : BUDGETS.output_reservation_cap, thoughts = measured ? Math.max(usage.thoughtsTokenCount || 0, (usage.totalTokenCount || 0) - usage.promptTokenCount - usage.candidatesTokenCount) : 0;
-        const overCap = measured && (input > BUDGETS.prompt_reservation_cap || output + thoughts > BUDGETS.output_reservation_cap);
+        const input = measured ? usage.promptTokenCount : record.reserved_input, output = measured ? usage.candidatesTokenCount : B.output_reservation_cap, thoughts = measured ? Math.max(usage.thoughtsTokenCount || 0, (usage.totalTokenCount || 0) - usage.promptTokenCount - usage.candidatesTokenCount) : 0;
+        const overCap = measured && (input > B.prompt_reservation_cap || output + thoughts > B.output_reservation_cap);
         a.reserved_input -= record.reserved_input;
         a.reserved_usd -= record.reserved_usd;
         a.input_tokens += input;
@@ -300,4 +308,4 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
     }
     return Object.freeze({ run, request, channel, session, outcome, priorOutcome, state: () => copy(state), save, stop, close: () => { process.removeListener('SIGINT', onInt); process.removeListener('SIGTERM', onTerm); save(); } });
 }
-module.exports = { createCollector, checkFreeze, price, validUsage, atomic, MODELS, BUDGETS, STOP_RULES, endpoint, validateFrozenRequest };
+module.exports = { createCollector, checkFreeze, price, validUsage, atomic, MODELS, BUDGETS, SMOKE_BUDGETS, PLANS, STOP_RULES, endpoint, validateFrozenRequest };

@@ -1,3 +1,30 @@
+# Phase 3: post-hoc harness fix after run 1
+
+Written by Claude Code on 2 November 2026, after Peng chose "fix and rerun". Offline only: no model call, credential read, push or PR. **This section is not an approval.** An independent adversarial review follows, and the smoke run needs Claude's go naming the new freeze.
+
+## Post-hoc harness changes
+
+Run 1 (`3403bc9`, below) could not measure either model. Every change here was made **after seeing its data**:
+
+| Run 1 observation (L, 32 responses) | Change |
+| --- | --- |
+| All 22 `invalid_answer_plan` fallbacks were correct plans wrapped in a ```json fence | The parser accepts a bare JSON object or exactly one ```json / ``` fenced block with nothing outside it. Prose around a fence, other fence languages and unterminated fences stay invalid. Each turn records `plan_format`. |
+| 6 `original_text_required` fallbacks: the model shortened the user's text ("A nice Charizard for my son" → "Charizard") | `text` is removed from the model-visible `search_catalog` and `get_offers` declarations. The server binds the turn's original text. A model-written `text` is recorded as `model_query` (privacy-filtered, 200 characters) and never forwarded. |
+| 14 of 22 plans said `decision:"search"` without calling `search_catalog` | The system instruction now says to call `search_catalog` to search, that `"search"` means a search already ran this turn, and to reply with bare JSON. A `"search"` plan with no search call this turn falls back as `search_not_called`, before any claim is rendered. |
+| The guard stopped with `live_runtime_failure` and kept no error | The fatal handler records a sanitized error (name, code, 200-character message with bearer tokens, `ya29.` tokens and query strings redacted, stack frames as file:line) and still stops. Error listeners on socket, TLS transport, request and response stay attached; later errors are recorded as `late_handle_error`. |
+
+**The guard mechanism is reproduced offline.** A fake socket/TLS/HTTPS fixture (no network) aborts a request mid-body, then raises late errors on each handle. On the `d0e951a` guard this stops the guard with `live_runtime_failure`; on the fixed guard it does not, and the next request succeeds. This is the likely cause of run 1's stop, though run 1 itself kept no error to confirm it.
+
+**Unchanged from freeze `320084c4`** (checked by `qualify-reduced-plan.cjs`): models, endpoints, prices, sampling, turn limits, reduced budgets, stop rules, privacy policy, phase-2 fixtures and the compatibility mapping. The guard's CONNECT, proxy and TLS code is byte-identical to attempt 4 apart from six listed edits (checked by `qualify-guard.cjs`).
+
+**New in the freeze:** a smoke plan (L only, J01–J04 twice, no attack, fault or compatibility cases, never scored; caps 80 calls, 2M input tokens, USD 1) and per-plan go strings (`claude_3c_smoke_go`, `claude_3c_reduced_go`). The old `claude_3a_go` no longer launches anything. The brief proposed 1M tokens and USD 0.50 for the smoke; that would stop after about four calls without usage data, because each is charged the 200K-token worst case, so the caps were raised.
+
+**Run 1 stays in the record, unscored.** Its checkpoint and evidence are untouched.
+
+Gate results for this change are in the review evidence, not committed here.
+
+---
+
 # Reduced phase 3 Part 2: stopped live collection
 
 **Stopped for Claude review. Do not retry, start P, or clear the checkpoint.** Executed commit `d0e951ac3bb266cc0535495d63049fa53b7796a8`, freeze `320084c4c0e142cede2b172acc776fa44e2382966fe1e7e5884ba887010032c2`. No source or tests changed. The following local commit contains only this report, summary and compact manifest.

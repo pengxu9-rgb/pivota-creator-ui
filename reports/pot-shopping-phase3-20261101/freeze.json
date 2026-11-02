@@ -86,7 +86,17 @@
       "X01-X12",
       "faults"
     ],
-    "model_arm_concurrency": 2
+    "model_arm_concurrency": 2,
+    "smoke": {
+      "arms": [
+        "L"
+      ],
+      "journey_repetitions": 2,
+      "adversarial": false,
+      "faults": false,
+      "compatibility": false,
+      "scored": false
+    }
   },
   "stop_rules": {
     "request_rejected": {
@@ -101,6 +111,26 @@
       "scope": "global"
     }
   },
+  "smoke_budgets": {
+    "calls": 80,
+    "calls_per_arm": 80,
+    "input_tokens": 2000000,
+    "usd": 1,
+    "usd_per_arm": {
+      "L": 1,
+      "P": 0
+    },
+    "concurrency": 2,
+    "minimum_launch_minutes": 45,
+    "refresh_minutes": 10,
+    "prompt_reservation_cap": 200000,
+    "output_reservation_cap": 2048
+  },
+  "review_go": {
+    "smoke": "claude_3c_smoke_go",
+    "reduced": "claude_3c_reduced_go"
+  },
+  "harness_fix": "Post-hoc harness fix of 2 November 2026 after run 1 (3403bc9): fenced answer plans accepted, original user text bound by the server for search_catalog and get_offers, search_not_called rule, guard error listeners and sanitized fatal record. Run 1 stays in the record, unscored.",
   "sampling_limitation": "Temperature 0 and thinking budget 128 were selected for stability. Google advises temperature 1.0 and thinking levels for Gemini 3 models; preflight proves acceptance only, not suitability.",
   "schema": "shopping.phase3.freeze.v1",
   "stage": "3a",
@@ -129,8 +159,8 @@
     }
   },
   "sampling_reason": "Temperature zero/topP one; bounded 1024 output and 128 thinking budget minimise sampling and reserve reasoning. Identical across arms; exact-model acceptance unverified until separately reviewed preflight. Unsupported configuration stops an arm; no substitution.",
-  "system_instruction_sha256": "4373c591866e9df7170dcc0e1f7cfcc5566ed21ba764dc12ee7f22cc0de3415b",
-  "declaration_set_sha256": "24f020f8ee926579a81eba2d81a4c8c9136ff39ff9703ac98c3fab33a4388ede",
+  "system_instruction_sha256": "056c964f87f01ead3246a05b02272824a3ebe830da60b83c7ddfbbf3e238e2c8",
+  "declaration_set_sha256": "0d41c5cd491e9f941813761f1b82fdb742c8421983f6c5fef662da5ac9a3ea58",
   "dropped_schema_keywords": [
     {
       "tool": "compare_offers",
@@ -648,11 +678,11 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/declarations.json",
-      "sha256": "19a824a213583ffe7a4ecac6ae808293e3a07bdeb0fd4a35bcf33b1936e3ae3b"
+      "sha256": "6113efa139c9d64b8622b0c47c958ba0de7a25e3da9f41c69996321353f711ae"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/declarations.json",
-      "sha256": "19a824a213583ffe7a4ecac6ae808293e3a07bdeb0fd4a35bcf33b1936e3ae3b"
+      "sha256": "6113efa139c9d64b8622b0c47c958ba0de7a25e3da9f41c69996321353f711ae"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/detached-launch.cjs",
@@ -664,19 +694,19 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/live-host.cjs",
-      "sha256": "7003d5d181f1351403f3795f3e4ba5f530249b184a3dbcb5f62c0464ecf1ea91"
+      "sha256": "2531596f034a3c762b878c53a93933b8e3b9019041bbbb37adaf233da723143e"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/mutations.cjs",
-      "sha256": "d6552fe15e03de546a1c6fc5e2cf238fa17fca3c77b7a647754644904647b750"
+      "sha256": "4e9711047f70647933fe7f8697adf648a830c56dad77586b4b3e4a2ca232522c"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/orchestrate.cjs",
-      "sha256": "081a07f901441d937fc665e2beb1a2747d915cbaf58c0b3a3265b330598e0c46"
+      "sha256": "03794d8d4e4bad9b47250355b032dea3f3dd9b27962285060d630c8f6ab71b51"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/prepare-freeze.cjs",
-      "sha256": "352d7b3c4ba0b298c0a14721f7baefde291843dd9575a728ddb86331b788cc98"
+      "sha256": "3becbfe97b6353bfe244c0e50db25aac53ca8ad44b7255e7a4dd46a1e0d93f35"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/prepare-scenarios.cjs",
@@ -704,7 +734,7 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/qualify-guard.cjs",
-      "sha256": "f278b246a22b402304f840b3c79f1d1050c22890583d3c2ede0a9c3a82dbc461"
+      "sha256": "5bec365c87842b15b3739b46455ea4913d98ea38d62b34afa6c3a6e674b15f3f"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/qualify-mapping.cjs",
@@ -712,7 +742,11 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/qualify-reduced-plan.cjs",
-      "sha256": "9b440c4a44dc229fb7638c0948490d54fa77f8650166e9e22d500bf28de24f4f"
+      "sha256": "4773044caaab4687c130bd3461d6513bbb0681f5bd4e8e6885677cfebcd3ff46"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/qualify-smoke.cjs",
+      "sha256": "9dac922bbba4006f54d9f710e4d150723d4263dcf5285a025a11c040396ebf19"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/qualify-syntax.cjs",
@@ -724,15 +758,15 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/token-launch.py",
-      "sha256": "2804beb313127f927953802860260a1a95c98c60fcbfd53a4bd6af1156d416ca"
+      "sha256": "1221b51350e6d285c027f903da42bae902b1aee8ebcf6777d5b3231eefe3b46b"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/vertex-allowlist-guard.cjs",
-      "sha256": "22bed7de98206197108592f1f597ca5fb68312f8d288d97c1ab21b489ad68020"
+      "sha256": "fe3a13238728a497e5e0c848c7bf43099c92dacc0f7bf1d897c50cc2f2e959cc"
     },
     {
       "path": "src/lib/pokemon/shopping/model/collector.cjs",
-      "sha256": "1ff978fd113b933ab6c199db32ca10fdb1391ddc172e882d73ad559b1ce34d81"
+      "sha256": "14b2d14cdb34139f0ab1d92eecb61235fc7f3b1a71bd277e2520947414615f17"
     },
     {
       "path": "src/lib/pokemon/shopping/model/compatibility.cjs",
@@ -744,7 +778,7 @@
     },
     {
       "path": "src/lib/pokemon/shopping/model/declarations.cjs",
-      "sha256": "a3e14cb9f5694f853f52f462831f37bdce446ffff4ce909e00cc979a2b54db54"
+      "sha256": "e9c9ad94190f503c99c951ba70410623ebf6d9d4e17293d1b0a89e4e9c0a2a94"
     },
     {
       "path": "src/lib/pokemon/shopping/model/privacy.cjs",
@@ -756,7 +790,7 @@
     },
     {
       "path": "src/lib/pokemon/shopping/model/turn.cjs",
-      "sha256": "09f729eea9522dde3a0cde41d2954bd26193b87ecded689d13546bffa48cefa7"
+      "sha256": "4e7bfe76a44630bf092f3f2a4545f7bd2ff1d6a7604b78f23778874c5bb592d6"
     },
     {
       "path": "src/lib/pokemon/shopping/model/vertex-request.cjs",
@@ -768,7 +802,7 @@
     },
     {
       "path": "tests/fixtures/shopping-model-eval/corpus-plan.json",
-      "sha256": "ac520416288213612c2c8f60baac163f216f78013b1402fa28caf46646c987be"
+      "sha256": "91f33313f0741fd9dc1d20dbad625d60529b19d7d81c7889a8bb227e8c4f1fec"
     },
     {
       "path": "tests/fixtures/shopping/frozen-manifest.json",
@@ -776,15 +810,27 @@
     },
     {
       "path": "tests/shopping-model-eval.test.cjs",
-      "sha256": "2aefa2c2d04a0782333b937c60cafe6418ff11ecdbf8f9d8fbc106021ed218d5"
+      "sha256": "9e8dda43814d1c06529090cefb39ab8d7c66371a9126598ac85dde0fcc852e7f"
     },
     {
       "path": "tests/shopping/model/collector.test.cjs",
-      "sha256": "e60369de7f2fcb350b0085b9fcc32c2cbd11b01cb3a0bef91927062d1177699c"
+      "sha256": "1fd17bbc88ae717887c5e6a0bcd397c5c4fb8cce853fd50f09e2961e8a671421"
     },
     {
       "path": "tests/shopping/model/compatibility.test.cjs",
       "sha256": "b6114b601af1533fe2909a886d5caef9ce7ae10aa68e34042b12bb18979fcf1f"
+    },
+    {
+      "path": "tests/shopping/model/guard-child.cjs",
+      "sha256": "4bac671728e7bbf73aef753e0db0a917edfe028466279e23976c13df92a008e3"
+    },
+    {
+      "path": "tests/shopping/model/guard.test.cjs",
+      "sha256": "c85b6c06bbcd139ef8632710d2db59fa4cc69f1a2da32753902ee002100cbb14"
+    },
+    {
+      "path": "tests/shopping/model/harness-fix.test.cjs",
+      "sha256": "cfdaee77d52d9b3be079cb7e2fb8e8e1fa9b0fb0d5f62b376ce9a3a7babe9e94"
     },
     {
       "path": "tests/shopping/model/reduced.test.cjs",
@@ -804,8 +850,8 @@
     },
     {
       "path": "tests/shopping/model/transport.test.cjs",
-      "sha256": "f35302655ce897bbb3e59a1c549aabdeb967093d0ea4f26a9d64618d089c3a9d"
+      "sha256": "849077b3ab4b95ae553b1f47438440d942ca4cdfb9852bbdd089c4be7e143bae"
     }
   ],
-  "review_required": "Stop after3a commit; Claude reviews exact freeze and code. No3b in this stage."
+  "review_required": "Stop after the harness-fix commit; Claude reviews the exact freeze and code. The smoke and reduced runs each need their own go naming this freeze."
 }

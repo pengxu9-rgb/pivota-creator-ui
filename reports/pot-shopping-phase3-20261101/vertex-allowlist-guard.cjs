@@ -15,6 +15,9 @@ const original={Socket:net.Socket,connect:net.Socket.prototype.connect,tls:tls.c
 const events=[],activeRequests=new Set(),activeHandles=new Set();let stopped=false,stopReason=null,sequence=0;
 function record(kind,requestId,fields={}){events.push({sequence:++sequence,...(requestId?{request_id:requestId}:{}),kind,...fields,time:new Date().toISOString()});}
 const coded=code=>Object.assign(new Error(code),{code});
+const safeCode=error=>typeof error?.code==='string'?error.code.slice(0,64):null;
+// A handle can report more than one error, for example after an abort. Act on the first; record the rest.
+function onErrors(handle,requestId,first){let seen=false;handle.on('error',error=>{if(seen){record('late_handle_error',requestId,{code:safeCode(error)});return;}seen=true;first(error);});}
 function abortAll(reason='guard_stopped'){
   if(!stopped){stopped=true;stopReason=reason;record('guard_stopped',null,{reason});}
   for(const request of activeRequests)request.destroy(coded(reason));
@@ -69,7 +72,7 @@ async function fetchImpl(url,options){
           if(transport.authorized!==true){record('tls_verification_failed',requestId,{issuer_cn:issuer(transport)});abortAll('tls_verification_failed');complete(coded('tls_verification_failed'));return;}
           record('tls_connected',requestId,{authorized:true,issuer_cn:issuer(transport),servername:HOST});complete(null,transport);
         });
-        transport.once('error',error=>{
+        onErrors(transport,requestId,error=>{
           if(cancelled||stopped){complete(coded(stopReason||'ABORT_ERR'));return;}
           if(/CERT|CERTIFICATE|UNABLE_TO_VERIFY|SELF_SIGNED/.test(String(error?.code||''))){record('tls_verification_failed',requestId,{issuer_cn:issuer(transport)});abortAll('tls_verification_failed');complete(coded('tls_verification_failed'));}
           else{record('tls_transport_error',requestId);complete(coded('live_transport_error'));}
@@ -88,7 +91,7 @@ async function fetchImpl(url,options){
       };
       const timer=setTimeout(failTunnel,5000);
       socket.on('data',readHeader);
-      socket.once('error',()=>{if(tunnel){if(!cancelled&&!stopped)record('tunnel_socket_error',requestId);complete(coded(stopReason||'live_transport_error'));}else failTunnel();});
+      onErrors(socket,requestId,()=>{if(tunnel){if(!cancelled&&!stopped)record('tunnel_socket_error',requestId);complete(coded(stopReason||'live_transport_error'));}else failTunnel();});
       socket.once('connect',()=>{if(cancelled||stopped){socket.destroy(coded(stopReason||'ABORT_ERR'));return;}socket.write(CONNECT);});
       record('proxy_connect',requestId,{host:PROXY_HOST,port:PROXY_PORT,connect_target:HOST+':443'});
       original.connect.call(socket,{host:PROXY_HOST,port:PROXY_PORT,family:4,autoSelectFamily:false});
@@ -98,17 +101,23 @@ async function fetchImpl(url,options){
     try{
       request=original.request({hostname:HOST,port:443,path:new URL(endpoint).pathname,method:'POST',
         headers:{authorization:options.headers.authorization,'content-type':'application/json'},agent},response=>{
-        record('http_status',requestId,{status:response.statusCode});
+        record('http_status',requestId,{status:response.statusCode});onErrors(response,requestId,()=>record('response_stream_error',requestId));
         const result=new Response(Readable.toWeb(response),{status:response.statusCode,headers:{'content-type':String(response.headers['content-type']||''),
           ...(response.headers['content-length']?{'content-length':String(response.headers['content-length'])}:{}),}});
         Object.defineProperty(result,'url',{value:endpoint});response.once('end',cleanup);response.once('close',cleanup);resolve(result);
       });
-      activeRequests.add(request);request.once('error',()=>{cleanup();reject(coded(stopReason||'live_transport_error'));});
+      activeRequests.add(request);onErrors(request,requestId,()=>{cleanup();reject(coded(stopReason||'live_transport_error'));});
       options.signal?.addEventListener('abort',abort,{once:true});if(options.signal?.aborted)abort();else request.end(options.body);
     }catch{cleanup();agent.destroy();destroyOwned('live_transport_error');reject(coded(stopReason||'live_transport_error'));}
   });
 }
-function fatal(){abortAll('live_runtime_failure');process.stderr.write('live_runtime_failure\n');process.exitCode=1;}
+// Sanitized: never headers, tokens, bodies or query strings; stack frames as file:line only.
+function sanitize(error){
+  const message=String(error?.message??error??'').replace(/Bearer\s+\S+/gi,'Bearer [redacted]').replace(/ya29\.[\w.~+\/-]+/g,'[redacted]').replace(/(https?:\/\/[^\s?#]*)\?\S*/g,'$1?[redacted]').slice(0,200);
+  const frames=String(error?.stack||'').split('\n').slice(1,9).map(line=>/([^\/\\\s()]+\.c?js):(\d+)/.exec(line)).filter(Boolean).map(m=>m[1]+':'+m[2]);
+  return {name:typeof error?.name==='string'?error.name.slice(0,64):typeof error,code:safeCode(error),message,frames};
+}
+function fatal(error){const failure=sanitize(error);record('runtime_failure',null,failure);abortAll('live_runtime_failure');process.stderr.write(JSON.stringify({live_runtime_failure:failure})+'\n');process.exitCode=1;}
 process.on('uncaughtException',fatal);process.on('unhandledRejection',fatal);
 process.on('exit',()=>fs.writeSync(2,JSON.stringify({live_allowlist_guard_audit:auditSnapshot()})+'\n'));
 module.exports=Object.freeze({endpoint,fetchImpl,auditSnapshot,abortAll});

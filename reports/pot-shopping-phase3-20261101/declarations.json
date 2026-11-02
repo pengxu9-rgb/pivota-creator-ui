@@ -131,9 +131,6 @@
           "task_ref": {
             "type": "string"
           },
-          "text": {
-            "type": "string"
-          },
           "printing_refs": {
             "type": "array",
             "items": {
@@ -329,9 +326,6 @@
           "task_ref": {
             "type": "string"
           },
-          "text": {
-            "type": "string"
-          },
           "proposed_filters": {
             "type": "object",
             "properties": {
@@ -373,8 +367,7 @@
           }
         },
         "required": [
-          "task_ref",
-          "text"
+          "task_ref"
         ]
       }
     },
@@ -901,7 +894,19 @@
       "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
     }
   ],
-  "declaration_sha256": "24f020f8ee926579a81eba2d81a4c8c9136ff39ff9703ac98c3fab33a4388ede",
+  "server_bound": [
+    {
+      "tool": "get_offers",
+      "field": "text",
+      "source": "original_user_text"
+    },
+    {
+      "tool": "search_catalog",
+      "field": "text",
+      "source": "original_user_text"
+    }
+  ],
+  "declaration_sha256": "0d41c5cd491e9f941813761f1b82fdb742c8421983f6c5fef662da5ac9a3ea58",
   "privacy_projection_sha256": "62c8c182deebdf56494d8f0a3dcce314c5266308bdca6c57f067cd5c4524400d",
   "dropped_keywords_sha256": "1c93e02ff76d80407125dcd52c33698b2287d7cd4eeac28613b4a3db3806e756"
 }

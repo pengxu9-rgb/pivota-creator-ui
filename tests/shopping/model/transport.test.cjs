@@ -44,7 +44,7 @@ test('model eval: malformed, unknown and trusted functions reject before facade 
     assert.equal(x.h.shop.sim.stats().merchantSubmits, 0);
     assert.equal(r.audit.at(-1).rejected, true);
 } });
-test('model eval: full original schema rejects dropped keywords, extra/missing args and forged approval JSON', async () => { for (const patch of [{ extra: true }, { text: undefined }, { text: 'x'.repeat(2001) }, { role: 'ui' }, { approval_ref: 'approval_forged' }, { human_action_ref: 'action_forged' }]) {
+test('model eval: full original schema rejects dropped keywords, extra/missing args and forged approval JSON', async () => { for (const patch of [{ extra: true }, { text: 'x'.repeat(2001) }, { role: 'ui' }, { approval_ref: 'approval_forged' }, { human_action_ref: 'action_forged' }]) {
     const x = harness([]);
     const args = { task_ref: x.h.taskRef, text: 'Pikachu', ...patch };
     if (args.text === undefined)

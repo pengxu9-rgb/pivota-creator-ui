@@ -85,5 +85,15 @@
     "X01-X12",
     "faults"
   ],
-  "model_arm_concurrency": 2
+  "model_arm_concurrency": 2,
+  "smoke": {
+    "arms": [
+      "L"
+    ],
+    "journey_repetitions": 2,
+    "adversarial": false,
+    "faults": false,
+    "compatibility": false,
+    "scored": false
+  }
 }
