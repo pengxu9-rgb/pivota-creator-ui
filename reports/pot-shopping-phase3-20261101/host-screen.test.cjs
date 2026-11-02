@@ -84,3 +84,10 @@ test('model eval host: after a selection the model sees the accepted requirement
             assert.equal(raw.includes(secret), false, id + ' leaks ' + secret);
     }
 });
+test('model eval host: compatibility contexts run only on a compatibility checkpoint, whatever the caller passes', async () => {
+    const { runCompatibility } = require('./orchestrate.cjs');
+    const stub = plan => ({ state: () => ({ plan, outcomes: [], arms: { L: { preflight: false, stop_reason: null } }, stop_reason: null }) });
+    await assert.rejects(runCompatibility(stub('reduced'), 'L', { plan: 'compatibility' }), /compatibility_not_in_reduced_plan/);
+    await assert.rejects(runCompatibility(stub(undefined), 'L', { plan: 'compatibility' }), /compatibility_not_in_reduced_plan/);
+    await assert.rejects(runCompatibility(stub('compatibility'), 'L'), /compatibility_not_in_reduced_plan/);
+});

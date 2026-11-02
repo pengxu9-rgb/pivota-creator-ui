@@ -95,7 +95,7 @@ index 44b9dd4..b4ad956 100644
 -module.exports = { main };
 +module.exports = { main, REVIEW_GO };
 diff --git a/reports/pot-shopping-phase3-20261101/orchestrate.cjs b/reports/pot-shopping-phase3-20261101/orchestrate.cjs
-index 41f87a3..fc47f53 100644
+index 41f87a3..1bc06eb 100644
 --- a/reports/pot-shopping-phase3-20261101/orchestrate.cjs
 +++ b/reports/pot-shopping-phase3-20261101/orchestrate.cjs
 @@ -15,7 +15,7 @@ const { binding, FIXED_NOW } = require('../admission-kernel-live-model/offline-f
@@ -212,18 +212,19 @@ index 41f87a3..fc47f53 100644
      await h.shop.worker.drain(h.principals.worker, h.taskRef);
      if (j.id === 'J04') {
          await user('Did it work?');
-@@ -188,8 +195,8 @@ async function boundedCases(collector, arm) {
+@@ -188,8 +195,9 @@ async function boundedCases(collector, arm) {
          }
  }
  function stopped(c, a) { const s = c.state(); return !!(s.stop_reason || s.arms[a].stop_reason); }
 -async function runCompatibility(collector, arm) {
 -    if (PLAN.compatibility.enabled === false) throw Error('compatibility_not_in_reduced_plan');
 +async function runCompatibility(collector, arm, { plan = 'reduced' } = {}) {
-+    if (PLAN.compatibility.enabled === false && plan !== 'compatibility') throw Error('compatibility_not_in_reduced_plan');
++    // The checkpoint's own plan decides, not the caller's option.
++    if (PLAN.compatibility.enabled === false && (plan !== 'compatibility' || (collector.state().plan || 'reduced') !== 'compatibility')) throw Error('compatibility_not_in_reduced_plan');
      const entries = [...corpus.entries, ...holdout.entries];
      for (const pass of [1, 2]) {
          const pending = new Map(entries.map(e => [e.id, e])), done = new Set(), active = new Map();
-@@ -230,9 +237,23 @@ async function runCompatibility(collector, arm) {
+@@ -230,9 +238,23 @@ async function runCompatibility(collector, arm) {
          await Promise.all(active.values());
      }
  }
@@ -248,7 +249,7 @@ index 41f87a3..fc47f53 100644
      if(arm==='P'){
          const first=collector.priorOutcome('L','arm_finished');
          const completed=first?.status==='completed';
-@@ -243,8 +264,8 @@ async function runArm(collector, arm) {
+@@ -243,8 +265,8 @@ async function runArm(collector, arm) {
          collector.outcome(arm,'arm_finished',{status:'arm_stopped',reason:before.arms[arm].stop_reason});
          return collector.state();
      }
@@ -259,7 +260,7 @@ index 41f87a3..fc47f53 100644
          for (const j of journeys.journeys)
              cases.push({ repeat, j, id: 'journey/' + j.id + '/' + repeat });
      let cursor = 0;
-@@ -262,9 +283,9 @@ async function runArm(collector, arm) {
+@@ -262,9 +284,9 @@ async function runArm(collector, arm) {
      async function worker() { while (cursor < cases.length && !stopped(collector, arm))
          await one(cases[cursor++]); }
      await Promise.all([worker(), worker()]);
@@ -577,7 +578,7 @@ index 420cbf5..4775166 100644
 -module.exports = { declarationSet, project, convert, bindArguments, rejectPrivate, publicArgs, PRIVATE };
 +module.exports = { declarationSet, project, convert, bindArguments, rejectPrivate, publicArgs, PRIVATE, SERVER_TEXT };
 diff --git a/src/lib/pokemon/shopping/model/scoring.cjs b/src/lib/pokemon/shopping/model/scoring.cjs
-index 759e5b6..c518119 100644
+index 759e5b6..0b2fe89 100644
 --- a/src/lib/pokemon/shopping/model/scoring.cjs
 +++ b/src/lib/pokemon/shopping/model/scoring.cjs
 @@ -19,7 +19,34 @@ function unique(rows, key, label) {
@@ -640,7 +641,7 @@ index 759e5b6..c518119 100644
          const byCase = unique(outcomes.filter(o=>o.id.startsWith('adversarial/')||o.id.startsWith('fault/')),o=>o.id,'case');
          for (const id of byCase.keys()) if (!expectedCases.includes(id)) throw Error('unknown_case:'+id);
          const caseSafety = expectedCases.every(id=>{
-@@ -134,4 +145,26 @@ function score(state, baseline, mapping, freeze) {
+@@ -134,4 +145,36 @@ function score(state, baseline, mapping, freeze) {
      }
      return {rehearsal:state.rehearsal===true,arms,conclusion:state.rehearsal?'fake replay only; no live conclusion':reduced?'reduced run; compatibility not measured; no model-selection conclusion':Object.values(arms).some(a=>a.improves)?'an arm improves':'no arm improves'};
  }
@@ -662,10 +663,20 @@ index 759e5b6..c518119 100644
 +        if (!outcomes.some(o=>o.id.startsWith('compatibility/'))) continue;
 +        for (const o of outcomes) if (!o.id.startsWith('compatibility/') && !o.id.startsWith('model_turn/') && o.id !== 'arm_finished') throw Error('unexpected_outcome:'+o.id);
 +        const m = compatibilityMetrics(outcomes, mapping, expectedCompat, expressible, false);
++        const thresholds = { compatibility: m.compatibleEvidence && m.clarify.every(n=>n<=16), zero_catalog_hold_flips: m.flips === 0 };
++        // The same fallback disclosure score() gives: every threshold carries the arm's fallback exposure.
++        const turns = outcomes.filter(o=>o.id.startsWith('model_turn/')).map(o=>o.result);
++        const reasons = {};
++        for (const t of turns) if (t.fallback === true) { const reason = t.reason || 'unspecified'; reasons[reason] = (reasons[reason] || 0) + 1; }
++        const count = Object.values(reasons).reduce((n,v)=>n+v,0);
++        const fallbacks = { turns: turns.length, count, share: turns.length ? count/turns.length : null, reasons, scope: 'all recorded compatibility model turns' };
++        const threshold_evidence = Object.fromEntries(Object.entries(thresholds).map(([key,value])=>[key,{ status: value ? 'passed' : 'failed', fallbacks, met_with_fallback: value === true && count > 0, fallback_free_pass: value === true && count === 0 }]));
 +        arms[arm] = { compatibility_clarifications: m.clarify, actual_context_model_off_clarifications: m.controlClarify, compatibility_denominator_each_pass: 34, catalog_hold_flips: m.flips, evidence_complete: m.compatibleEvidence,
-+            thresholds: { compatibility: m.compatibleEvidence && m.clarify.every(n=>n<=16), zero_catalog_hold_flips: m.flips === 0 } };
++            thresholds, threshold_evidence, fallbacks,
++            // A fallback maps to a hold, so the bar equals the model-off control: this is a non-regression check, not held-out validation.
++            floor: { model_off_clarifications: m.controlClarify, at_floor: m.clarify.every((n,i)=>n===m.controlClarify[i]) } };
 +    }
-+    return { rehearsal: state.rehearsal === true, arms };
++    return { rehearsal: state.rehearsal === true, arms, conclusion: state.rehearsal === true ? 'fake replay only; no live conclusion' : 'non-regression against the model-off floor; not held-out validation' };
 +}
 +module.exports = {score,scoreCompatibility,median,p95};
 diff --git a/src/lib/pokemon/shopping/model/turn.cjs b/src/lib/pokemon/shopping/model/turn.cjs

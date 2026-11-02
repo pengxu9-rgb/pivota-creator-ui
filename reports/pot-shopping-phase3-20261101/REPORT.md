@@ -1,10 +1,15 @@
-# Round 3: the held-out check and P's destination questions (post-hoc)
+# Round 3: the compatibility plan and P's destination questions (post-hoc)
 
-**The compatibility plan (held-out check):**
+**The compatibility plan (a non-regression check, not held-out validation):**
 - **What it measures:** the two thresholds the reduced plan never measured (compatibility ≤16/34 in each pass, and zero catalog-to-hold flips between passes), on the 389 pre-registered compatibility contexts.
-- **Why it counts as held-out:** those contexts were frozen in stage 3a and never used in any iteration.
+- **What it cannot show** (corrected after review):
+  - **The bar is the model-off floor.** A fallback maps to a hold, and any non-clarify answer is replaced by native routing, so 16/34 is exactly the model-off control. A model that always answers passes.
+  - **Only 8 expressible contexts can move the count**, and the check penalises only added holds. It cannot detect over-suppressed questions.
+  - **The set is not held out from L.** Its A–D rows ran live on Gemini 3.5 Flash-Lite in the admission-kernel attempts, with published per-row results.
+  - **The round-2 and round-3 screen and requirements fixes are not exercised:** compatibility turns start with an empty screen.
+  - **So a pass here means no regression against model-off, nothing more.** The unnecessary-question pass still needs genuinely held-out journeys before it is read as improvement.
 - **Run and budget:** L only, under its own frozen budget (2,400 calls, 12M input tokens, USD 5; P USD 0). It uses its own checkpoint and the go string `claude_3c_compat_go`.
-- **Scoring:** the frozen scorer's compatibility block moved, unchanged, into `compatibilityMetrics()`. `score()` calls it as before, and `scoreCompatibility()` reuses it with the same 16/34 boundary. A test checks both give identical results and fail at 17. `score()` refuses a compatibility checkpoint.
+- **Scoring:** the frozen scorer's compatibility block moved, unchanged, into `compatibilityMetrics()`. `score()` calls it as before (a 4,500-state differential fuzz by the reviewer found no difference), and `scoreCompatibility()` reuses it with the same 16/34 boundary. Like `score()`, it reports fallback count, share and reasons beside every threshold and flags passes with fallback exposure. It shows the model-off floor and labels rehearsals "fake replay only". `score()` refuses a compatibility checkpoint.
 - **Why P is excluded:** at P's timeout rate, its accounted cost on 778 contexts would exceed any budget approved so far.
 
 **P's destination questions: root cause.**
@@ -19,7 +24,24 @@
 - **Options rejected:** a lower `maxOutputTokens` cap was considered. Vertex does not document whether it bounds thinking, and lowering it would change a frozen setting mainly to change P's cost accounting.
 - **Decision needed:** whether to change the limit or the accounting is Peng's call.
 
-**Tests:** model 106, host 5. **Mutants:** 36, all killed. The 4 new ones remove the flag, skip the requirements view, set compatibility to 17, and let `score()` take a compatibility checkpoint.
+**Independent review of `ca9136d..ac29152`: one P1, two P2s, all addressed.**
+
+| Finding | Resolution |
+| --- | --- |
+| **P1:** `scoreCompatibility()` dropped the registered fallback disclosure. In the reviewer's fake run, 702 of 778 contexts fell back and the scorer still reported a clean pass. | Fallback count, share and reasons, `met_with_fallback`, the model-off floor and a rehearsal label added, as above. |
+| **P2:** the compatibility check cannot validate what round 3 claimed. | Report corrected above: it is a non-regression check only. |
+| **P2:** the launch gate did not bind about 24 runtime files that decide the compatibility results (`dynamic-context.cjs`, `offline-fixture.cjs`, the admission vocabulary and others). | The freeze now hashes all of them. `qualify-reduced-plan.cjs` also loads the harness, triggers a dynamic context, and fails if any loaded runtime file is unbound (56 files, all bound). |
+
+**P3s fixed:**
+- `runCompatibility` checks the checkpoint's own plan, not the caller's option.
+- Tests cover unreachable contexts, a single flip, the disclosure, and `ship_to_on_file` appearing only on records that carry a destination.
+- The freeze's review note names all three plans.
+
+**Accepted P3s:**
+- A stop records in-flight turns as holds. That counts against the model, so it is conservative.
+- The 2,400-call compatibility cap fails safe if the model chains tools.
+
+**Tests:** model 108, host 6. **Mutants:** 41, all killed. The 9 new ones: the flag removed, the requirements view skipped, compatibility at 17, `score()` taking a compatibility checkpoint, evidence dropped, flips tolerating one, fallbacks hidden, the flag on every record, the guard trusting its caller.
 
 ---
 

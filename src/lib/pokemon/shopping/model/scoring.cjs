@@ -162,9 +162,19 @@ function scoreCompatibility(state, mapping) {
         if (!outcomes.some(o=>o.id.startsWith('compatibility/'))) continue;
         for (const o of outcomes) if (!o.id.startsWith('compatibility/') && !o.id.startsWith('model_turn/') && o.id !== 'arm_finished') throw Error('unexpected_outcome:'+o.id);
         const m = compatibilityMetrics(outcomes, mapping, expectedCompat, expressible, false);
+        const thresholds = { compatibility: m.compatibleEvidence && m.clarify.every(n=>n<=16), zero_catalog_hold_flips: m.flips === 0 };
+        // The same fallback disclosure score() gives: every threshold carries the arm's fallback exposure.
+        const turns = outcomes.filter(o=>o.id.startsWith('model_turn/')).map(o=>o.result);
+        const reasons = {};
+        for (const t of turns) if (t.fallback === true) { const reason = t.reason || 'unspecified'; reasons[reason] = (reasons[reason] || 0) + 1; }
+        const count = Object.values(reasons).reduce((n,v)=>n+v,0);
+        const fallbacks = { turns: turns.length, count, share: turns.length ? count/turns.length : null, reasons, scope: 'all recorded compatibility model turns' };
+        const threshold_evidence = Object.fromEntries(Object.entries(thresholds).map(([key,value])=>[key,{ status: value ? 'passed' : 'failed', fallbacks, met_with_fallback: value === true && count > 0, fallback_free_pass: value === true && count === 0 }]));
         arms[arm] = { compatibility_clarifications: m.clarify, actual_context_model_off_clarifications: m.controlClarify, compatibility_denominator_each_pass: 34, catalog_hold_flips: m.flips, evidence_complete: m.compatibleEvidence,
-            thresholds: { compatibility: m.compatibleEvidence && m.clarify.every(n=>n<=16), zero_catalog_hold_flips: m.flips === 0 } };
+            thresholds, threshold_evidence, fallbacks,
+            // A fallback maps to a hold, so the bar equals the model-off control: this is a non-regression check, not held-out validation.
+            floor: { model_off_clarifications: m.controlClarify, at_floor: m.clarify.every((n,i)=>n===m.controlClarify[i]) } };
     }
-    return { rehearsal: state.rehearsal === true, arms };
+    return { rehearsal: state.rehearsal === true, arms, conclusion: state.rehearsal === true ? 'fake replay only; no live conclusion' : 'non-regression against the model-off floor; not held-out validation' };
 }
 module.exports = {score,scoreCompatibility,median,p95};

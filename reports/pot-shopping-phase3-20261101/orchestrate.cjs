@@ -196,7 +196,8 @@ async function boundedCases(collector, arm) {
 }
 function stopped(c, a) { const s = c.state(); return !!(s.stop_reason || s.arms[a].stop_reason); }
 async function runCompatibility(collector, arm, { plan = 'reduced' } = {}) {
-    if (PLAN.compatibility.enabled === false && plan !== 'compatibility') throw Error('compatibility_not_in_reduced_plan');
+    // The checkpoint's own plan decides, not the caller's option.
+    if (PLAN.compatibility.enabled === false && (plan !== 'compatibility' || (collector.state().plan || 'reduced') !== 'compatibility')) throw Error('compatibility_not_in_reduced_plan');
     const entries = [...corpus.entries, ...holdout.entries];
     for (const pass of [1, 2]) {
         const pending = new Map(entries.map(e => [e.id, e])), done = new Set(), active = new Map();

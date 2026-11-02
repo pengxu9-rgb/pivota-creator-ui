@@ -692,12 +692,20 @@
       "sha256": "c1c9912e16c7a491387f8d3e24c59493bfce5fd4f6437a72eaecaa9f26dafd73"
     },
     {
+      "path": "reports/admission-kernel-live-model/dynamic-context.cjs",
+      "sha256": "b9b6f5f51036b7a7c330d93be32eb559a04f4cab82f4046269ef3fcd71c965ef"
+    },
+    {
       "path": "reports/admission-kernel-live-model/holdout-e.json",
       "sha256": "dc63d42daf62ddd6ca0a643eb0ddad42a9dcf5fa591f9708b84ac91234bd4997"
     },
     {
       "path": "reports/admission-kernel-live-model/live-allowlist-guard.cjs",
       "sha256": "623aec6125d41f53416b16fdbf3be2d2715a4d34a70b8130dc45c24f5d05d202"
+    },
+    {
+      "path": "reports/admission-kernel-live-model/offline-fixture.cjs",
+      "sha256": "8b9dbd793894ab49cb066bd37a9bbd21bb8aa10897bdf1da40d1b569a7d0e715"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/MAPPING.md",
@@ -725,11 +733,11 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/harness-fix-runtime.patch",
-      "sha256": "dc315a59beb40f102acc276e4f5bd5f558ac7cc9721b074e95ab61785dbfd6f1"
+      "sha256": "a8b1280f10c99a503e1d7fe64348e5938c3ada59f768811cbf900530e2a3914d"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/host-screen.test.cjs",
-      "sha256": "9ce44fa84937a2dc90a8b7f1c40972a854d31ba523c3d95ad19ba10145174d28"
+      "sha256": "825f712d20200036962d30d684bdc8f668a42566a6da6df8639eaf8385d1531a"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/launch-go.test.cjs",
@@ -741,15 +749,15 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/mutations.cjs",
-      "sha256": "98c022ae2a4051202c10b3211117d0d86a32b225213f1fb2d04c546154f5b651"
+      "sha256": "28c9212e1714bcf23e7e9efd267e32111cd26bb0c737e02ecaab79e5bab293f7"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/orchestrate.cjs",
-      "sha256": "44c9c1b37328548533e4e3f00efdd2f0658d97d24ef98fdae6737a38baf82a99"
+      "sha256": "df32f25c73b2b496562fedfd56f5b6d7b8fa2e8766f9a63c3bb1c30bd24e11ff"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/prepare-freeze.cjs",
-      "sha256": "95417ba4e704eaaf5c0ca8a384c88d7e335542df06a65a244d27f4b3c6f7a1bf"
+      "sha256": "2187bd575166dc5f25bef8312739857553f29e6b581ff75246f7284b0d3142f7"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/prepare-scenarios.cjs",
@@ -785,7 +793,7 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/qualify-reduced-plan.cjs",
-      "sha256": "3a9906917fe29495211ecba459dad51d0b898b859ced2e78ddbc05ddc41fff61"
+      "sha256": "558ff82ef5e0aca227dbd93fe71958e6a79cc8fc0f52125a1aa283db618ce130"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/qualify-smoke.cjs",
@@ -812,12 +820,64 @@
       "sha256": "0002b573bb37536316218890a56575e7eb50411a8de1b0b6bdaba3f9719eb551"
     },
     {
+      "path": "src/lib/pokemon/admissionVocabulary.json",
+      "sha256": "6d763083ca01413f7d071d2e65a34145da49543338df6b2c12f1d682ac20a516"
+    },
+    {
+      "path": "src/lib/pokemon/bnsChatState.cjs",
+      "sha256": "6f2212785a850aa90090d64f7e9a5e630d6bc54a7a7f4dcad5bbf4fc1450fe86"
+    },
+    {
+      "path": "src/lib/pokemon/bnsPreview.cjs",
+      "sha256": "fccd9eb7317ea181cfe3e0231b017d7b3a1f69805029df03b15c9effc0af6fe4"
+    },
+    {
       "path": "src/lib/pokemon/catalogAdapter.cjs",
       "sha256": "9b7acc3a75cffce2bcb7dad11356a0f6920b34c1591a271a49403bf61a85bf52"
     },
     {
+      "path": "src/lib/pokemon/catalogMedia.cjs",
+      "sha256": "ee4785b026311b08fc23a23dc1ddeba5de6b5f104b0991a67869c393175eb79b"
+    },
+    {
+      "path": "src/lib/pokemon/chatReleaseHints.json",
+      "sha256": "fc4466575faf940874230ee84829f4e338cfbf09c522031628985b25b5958b66"
+    },
+    {
       "path": "src/lib/pokemon/chatTextIntent.cjs",
       "sha256": "3880370526ba45ae1fb5822b4cea21f2032fe1a006c27363986ac60030f1d813"
+    },
+    {
+      "path": "src/lib/pokemon/collectorError.cjs",
+      "sha256": "2010f2f81bc5b6f84338e8f08a4db1813acf1b0c786a0d53c25962d5f4469d48"
+    },
+    {
+      "path": "src/lib/pokemon/commerceContract.cjs",
+      "sha256": "a703c883797cf8f22c16140718cb96d1fbfb2f6a3e1dbaec5b2c5aed0eb1d77c"
+    },
+    {
+      "path": "src/lib/pokemon/commerceHistory.cjs",
+      "sha256": "a1a66f810a902ec2e9287242da484884b1d5bbc97552aa24022afe0c74d69d21"
+    },
+    {
+      "path": "src/lib/pokemon/comparisonRecords.cjs",
+      "sha256": "199f91421312c46e461609b803f831653e874f43c22bf11873234156077c3d6b"
+    },
+    {
+      "path": "src/lib/pokemon/conversations.cjs",
+      "sha256": "0deb24378464a317d3f52464c330baa131471727c1bd1fb847c6ad3e9a1de3ff"
+    },
+    {
+      "path": "src/lib/pokemon/geminiVertex.cjs",
+      "sha256": "3eac62cec7ac778dd81a39208cb0faf5f330761e4ea44f7fcb1668f0d5be6228"
+    },
+    {
+      "path": "src/lib/pokemon/listingEvidence.cjs",
+      "sha256": "76a5cc2119bd1c24745d2e46d30ff50e0f96ce12ce0be26948e4f52b8094dfa1"
+    },
+    {
+      "path": "src/lib/pokemon/mediaWarnings.cjs",
+      "sha256": "0d9675764290a22623891344d9532384d8a05a22a0b7d7a95a5ea3c7222aecdc"
     },
     {
       "path": "src/lib/pokemon/modelRuntime.cjs",
@@ -826,6 +886,22 @@
     {
       "path": "src/lib/pokemon/modelTurn.cjs",
       "sha256": "432b0a6b5060eb97caf318d399fd9acb7c4ca8960099e5ef3581b73765378b63"
+    },
+    {
+      "path": "src/lib/pokemon/offerEvidence.cjs",
+      "sha256": "8e3391ebd121f5bc827cb5d2fb9b12b98d958ef0edaa8bd493da993125458429"
+    },
+    {
+      "path": "src/lib/pokemon/purchaseLink.cjs",
+      "sha256": "c0e89c6aca383d0cd2fce60dc96dc3e99fc947cab4c92dbd7e1b6d506b88e57b"
+    },
+    {
+      "path": "src/lib/pokemon/requestBudgets.cjs",
+      "sha256": "11298beff069361f1a1a53eef5d6a382b563ad31473f8c499ab14d20265dd3a8"
+    },
+    {
+      "path": "src/lib/pokemon/sellerEvidence.cjs",
+      "sha256": "100922050e1046e1c38b82b68d4604ba865f28292ef409fc51e3bda2180e2b15"
     },
     {
       "path": "src/lib/pokemon/shopping/contracts/approve_purchase.schema.json",
@@ -945,7 +1021,7 @@
     },
     {
       "path": "src/lib/pokemon/shopping/model/scoring.cjs",
-      "sha256": "39403af95ee4e272a27df619c719450b12fe52aa756c5bc074c76366137f773a"
+      "sha256": "fb91e3a73a06285db0e07edf14a483eb2eca5a840dcdd57b0eb52fde2d4d0003"
     },
     {
       "path": "src/lib/pokemon/shopping/model/turn.cjs",
@@ -974,6 +1050,26 @@
     {
       "path": "src/lib/pokemon/shopping/worker.cjs",
       "sha256": "e0e535d05fa233774c432dcaf3fc6abb9a124b8ded342432c3779bca561b808c"
+    },
+    {
+      "path": "src/lib/pokemon/sourceFamilyAdvisory.cjs",
+      "sha256": "26b8ac8a6bb1f01c3a27ef3c60e10332ac9c717a7b7a58608a0b6121d74afdc0"
+    },
+    {
+      "path": "src/lib/pokemon/sourceReadiness.cjs",
+      "sha256": "d77468effa377889d3952aa36f36e23c5d5d0ceadc0ce86bc2aa0ffbbe80f0ba"
+    },
+    {
+      "path": "src/lib/pokemon/vendor/collectorClient.cjs",
+      "sha256": "1db49f36b0b017a617b1682135fadeaa9b88a356c74ac575cf1a8437b4df08ae"
+    },
+    {
+      "path": "src/lib/pokemon/vendor/privateCollector.cjs",
+      "sha256": "624709b1ce667d30550778baa2f45dc6db1e58d07e63cd9a25dfa85c31dbe5a0"
+    },
+    {
+      "path": "src/lib/pokemon/workspaceFeedback.cjs",
+      "sha256": "4f1f5742b4397aa2a646f34904f3227ca124babe864cd16cfbd6b6ebc55ca911"
     },
     {
       "path": "tests/fixtures/shopping-model-eval/compatibility-mapping.json",
@@ -1029,7 +1125,7 @@
     },
     {
       "path": "tests/shopping/model/harness-fix.test.cjs",
-      "sha256": "ca9d968d037c334455cd9266b43701ece1f1ef2b10082822c14bc7771b60832c"
+      "sha256": "82309c6b6f0dd14caf9adc6efc88165dbd2f712d87ffea230a6675ffdba6f77e"
     },
     {
       "path": "tests/shopping/model/reduced.test.cjs",
@@ -1052,5 +1148,5 @@
       "sha256": "849077b3ab4b95ae553b1f47438440d942ca4cdfb9852bbdd089c4be7e143bae"
     }
   ],
-  "review_required": "Stop after the harness-fix commit; Claude reviews the exact freeze and code. The smoke and reduced runs each need their own go naming this freeze."
+  "review_required": "Stop after the harness-fix commit; Claude reviews the exact freeze and code. The smoke, reduced and compatibility runs each need their own go naming this freeze."
 }
