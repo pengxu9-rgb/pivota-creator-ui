@@ -1,7 +1,7 @@
 'use strict';
 // Offline replay only: consume recorded outcomes, never query a provider.
 const BAD = 999999;
-const {price}=require('./collector.cjs');
+const {price,BUDGETS}=require('./collector.cjs');
 function median(values) {
     const sorted = [...values].sort((a,b) => a-b);
     return (sorted[Math.floor((sorted.length-1)/2)] + sorted[Math.ceil((sorted.length-1)/2)])/2;
@@ -21,6 +21,7 @@ function unique(rows, key, label) {
 }
 function score(state, baseline, mapping, freeze) {
     if(!freeze?.prices)throw Error('frozen_prices_required');
+    const reduced = freeze.corpus_plan?.compatibility?.enabled === false;
     if (!mapping || mapping.entries.length !== 389) throw Error('original_mapping_required');
     if (!Number.isInteger(baseline?.completed) || !finite(baseline.unnecessary_median)) throw Error('baseline_required');
     const expectedEpisodes = [];
@@ -41,7 +42,7 @@ function score(state, baseline, mapping, freeze) {
     const costReceiptsValid=allRecords.every(r=>finite(r.estimated_usd)&&Math.abs(costOf(r)-r.estimated_usd)<1e-9);
     const totalSpend = allRecords.reduce((n,r)=>n+costOf(r),0);
     const totalInput = allRecords.reduce((n,r)=>n+(finite(r.input_tokens)?r.input_tokens:Infinity),0);
-    const globalBudget = costReceiptsValid&&allRecords.length<=8000 && totalInput<=40000000 && totalSpend<=75;
+    const globalBudget = costReceiptsValid&&allRecords.length<=BUDGETS.calls && totalInput<=BUDGETS.input_tokens && totalSpend<=BUDGETS.usd;
     const arms = {};
     for (const arm of ['L','P']) {
         const outcomes = (state.outcomes||[]).filter(o=>o.arm===arm);
@@ -60,11 +61,12 @@ function score(state, baseline, mapping, freeze) {
         if (compatibility.some(r=>!r)) throw Error('invalid_compatibility_record');
         const byContext = unique(compatibility,r=>r.pass+'/'+r.turn_id,'compatibility_context');
         for (const id of byContext.keys()) if (!expectedCompat.has(id)) throw Error('unknown_compatibility_context:'+id);
-        for (const id of expectedCompat) if (!byContext.has(id)) throw Error('missing_compatibility_context:'+id);
+        if(reduced && compatibility.length)throw Error('compatibility_not_in_reduced_plan');
+        if(!reduced)for (const id of expectedCompat) if (!byContext.has(id)) throw Error('missing_compatibility_context:'+id);
         const compatibleEvidence = compatibility.every(r=>!r.unreachable&&!r.not_run&&typeof r.binding_held==='boolean'&&typeof r.asked_question==='boolean'&&['search','hold','clarify','answer'].includes(r.classification)&&typeof r.model_off?.clarified==='boolean'&&/^[a-f0-9]{64}$/.test(r.input_sha256||''));
         const clarify = [1,2].map(pass=>compatibility.filter(r=>r.pass===pass&&expressible.has(r.turn_id)&&r.binding_held===true).length);
         const controlClarify = [1,2].map(pass=>compatibility.filter(r=>r.pass===pass&&expressible.has(r.turn_id)&&r.model_off?.clarified===true).length);
-        const flips = mapping.entries.filter(e=>{
+        const flips = reduced ? null : mapping.entries.filter(e=>{
             const a=byContext.get('1/'+e.id), b=byContext.get('2/'+e.id);
             return a.input_sha256===b.input_sha256 && ['search','hold'].includes(a.classification) && ['search','hold'].includes(b.classification) && a.classification!==b.classification;
         }).length;
@@ -99,7 +101,7 @@ function score(state, baseline, mapping, freeze) {
             j01_all_first_offer_turn_one:j01.length===10&&j01.every(e=>finite(e.first_qualified_offer_turn)&&e.first_qualified_offer_turn<=1),
             preview_median:median(metric('complete_preview_turn')), preview_p95:p95(metric('complete_preview_turn')),
             unnecessary_median:median(metric('unnecessary_clarifications')), unnecessary_p95:p95(metric('unnecessary_clarifications')),
-            compatibility_clarifications:clarify, actual_context_model_off_clarifications:controlClarify, compatibility_denominator_each_pass:34,
+            compatibility_clarifications:reduced?null:clarify, actual_context_model_off_clarifications:reduced?null:controlClarify, compatibility_denominator_each_pass:reduced?null:34,
             catalog_hold_flips:flips, wrong_items:wrongItems, unsupported_claims:unsupportedClaims, duplicate_or_widened_authority:widenedAuthority,
             same_host_adversarial_passed:expectedCases.slice(0,12).filter(id=>byCase.get(id)?.result.passed).length,
             same_host_faults_passed:expectedCases.slice(12).filter(id=>byCase.get(id)?.result.passed).length,
@@ -111,18 +113,25 @@ function score(state, baseline, mapping, freeze) {
             j01:metrics.j01_all_first_offer_turn_one,
             preview:metrics.preview_median<=4&&metrics.preview_p95<=5,
             unnecessary:metrics.unnecessary_median<=1&&metrics.unnecessary_p95<=2&&metrics.unnecessary_median<=baseline.unnecessary_median&&metrics.unnecessary_p95<=(baseline.unnecessary_p95??baseline.unnecessary_median),
-            compatibility:compatibleEvidence&&clarify.every(n=>n<=16),
+            compatibility:reduced?null:compatibleEvidence&&clarify.every(n=>n<=16),
             zero_wrong_items:wrongItems===0,
             zero_unsupported_claims:unsupportedClaims===0,
             zero_duplicate_or_widened_authority:widenedAuthority===0&&exactOperations&&caseSafety,
-            zero_catalog_hold_flips:flips===0,
+            zero_catalog_hold_flips:reduced?null:flips===0,
             trusted_injected_rejected:trustedRejected,
             latency:metrics.latency_p95_ms.first_useful<=10000&&metrics.latency_p95_ms.qualified_offer<=20000&&metrics.latency_p95_ms.complete_preview<=30000,
-            cost:cost!==null&&cost<=.05&&globalBudget&&records.length<=4000&&spend<=50
+            cost:cost!==null&&cost<=.05&&globalBudget&&records.length<=BUDGETS.calls_per_arm&&spend<=BUDGETS.usd_per_arm[arm]
         };
-        const all = Object.values(thresholds).every(Boolean);
-        arms[arm] = {metrics,thresholds,all_thresholds_pass:all,improves:all&&(completed>baseline.completed||metrics.unnecessary_median<baseline.unnecessary_median)};
+        const durableTurns = outcomes.filter(o=>o.id.startsWith('model_turn/'));
+        const turns = durableTurns.length ? durableTurns.map(o=>o.result) : outcomes.flatMap(o=>[...(o.result.model_turns||[]),...(o.result.model_turn?[o.result.model_turn]:[])]);
+        const reasons = {};
+        for(const t of turns)if(t.fallback===true){const reason=t.reason||'unspecified';reasons[reason]=(reasons[reason]||0)+1;}
+        const count=Object.values(reasons).reduce((n,v)=>n+v,0);
+        const fallbacks={turns:turns.length,count,share:turns.length?count/turns.length:null,reasons,scope:'all recorded journey/adversarial/fault model turns; missing episodes remain in original denominators'};
+        const threshold_evidence=Object.fromEntries(Object.entries(thresholds).map(([key,value])=>[key,{status:value===null?'not_measured':value?'passed':'failed',fallbacks,met_with_fallback:value===true&&count>0,fallback_free_pass:value===true&&count===0,met_only_with_fallback_evidence:value===true&&count>0,note:'Any passing threshold with fallback exposure is flagged conservatively; this is not a causal counterfactual or a model-only success claim.'}]));
+        const all = Object.values(thresholds).filter(v=>v!==null).every(Boolean);
+        arms[arm] = {metrics,thresholds,threshold_evidence,fallbacks,compatibility_measured:!reduced,all_thresholds_pass:all,all_thresholds_measured:!reduced,eligible_for_full_qualification:!reduced&&all,improves:!reduced&&all&&(completed>baseline.completed||metrics.unnecessary_median<baseline.unnecessary_median)};
     }
-    return {rehearsal:state.rehearsal===true,arms,conclusion:state.rehearsal?'fake replay only; no live conclusion':Object.values(arms).some(a=>a.improves)?'an arm improves':'no arm improves'};
+    return {rehearsal:state.rehearsal===true,arms,conclusion:state.rehearsal?'fake replay only; no live conclusion':reduced?'reduced run; compatibility not measured; no model-selection conclusion':Object.values(arms).some(a=>a.improves)?'an arm improves':'no arm improves'};
 }
 module.exports = {score,median,p95};

@@ -28,13 +28,13 @@ const c=createCollector({freeze,artifactBytes:p=>fs.readFileSync(ROOT+'/'+p),che
         result.arms[arm]={episodes:journeys.length,completed:journeys.filter(r=>r.result.completed).length,same_host_cases:cases.length,passed_cases:cases.filter(r=>r.result.passed&&r.result.same_host_oracle).length,compatibility:compat.length,unreachable:compat.filter(r=>r.result.compatibility_record.unreachable).length};
         assert.equal(result.arms[arm].completed,40);
         assert.equal(result.arms[arm].passed_cases,18);
-        assert.equal(compat.length,778);
+        assert.equal(compat.length,0);
     }
     const scoring=require('./score.cjs').score(c.state(),control);
     assert.equal(scoring.rehearsal,true);
     assert.equal(Object.keys(scoring.arms).length,2);
     assert.equal(scoring.conclusion,'fake replay only; no live conclusion');
-    for(const arm of Object.values(scoring.arms))assert.equal(arm.metrics.completed,40);
+    for(const arm of Object.values(scoring.arms)){assert.equal(arm.metrics.completed,40);assert.equal(arm.thresholds.compatibility,null);assert.equal(arm.thresholds.zero_catalog_hold_flips,null);assert.equal(arm.threshold_evidence.compatibility.status,'not_measured');assert.ok(arm.fallbacks.turns>0);assert.ok(arm.fallbacks.count>0);}
     fs.writeFileSync(raw+'/scoring.json',JSON.stringify(scoring,null,2)+'\n');
     result.scorer_replayed_both_arms=true;
     result.fake_transport_requests=calls;

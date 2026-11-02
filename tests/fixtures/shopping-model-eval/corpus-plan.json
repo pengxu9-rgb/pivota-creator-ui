@@ -67,8 +67,10 @@
     "per_arm": true
   },
   "compatibility": {
+    "enabled": false,
     "unique": 389,
-    "passes_per_arm": 2,
+    "passes_per_arm": 0,
+    "retained_unused": true,
     "mapping": "tests/fixtures/shopping-model-eval/compatibility-mapping.json"
   },
   "unexpected_question_rule": {
@@ -81,8 +83,7 @@
   "order": [
     "journeys",
     "X01-X12",
-    "faults",
-    "compatibility"
+    "faults"
   ],
   "model_arm_concurrency": 2
 }

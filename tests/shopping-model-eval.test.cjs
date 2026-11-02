@@ -4,3 +4,4 @@ require('./shopping/model/collector.test.cjs');
 require('./shopping/model/compatibility.test.cjs');
 require('./shopping/model/scenarios.test.cjs');
 require('./shopping/model/scoring.test.cjs');
+require('./shopping/model/reduced.test.cjs');

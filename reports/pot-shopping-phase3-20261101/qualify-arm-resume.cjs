@@ -18,7 +18,7 @@ const pending=new Set(['journey/J02/1','journey/J03/1','journey/J04/1']);
 function makeFixture(pref,includeP=false){
     const s=structuredClone(seed);
     s.freeze_sha256=freezeHash;s.rehearsal=true;s.stop_reason=null;s.signals=[];s.resume_history=[];s.sessions={};
-    s.outcomes=s.outcomes.filter(o=>(includeP||o.arm==='L')&&o.id!=='arm_finished'&&!(o.arm==='L'&&pending.has(o.id))).map(o=>({arm:o.arm,id:o.id,result:{fixture_completed:true,completed:o.result.completed===true,compatibility_record:o.result.compatibility_record?{turn_id:o.result.compatibility_record.turn_id,pass:o.result.compatibility_record.pass}:undefined}}));
+    s.outcomes=s.outcomes.filter(o=>(includeP||o.arm==='L')&&o.id!=='arm_finished'&&!o.id.startsWith('model_turn/')&&!(o.arm==='L'&&pending.has(o.id))).map(o=>({arm:o.arm,id:o.id,result:{fixture_completed:true,completed:o.result.completed===true,compatibility_record:o.result.compatibility_record?{turn_id:o.result.compatibility_record.turn_id,pass:o.result.compatibility_record.pass}:undefined}}));
     s.records=s.records.filter(r=>r.arm==='L'&&r.id.startsWith('journey/J01/1/call-'));
     for(const arm of ['L','P']){const records=s.records.filter(r=>r.arm===arm);s.arms[arm]={calls:records.length,input_tokens:records.reduce((n,r)=>n+r.input_tokens,0),output_tokens:records.reduce((n,r)=>n+r.output_tokens,0),thought_tokens:records.reduce((n,r)=>n+r.thought_tokens,0),usd:records.reduce((n,r)=>n+r.estimated_usd,0),reserved_input:0,reserved_usd:0,without_tls:0,tls_timeouts:0,rate_limits:0,stop_reason:null,preflight:arm==='L'?pref:includeP};}
     return s;

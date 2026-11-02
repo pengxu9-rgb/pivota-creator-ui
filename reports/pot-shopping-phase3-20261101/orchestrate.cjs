@@ -12,6 +12,7 @@ const { bridge } = require(ROOT + '/src/lib/pokemon/shopping/model/compatibility
 const { buildModelInput } = require(ROOT + '/src/lib/pokemon/modelTurn.cjs');
 const { routeChatText } = require(ROOT + '/src/lib/pokemon/chatTextIntent.cjs'), { admit } = require(ROOT + '/src/lib/pokemon/admission.cjs');
 const { binding, FIXED_NOW } = require('../admission-kernel-live-model/offline-fixture.cjs'), dynamic = require('../admission-kernel-live-model/dynamic-context.cjs');
+const PLAN = require('../../tests/fixtures/shopping-model-eval/corpus-plan.json');
 const corpus = require('../admission-kernel-live-model/corpus.json'), holdout = require('../admission-kernel-live-model/holdout-e.json');
 function modelHost(collector, arm, id, h, options = {}) {
     let fallbacks = 0, turn = 0;
@@ -20,18 +21,19 @@ function modelHost(collector, arm, id, h, options = {}) {
     const timing = collector.session(arm,id);
     const elapsed = () => Math.max(timing.elapsed(),transport.elapsedMs());
     const metrics = { first_useful_ms: null, qualified_offer_ms: null, qualified_offer_turn: null };
-    function observe(reply) {
+    function observe(reply, origin = 'trusted_model_off_control') {
         const records = reply?.result?.records || reply?.records || [];
         for (const record of records) {
             if (!record.evidence_ref) continue;
             h.shop.evidence.read(record.evidence_ref, { task: h.state() });
             const useful=['printing','offer','seller','certificate','preview','order'].includes(record.kind)||record.kind==='operation'&&!['queued','dispatching','pending','queued_read_refresh','queued_forwarding'].includes(record.status);
-            if (useful && metrics.first_useful_ms === null) metrics.first_useful_ms = timing.observe('first_useful',transport.elapsedMs());
+            if (useful && metrics.first_useful_ms === null) { metrics.first_useful_ms = timing.observe('first_useful',transport.elapsedMs()); metrics.first_useful_origin = origin; }
             if (record.kind === 'offer' && h.shop.evidence.qualified(h.shop.evidence.offer(record.id))) {
                 h.shop.render(h.principals.ui, h.taskRef, { evidence_ref: record.evidence_ref, slot: 'price' });
                 if (metrics.qualified_offer_ms === null) {
                     metrics.qualified_offer_ms = timing.observe('qualified_offer',transport.elapsedMs());
                     metrics.qualified_offer_turn = turn;
+                    metrics.qualified_offer_origin = origin;
                 }
             }
         }
@@ -51,10 +53,10 @@ function modelHost(collector, arm, id, h, options = {}) {
         fallback: async ({ text }) => {
             fallbacks++;
             const result = await h.shop.call(options.principal || h.principals.ui, 'search_catalog', { task_ref: h.taskRef, text });
-            if (!options.principal) observe(result);
+            if (!options.principal) observe(result, 'model_off_fallback');
             return result;
         },
-        onUseful: observe,
+        onUseful: reply => observe(reply, 'model_tool'),
         renderClaim: claim => {
             const text = h.shop.render(h.principals.ui, h.taskRef, claim);
             rendered.push({ ...claim, verified: true });
@@ -66,6 +68,7 @@ function modelHost(collector, arm, id, h, options = {}) {
         turn: async (text, more = {}) => {
             const result = await runner.turn({ text, task_ref: h.taskRef, ...more });
             results.push(result);
+            collector.outcome(arm,'model_turn/'+id+'/'+results.length,result);
             return result;
         }
     };
@@ -159,7 +162,7 @@ async function shoppingEpisode(collector, arm, id, j) {
     for(const record of order.records) h.shop.render(h.principals.ui,h.taskRef,{evidence_ref:record.evidence_ref,slot:'status'});
     const unsupportedClaims = host.rendered.filter(c => !c.verified).length;
     const duplicateOrWidened = Number(h.shop.sim.stats().orders !== 1 || h.shop.sim.stats().merchantSubmits !== 1);
-    return { id, arm, journey: j.id, completed: true, user_turns: turns, first_qualified_offer_turn: host.metrics.qualified_offer_turn ?? firstOffer, complete_preview_turn: completePreview, latency_ms: { first_useful: host.metrics.first_useful_ms, qualified_offer: host.metrics.qualified_offer_ms, complete_preview: previewMs }, unnecessary_clarifications: unnecessary, questions, counts: host.counts(), model_turns: host.results, stats: h.shop.sim.stats(), wrong_items: wrongItems, unsupported_claims: unsupportedClaims, duplicate_or_widened_authority: duplicateOrWidened };
+    return { id, arm, journey: j.id, completed: true, user_turns: turns, first_qualified_offer_turn: host.metrics.qualified_offer_turn ?? firstOffer, complete_preview_turn: completePreview, latency_ms: { first_useful: host.metrics.first_useful_ms, qualified_offer: host.metrics.qualified_offer_ms, complete_preview: previewMs }, unnecessary_clarifications: unnecessary, questions, counts: host.counts(), model_turns: host.results, evidence_provenance: {first_useful:host.metrics.first_useful_origin,qualified_offer:host.metrics.qualified_offer_origin,preview:'trusted_scripted_controls',completion:'trusted_scripted_controls'}, stats: h.shop.sim.stats(), wrong_items: wrongItems, unsupported_claims: unsupportedClaims, duplicate_or_widened_authority: duplicateOrWidened };
 }
 async function boundedCases(collector, arm) {
     for (const [kind, rows, oracle] of [['adversarial', attacks.cases, adversarialCase], ['fault', faults.cases, faultCase]])
@@ -186,6 +189,7 @@ async function boundedCases(collector, arm) {
 }
 function stopped(c, a) { const s = c.state(); return !!(s.stop_reason || s.arms[a].stop_reason); }
 async function runCompatibility(collector, arm) {
+    if (PLAN.compatibility.enabled === false) throw Error('compatibility_not_in_reduced_plan');
     const entries = [...corpus.entries, ...holdout.entries];
     for (const pass of [1, 2]) {
         const pending = new Map(entries.map(e => [e.id, e])), done = new Set(), active = new Map();
@@ -260,7 +264,7 @@ async function runArm(collector, arm) {
     await Promise.all([worker(), worker()]);
     if (!stopped(collector, arm))
         await boundedCases(collector, arm);
-    if (!stopped(collector, arm))
+    if (!stopped(collector, arm) && PLAN.compatibility.enabled !== false)
         await runCompatibility(collector, arm);
     const after=collector.state();
     // Global shutdowns are checkpoints, never terminal arm outcomes.

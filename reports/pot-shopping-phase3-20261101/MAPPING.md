@@ -1,5 +1,17 @@
 # Frozen corpus interface for Claude's stage3a review
 
+## Reduced-plan amendment, 2 November 2026
+
+The current frozen plan runs J01–J04 ten times per arm, X01–X12 once each, and the six faults once each. Compatibility code and the original 389-context mapping below are retained as historical/unused material. Neither compatibility ≤16/34 nor identical-input catalog-to-hold flips between passes is measured by this reduced run; both are explicitly null/not measured, never passed. The reduced run cannot qualify the omitted measurements or select a production model.
+
+Hard budgets are 1,500 calls total / 750 per arm, 15 million input tokens total, USD 25 total (L USD 5, P USD 20), with worst-case in-flight reservations. Three consecutive observed non-429 4xx responses stop that arm with `request_rejected`; 401/403 still stop globally immediately. Other HTTP responses reset this streak; attempts without an HTTP response neither increment nor reset it. Existing limits, token rules and transport stops remain.
+
+Every recorded model turn is durably retained independently of final episode success. Per-arm fallback count, recorded-turn denominator, share and reasons accompany every threshold. Passing thresholds with any fallback exposure are conservatively flagged as fallback-assisted / not established as fallback-free; this over-approximates dependence and does not assert a causal counterfactual. Trusted scripted controls and deterministic fallback evidence are not credited as model-only output. Missing episodes remain in the original 40-episode denominator.
+
+Sampling is unchanged: temperature 0 and thinking budget 128 were chosen for stability. Claude's stage-3a review records Google's advice to use temperature 1.0 and thinking levels for Gemini 3 models. Preflight establishes acceptance only, not suitability. No model calls have run; Part 2 requires Claude's go naming the exact new freeze hash.
+
+## Historical full-plan mapping (unused in the reduced run)
+
 Every source fixture, original A–D/E text and original threshold remains unchanged. The new machine mapping names each of349 A–D and40 E contexts and their original context/input hashes. Each is one shopping turn in each of two passes per arm, with original typed controls, task scope and tool fixtures. Journeys J01–J04 have ten repetitions per arm; X01–X12 and each of six faults have one per arm. These are synthetic cases. User questions follow the existing “Use what I already said” rule.
 
 The deterministic control is the existing phase2 model-off path. It is not weakened: its40/40 completion and zero unnecessary-question median are a ceiling. No new arm can beat40 completions. Historical16/34 expressible clarification is context for the previous interpreter, not a newly measured result for this shopping interface. A model arm must pass all thresholds AND improve a newly measured comparable metric. Equal performance means no arm improves. We retain this limitation before any model data exists.

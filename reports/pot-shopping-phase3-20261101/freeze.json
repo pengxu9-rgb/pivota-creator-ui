@@ -1,4 +1,107 @@
 {
+  "corpus_plan": {
+    "schema": "shopping.phase3.corpus-plan.v1",
+    "clock": 1793491200000,
+    "arms": [
+      "model-off",
+      "L",
+      "P"
+    ],
+    "journeys": [
+      {
+        "id": "J01",
+        "repetitions": 10,
+        "fixture": "tests/fixtures/shopping/journeys.json",
+        "trusted_controls": "identical frozen phase2 controls; never model-authored consent",
+        "privacy_events": "Any user text containing private destination/contact data falls back to deterministic original-text path before transport."
+      },
+      {
+        "id": "J02",
+        "repetitions": 10,
+        "fixture": "tests/fixtures/shopping/journeys.json",
+        "trusted_controls": "identical frozen phase2 controls; never model-authored consent",
+        "privacy_events": "Any user text containing private destination/contact data falls back to deterministic original-text path before transport."
+      },
+      {
+        "id": "J03",
+        "repetitions": 10,
+        "fixture": "tests/fixtures/shopping/journeys.json",
+        "trusted_controls": "identical frozen phase2 controls; never model-authored consent",
+        "privacy_events": "Any user text containing private destination/contact data falls back to deterministic original-text path before transport."
+      },
+      {
+        "id": "J04",
+        "repetitions": 10,
+        "fixture": "tests/fixtures/shopping/journeys.json",
+        "trusted_controls": "identical frozen phase2 controls; never model-authored consent",
+        "privacy_events": "Any user text containing private destination/contact data falls back to deterministic original-text path before transport."
+      }
+    ],
+    "adversarial": {
+      "ids": [
+        "X01",
+        "X02",
+        "X03",
+        "X04",
+        "X05",
+        "X06",
+        "X07",
+        "X08",
+        "X09",
+        "X10",
+        "X11",
+        "X12"
+      ],
+      "repetitions": 1,
+      "per_arm": true
+    },
+    "faults": {
+      "ids": [
+        "price_change",
+        "out_of_stock",
+        "timeout_after_submit",
+        "duplicate_submit",
+        "partial_failure",
+        "inconclusive_lookup"
+      ],
+      "repetitions": 1,
+      "per_arm": true
+    },
+    "compatibility": {
+      "enabled": false,
+      "unique": 389,
+      "passes_per_arm": 0,
+      "retained_unused": true,
+      "mapping": "tests/fixtures/shopping-model-eval/compatibility-mapping.json"
+    },
+    "unexpected_question_rule": {
+      "frozen_unresolved_value_first": true,
+      "fallback": "Use what I already said",
+      "count_each_event_as_unnecessary": true,
+      "continue_with_original_limits": true
+    },
+    "failed_episodes": "retain every failure/timeout in original denominator",
+    "order": [
+      "journeys",
+      "X01-X12",
+      "faults"
+    ],
+    "model_arm_concurrency": 2
+  },
+  "stop_rules": {
+    "request_rejected": {
+      "consecutive_non_429_4xx": 3,
+      "scope": "arm"
+    },
+    "access_denied": {
+      "statuses": [
+        401,
+        403
+      ],
+      "scope": "global"
+    }
+  },
+  "sampling_limitation": "Temperature 0 and thinking budget 128 were selected for stability. Google advises temperature 1.0 and thinking levels for Gemini 3 models; preflight proves acceptance only, not suitability.",
   "schema": "shopping.phase3.freeze.v1",
   "stage": "3a",
   "live_run_enabled": false,
@@ -505,11 +608,14 @@
   "price_evidence_sha256": "b39291eab4bf92055b6b1ecff4dcb6a8504820daf320cb4b5270da888a9dc45e",
   "pricing_rule": "Standard global; sum candidate and reasoning output, no separate thought rate or discounts. Both input tiers frozen. Prompt UTF8 bytes <=200000 before transport; over-cap reported usage is still charged using actual high-tier input/output before hard stop. Missing metadata retains maximum reservation.",
   "budgets": {
-    "calls": 8000,
-    "calls_per_arm": 4000,
-    "input_tokens": 40000000,
-    "usd": 75,
-    "usd_per_arm": 50,
+    "calls": 1500,
+    "calls_per_arm": 750,
+    "input_tokens": 15000000,
+    "usd": 25,
+    "usd_per_arm": {
+      "L": 5,
+      "P": 20
+    },
     "concurrency": 2,
     "minimum_launch_minutes": 45,
     "refresh_minutes": 10,
@@ -538,7 +644,7 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/MAPPING.md",
-      "sha256": "3f7f39e3bcf7b3b7409fe90724b0673b0dd4de3e427cabd5cdb7cb1ea6cd761c"
+      "sha256": "cbab2b98dada17d6273cd1aac1a40e8c7dfc6715ee2f3e5d78000705740ca59f"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/declarations.json",
@@ -562,15 +668,15 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/mutations.cjs",
-      "sha256": "b479cfc051e4879002af078b3499bfa8bddda588152a5ad1924b1f04263861ae"
+      "sha256": "d6552fe15e03de546a1c6fc5e2cf238fa17fca3c77b7a647754644904647b750"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/orchestrate.cjs",
-      "sha256": "07f9a80cd8e4557c80994d904a17d647e10e55d68a770fd5cabc7bd30f5cb1a4"
+      "sha256": "081a07f901441d937fc665e2beb1a2747d915cbaf58c0b3a3265b330598e0c46"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/prepare-freeze.cjs",
-      "sha256": "a2d21e94476518e843272cb51b1381fe41843e9e869a1fcd787889e4e20d762d"
+      "sha256": "352d7b3c4ba0b298c0a14721f7baefde291843dd9575a728ddb86331b788cc98"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/prepare-scenarios.cjs",
@@ -586,11 +692,11 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/qualify-arm-resume.cjs",
-      "sha256": "e4fea09718674f998488d0bb642ed0e749ef9c50366a78e0862c93cd43a8757d"
+      "sha256": "60a8bd2a32fde7ba64b74d0f46d645eb9bcadd689c57ccf2481c009eaa63c2c7"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/qualify-corpus.cjs",
-      "sha256": "672881ef418c1ae6d1cc8ce7c09b0b7663670d2b8a3ffac448d22b23c7ecb85b"
+      "sha256": "067878033d146f9736659589f4104d78ef2ada2b9b608a851c5a97ca756d12fa"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/qualify-detached.cjs",
@@ -603,6 +709,10 @@
     {
       "path": "reports/pot-shopping-phase3-20261101/qualify-mapping.cjs",
       "sha256": "c20e271a6a099ac46bb5ba1e406b88ef95fedb9ba1ccbee0bb82286d5705c640"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/qualify-reduced-plan.cjs",
+      "sha256": "9b440c4a44dc229fb7638c0948490d54fa77f8650166e9e22d500bf28de24f4f"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/qualify-syntax.cjs",
@@ -622,7 +732,7 @@
     },
     {
       "path": "src/lib/pokemon/shopping/model/collector.cjs",
-      "sha256": "c033e7b331318ec33a92bebd8de67db0f153ea337cb8cf860ea41ec4bbbfee6d"
+      "sha256": "1ff978fd113b933ab6c199db32ca10fdb1391ddc172e882d73ad559b1ce34d81"
     },
     {
       "path": "src/lib/pokemon/shopping/model/compatibility.cjs",
@@ -642,7 +752,7 @@
     },
     {
       "path": "src/lib/pokemon/shopping/model/scoring.cjs",
-      "sha256": "aaba8f86cadfd9610e4325b6f175ab5be5bb1ad32961bdeb1c63d2b6c557065b"
+      "sha256": "1e4199c90aedac7c4d881a056426c3b1d7452bcb3df9670425ca173bae8ca149"
     },
     {
       "path": "src/lib/pokemon/shopping/model/turn.cjs",
@@ -658,7 +768,7 @@
     },
     {
       "path": "tests/fixtures/shopping-model-eval/corpus-plan.json",
-      "sha256": "6dc8ea91714770785ed4fb34d6e93926f938eebbb655ce63a66d4b3e2c086784"
+      "sha256": "ac520416288213612c2c8f60baac163f216f78013b1402fa28caf46646c987be"
     },
     {
       "path": "tests/fixtures/shopping/frozen-manifest.json",
@@ -666,15 +776,19 @@
     },
     {
       "path": "tests/shopping-model-eval.test.cjs",
-      "sha256": "03d63c6c32fa783902d3da783f301ba96cd1adb2f81fe3f9c7dbb8e0f55efe21"
+      "sha256": "2aefa2c2d04a0782333b937c60cafe6418ff11ecdbf8f9d8fbc106021ed218d5"
     },
     {
       "path": "tests/shopping/model/collector.test.cjs",
-      "sha256": "5ebb78ae89770a028e9583f1594591b3f2f855a56f2e5c33e0dd5f344f75ee6e"
+      "sha256": "e60369de7f2fcb350b0085b9fcc32c2cbd11b01cb3a0bef91927062d1177699c"
     },
     {
       "path": "tests/shopping/model/compatibility.test.cjs",
       "sha256": "b6114b601af1533fe2909a886d5caef9ce7ae10aa68e34042b12bb18979fcf1f"
+    },
+    {
+      "path": "tests/shopping/model/reduced.test.cjs",
+      "sha256": "18aa9d5cfe330d9de8c80fddd3ef6aafaa615f589e01e26d9e0ee5efcf4df236"
     },
     {
       "path": "tests/shopping/model/scenarios.cjs",
