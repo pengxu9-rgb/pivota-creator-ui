@@ -27,6 +27,27 @@ Run 1 (`3403bc9`, below) could not measure either model. Every change here was m
 
 **Run 1 stays in the record, unscored.** Its checkpoint and evidence are untouched.
 
+## Smoke run (L only, never scored)
+
+Run on 2 November 2026, 11:03:50–11:04:15 UTC, at `c6250b3` with freeze `14bebd7f…` after Peng's go in chat. Token handoff had 59.6 minutes left; no refresh by the harness. Raw evidence stays outside Git (manifest `3df071da1d3e6a8854abdac423c22372adc3d5030ec9dfb43d002cf82ab7a824`).
+
+- **Calls:** 26, all HTTP 200, no transport errors, no guard events. **USD 0.0155 measured** (38,506 input / 758 output / 810 thinking tokens) against the USD 1 cap. P: 0 calls.
+- **Episodes:** 8 of 8 completed; 0 wrong items, 0 unsupported rendered claims, 0 duplicate or widened authority.
+- **Response shapes (26):** 12 function calls (`search_catalog` 8, `get_offers` 3, `select_offer` 1), 12 bare JSON plans, 1 fenced plan (accepted), 1 `MALFORMED_FUNCTION_CALL` with no text.
+- **Model-written search text:** none. The model called `search_catalog` with no `text` and the server bound the user's words.
+- **Fallbacks:** 9 of 17 recorded turns (run 1: 40 of 41).
+
+| Reason | Count | Cause |
+| --- | --- | --- |
+| `private_user_event` | 2 | Privacy rule, by design |
+| `search_not_called` | 2 | The model called `get_offers`, then labelled its plan "search" |
+| `unsupported_claim` | 2 | Invented claim slots (`offer_A`, `offer`); **the instruction never lists the valid slots** |
+| `invalid_answer_plan` | 1 | Field `printing_ref`; **the instruction never lists the allowed fields** |
+| `private_binding_unavailable` | 1 | `select_offer` without the user's UI payload, refused as designed |
+| `invalid_finish` | 1 | Vertex `MALFORMED_FUNCTION_CALL` |
+
+The harness now records real model behaviour. Three fallbacks come from an interface gap: the parser and renderer enforce field and slot vocabularies (`language, budget, grade, printing, condition, purpose, quantity, destination`; `price, total, item, shipping, fee, tax, currency, status, expiry, url`) that the model is never shown.
+
 ## Independent adversarial review
 
 An independent agent reviewed `ef172b8` and `58e18f9` read-only and offline. **No P1.** Four P2s, all addressed:
