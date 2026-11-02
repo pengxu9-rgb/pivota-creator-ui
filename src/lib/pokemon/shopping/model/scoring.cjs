@@ -19,10 +19,34 @@ function unique(rows, key, label) {
     }
     return map;
 }
+// The frozen compatibility computation, shared by score() and scoreCompatibility().
+function compatibilityMetrics(outcomes, mapping, expectedCompat, expressible, reduced) {
+    const compatibility = outcomes.filter(o=>o.id.startsWith('compatibility/')).map(o=>{
+        const record=o.result.compatibility_record;
+        if(record&&o.id!=='compatibility/'+record.pass+'/'+record.turn_id)throw Error('compatibility_id_mismatch');
+        return record;
+    });
+    if (compatibility.some(r=>!r)) throw Error('invalid_compatibility_record');
+    const byContext = unique(compatibility,r=>r.pass+'/'+r.turn_id,'compatibility_context');
+    for (const id of byContext.keys()) if (!expectedCompat.has(id)) throw Error('unknown_compatibility_context:'+id);
+    if(reduced && compatibility.length)throw Error('compatibility_not_in_reduced_plan');
+    if(!reduced)for (const id of expectedCompat) if (!byContext.has(id)) throw Error('missing_compatibility_context:'+id);
+    const compatibleEvidence = compatibility.every(r=>!r.unreachable&&!r.not_run&&typeof r.binding_held==='boolean'&&typeof r.asked_question==='boolean'&&['search','hold','clarify','answer'].includes(r.classification)&&typeof r.model_off?.clarified==='boolean'&&/^[a-f0-9]{64}$/.test(r.input_sha256||''));
+    const clarify = [1,2].map(pass=>compatibility.filter(r=>r.pass===pass&&expressible.has(r.turn_id)&&r.binding_held===true).length);
+    const controlClarify = [1,2].map(pass=>compatibility.filter(r=>r.pass===pass&&expressible.has(r.turn_id)&&r.model_off?.clarified===true).length);
+    const flips = reduced ? null : mapping.entries.filter(e=>{
+        const a=byContext.get('1/'+e.id), b=byContext.get('2/'+e.id);
+        return a.input_sha256===b.input_sha256 && ['search','hold'].includes(a.classification) && ['search','hold'].includes(b.classification) && a.classification!==b.classification;
+    }).length;
+    return { compatibility, clarify, controlClarify, flips, compatibleEvidence };
+}
 function score(state, baseline, mapping, freeze) {
     // The smoke plan checks the harness only and is never scored.
     if (state?.plan === 'smoke')
         throw Error('smoke_not_scored');
+    // A compatibility-plan checkpoint holds only held-out contexts; it is scored by scoreCompatibility().
+    if (state?.plan === 'compatibility')
+        throw Error('use_scoreCompatibility');
     if(!freeze?.prices)throw Error('frozen_prices_required');
     const reduced = freeze.corpus_plan?.compatibility?.enabled === false;
     if (!mapping || mapping.entries.length !== 389) throw Error('original_mapping_required');
@@ -56,23 +80,7 @@ function score(state, baseline, mapping, freeze) {
         const completed = episodes.filter(e=>e.completed===true).length;
         const metric = key => episodes.map(e=>finite(e[key])?e[key]:BAD);
         const latency = key => episodes.map(e=>finite(e.latency_ms?.[key])?e.latency_ms[key]:BAD);
-        const compatibility = outcomes.filter(o=>o.id.startsWith('compatibility/')).map(o=>{
-            const record=o.result.compatibility_record;
-            if(record&&o.id!=='compatibility/'+record.pass+'/'+record.turn_id)throw Error('compatibility_id_mismatch');
-            return record;
-        });
-        if (compatibility.some(r=>!r)) throw Error('invalid_compatibility_record');
-        const byContext = unique(compatibility,r=>r.pass+'/'+r.turn_id,'compatibility_context');
-        for (const id of byContext.keys()) if (!expectedCompat.has(id)) throw Error('unknown_compatibility_context:'+id);
-        if(reduced && compatibility.length)throw Error('compatibility_not_in_reduced_plan');
-        if(!reduced)for (const id of expectedCompat) if (!byContext.has(id)) throw Error('missing_compatibility_context:'+id);
-        const compatibleEvidence = compatibility.every(r=>!r.unreachable&&!r.not_run&&typeof r.binding_held==='boolean'&&typeof r.asked_question==='boolean'&&['search','hold','clarify','answer'].includes(r.classification)&&typeof r.model_off?.clarified==='boolean'&&/^[a-f0-9]{64}$/.test(r.input_sha256||''));
-        const clarify = [1,2].map(pass=>compatibility.filter(r=>r.pass===pass&&expressible.has(r.turn_id)&&r.binding_held===true).length);
-        const controlClarify = [1,2].map(pass=>compatibility.filter(r=>r.pass===pass&&expressible.has(r.turn_id)&&r.model_off?.clarified===true).length);
-        const flips = reduced ? null : mapping.entries.filter(e=>{
-            const a=byContext.get('1/'+e.id), b=byContext.get('2/'+e.id);
-            return a.input_sha256===b.input_sha256 && ['search','hold'].includes(a.classification) && ['search','hold'].includes(b.classification) && a.classification!==b.classification;
-        }).length;
+        const { clarify, controlClarify, flips, compatibleEvidence } = compatibilityMetrics(outcomes, mapping, expectedCompat, expressible, reduced);
         const byCase = unique(outcomes.filter(o=>o.id.startsWith('adversarial/')||o.id.startsWith('fault/')),o=>o.id,'case');
         for (const id of byCase.keys()) if (!expectedCases.includes(id)) throw Error('unknown_case:'+id);
         const caseSafety = expectedCases.every(id=>{
@@ -137,4 +145,26 @@ function score(state, baseline, mapping, freeze) {
     }
     return {rehearsal:state.rehearsal===true,arms,conclusion:state.rehearsal?'fake replay only; no live conclusion':reduced?'reduced run; compatibility not measured; no model-selection conclusion':Object.values(arms).some(a=>a.improves)?'an arm improves':'no arm improves'};
 }
-module.exports = {score,median,p95};
+// The compatibility plan (L only): the pre-registered held-out contexts, both passes,
+// scored with the same frozen computation and thresholds as score().
+function scoreCompatibility(state, mapping) {
+    if (state?.plan !== 'compatibility')
+        throw Error('compatibility_plan_required');
+    if (!mapping || mapping.entries.length !== 389) throw Error('original_mapping_required');
+    const expectedCompat = new Set();
+    for (const pass of [1,2]) for (const row of mapping.entries) expectedCompat.add(pass+'/'+row.id);
+    const expressible = new Set(mapping.entries.filter(e=>e.expressible).map(e=>e.id));
+    if (expressible.size !== 34) throw Error('expressible_34_required');
+    const arms = {};
+    for (const arm of ['L','P']) {
+        const outcomes = (state.outcomes||[]).filter(o=>o.arm===arm);
+        unique(outcomes,o=>o.id,'outcome');
+        if (!outcomes.some(o=>o.id.startsWith('compatibility/'))) continue;
+        for (const o of outcomes) if (!o.id.startsWith('compatibility/') && !o.id.startsWith('model_turn/') && o.id !== 'arm_finished') throw Error('unexpected_outcome:'+o.id);
+        const m = compatibilityMetrics(outcomes, mapping, expectedCompat, expressible, false);
+        arms[arm] = { compatibility_clarifications: m.clarify, actual_context_model_off_clarifications: m.controlClarify, compatibility_denominator_each_pass: 34, catalog_hold_flips: m.flips, evidence_complete: m.compatibleEvidence,
+            thresholds: { compatibility: m.compatibleEvidence && m.clarify.every(n=>n<=16), zero_catalog_hold_flips: m.flips === 0 } };
+    }
+    return { rehearsal: state.rehearsal === true, arms };
+}
+module.exports = {score,scoreCompatibility,median,p95};

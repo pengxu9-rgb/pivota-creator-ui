@@ -12,7 +12,7 @@ import sys
 
 
 # Each plan has its own go; a go for one plan never launches the other.
-REVIEW_GO = {'smoke': 'claude_3c_smoke_go', 'reduced': 'claude_3c_reduced_go'}
+REVIEW_GO = {'smoke': 'claude_3c_smoke_go', 'reduced': 'claude_3c_reduced_go', 'compatibility': 'claude_3c_compat_go'}
 
 
 def main():
@@ -21,7 +21,7 @@ def main():
     parser.add_argument('--arm', choices=['L', 'P'], required=True)
     parser.add_argument('--raw', required=True)
     parser.add_argument('--freeze-sha', required=True)
-    parser.add_argument('--plan', choices=['smoke', 'reduced'], required=True)
+    parser.add_argument('--plan', choices=['smoke', 'reduced', 'compatibility'], required=True)
     parser.add_argument('--fake-cache')
     args = parser.parse_args()
     here = Path(__file__).resolve().parent

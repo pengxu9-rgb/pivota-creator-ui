@@ -30,6 +30,9 @@ function createContext(taskRef) {
             for (const [key, value] of Object.entries(record))
                 if (FIELDS.has(key) && scalar(value))
                     row[key] = typeof value === 'string' ? value.slice(0, 2000) : value;
+            // Presence only: the model learns a destination is set, never which one.
+            if (typeof record.destination_ref === 'string' && record.destination_ref)
+                row.ship_to_on_file = true;
             // Tool-shaped seller text is inert, explicitly quoted data, never instructions.
             for (const key of ['title', 'seller_name', 'description'])
                 if (typeof record[key] === 'string')

@@ -95,5 +95,18 @@
     "faults": false,
     "compatibility": false,
     "scored": false
+  },
+  "compatibility_plan": {
+    "arms": [
+      "L"
+    ],
+    "contexts": 389,
+    "passes": 2,
+    "journeys": false,
+    "scored_by": "scoreCompatibility",
+    "thresholds": [
+      "compatibility",
+      "zero_catalog_hold_flips"
+    ]
   }
 }

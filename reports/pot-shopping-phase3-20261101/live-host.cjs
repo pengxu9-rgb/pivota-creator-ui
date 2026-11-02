@@ -3,7 +3,7 @@
 const fs = require('node:fs'), path = require('node:path');
 const ROOT = path.resolve(__dirname, '../..');
 // Each plan has its own go; a go for one plan never launches the other.
-const REVIEW_GO = Object.freeze({ smoke: 'claude_3c_smoke_go', reduced: 'claude_3c_reduced_go' });
+const REVIEW_GO = Object.freeze({ smoke: 'claude_3c_smoke_go', reduced: 'claude_3c_reduced_go', compatibility: 'claude_3c_compat_go' });
 async function main(arm, raw, reviewHash, plan) {
     const { hash } = require(ROOT + '/src/lib/pokemon/shopping/schema.cjs'), bytes = fs.readFileSync(__dirname + '/freeze.json', 'utf8'), freeze = JSON.parse(bytes);
     if (!Object.hasOwn(REVIEW_GO, plan) || freeze.review_go?.[plan] !== REVIEW_GO[plan])

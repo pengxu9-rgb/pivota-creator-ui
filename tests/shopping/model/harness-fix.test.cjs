@@ -197,3 +197,34 @@ test('model eval harness fix: a failed catalog read does not make a search plan 
     assert.equal(results[0].ok, false);
     assert.equal(r.reason, 'search_not_called');
 });
+test('model eval harness fix: the compatibility plan is scored by the frozen computation, at the frozen 16/34 boundary, and never by score()', () => {
+    const { score, scoreCompatibility } = require('../../../src/lib/pokemon/shopping/model/scoring.cjs');
+    const { fixture, freeze, baseline } = require('./scoring.test.cjs');
+    const mapping = require('../../fixtures/shopping-model-eval/compatibility-mapping.json');
+    const { COMPAT_BUDGETS, BUDGETS } = require('../../../src/lib/pokemon/shopping/model/collector.cjs');
+    assert.deepEqual(COMPAT_BUDGETS.usd_per_arm, { L: 5, P: 0 });
+    assert.equal(COMPAT_BUDGETS.calls_per_arm, 2400);
+    assert.equal(COMPAT_BUDGETS.output_reservation_cap, BUDGETS.output_reservation_cap);
+    const compatState = full => ({ ...full, plan: 'compatibility', outcomes: full.outcomes.filter(o => o.arm === 'L' && o.id.startsWith('compatibility/')) });
+    const full = fixture(), reference = score(full, baseline, mapping, freeze).arms.L;
+    const c = scoreCompatibility(compatState(fixture()), mapping);
+    assert.deepEqual(Object.keys(c.arms), ['L']);
+    assert.deepEqual(c.arms.L.compatibility_clarifications, reference.metrics.compatibility_clarifications);
+    assert.equal(c.arms.L.catalog_hold_flips, reference.metrics.catalog_hold_flips);
+    assert.equal(c.arms.L.thresholds.compatibility, reference.thresholds.compatibility);
+    assert.equal(c.arms.L.thresholds.zero_catalog_hold_flips, reference.thresholds.zero_catalog_hold_flips);
+    assert.deepEqual(c.arms.L.compatibility_clarifications, [16, 16]);
+    assert.equal(c.arms.L.thresholds.compatibility, true);
+    // A 17th held clarification in one pass fails, exactly as in score().
+    const over = compatState(fixture()), ids = mapping.entries.filter(e => e.expressible).map(e => e.id);
+    const row = over.outcomes.find(o => o.result.compatibility_record.pass === 1 && o.result.compatibility_record.turn_id === ids[16]);
+    row.result.compatibility_record.binding_held = true;
+    assert.equal(scoreCompatibility(over, mapping).arms.L.thresholds.compatibility, false);
+    // Refusals.
+    assert.throws(() => score({ ...fixture(), plan: 'compatibility' }, baseline, mapping, freeze), /use_scoreCompatibility/);
+    assert.throws(() => scoreCompatibility({ ...fixture(), plan: 'reduced' }, mapping), /compatibility_plan_required/);
+    const missing = compatState(fixture()); missing.outcomes.pop();
+    assert.throws(() => scoreCompatibility(missing, mapping), /missing_compatibility_context/);
+    const foreign = compatState(fixture()); foreign.outcomes.push({ arm: 'L', id: 'journey/J01/1', result: {} });
+    assert.throws(() => scoreCompatibility(foreign, mapping), /unexpected_outcome/);
+});

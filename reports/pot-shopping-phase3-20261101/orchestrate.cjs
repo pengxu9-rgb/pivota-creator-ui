@@ -81,6 +81,9 @@ async function shoppingEpisode(collector, arm, id, j) {
     const started = Date.now(), h = setup(), host = modelHost(collector, arm, id, h);
     let turns = 0, unnecessary = 0, firstOffer = null, completePreview = null, firstOfferMs = null, previewMs = null;
     const questions = [], shown = result => host.show(result);
+    // After a selection the interface shows the user's accepted requirements; the privacy
+    // projection keeps only safe scalars and turns a destination into ship_to_on_file.
+    const selectShown = async (...args) => { shown(await select(...args)); shown({ synthetic: true, tool: 'interface_requirements', status: 'accepted', state_version: h.state().state_version, records: [{ id: 'requirements_' + h.taskRef, kind: 'requirements', ...h.state().accepted }] }); };
     const unresolved = j.id === 'J02' ? { language: 'English', purpose: 'display gift', grade: 'raw', budget: 'USD 50 item budget' } : {};
     async function user(text, model = true) { turns++; host.setTurn(turns); if (!model)
         return; let r = await host.turn(text); let extra = 0; while (r.plan?.decision === 'clarify' && extra++ < 12) {
@@ -96,7 +99,7 @@ async function shoppingEpisode(collector, arm, id, j) {
             break;
     } }
     if (j.id === 'J04')
-        { shown(await select(h, j)); shown(await preview(h)); }
+        { await selectShown(h, j); shown(await preview(h)); }
     if(j.id==='J04')host.observe({records:[h.shop.evidence.offer(j.offer_ref)]});
     await user(j.query);
     const offers = shown(ok(await h.call('ui', 'search_catalog', { text: j.query })));
@@ -108,7 +111,7 @@ async function shoppingEpisode(collector, arm, id, j) {
     if (j.id === 'J01') {
         await user('JPY 30,000 delivered to Hong Kong');
         await user('Confirm and compare offers', false);
-        shown(await select(h, j));
+        await selectShown(h, j);
         shown(ok(await h.call('ui', 'compare_offers', { offer_refs: ['offer_A', 'offer_B'], criterion: 'item_price' })));
         await user('Preview A');
         if (shown(await preview(h)).status === 'complete')
@@ -121,7 +124,7 @@ async function shoppingEpisode(collector, arm, id, j) {
         await user('Choose the fixture printing and condition', false);
         shown(ok(await h.call('ui', 'compare_offers', { offer_refs: ['offer_CHAR_A', 'offer_CHAR_B'], criterion: 'item_price' })));
         await user('Choose seller A, destination Hong Kong', false);
-        shown(await select(h, j));
+        await selectShown(h, j);
         if (shown(await preview(h)).status === 'complete')
             completePreview = turns;
     }
@@ -129,7 +132,7 @@ async function shoppingEpisode(collector, arm, id, j) {
         await user('Pikachu / Japanese', false);
         shown(ok(await h.call('ui', 'get_product', { printing_ref: j.requirements.printing_ref })));
         await user('Choose this printing, PSA 10 and JPY budget controls', false);
-        shown(await select(h, j));
+        await selectShown(h, j);
         if (shown(await preview(h)).status === 'complete')
             completePreview = turns;
     }
@@ -139,7 +142,7 @@ async function shoppingEpisode(collector, arm, id, j) {
             throw Error('changed_terms_not_held');
         denied(await h.human('approve_purchase', { preview_ref: h.state().preview.id }));
         await user('Change cap to JPY 31,000; review new simulated preview', false);
-        shown(await select(h, j, { budget_minor: j.new_budget_minor }));
+        await selectShown(h, j, { budget_minor: j.new_budget_minor });
         if (shown(await preview(h)).status === 'complete')
             completePreview = turns;
         h.shop.sim.setFault('timeout_after_submit');
@@ -192,8 +195,8 @@ async function boundedCases(collector, arm) {
         }
 }
 function stopped(c, a) { const s = c.state(); return !!(s.stop_reason || s.arms[a].stop_reason); }
-async function runCompatibility(collector, arm) {
-    if (PLAN.compatibility.enabled === false) throw Error('compatibility_not_in_reduced_plan');
+async function runCompatibility(collector, arm, { plan = 'reduced' } = {}) {
+    if (PLAN.compatibility.enabled === false && plan !== 'compatibility') throw Error('compatibility_not_in_reduced_plan');
     const entries = [...corpus.entries, ...holdout.entries];
     for (const pass of [1, 2]) {
         const pending = new Map(entries.map(e => [e.id, e])), done = new Set(), active = new Map();
@@ -237,10 +240,20 @@ async function runCompatibility(collector, arm) {
 async function runArm(collector, arm, { plan = 'reduced' } = {}) {
     const before=collector.state();
     if((before.plan||'reduced')!==plan)throw Error('collector_plan_mismatch');
-    if(plan!=='reduced'&&plan!=='smoke')throw Error('unknown_plan');
+    if(!['reduced','smoke','compatibility'].includes(plan))throw Error('unknown_plan');
     // The smoke plan checks the harness on L only; it is never scored.
     if(plan==='smoke'&&arm!=='L')throw Error('smoke_is_L_only');
+    // The compatibility plan runs only the held-out contexts, on L only.
+    if(plan==='compatibility'&&arm!=='L')throw Error('compatibility_is_L_only');
     if(before.stop_reason)return before;
+    if(plan==='compatibility'){
+        if(before.arms[arm].stop_reason){collector.outcome(arm,'arm_finished',{status:'arm_stopped',reason:before.arms[arm].stop_reason});return collector.state();}
+        await runCompatibility(collector, arm, { plan });
+        const done=collector.state();
+        if(done.stop_reason)return done;
+        collector.outcome(arm,'arm_finished',done.arms[arm].stop_reason?{status:'arm_stopped',reason:done.arms[arm].stop_reason}:{status:'completed'});
+        return collector.state();
+    }
     if(arm==='P'){
         const first=collector.priorOutcome('L','arm_finished');
         const completed=first?.status==='completed';

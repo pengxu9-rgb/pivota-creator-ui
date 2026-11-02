@@ -1,3 +1,28 @@
+# Round 3: the held-out check and P's destination questions (post-hoc)
+
+**The compatibility plan (held-out check):**
+- **What it measures:** the two thresholds the reduced plan never measured (compatibility ≤16/34 in each pass, and zero catalog-to-hold flips between passes), on the 389 pre-registered compatibility contexts.
+- **Why it counts as held-out:** those contexts were frozen in stage 3a and never used in any iteration.
+- **Run and budget:** L only, under its own frozen budget (2,400 calls, 12M input tokens, USD 5; P USD 0). It uses its own checkpoint and the go string `claude_3c_compat_go`.
+- **Scoring:** the frozen scorer's compatibility block moved, unchanged, into `compatibilityMetrics()`. `score()` calls it as before, and `scoreCompatibility()` reuses it with the same 16/34 boundary. A test checks both give identical results and fail at 17. `score()` refuses a compatibility checkpoint.
+- **Why P is excluded:** at P's timeout rate, its accounted cost on 778 contexts would exceed any budget approved so far.
+
+**P's destination questions: root cause.**
+- **What P couldn't see:** in J01 the destination arrives in a privacy-withheld turn, and the selection record carries no destination, so the model could not tell one was set.
+- **The fix:** after each selection, the host shows the accepted requirements through the same privacy projection, as a real interface shows the user's choices. A destination becomes a presence flag, `ship_to_on_file`, and never its value; the budget amount is dropped as before.
+- **Naming:** the flag avoids the word "destination", which the privacy filter strips from keys.
+- **Instruction:** it now says `ship_to_on_file` means a destination is already set.
+- **Scope:** this also changes what L sees, so L must be rerun.
+
+**Not addressed: P's timeouts.**
+- **The cause:** P's latency is structural at the lowest thinking level it accepts, so about 11% of its calls exceed the frozen 8-second limit and are charged the worst case.
+- **Options rejected:** a lower `maxOutputTokens` cap was considered. Vertex does not document whether it bounds thinking, and lowering it would change a frozen setting mainly to change P's cost accounting.
+- **Decision needed:** whether to change the limit or the accounting is Peng's call.
+
+**Tests:** model 106, host 5. **Mutants:** 36, all killed. The 4 new ones remove the flag, skip the requirements view, set compatibility to 17, and let `score()` take a compatibility checkpoint.
+
+---
+
 # Round 2 reduced run results (L, then P)
 
 Run on 2 November 2026 at `ca9136d` with freeze `3b90e58e…`, after Peng's instruction to continue. L ran 17:55:52–17:58:02 UTC; P ran 17:58:02–18:06:17 UTC, chained so the token stayed above the 45-minute rule (57.9 and 55.8 minutes at handoff). No stops, retries or refreshes by the harness. Every gate passed on `ca9136d`, including the 93-row gate (88 caught, the same five equivalents, zero network attempts). The frozen scorer replayed the recorded responses offline. Raw evidence is outside Git (manifest `9d856e020180b77a6f067c72043e0953c21621a2fa737f4860e187394eb36ced`). Compatibility and flips are not measured in the reduced plan.

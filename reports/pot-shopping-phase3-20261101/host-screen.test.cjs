@@ -69,3 +69,18 @@ test('model eval host: injected seller text on the screen stays quoted data and 
     const offers = JSON.parse(requests[0].contents[0].parts[0].text).context.flatMap(e => e.records).filter(r => r.kind === 'offer');
     assert.ok(offers.length > 0 && offers.every(r => r.quoted_description?.quoted === injection && !Object.hasOwn(r, 'description')));
 });
+test('model eval host: after a selection the model sees the accepted requirements, with a destination only as ship_to_on_file', async () => {
+    // J01 and J04 are the journeys with a model turn after a selection.
+    for (const id of ['J01', 'J04']) {
+        const c = fakeCollector(), j = journeys.journeys.find(x => x.id === id);
+        await shoppingEpisode(c, 'L', 'journey/' + id + '/1', j);
+        const last = JSON.parse(c.requests.at(-1).contents[0].parts[0].text);
+        const req = last.context.filter(e => e.shown_in_interface === true).flatMap(e => e.records).filter(r => r.kind === 'requirements');
+        assert.ok(req.length >= 1, id + ' requirements not shown');
+        assert.equal(req.at(-1).ship_to_on_file, true, id);
+        assert.equal(req.at(-1).language, j.requirements.language, id);
+        const raw = JSON.stringify(c.requests.map(r => r.contents));
+        for (const secret of ['dest_hk', 'dest_us', 'destination_ref', 'budget_minor'])
+            assert.equal(raw.includes(secret), false, id + ' leaks ' + secret);
+    }
+});

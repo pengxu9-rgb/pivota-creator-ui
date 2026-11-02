@@ -9,7 +9,9 @@ const endpoint = arm => 'https://aiplatform.googleapis.com/v1/projects/pivota-pr
 const BUDGETS = Object.freeze({ calls: 1500, calls_per_arm: 750, input_tokens: 15000000, usd: 25, usd_per_arm: Object.freeze({L:5,P:20}), concurrency: 2, minimum_launch_minutes: 45, refresh_minutes: 10, prompt_reservation_cap: 200000, output_reservation_cap: 2048 });
 // Harness check only: L alone, never scored.
 const SMOKE_BUDGETS = Object.freeze({ ...BUDGETS, calls: 80, calls_per_arm: 80, input_tokens: 2000000, usd: 1, usd_per_arm: Object.freeze({ L: 1, P: 0 }) });
-const PLANS = Object.freeze({ reduced: BUDGETS, smoke: SMOKE_BUDGETS });
+// Held-out compatibility contexts on L only; never combined with the reduced checkpoint.
+const COMPAT_BUDGETS = Object.freeze({ ...BUDGETS, calls: 2400, calls_per_arm: 2400, input_tokens: 12000000, usd: 5, usd_per_arm: Object.freeze({ L: 5, P: 0 }) });
+const PLANS = Object.freeze({ reduced: BUDGETS, smoke: SMOKE_BUDGETS, compatibility: COMPAT_BUDGETS });
 const STOP_RULES = Object.freeze({request_rejected:Object.freeze({consecutive_non_429_4xx:3,scope:'arm'}),access_denied:Object.freeze({statuses:Object.freeze([401,403]),scope:'global'})});
 function price(freeze, arm, input, output, thoughts = 0) {
     if (![input, output, thoughts].every(n => Number.isSafeInteger(n) && n >= 0))
@@ -41,7 +43,7 @@ function checkFreeze(freeze, artifactBytes) {
     if (freeze.stage !== '3a' || freeze.live_run_enabled !== false)
         throw Error('invalid_freeze');
     if (hash(freeze.stop_rules) !== hash(STOP_RULES)) throw Error('frozen_stop_rules_mismatch');
-    if (hash(freeze.budgets) !== hash(BUDGETS) || hash(freeze.smoke_budgets) !== hash(SMOKE_BUDGETS) || hash(freeze.models) !== hash(MODELS))
+    if (hash(freeze.budgets) !== hash(BUDGETS) || hash(freeze.smoke_budgets) !== hash(SMOKE_BUDGETS) || hash(freeze.compat_budgets) !== hash(COMPAT_BUDGETS) || hash(freeze.models) !== hash(MODELS))
         throw Error('frozen_limits_mismatch');
     for (const [arm, id] of Object.entries(MODELS)) {
         if (freeze.endpoints?.[arm] !== endpoint(arm))
@@ -308,4 +310,4 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
     }
     return Object.freeze({ run, request, channel, session, outcome, priorOutcome, state: () => copy(state), save, stop, close: () => { process.removeListener('SIGINT', onInt); process.removeListener('SIGTERM', onTerm); save(); } });
 }
-module.exports = { createCollector, checkFreeze, price, validUsage, atomic, MODELS, BUDGETS, SMOKE_BUDGETS, PLANS, STOP_RULES, endpoint, validateFrozenRequest };
+module.exports = { createCollector, checkFreeze, price, validUsage, atomic, MODELS, BUDGETS, SMOKE_BUDGETS, COMPAT_BUDGETS, PLANS, STOP_RULES, endpoint, validateFrozenRequest };

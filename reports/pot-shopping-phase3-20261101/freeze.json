@@ -96,6 +96,19 @@
       "faults": false,
       "compatibility": false,
       "scored": false
+    },
+    "compatibility_plan": {
+      "arms": [
+        "L"
+      ],
+      "contexts": 389,
+      "passes": 2,
+      "journeys": false,
+      "scored_by": "scoreCompatibility",
+      "thresholds": [
+        "compatibility",
+        "zero_catalog_hold_flips"
+      ]
     }
   },
   "stop_rules": {
@@ -126,9 +139,25 @@
     "prompt_reservation_cap": 200000,
     "output_reservation_cap": 2048
   },
+  "compat_budgets": {
+    "calls": 2400,
+    "calls_per_arm": 2400,
+    "input_tokens": 12000000,
+    "usd": 5,
+    "usd_per_arm": {
+      "L": 5,
+      "P": 0
+    },
+    "concurrency": 2,
+    "minimum_launch_minutes": 45,
+    "refresh_minutes": 10,
+    "prompt_reservation_cap": 200000,
+    "output_reservation_cap": 2048
+  },
   "review_go": {
     "smoke": "claude_3c_smoke_go",
-    "reduced": "claude_3c_reduced_go"
+    "reduced": "claude_3c_reduced_go",
+    "compatibility": "claude_3c_compat_go"
   },
   "harness_fix": "Post-hoc harness fix of 2 November 2026 after run 1 (3403bc9): fenced answer plans accepted, original user text bound by the server for search_catalog and get_offers, search_not_called rule, guard error listeners and sanitized fatal record. Run 1 stays in the record, unscored. Round 2 after the reduced run: the model sees interface results (shown_in_interface) through the privacy projection, a search plan counts any catalog read, the instruction states interface and privacy policy and slot-to-record rules, and sampling follows Gemini 3 guidance. The reduced run stays in the record.",
   "sampling_limitation": "Round 2 (2 November 2026, after the reduced run): temperature, topP and thinkingBudget removed and thinkingLevel LOW set on both arms, following Google guidance for Gemini 3 (thinkingBudget deprecated and can 400; temperature below 1.0 can loop; 3.5 Flash-Lite ignores custom sampling). LOW is the lowest level both models accept. Preflight proves acceptance only, not suitability.",
@@ -157,7 +186,7 @@
     }
   },
   "sampling_reason": "Vendor-default sampling, bounded 1024 output tokens and thinkingLevel LOW. Identical across arms; exact-model acceptance unverified until preflight. Unsupported configuration stops an arm; no substitution.",
-  "system_instruction_sha256": "696179a56235b197f7989040b793540ed2a5c23113465a73922dbeda91c48666",
+  "system_instruction_sha256": "910679f60e87d488d2ca633748637b0b8f553f7da5c53f471d7690fa9c1307cb",
   "declaration_set_sha256": "0d41c5cd491e9f941813761f1b82fdb742c8421983f6c5fef662da5ac9a3ea58",
   "dropped_schema_keywords": [
     {
@@ -696,31 +725,31 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/harness-fix-runtime.patch",
-      "sha256": "f75dfda2f941894cefce740a12a296644f6570f0c704ffb8819e9f0be89831c3"
+      "sha256": "dc315a59beb40f102acc276e4f5bd5f558ac7cc9721b074e95ab61785dbfd6f1"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/host-screen.test.cjs",
-      "sha256": "8eb3d85cf3c35c6e25504aff450617ddcdb97c08d7b657d34879c56ed73305fc"
+      "sha256": "9ce44fa84937a2dc90a8b7f1c40972a854d31ba523c3d95ad19ba10145174d28"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/launch-go.test.cjs",
-      "sha256": "e1180ca2cb2e48a72b9c29a5a23de7c5f5186758f57ab9ab6c6cf6d5f8109e3f"
+      "sha256": "1de7ab9d699b23bb74d22485b87cafc877c21d6b48c38f652e5425ff8c1eeeb2"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/live-host.cjs",
-      "sha256": "2531596f034a3c762b878c53a93933b8e3b9019041bbbb37adaf233da723143e"
+      "sha256": "118863691ed64c36ae63cc9c35e0c4d290ee1d2c6c834cc644507188b54e313b"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/mutations.cjs",
-      "sha256": "46477ebbe8b174535ff14a5ca66febf0cdc8876e851a672df20c4fbdacc4c5be"
+      "sha256": "98c022ae2a4051202c10b3211117d0d86a32b225213f1fb2d04c546154f5b651"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/orchestrate.cjs",
-      "sha256": "82d84e26be1f188d1b07f592067d40a30f779582fe8647754f35ad8421d2bedb"
+      "sha256": "44c9c1b37328548533e4e3f00efdd2f0658d97d24ef98fdae6737a38baf82a99"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/prepare-freeze.cjs",
-      "sha256": "5d50762a0ee3c5ea0a2b8310b3d74b4c3abb777ab1f45c761ccfd32ab4c754d7"
+      "sha256": "95417ba4e704eaaf5c0ca8a384c88d7e335542df06a65a244d27f4b3c6f7a1bf"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/prepare-scenarios.cjs",
@@ -733,6 +762,10 @@
     {
       "path": "reports/pot-shopping-phase3-20261101/qualify-arm-resume.cjs",
       "sha256": "60a8bd2a32fde7ba64b74d0f46d645eb9bcadd689c57ccf2481c009eaa63c2c7"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/qualify-compat.cjs",
+      "sha256": "07536629876c70f2426d26084154efbc4e7044277ceb2c60e4d034a31a3fb8d1"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/qualify-corpus.cjs",
@@ -752,7 +785,7 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/qualify-reduced-plan.cjs",
-      "sha256": "5493bddc996eb78a09b618cef17d912ce1a72d76f3ff6c082483c40cb8f6586e"
+      "sha256": "3a9906917fe29495211ecba459dad51d0b898b859ced2e78ddbc05ddc41fff61"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/qualify-smoke.cjs",
@@ -768,7 +801,7 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/token-launch.py",
-      "sha256": "1221b51350e6d285c027f903da42bae902b1aee8ebcf6777d5b3231eefe3b46b"
+      "sha256": "9a2ca1bf562f946523ab62967a4be6fad2d898e1241f86df2190764839448205"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/vertex-allowlist-guard.cjs",
@@ -892,7 +925,7 @@
     },
     {
       "path": "src/lib/pokemon/shopping/model/collector.cjs",
-      "sha256": "14b2d14cdb34139f0ab1d92eecb61235fc7f3b1a71bd277e2520947414615f17"
+      "sha256": "b5ea07fa76cde9053a677a750d4d0ea8ac8c8a36b29a4e7b2acb2ac90db9a726"
     },
     {
       "path": "src/lib/pokemon/shopping/model/compatibility.cjs",
@@ -900,7 +933,7 @@
     },
     {
       "path": "src/lib/pokemon/shopping/model/context.cjs",
-      "sha256": "870e25f7af0a5e45370684b8494493ab917c828a6d1e4ca8387de08b5ca3b028"
+      "sha256": "ad855589e6c727989e19fec8b102d3aac9c4ed0972ccdd880f4e49e7c74187fd"
     },
     {
       "path": "src/lib/pokemon/shopping/model/declarations.cjs",
@@ -912,11 +945,11 @@
     },
     {
       "path": "src/lib/pokemon/shopping/model/scoring.cjs",
-      "sha256": "835dfd55abc8164de42950cc5fc9a99f79abcb570c612020703e93b734ea560b"
+      "sha256": "39403af95ee4e272a27df619c719450b12fe52aa756c5bc074c76366137f773a"
     },
     {
       "path": "src/lib/pokemon/shopping/model/turn.cjs",
-      "sha256": "a10fa5882ba811ebede5df5499d5b8430ce499171736914c234d3fed610a6048"
+      "sha256": "7ccb020579bda7ca642bdf0b78faca51d6bb5a1209315d025ef2d460f0e47586"
     },
     {
       "path": "src/lib/pokemon/shopping/model/vertex-request.cjs",
@@ -948,7 +981,7 @@
     },
     {
       "path": "tests/fixtures/shopping-model-eval/corpus-plan.json",
-      "sha256": "91f33313f0741fd9dc1d20dbad625d60529b19d7d81c7889a8bb227e8c4f1fec"
+      "sha256": "cc25a78b98a8045ee613fdd858f3aab80208f3d5f0cd4262d8fbaa6543f582eb"
     },
     {
       "path": "tests/fixtures/shopping/adversarial.json",
@@ -988,7 +1021,7 @@
     },
     {
       "path": "tests/shopping/model/collector.test.cjs",
-      "sha256": "1fd17bbc88ae717887c5e6a0bcd397c5c4fb8cce853fd50f09e2961e8a671421"
+      "sha256": "30fa787f88b57bc2a040293f07fe1fa7f052b5e0e31fd5c208f1d61ed56f4a64"
     },
     {
       "path": "tests/shopping/model/compatibility.test.cjs",
@@ -996,7 +1029,7 @@
     },
     {
       "path": "tests/shopping/model/harness-fix.test.cjs",
-      "sha256": "5e30f047c2607efc5b45ae3b1b99c5b22b3465f58d642f5c471fa05a8e61f586"
+      "sha256": "ca9d968d037c334455cd9266b43701ece1f1ef2b10082822c14bc7771b60832c"
     },
     {
       "path": "tests/shopping/model/reduced.test.cjs",

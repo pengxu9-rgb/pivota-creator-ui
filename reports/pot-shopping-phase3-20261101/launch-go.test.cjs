@@ -10,8 +10,8 @@ test('model eval harness fix: each plan launches only with its own go string, be
     const saved = { go: process.env.POT_SHOPPING_REVIEW_GO, expires: process.env.POT_LIVE_TOKEN_EXPIRES_AT };
     delete process.env.POT_LIVE_TOKEN_EXPIRES_AT;
     try {
-        assert.deepEqual(REVIEW_GO, { smoke: 'claude_3c_smoke_go', reduced: 'claude_3c_reduced_go' });
-        for (const [plan, go] of [['smoke', 'claude_3c_reduced_go'], ['reduced', 'claude_3c_smoke_go'], ['smoke', 'claude_3a_go'], ['reduced', 'claude_3a_go'], ['smoke', undefined]]) {
+        assert.deepEqual(REVIEW_GO, { smoke: 'claude_3c_smoke_go', reduced: 'claude_3c_reduced_go', compatibility: 'claude_3c_compat_go' });
+        for (const [plan, go] of [['smoke', 'claude_3c_reduced_go'], ['reduced', 'claude_3c_smoke_go'], ['smoke', 'claude_3a_go'], ['reduced', 'claude_3a_go'], ['smoke', undefined], ['compatibility', 'claude_3c_reduced_go'], ['reduced', 'claude_3c_compat_go'], ['compatibility', 'claude_3c_smoke_go']]) {
             if (go === undefined) delete process.env.POT_SHOPPING_REVIEW_GO; else process.env.POT_SHOPPING_REVIEW_GO = go;
             await assert.rejects(main('L', raw, freezeHash, plan), /claude_exact_freeze_review_required/, plan + ' with ' + go);
         }
@@ -19,7 +19,7 @@ test('model eval harness fix: each plan launches only with its own go string, be
         await assert.rejects(main('L', raw, freezeHash, 'bogus'), /exact_plan_required/);
         await assert.rejects(main('L', raw, 'f'.repeat(64), 'smoke'), /claude_exact_freeze_review_required/);
         // The right go and freeze pass the gate and stop at the token rule, before stdin is read.
-        for (const plan of ['smoke', 'reduced']) {
+        for (const plan of ['smoke', 'reduced', 'compatibility']) {
             process.env.POT_SHOPPING_REVIEW_GO = REVIEW_GO[plan];
             await assert.rejects(main('L', raw, freezeHash, plan), /cached_token_requires_45_minutes/, plan);
         }
