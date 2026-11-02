@@ -185,3 +185,15 @@ test('model eval harness fix: attached interface actions are listed, and the con
     await runner.turn({ text: 'Pikachu', task_ref: h.taskRef, bindings: { select_offer: { human_action_ref: 'x' }, not_a_tool: {} } });
     assert.deepEqual(JSON.parse(requests[0].contents[0].parts[0].text).interface_actions_attached, ['select_offer']);
 });
+test('model eval harness fix: a failed catalog read does not make a search plan truthful, and the search tools are exactly the catalog reads', async () => {
+    const { SEARCH_TOOLS } = require('../../../src/lib/pokemon/shopping/model/turn.cjs');
+    assert.deepEqual([...SEARCH_TOOLS], ['search_catalog', 'get_offers', 'get_product', 'get_alternatives', 'compare_offers']);
+    const { select, preview } = require('../helpers.cjs');
+    const h = setup(), shown = [{ ok: true, result: await select(h) }, { ok: true, result: await preview(h) }], results = [];
+    const responses = [reply([call('get_product', { task_ref: h.taskRef, printing_ref: h.state().selection.id })]), text(planJson('search'))];
+    const runner = createJourney({ transport: async () => responses.shift(), port: createModelPort(async (p, n, a) => { const out = await h.shop.call(p, n, a); results.push(out); return out; }, h.principals.model), fallback: async input => h.shop.call(h.principals.ui, 'search_catalog', { task_ref: h.taskRef, text: input.text }), renderClaim: c => h.shop.render(h.principals.ui, h.taskRef, c) });
+    const r = await runner.turn({ text: 'Preview selected listing A', task_ref: h.taskRef, initialResults: shown });
+    assert.equal(results.length, 1);
+    assert.equal(results[0].ok, false);
+    assert.equal(r.reason, 'search_not_called');
+});

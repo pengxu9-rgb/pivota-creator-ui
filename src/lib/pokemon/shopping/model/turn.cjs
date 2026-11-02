@@ -78,12 +78,13 @@ function createJourney({ transport, port, fallback, renderClaim, onUseful = () =
         const context = contexts.get(task_ref) || createContext(task_ref);
         contexts.set(task_ref, context);
         let turnCalls = 0, turnTools = 0, currentFunctionNames=[], searched = false;
-        // The screen is projected first, so it reaches later turns even when this one falls back.
-        for (const r of initialResults)
-            context.project(r, 'interface');
         const attached = Object.keys(bindings).filter(name => allowed.has(name)).sort();
-        const audit = [], contents = [{ role: 'user', parts: [{ text: JSON.stringify({ text, task_ref, context: context.snapshot(), accepted_context: safeValue(modelContext), interface_actions_attached: attached }) }] }];
+        const audit = [], contents = [{ role: 'user', parts: [{ text: '' }] }];
         try {
+            // The screen is projected before the privacy check, so it reaches later turns even when this one falls back.
+            for (const r of initialResults)
+                context.project(r, 'interface');
+            contents[0].parts[0].text = JSON.stringify({ text, task_ref, context: context.snapshot(), accepted_context: safeValue(modelContext), interface_actions_attached: attached });
             if (privateText(text))
                 throw Error('private_user_event');
             while (true) {
@@ -131,7 +132,8 @@ function createJourney({ transport, port, fallback, renderClaim, onUseful = () =
                 // function responses from the parallel model batch return in one user part.
                 for (const { name, full, id } of calls) {
                     const result = await execute(name, full);
-                    if (SEARCH_TOOLS.includes(name))
+                    // Only a catalog read that succeeded makes a "search" plan truthful.
+                    if (SEARCH_TOOLS.includes(name) && result.ok === true)
                         searched = true;
                     audit.push({ tool: name, ok: result.ok, code: result.error?.code || null });
                     const safe = context.project(result);

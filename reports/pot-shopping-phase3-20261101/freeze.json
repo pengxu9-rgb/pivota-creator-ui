@@ -696,11 +696,11 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/harness-fix-runtime.patch",
-      "sha256": "bb8baa9f4f907ebae861edc174909764fdb7e2c27df38a44572ab766c75af82b"
+      "sha256": "f75dfda2f941894cefce740a12a296644f6570f0c704ffb8819e9f0be89831c3"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/host-screen.test.cjs",
-      "sha256": "f021e33eb50fb04a9209e3e310b1f08caaca27e3992be0ee5aa708e7aa06bbb1"
+      "sha256": "8eb3d85cf3c35c6e25504aff450617ddcdb97c08d7b657d34879c56ed73305fc"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/launch-go.test.cjs",
@@ -712,7 +712,7 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/mutations.cjs",
-      "sha256": "8f1cba7cb14227f535e5ce57105eecc46b769c99984a4a2004c82b2096bb8e69"
+      "sha256": "46477ebbe8b174535ff14a5ca66febf0cdc8876e851a672df20c4fbdacc4c5be"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/orchestrate.cjs",
@@ -752,7 +752,7 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/qualify-reduced-plan.cjs",
-      "sha256": "6cea417b3c7deddebeb58119e606c134eb4856499caf4fc95389459018ee7fc9"
+      "sha256": "5493bddc996eb78a09b618cef17d912ce1a72d76f3ff6c082483c40cb8f6586e"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/qualify-smoke.cjs",
@@ -916,7 +916,7 @@
     },
     {
       "path": "src/lib/pokemon/shopping/model/turn.cjs",
-      "sha256": "c7edad154b0a8fb785753b211be6856dcb6d8a33be57b42cb3de996792ed272d"
+      "sha256": "a10fa5882ba811ebede5df5499d5b8430ce499171736914c234d3fed610a6048"
     },
     {
       "path": "src/lib/pokemon/shopping/model/vertex-request.cjs",
@@ -996,7 +996,7 @@
     },
     {
       "path": "tests/shopping/model/harness-fix.test.cjs",
-      "sha256": "113fb14f6d5c10e3b1540da3e587ea76aab93fe39e323c2416dc81971bdebf07"
+      "sha256": "5e30f047c2607efc5b45ae3b1b99c5b22b3465f58d642f5c471fa05a8e61f586"
     },
     {
       "path": "tests/shopping/model/reduced.test.cjs",

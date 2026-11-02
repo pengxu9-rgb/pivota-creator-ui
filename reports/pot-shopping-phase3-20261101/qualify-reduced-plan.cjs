@@ -27,7 +27,7 @@ assert.deepEqual(freeze.smoke_budgets,{...base.budgets,calls:80,calls_per_arm:80
 assert.equal(fs.readFileSync(root+'/tests/fixtures/shopping-model-eval/compatibility-mapping.json','utf8'),show('tests/fixtures/shopping-model-eval/compatibility-mapping.json'));
 assert.equal(freeze.corpus_plan.compatibility.enabled,false);assert.equal(freeze.corpus_plan.journeys.length,4);assert.ok(freeze.corpus_plan.journeys.every(j=>j.repetitions===10));assert.equal(freeze.corpus_plan.adversarial.ids.length,12);assert.equal(freeze.corpus_plan.faults.ids.length,6);
 // Every runtime file's diff against d0e951a must equal the committed, reviewed patch byte for byte.
-const RUNTIME=['src/lib/pokemon','tests/fixtures/shopping','tests/fixtures/shopping-model-eval','tests/shopping/helpers.cjs','tests/shopping/evaluate.cjs','reports/admission-kernel-live-model',
+const RUNTIME=['src/lib/pokemon','tests/fixtures/shopping','tests/fixtures/shopping-model-eval','tests/shopping/helpers.cjs','tests/shopping/evaluate.cjs','tests/shopping/model/scenarios.cjs','reports/admission-kernel-live-model',
  ...['orchestrate.cjs','live-host.cjs','vertex-allowlist-guard.cjs','token-launch.py','score.cjs','declarations.json','published-prices.json'].map(f=>'reports/pot-shopping-phase3-20261101/'+f)];
 const runtimeDiff=()=>cp.execFileSync('git',['-c','core.quotePath=true','diff','--no-color','--no-ext-diff','--no-textconv','--no-renames','--diff-algorithm=myers','--src-prefix=a/','--dst-prefix=b/','-U3',BASE,'--',...RUNTIME],{cwd:root,encoding:'utf8',maxBuffer:32000000});
 if(process.argv[3]==='--write-patch'){fs.writeFileSync(__dirname+'/harness-fix-runtime.patch',runtimeDiff());process.stdout.write('patch written\n');process.exit(0);}
