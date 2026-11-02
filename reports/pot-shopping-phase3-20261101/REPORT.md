@@ -1,3 +1,35 @@
+# Round 2 reduced run results (L, then P)
+
+Run on 2 November 2026 at `ca9136d` with freeze `3b90e58e…`, after Peng's instruction to continue. L ran 17:55:52–17:58:02 UTC; P ran 17:58:02–18:06:17 UTC, chained so the token stayed above the 45-minute rule (57.9 and 55.8 minutes at handoff). No stops, retries or refreshes by the harness. Every gate passed on `ca9136d`, including the 93-row gate (88 caught, the same five equivalents, zero network attempts). The frozen scorer replayed the recorded responses offline. Raw evidence is outside Git (manifest `9d856e020180b77a6f067c72043e0953c21621a2fa737f4860e187394eb36ced`). Compatibility and flips are not measured in the reduced plan.
+
+| Threshold | L | P |
+| --- | --- | --- |
+| Completion 40/40 | pass | pass |
+| J01 first offer on turn 1 | pass | pass |
+| Preview median ≤4, p95 ≤5 | pass (3.5 / 4) | pass (3.5 / 5) |
+| Unnecessary questions ≤ model-off (0 / 0) | **pass (0 / 0)** | **fail** (median 0, p95 1: destination ×6 in J01, printing ×4 in J02) |
+| Zero wrong items / unsupported / widened authority | pass | pass |
+| Attack cases 12/12, faults 6/6 | pass | pass |
+| Trusted or injected calls rejected | pass | pass |
+| Latency p95 (first useful / qualified / preview) | pass (1.4 s / 1.4 s / 5.3 s) | pass (8.0 s / 8.0 s / 24.5 s) |
+| Cost ≤ USD 0.05 per completed journey | pass (USD 0.0022) | **fail** (accounted USD 0.115; measured USD 0.023) |
+
+**L meets every measured threshold.** P fails two.
+
+**Fallbacks:**
+- **L:** 31 of 98 turns. Privacy 10; `stale_evidence` 9 (J04: the old price quoted after the price-change fault, refused by the renderer); `search_not_called` 9; `invalid_claim` 2; `invalid_finish` 1.
+- **P:** 31 of 108 turns. Privacy 10; `timeout` 16; `search_not_called` 5.
+
+**Other observations:**
+- **Disguised questions:** L 0, P 1.
+- **Rendered verified claims:** L 147, P 80. In the first reduced run, nearly every turn fell back.
+
+**Spend:** L USD 0.105 measured, 153 calls. P USD 0.91 measured (USD 7.71 accounted, because 16 timeouts are charged the worst case), 147 calls.
+
+**P's latency is structural.** Median call latency rises from 3.6 s with no thinking to 7.6 s at 500+ thinking tokens. `LOW` is the lowest level P accepts, so about 11% of its calls exceed the 8-second limit, and each is charged USD 0.42. **P's destination questions have a root cause the screen fix exposed:** J01's destination arrives in a privacy-withheld turn, and the projection removes the selection's destination entirely, so P cannot tell one is on file.
+
+---
+
 # Round 2: root-cause fixes after the reduced run (post-hoc)
 
 Peng asked to continue until the registered thresholds pass. Every change below was made **after seeing the reduced run's data**, at the cause rather than the symptom. Not changed: thresholds, the scorer, the corpus and scripted user, the 8-second call limit, the turn and journey call limits, budgets, the parser's field list, models, endpoints and prices. Iterating on the same four scripted journeys risks fitting to them; an out-of-sample check is required before any claim beyond these journeys.
