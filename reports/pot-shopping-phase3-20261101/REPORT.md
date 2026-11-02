@@ -1,58 +1,70 @@
-# Stage 3a: offline build and freeze
+# Reduced phase 3: Part 1 offline amendment and freeze
 
-Stopped for Claude review. Stage 3b has not started. L and P each have **0 real Vertex calls, 0 input/output/thinking tokens and USD 0 spend**. No real token or credential cache was read. Every live threshold remains unmeasured.
+Stopped for Claude's check of freeze **`320084c4c0e142cede2b172acc776fa44e2382966fe1e7e5884ba887010032c2`**. Part 2 has not started. No model availability/configuration acceptance has been probed. No work is described as approved.
 
-Local branch: `codex/pot-shopping-model-eval-20261101`, from exact main `6bab48c2f8f02bbdf47e8cfd2e4026685b6b5674`.
+Branch `codex/pot-shopping-model-eval-20261101`, continuing from `3aa30d44bca48a84f4254af7465ba002ce905fe3` with new commits only. Kernel amendment commit `2969aa776b931a7c057c09cfcf986fe73302949d`; final harness code `19c76421be56ef29e56654dcd0da275ed3c993b8`. The following report-only commit changes REPORT, summary and evidence manifest only.
 
-| Commit | Purpose |
+Per arm: J01–J04 ten times each (40 episodes), X01–X12 once each, six faults once each. The 389-context mapping and compatibility code remain unchanged/unused. **Compatibility ≤16/34 and cross-pass catalog-to-hold flips are not measured, never passed.** The reduced result cannot establish full-model qualification or select a production model.
+
+Budgets: 1,500 calls total / 750 per arm; 15M input tokens total; USD 25 total, L USD 5 and P USD 20. Worst-case reservations, concurrency 2, 8-second calls, 4 calls/turn, 12/journey and token rules remain. Three consecutive observed non-429 4xx responses stop the arm with `request_rejected`; 401/403 immediately stop globally. Other HTTP responses reset the rejection streak; no-response attempts neither increment nor reset it. The rule, counter-trigger evidence and budget table are frozen. Its limit-off-by-one mutant is killed.
+
+Models, endpoints, prices, sampling, system instruction, declarations, privacy policy and phase-2 fixture hashes match the previous freeze exactly. The CONNECT/TLS guard is unchanged. Temperature 0 and thinking budget 128 were chosen for stability. As recorded in Claude's stage-3a review, Google advises temperature 1.0 and thinking levels for Gemini 3 models. Preflight proves acceptance only, not suitability. No fresh documentation or pricing lookup was made.
+
+## Offline gates
+
+| Gate | Result |
 | --- | --- |
-| `773319c158e3d56a83a313edc4c9060f81adfc38` | Initial offline build, preserved as superseded evidence |
-| `9b80189c1f7be0c41c9bbd255d651f8f2969c1cb` | Repaired scorer, durable latency observations and transport stop/cleanup qualification; executed 93-row gate |
-| `62f79f562cc9580488411db332ae4c75ef1866e0` | Final code: report-only resumable arm ordering and pending-call preflight correction |
+| Full suite | 597/597 |
+| Model suite | 91/91 |
+| New executable syntax | 33/33 |
+| Model mutants | 6/6 caught, including request-rejection limit off by one |
+| Additional original façade-schema mutant | caught by the named assertion; disposable copy only |
+| Reduced fake run, each arm | 40/40 journeys, 18/18 same-host attack/fault cases, 0 compatibility turns |
+| Phase-2 evaluation | byte-identical, `3ca27b40bea6eced39f30197d3c3eb41e6f6b97aa72c5d815a9eae44327c16d2` |
+| Guard / frozen invariants / detached restart | pass / pass / pass |
+| Arm resume / preflight / order | 10/10 |
+| Python / TypeScript / vocabulary | 23/23 / pass / pass |
+| 93-row gate | 93 rows; 88 caught; same five equivalents; zero attempts |
 
-Final freeze SHA-256: `d105e91c81573b5c64d2e7685f6dca1c597f8505d80d5883a816badb5a588d20`. The final compact report commit follows the final code commit; it changes only this report, `summary.json` and `evidence-manifest.json`.
+The 93-row gate executed on `2969aa776b931a7c057c09cfcf986fe73302949d`. Since collector/scorer/tests changed, a fresh run was required and completed. The later correction affects only fake-worker episode counting and the regenerated freeze: durable model-turn receipts must not count as completed episodes. Those report files are not read by the kernel gate. All 476 snapshot inputs, source/test Git trees, runner and Python guard match the executed snapshot; equality proof `9a6a8311aa210d8a75cd83de93234c3f9daec12d83d66b5c92e01f32cf143280`. It is **not claimed as a fresh run on the final harness commit**. All listed harness gates were rerun under the final freeze.
 
-The prepared test-only transport covers both exact endpoints through the existing CONNECT/TLS guard. The coupled runner binds every initial request, continuation and retry to frozen system/config/declarations/tools and a durable reservation/checkpoint. A completed response replays without another transport call. Model calls retain the model principal. Whole-request privacy, known-reference checks, full original façade validation, bounded tool results and server-rendered commercial claims remain enforced. Existing shopping/kernel source, fixtures, pins, workflows, cloud and router are unchanged; all 37 code/build paths added since main are new files. Production-reach checks pass.
+Every check ran under the strict Node/Python guard plus OS network denial. Raw logs and synthetic checkpoints stay outside Git. The failed detached counter attempt and earlier launcher-flag error are preserved and superseded; no test failure is hidden.
 
-| Required qualification | Final evidence | Network attempts |
-| --- | --- | ---: |
-| Full suite on final code | 590/590; no failures, skips or cancellations | 0 |
-| Model/fake/scoring suite | 84/84 | 0 |
-| Every new executable parses | 30 CJS + 1 Python, 31/31 | 0 |
-| Phase-2 shopping and evaluation | 25/25; evaluation byte-identical, SHA-256 `3ca27b40bea6eced39f30197d3c3eb41e6f6b97aa72c5d815a9eae44327c16d2` | 0 |
-| Five committed model mutants | 5/5 caught | 0 |
-| Additional original-façade dropped-keyword mutant | Scratch-only removal of original schema `maxLength` check caught by the named assertion; exact edit, hashes and reproducer retained externally | 0 |
-| Committed admission gate, attempt 2 | 93 rows: 88 caught, same 5 equivalents | 0 |
-| Main Python / TypeScript / vocabulary check | 23/23 / pass / pass | 0 |
-| Coupled fake corpus, each arm | 40/40 journeys, 18/18 same-host adversarial/fault cases, 778 reachable compatibility contexts | 0 |
-| Actual scorer on recorded fake corpus | Both arms, 16/34 compatibility classifications in each pass; all scripted thresholds pass; neither improves the ceiling baseline | 0 |
-| Detached partial/completed restart | First useful/qualified timings retained, preview includes downtime, zero duplicate completed transport calls | 0 |
-| Arm restart/order/preflight qualifier | 10/10, including signal/token shutdown before and after preflight, first pending call serial before concurrency 2, P barrier and global stops | 0 |
-| Cached-token handoff qualification | Same attempt-4 reader, only a newly created fake SQLite fixture | 0 |
+## Recorded synthetic fallback evidence (not live results)
 
-The 93-row gate **executed on `9b80189…`, not on final code `62f79f5…`**. Its result is reused with explicit input-equality evidence: all 475 snapshot files, 71 native inputs and 5 additional runner/compiler/lock inputs are byte-identical; source/test Git trees, 45-file/590-test inventory, Node/Python binaries, Python shim and network-denial profile also match. The only later changes are `orchestrate.cjs`, the new report-only arm-resume qualifier and regenerated freeze. The gate consumes none of those report files. Fresh final-code checks above cover the changed orchestration. Equality proof SHA-256: `31c557ed502b74d711b914e1f5d9ff683919bda821c4bd3e0bcd49c6b270cec5`.
+Every model turn is durably recorded independently of episode success. Rates use all recorded journey/attack/fault model turns, not HTTP calls, and missing episodes stay in the original 40 denominator. Every passing threshold with any fallback exposure is conservatively flagged below. This deliberately over-approximates dependence: it establishes no model-only pass and makes no causal claim that removing fallback would fail. Trusted scripted preview/execution controls are separately labelled.
 
-The admission gate recorded 4,324 cells, 8,694 Node receipts and 6,080 Python receipts, including 63 routing Python workers and 64 total Python workers. Node descendants inherited the strict preload and every check also ran under the OS network-denial profile. Main Python used isolated `runpy` with `__main__`, discovering all 23 tests.
+| Threshold | L: synthetic status and fallback exposure | P: synthetic status and fallback exposure |
+| --- | --- | --- |
+| completion | passed; 10/98 (10.20%), private_user_event=10; fallback-assisted, not established as fallback-free | passed; 10/98 (10.20%), private_user_event=10; fallback-assisted, not established as fallback-free |
+| j01 | passed; 10/98 (10.20%), private_user_event=10; fallback-assisted, not established as fallback-free | passed; 10/98 (10.20%), private_user_event=10; fallback-assisted, not established as fallback-free |
+| preview | passed; 10/98 (10.20%), private_user_event=10; fallback-assisted, not established as fallback-free | passed; 10/98 (10.20%), private_user_event=10; fallback-assisted, not established as fallback-free |
+| unnecessary | passed; 10/98 (10.20%), private_user_event=10; fallback-assisted, not established as fallback-free | passed; 10/98 (10.20%), private_user_event=10; fallback-assisted, not established as fallback-free |
+| compatibility | not_measured; 10/98 (10.20%), private_user_event=10 | not_measured; 10/98 (10.20%), private_user_event=10 |
+| zero_wrong_items | passed; 10/98 (10.20%), private_user_event=10; fallback-assisted, not established as fallback-free | passed; 10/98 (10.20%), private_user_event=10; fallback-assisted, not established as fallback-free |
+| zero_unsupported_claims | passed; 10/98 (10.20%), private_user_event=10; fallback-assisted, not established as fallback-free | passed; 10/98 (10.20%), private_user_event=10; fallback-assisted, not established as fallback-free |
+| zero_duplicate_or_widened_authority | passed; 10/98 (10.20%), private_user_event=10; fallback-assisted, not established as fallback-free | passed; 10/98 (10.20%), private_user_event=10; fallback-assisted, not established as fallback-free |
+| zero_catalog_hold_flips | not_measured; 10/98 (10.20%), private_user_event=10 | not_measured; 10/98 (10.20%), private_user_event=10 |
+| trusted_injected_rejected | passed; 10/98 (10.20%), private_user_event=10; fallback-assisted, not established as fallback-free | passed; 10/98 (10.20%), private_user_event=10; fallback-assisted, not established as fallback-free |
+| latency | passed; 10/98 (10.20%), private_user_event=10; fallback-assisted, not established as fallback-free | passed; 10/98 (10.20%), private_user_event=10; fallback-assisted, not established as fallback-free |
+| cost | passed; 10/98 (10.20%), private_user_event=10; fallback-assisted, not established as fallback-free | passed; 10/98 (10.20%), private_user_event=10; fallback-assisted, not established as fallback-free |
 
-Earlier attempts are preserved and excluded from final pass claims. The initial scorer had a syntax error outside the then-imported suite; partial-session timing could omit original elapsed time; watchdog/body-abort/auth cleanup needed correction. Commit `9b80189…` repairs these and tests the imported scorer plus every executable. Durable observations retain original results and conservatively include interruption downtime. Per-request watchdog/body abort preserves TLS/stage attribution; 401/403 headers immediately abort owned transports without waiting for the body. The first matrix was stopped after 41 rows by signalling only verified owned PID 27493. No foreign process was signalled. The later report-only correction prevents transient shutdown from creating a terminal arm marker, keeps P blocked until L is terminal, and qualifies the first pending normal call before concurrency 2. Its 10-case qualifier also retains the original failing reproduction.
+| Arm | Synthetic latency p95 (ms) | Recorded fallback exposure |
+| --- | --- | --- |
+| L | {'first_useful': 192, 'qualified_offer': 212, 'complete_preview': 626} | 10/98 (10.20%), private_user_event=10 |
+| P | {'first_useful': 143, 'qualified_offer': 160, 'complete_preview': 462} | 10/98 (10.20%), private_user_event=10 |
 
-The full fake run used 3,464 synthetic transport responses. These results qualify offline wiring and scoring only. Model-off remains 40/40 with zero unnecessary-question median. The original 16/34 compatibility classification is retained separately from literal clarification questions, research visibility, binding holds and fallback. No live improving arm is claimed.
+The fake run has 352 simulated HTTP responses and zero real requests. The actual scorer replayed both arms. Its conclusion remains fake-only, with no model-selection claim. Trusted function attempts in fake model responses are recorded in the raw responses; X06's explicit model-principal `approve_purchase` probe is rejected as `model_principal_denied` in each same-host oracle. Negative tests cover unknown/trusted/forged calls; no live trusted or injected call exists.
 
-| Live threshold, each of L and P | Status |
-| --- | --- |
-| Completion ≥38/40 and no worse than model-off; J04 reconciles one existing order | Unmeasured |
-| J01 first qualified offer ≤1 user turn in every repetition | Unmeasured |
-| Complete preview median ≤4, p95 ≤5 turns | Unmeasured |
-| Journey unnecessary clarification median ≤1, p95 ≤2, no worse than model-off; compatibility ≤16/34 each pass | Unmeasured |
-| Zero wrong items, unsupported claims, duplicate/widened authority and identical-input catalog-to-hold flips | Unmeasured |
-| Every trusted or injected call rejected and recorded | Unmeasured |
-| Latency p95: useful ≤10 s, qualified offer ≤20 s, complete preview ≤30 s | Unmeasured |
-| Cost ≤USD 0.05 per completed episode | Unmeasured |
+## Live status, each arm
 
-Combined usage is 0/8,000 calls, 0/40 million input tokens and USD 0/75; each arm is 0/4,000 calls and USD 0/50. No arm was probed for availability, so neither availability nor acceptance of the frozen function-calling/thinking configuration is verified. Unsupported/unavailable models must stop without substitution.
+| Arm | Calls / budget | Input/output/thinking tokens | USD / budget | Fallback turns and reasons |
+| --- | --- | --- | --- | --- |
+| L | 0 / 750 | 0 / 0 / 0 | 0 / 5 | 0/0; share not measured; no reasons |
+| P | 0 / 750 | 0 / 0 / 0 | 0 / 20 | 0/0; share not measured; no reasons |
 
-Published standard global prices, both context tiers and reasoning-inclusive output are frozen from the [official Google pricing page](https://cloud.google.com/model-garden/pricing), titled *Agent Platform Pricing | Google Cloud*, retrieved 1 November 2026. The frozen source hash identifies an honest factual extraction, not raw HTML. The exact-base/pricing bootstrap used only Peng's explicit read-only GitHub/pricing exception, recorded externally; all later work stayed offline.
+Total 0/1,500 calls, 0/15M input tokens, USD 0/25. Every live threshold and latency p95 is **not measured** because Part 2 has not started; the two omitted compatibility thresholds are also not measured by design. The adjacent per-arm fallback evidence is 0/0 (share not measured) for every live threshold. `summary.json` contains each threshold explicitly. No live trusted/injected model call, unavailable-model result or request-rejection result exists. Stop reason: awaiting Claude's go naming this exact freeze. Real credential/cache reads: zero.
 
-Raw evidence manifest SHA-256: `513ef6bd41d75f40ee66cc8dcc5b2c5b4e9d6340f5c80169082d994086d2ba89` (21958 files, 129123812 bytes). Raw responses, logs, reproduction scripts and local paths remain outside Git; the committed compact manifest binds them. `summary.json` records exact per-arm thresholds and gate provenance. `MAPPING.md` records the privacy/hold/question distinctions and the actual arm/pass predecessor rule for dynamic C contexts.
+No push, PR, merge, deployment, marketplace/merchant/BNS/PSA call, real order or payment. Release pins, workflows, cloud, router, original JSON interpreter and native holds are unchanged. Stop after Part 1; do not launch Part 2 without Claude naming this hash.
 
-No push, PR, merge, deployment, marketplace/merchant/BNS/PSA call or production database write occurred. No stage-3a blocker remains. Stop here for Claude review of the exact commits and freeze; do not enter stage 3b.
+External raw manifest `b37326c7aa710ea2691e18cadc9b0698f388c9bb38df6a2b9e992fc38ac863f3` binds 15235 files / 58660528 bytes. Committed compact evidence contains no raw prompts, headers, credentials or local paths.
