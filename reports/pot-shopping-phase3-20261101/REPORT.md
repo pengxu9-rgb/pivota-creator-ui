@@ -52,6 +52,25 @@ The harness now records real model behaviour. Three fallbacks come from an inter
 
 Peng chose to fix the interface gap before the full run. The instruction now lists the allowed plan fields and claim slots. `PLAN_FIELDS` and `CLAIM_SLOTS` in `turn.cjs` are the single source. A test requires the instruction to name exactly those words, and the slots to equal the renderer's cases in `render.cjs`. Two mutants (a slot dropped from the instruction, a field added only to the parser) are killed. Nothing else changed: the `search_not_called` rule and every frozen setting stay as they were. This is another change made after seeing data. The first smoke run stays in the record.
 
+## Smoke run 2 (after the vocabulary fix; never scored)
+
+Run on 2 November 2026 at 11:13 UTC, at `2de29a1` with freeze `295eb720…`. Token handoff had 50.2 minutes left; no refresh. Raw evidence stays outside Git (manifest `42b0aa1cc8c4e238cbdbfaf5025a170c0c70e1cdf1ec6da725869efadf1d0edd`). All offline gates passed on `2de29a1`, including the 93-row gate (88 caught, the same five equivalents, zero network attempts).
+
+- **Calls:** 24, all HTTP 200. **USD 0.013 measured.** P: 0 calls.
+- **Episodes:** 8 of 8 completed; 0 wrong items, 0 unsupported rendered claims, 0 duplicate or widened authority.
+- **Invented names:** none. Claims used valid slots (`price`, `currency`, `item`).
+- **Fallbacks:** 9 of 16 turns.
+
+| Reason | Count | Cause |
+| --- | --- | --- |
+| `search_not_called` | 3 | After `get_offers`, the model labels its plan "search" |
+| `invalid_finish` | 2 | Vertex `MALFORMED_FUNCTION_CALL` |
+| `unsupported_claim` | 1 | A valid slot on a record without that value; the renderer refused |
+| `invalid_answer_plan` | 1 | `{"decision":"search"}` without `fields` and `claims` |
+| `private_user_event` | 2 | Privacy rule, by design |
+
+These are model behaviour, not interface gaps. Further instruction changes were declined, to avoid fitting the harness to one model after repeated looks at its output. The reduced run measures these rates on the full corpus.
+
 ## Independent adversarial review
 
 An independent agent reviewed `ef172b8` and `58e18f9` read-only and offline. **No P1.** Four P2s, all addressed:
