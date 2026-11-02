@@ -39,7 +39,8 @@ function planBody(raw) {
         throw Error('invalid_answer_plan');
     return { text: fenced[1], format: 'fenced' };
 }
-function answer(parts, context, renderClaim, { searched = true } = {}) {
+// searched must be passed explicitly; a missing flag counts as no search.
+function answer(parts, context, renderClaim, { searched = false } = {}) {
     if (parts.some(p => typeof p.text !== 'string' || Object.keys(p).some(k => !['text', 'thought', 'thoughtSignature'].includes(k))))
         throw Error('invalid_output');
     const { text: planText, format } = planBody(parts.map(p => p.text).join(''));
@@ -110,7 +111,10 @@ function createJourney({ transport, port, fallback, renderClaim, onUseful = () =
                     context.validateRefs(args);
                     const bound = { text };
                     const full = bindArguments(name, args, bindings, bound);
-                    return { name, full, id, model_query: bound.model_query };
+                    // Recorded at binding, so a later failure in the batch cannot lose it.
+                    if (bound.model_query !== undefined)
+                        audit.push({ tool: name, model_query: bound.model_query });
+                    return { name, full, id };
                 });
                 turnTools += calls.length;
                 toolCalls += calls.length;
@@ -118,11 +122,11 @@ function createJourney({ transport, port, fallback, renderClaim, onUseful = () =
                 const results = [];
                 // Serialized facade invocation avoids concurrent versioned mutations; all
                 // function responses from the parallel model batch return in one user part.
-                for (const { name, full, id, model_query } of calls) {
+                for (const { name, full, id } of calls) {
                     const result = await execute(name, full);
                     if (name === 'search_catalog')
                         searched = true;
-                    audit.push({ tool: name, ok: result.ok, code: result.error?.code || null, ...(model_query === undefined ? {} : { model_query }) });
+                    audit.push({ tool: name, ok: result.ok, code: result.error?.code || null });
                     const safe = context.project(result);
                     results.push({ functionResponse: { name, ...(id === undefined ? {} : { id }), response: safe } });
                     if (safe.ok && safe.records.length)

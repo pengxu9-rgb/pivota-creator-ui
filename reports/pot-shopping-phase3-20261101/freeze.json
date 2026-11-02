@@ -681,10 +681,6 @@
       "sha256": "6113efa139c9d64b8622b0c47c958ba0de7a25e3da9f41c69996321353f711ae"
     },
     {
-      "path": "reports/pot-shopping-phase3-20261101/declarations.json",
-      "sha256": "6113efa139c9d64b8622b0c47c958ba0de7a25e3da9f41c69996321353f711ae"
-    },
-    {
       "path": "reports/pot-shopping-phase3-20261101/detached-launch.cjs",
       "sha256": "ada0cee4a38163d465be58d072dfc9c3a959146e6ce09d8b264e3c5f0f0c1e5f"
     },
@@ -694,11 +690,15 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/guard-child.cjs",
-      "sha256": "53e468c8a8adb5029280c18ca84b8b23d31a3aac4a6cb94f85add4c613e51889"
+      "sha256": "2345554188921d83460e8902d67992b2917face57b778d855559d3ad0668f8b1"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/guard.test.cjs",
-      "sha256": "c85b6c06bbcd139ef8632710d2db59fa4cc69f1a2da32753902ee002100cbb14"
+      "sha256": "a6861ea6b02a4326ebe5b2780a3f1ed8be699104afd3c46a321b79102e299cc7"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/harness-fix-runtime.patch",
+      "sha256": "eb1dfdda7494196fe4374be424cfb84b75436fb692c0d039706ebdcf06bd2dba"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/launch-go.test.cjs",
@@ -710,7 +710,7 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/mutations.cjs",
-      "sha256": "8d3d7ee08aedaa02003cdeb7cd4096e9b04dc28cc949f213604aec4a82657511"
+      "sha256": "cd7f9e814e3f392b8fa5fb2324f622d8ba6ae51a026c765c1bfea6f8a0b33c02"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/orchestrate.cjs",
@@ -718,15 +718,11 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/prepare-freeze.cjs",
-      "sha256": "3becbfe97b6353bfe244c0e50db25aac53ca8ad44b7255e7a4dd46a1e0d93f35"
+      "sha256": "5534b32dee5a194dd7228382f4f29483b2c8c756f72b9c84ed3de4694d22a13a"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/prepare-scenarios.cjs",
       "sha256": "261ad096b40bf23cbf2e8483bab0444b33e73430563ae598b35d500f6dcc18f4"
-    },
-    {
-      "path": "reports/pot-shopping-phase3-20261101/published-prices.json",
-      "sha256": "b39291eab4bf92055b6b1ecff4dcb6a8504820daf320cb4b5270da888a9dc45e"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/published-prices.json",
@@ -746,7 +742,7 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/qualify-guard.cjs",
-      "sha256": "5bec365c87842b15b3739b46455ea4913d98ea38d62b34afa6c3a6e674b15f3f"
+      "sha256": "4b4f7a736cd317f301c54281b5d8bb79d6e8f95ff4d3c8600e3b4b30f0f24fe6"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/qualify-mapping.cjs",
@@ -754,7 +750,7 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/qualify-reduced-plan.cjs",
-      "sha256": "4773044caaab4687c130bd3461d6513bbb0681f5bd4e8e6885677cfebcd3ff46"
+      "sha256": "01b9ef8cfacf91138a3c4ad952d96f604130c78ece98c21f0807e18e2d9d761d"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/qualify-smoke.cjs",
@@ -774,7 +770,123 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/vertex-allowlist-guard.cjs",
-      "sha256": "fe3a13238728a497e5e0c848c7bf43099c92dacc0f7bf1d897c50cc2f2e959cc"
+      "sha256": "e230e13407cc6a551729bfabee0ec70a5db035ac1ace5077e28d5637167ecf33"
+    },
+    {
+      "path": "src/lib/pokemon/admission.cjs",
+      "sha256": "0002b573bb37536316218890a56575e7eb50411a8de1b0b6bdaba3f9719eb551"
+    },
+    {
+      "path": "src/lib/pokemon/catalogAdapter.cjs",
+      "sha256": "9b7acc3a75cffce2bcb7dad11356a0f6920b34c1591a271a49403bf61a85bf52"
+    },
+    {
+      "path": "src/lib/pokemon/chatTextIntent.cjs",
+      "sha256": "3880370526ba45ae1fb5822b4cea21f2032fe1a006c27363986ac60030f1d813"
+    },
+    {
+      "path": "src/lib/pokemon/modelRuntime.cjs",
+      "sha256": "5da6101468d86b01788c97878b838d628fd111b9ec5596170c78bf9111f66bf3"
+    },
+    {
+      "path": "src/lib/pokemon/modelTurn.cjs",
+      "sha256": "432b0a6b5060eb97caf318d399fd9acb7c4ca8960099e5ef3581b73765378b63"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/approve_purchase.schema.json",
+      "sha256": "9804f1483095a645095314ce0e034a2ba63216f5436ae26caaa3f4ef5b1bd539"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/common.schema.json",
+      "sha256": "d8cbefd4bf1cc5328efcf00615e450801498dff2cfa78f737886d9359ecd0fd3"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/compare_offers.schema.json",
+      "sha256": "8d34763f0d16c914b78bad17d20a992287ad7009df3c7bf31b98bc34989c6bd2"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/complete_checkout_session.schema.json",
+      "sha256": "25813080b199daa99050e2e0be963cd8533d2889f2f0576c5926fcf0a64a394a"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/create_checkout_session.schema.json",
+      "sha256": "d40d53acd5c0c3e4e7227db0de4a36f52b06806711b2052bec8e3446ffda9250"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/create_payment_link.schema.json",
+      "sha256": "d00d72bf481cc1d973c101cba0f57de490a4330a9db5360d5d5ee84f8ce61e6d"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/get_alternatives.schema.json",
+      "sha256": "c101ac45714f49308a5177fcec5cf5303b3df4afd68bf49ea7abb75ac1f46fde"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/get_checkout_session.schema.json",
+      "sha256": "477c116b87bfff9c592b9c37d694a7f2a5236255516dce19dcc80048b78dfe11"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/get_offers.schema.json",
+      "sha256": "bc69c57dbc3f347d82c18d3ca00c93b716152ad712a727698fe4a397f176d32e"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/get_operation.schema.json",
+      "sha256": "ba4e8a1992b290f8b6931a63edfc0694ffa39e64da218ff3fe49a5c9c238db63"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/get_order.schema.json",
+      "sha256": "adccb4f094ca9b0fdeea555eb39ab211f8a005f8cdecccbbb54fccd9a7748067"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/get_product.schema.json",
+      "sha256": "dd3e1e769cf95acf608bcacf5e8184e8da27e06ccb0c81a2be9f36a44e9a30af"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/lookup_certificate.schema.json",
+      "sha256": "e95a600c921b6132e6fca7cac343b618fb4bd99ea1ecad808f1fde906e2e8aa3"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/reconcile_operation.schema.json",
+      "sha256": "c162e618bdce1c994203c4ea366f0a9b53104125bdcc940812d3933b75e6b2e8"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/recover_operation.schema.json",
+      "sha256": "a6fa8c0e3adbddb12e8aeab3c6d3ae2472f9257acb1537c486f2ea70bf87085a"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/replay_same_key.schema.json",
+      "sha256": "53a99a72ca94b5ae6ccc21bbbd8f7cffbce3aee7a7f83da94ada561d8764a21f"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/request_after_sales.schema.json",
+      "sha256": "4a923aaf5c5f882b879f987d55dc499989225d8e78198ad97807a363287d5aff"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/request_refresh.schema.json",
+      "sha256": "272a2010f2ec1aec27027bc268997432a43b95df217209f436d7e6cd3fb4c83e"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/search_catalog.schema.json",
+      "sha256": "45291d276c86a2b614e353feb5b66648e7e2355438e4db5a00e4d14d2db7e528"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/select_offer.schema.json",
+      "sha256": "287a30c7751e87d407eb86f1bd3b95443db9c8cfafaeafbe493d277f2b207ab9"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/evidence.cjs",
+      "sha256": "8dddb218e0e4e241675ab8d9dd5e6beaec049ee577dd153c550d448aa20b54bb"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/exploration.cjs",
+      "sha256": "41d2b747723f4848e42b7b3e9d47abe8a4076b073de0627f0a479c827f111d08"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/facade.cjs",
+      "sha256": "d43a2e5012917bf78de4e283097a2aeb45af526e356734487467ff14d87b51a1"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/ledger.cjs",
+      "sha256": "59a706d39bc617ba174c2d2f286b8ff6da520883b3dde76fef93e259839e81b4"
     },
     {
       "path": "src/lib/pokemon/shopping/model/collector.cjs",
@@ -790,7 +902,7 @@
     },
     {
       "path": "src/lib/pokemon/shopping/model/declarations.cjs",
-      "sha256": "e9c9ad94190f503c99c951ba70410623ebf6d9d4e17293d1b0a89e4e9c0a2a94"
+      "sha256": "3c80a2bd5e321597a9e7bc81ef1c14d76d572e4ef6ebc9cedd7d44c7d57f6de6"
     },
     {
       "path": "src/lib/pokemon/shopping/model/privacy.cjs",
@@ -798,15 +910,35 @@
     },
     {
       "path": "src/lib/pokemon/shopping/model/scoring.cjs",
-      "sha256": "1e4199c90aedac7c4d881a056426c3b1d7452bcb3df9670425ca173bae8ca149"
+      "sha256": "835dfd55abc8164de42950cc5fc9a99f79abcb570c612020703e93b734ea560b"
     },
     {
       "path": "src/lib/pokemon/shopping/model/turn.cjs",
-      "sha256": "4e7bfe76a44630bf092f3f2a4545f7bd2ff1d6a7604b78f23778874c5bb592d6"
+      "sha256": "22500f428094f2dfb4f03e80937badf10135dabc927384093c2dbd9914f060a5"
     },
     {
       "path": "src/lib/pokemon/shopping/model/vertex-request.cjs",
       "sha256": "22e803fad28360b5dd9c7d6c195d8d97c18d806d86fdb4179567a85df2e28bc1"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/render.cjs",
+      "sha256": "c49f20ef0935847281bb4d15163577b5e2eb1b2d3f414a8fb7346316516c14c0"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/schema.cjs",
+      "sha256": "dfca7798674b44c2c90ecc8012222b6291d2bed062d735175bebaf1318f34a8b"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/shoppingAdmission.cjs",
+      "sha256": "901b565c6d57b9ca231feb6a62178bcc691343f674ded3a669039287c271ba29"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/simulators.cjs",
+      "sha256": "cbd2dad0880b0a420a5dd42ede1c17d826966d1d70c8be708a0f3445c49e2c9a"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/worker.cjs",
+      "sha256": "e0e535d05fa233774c432dcaf3fc6abb9a124b8ded342432c3779bca561b808c"
     },
     {
       "path": "tests/fixtures/shopping-model-eval/compatibility-mapping.json",
@@ -817,12 +949,40 @@
       "sha256": "91f33313f0741fd9dc1d20dbad625d60529b19d7d81c7889a8bb227e8c4f1fec"
     },
     {
+      "path": "tests/fixtures/shopping/adversarial.json",
+      "sha256": "ee75c20d7a96b508c483844af11392073fa86595dd7d0f5ef3689b8129f77abb"
+    },
+    {
+      "path": "tests/fixtures/shopping/catalog.json",
+      "sha256": "d31449d7d2e10acf4ea76b4e5a7fa82e27d227d3a3487dba5c3011e0012fa841"
+    },
+    {
+      "path": "tests/fixtures/shopping/faults.json",
+      "sha256": "73805c1bd629669eb45295bfab276b3b3bddb7a8ad351239bb1fe51125f91acf"
+    },
+    {
       "path": "tests/fixtures/shopping/frozen-manifest.json",
       "sha256": "bd4258fb31b197a64dc8d7b445c4b03dca8b9bce0d9f11aa7cf6fc3bce54ae79"
     },
     {
+      "path": "tests/fixtures/shopping/journeys.json",
+      "sha256": "4c4416d9e67de550323b53e99695b05f87a1952e595def7a45854a09ea4eea9c"
+    },
+    {
+      "path": "tests/fixtures/shopping/scripted-proposals.json",
+      "sha256": "b8aa81153222ae04c837da5b8652817e925e02ec107b9bd54e4a61802c0b3f17"
+    },
+    {
       "path": "tests/shopping-model-eval.test.cjs",
       "sha256": "b048da9d053b47b3b5dfff44056d248e1e911e00c1a3b1eefe955d16647ade9c"
+    },
+    {
+      "path": "tests/shopping/evaluate.cjs",
+      "sha256": "e098a15b1c1448e5908ec3f903a7eea94f2143464cd2d11d1f68d3fc82ee8c53"
+    },
+    {
+      "path": "tests/shopping/helpers.cjs",
+      "sha256": "11f3dcd88619c7ed67018a215b725426cfa6a12b311b02bee32584c99f9359b7"
     },
     {
       "path": "tests/shopping/model/collector.test.cjs",
@@ -834,11 +994,11 @@
     },
     {
       "path": "tests/shopping/model/harness-fix.test.cjs",
-      "sha256": "bf4be7fbcb7a71a785a66cf1759da75ab0d5bb39aa39ca4fa1d19db96be34491"
+      "sha256": "34ae10965ac8df4c7812912978ad7134b6967887bca2f3a36f5ef72ccba51e00"
     },
     {
       "path": "tests/shopping/model/reduced.test.cjs",
-      "sha256": "18aa9d5cfe330d9de8c80fddd3ef6aafaa615f589e01e26d9e0ee5efcf4df236"
+      "sha256": "b5b3b82e4701c1f4ddc5ee2ac4e6791ab1a6790a146b6b3c8660c4d496ad9fe4"
     },
     {
       "path": "tests/shopping/model/scenarios.cjs",

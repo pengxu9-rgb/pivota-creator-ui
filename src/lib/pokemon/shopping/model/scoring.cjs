@@ -20,6 +20,9 @@ function unique(rows, key, label) {
     return map;
 }
 function score(state, baseline, mapping, freeze) {
+    // The smoke plan checks the harness only and is never scored.
+    if (state?.plan === 'smoke')
+        throw Error('smoke_not_scored');
     if(!freeze?.prices)throw Error('frozen_prices_required');
     const reduced = freeze.corpus_plan?.compatibility?.enabled === false;
     if (!mapping || mapping.entries.length !== 389) throw Error('original_mapping_required');

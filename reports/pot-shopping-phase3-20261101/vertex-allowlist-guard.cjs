@@ -111,13 +111,17 @@ async function fetchImpl(url,options){
     }catch{cleanup();agent.destroy();destroyOwned('live_transport_error');reject(coded(stopReason||'live_transport_error'));}
   });
 }
-// Sanitized: never headers, tokens, bodies or query strings; stack frames as file:line only.
+// Sanitized: never headers, tokens, bodies, query strings or home paths; stack frames as file:line only.
 function sanitize(error){
-  const message=String(error?.message??error??'').replace(/Bearer\s+\S+/gi,'Bearer [redacted]').replace(/ya29\.[\w.~+\/-]+/g,'[redacted]').replace(/(https?:\/\/[^\s?#]*)\?\S*/g,'$1?[redacted]').slice(0,200);
+  const message=String(error?.message??error??'').replace(/\b(Bearer|Basic)\s+\S+/gi,'$1 [redacted]').replace(/ya29\.[\w.~+\/-]+/g,'[redacted]')
+    .replace(/eyJ[\w-]+\.[\w-]+\.[\w-]*/g,'[redacted]').replace(/\/\/[^\s\/@]+@/g,'//[redacted]@').replace(/(https?:\/\/[^\s?#]*)\?\S*/g,'$1?[redacted]')
+    .replace(/\b((?:access_|refresh_|id_)?token|api_?key|key|secret|password|credential)(["']?\s*[:=]\s*["']?)[^\s"',&;]+/gi,'$1$2[redacted]')
+    .replace(/(?:\/Users|\/home|\/private|\/var)\/[^\s'"]*/g,m=>'[path]/'+m.split('/').pop()).slice(0,200);
   const frames=String(error?.stack||'').split('\n').slice(1,9).map(line=>/([^\/\\\s()]+\.c?js):(\d+)/.exec(line)).filter(Boolean).map(m=>m[1]+':'+m[2]);
   return {name:typeof error?.name==='string'?error.name.slice(0,64):typeof error,code:safeCode(error),message,frames};
 }
-function fatal(error){const failure=sanitize(error);record('runtime_failure',null,failure);abortAll('live_runtime_failure');process.stderr.write(JSON.stringify({live_runtime_failure:failure})+'\n');process.exitCode=1;}
+// Stop first, so an error that cannot be described still stops the guard.
+function fatal(error){abortAll('live_runtime_failure');let failure;try{failure=sanitize(error);}catch{failure={name:'unrecordable',code:null,message:'',frames:[]};}record('runtime_failure',null,failure);process.stderr.write(JSON.stringify({live_runtime_failure:failure})+'\n');process.exitCode=1;}
 process.on('uncaughtException',fatal);process.on('unhandledRejection',fatal);
 process.on('exit',()=>fs.writeSync(2,JSON.stringify({live_allowlist_guard_audit:auditSnapshot()})+'\n'));
 module.exports=Object.freeze({endpoint,fetchImpl,auditSnapshot,abortAll});

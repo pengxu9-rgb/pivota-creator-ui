@@ -43,3 +43,7 @@ test('model eval reduced: fallbacks and reasons accompany every threshold withou
  for(const evidence of Object.values(a.threshold_evidence)){assert.equal(evidence.fallbacks.count,2);if(evidence.status==='passed'){assert.equal(evidence.met_with_fallback,true);assert.equal(evidence.met_only_with_fallback_evidence,true);assert.equal(evidence.fallback_free_pass,false);}}
  s.outcomes[0].result.completed=false;assert.equal(score(s,baseline,mapping,reducedFreeze()).arms.L.fallbacks.count,2);
 });
+test('model eval reduced: a smoke checkpoint is never scored',()=>{
+ const s=reducedState();s.plan='smoke';assert.throws(()=>score(s,baseline,mapping,reducedFreeze()),/smoke_not_scored/);
+ const r=reducedState();r.plan='reduced';assert.doesNotThrow(()=>score(r,baseline,mapping,reducedFreeze()));
+});

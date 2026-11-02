@@ -13,13 +13,34 @@ Run 1 (`3403bc9`, below) could not measure either model. Every change here was m
 | 14 of 22 plans said `decision:"search"` without calling `search_catalog` | The system instruction now says to call `search_catalog` to search, that `"search"` means a search already ran this turn, and to reply with bare JSON. A `"search"` plan with no search call this turn falls back as `search_not_called`, before any claim is rendered. |
 | The guard stopped with `live_runtime_failure` and kept no error | The fatal handler records a sanitized error (name, code, 200-character message with bearer tokens, `ya29.` tokens and query strings redacted, stack frames as file:line) and still stops. Error listeners on socket, TLS transport, request and response stay attached; later errors are recorded as `late_handle_error`. |
 
-**The guard mechanism is reproduced offline.** A fake socket/TLS/HTTPS fixture (no network) aborts a request mid-body, then raises late errors on each handle. On the `d0e951a` guard this stops the guard with `live_runtime_failure`; on the fixed guard it does not, and the next request succeeds. This is the likely cause of run 1's stop, though run 1 itself kept no error to confirm it.
+**The guard mechanism is reproduced offline, but only as a hypothesis for run 1.** A fake socket/TLS/HTTPS fixture (no network) aborts a request mid-body and then raises late errors on each handle itself. On the `d0e951a` guard this stops the guard with `live_runtime_failure`; on the fixed guard it does not, and the next request succeeds. The fixture does not show that real Node emits those second errors, so run 1's cause remains unconfirmed; the smoke run's fatal record would show it if it recurs. The response-stream listener is defensive only: `Readable.toWeb` already handles response errors, so removing it is an equivalent change.
+
+**The fatal handler stops the guard before describing the error.** If the error value cannot be described (for example `Object.create(null)`), it is recorded as `unrecordable`. Redaction covers bearer and basic credentials, `ya29.` tokens, JWTs, URL user info, query strings, `token`/`key`/`secret`/`password` values and home paths.
 
 **Unchanged from freeze `320084c4`** (checked by `qualify-reduced-plan.cjs`): models, endpoints, prices, sampling, turn limits, reduced budgets, stop rules, privacy policy, phase-2 fixtures and the compatibility mapping. The guard's CONNECT, proxy and TLS code is byte-identical to attempt 4 apart from six listed edits (checked by `qualify-guard.cjs`).
 
 **New in the freeze:** a smoke plan (L only, J01–J04 twice, no attack, fault or compatibility cases, never scored; caps 80 calls, 2M input tokens, USD 1) and per-plan go strings (`claude_3c_smoke_go`, `claude_3c_reduced_go`). The old `claude_3a_go` no longer launches anything. The brief proposed 1M tokens and USD 0.50 for the smoke; that would stop after about four calls without usage data, because each is charged the 200K-token worst case, so the caps were raised.
 
+**`get_offers` now always receives the turn's original text.** Before, the model could omit `text`, and the façade then returned offers in every language. Now `offersFor` filters by the languages in the user's words, so "Japanese Pikachu" returns only Japanese offers. This is the intended binding, but it is a behaviour change for `get_offers`.
+
+**A smoke checkpoint cannot be scored** (`smoke_not_scored`), resumed as reduced, or run on P (USD 0 cap).
+
 **Run 1 stays in the record, unscored.** Its checkpoint and evidence are untouched.
+
+## Independent adversarial review
+
+An independent agent reviewed `ef172b8` and `58e18f9` read-only and offline. **No P1.** Four P2s, all addressed:
+
+| P2 | Resolution |
+| --- | --- |
+| The plan qualifier did not prove only the listed code changed | `harness-fix-runtime.patch` is the full runtime diff against `d0e951a`. `qualify-reduced-plan.cjs` regenerates it from git and requires byte equality, and pins the exact instruction text. Checked: the reviewer's own mutation (prose before a fence, global call cap disabled, freeze regenerated) now fails. |
+| Smoke caps differ from the brief | Accepted by Claude as the brief's author: 80 calls, 2M input tokens, USD 1 (L), USD 0 (P). Reason above. |
+| No test of the smoke caps | A test exhausts each smoke cap and P's USD 0; mutant `smoke_uses_reduced_budgets` is killed. |
+| Brief mutant 2 (two fences) missing | `fence_allows_second_fence` added and killed. The `includes('```')` check itself is redundant (a second fence fails `JSON.parse`), so removing only that check is an equivalent change. |
+
+P3s fixed: fatal ordering and `unrecordable`; broader redaction; the search rule tested with a claim present and with `get_offers` only, and `answer()` no longer defaults to "searched"; scoring refuses smoke checkpoints; non-object arguments get `invalid_arguments`; `model_query` is recorded at binding, so a failed batch keeps it; the freeze now also hashes the phase-2 shopping code and contracts, the kernel files, the phase-2 fixtures and the shopping test helpers (88 unique paths).
+
+Accepted as is: a fenced plan containing ``` inside a JSON string is rejected (harmless); a certificate error arriving as a second transport error is recorded rather than stopping the guard (the request has already failed, and Node emits it once); `guard.test.cjs` and `launch-go.test.cjs` sit beside the harness, because the round-6 kernel gate snapshots only `src/` and `tests/`, so the gate list runs them explicitly and CI does not.
 
 Gate results for this change are in the review evidence, not committed here.
 

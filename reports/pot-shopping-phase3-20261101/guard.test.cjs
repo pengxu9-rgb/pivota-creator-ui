@@ -30,10 +30,17 @@ test('model eval guard: the fatal handler records a sanitized error and still st
     assert.ok(result.failure, 'runtime failure recorded');
     assert.equal(result.failure.name, 'Error');
     assert.equal(result.failure.code, 'E_FIXTURE');
-    assert.ok(result.failure.message.startsWith('boom Bearer [redacted]'));
+    assert.ok(result.failure.message.startsWith('boom Bearer [redacted]'), result.failure.message);
     assert.ok(result.failure.message.length <= 200);
     assert.ok(result.failure.frames.length > 0 && result.failure.frames.every(f => /^[^/\\\s]+\.c?js:\d+$/.test(f)));
-    for (const secret of ['abc.defsecret', 'SECRETTOKEN', 's3cret'])
+    for (const secret of ['abc.defsecret', 'SECRETTOKEN', 's3cret', 'dXNlcjpwYXNzd29yZA', 'eyJzdWIiOiJ4In0', 'p4sswd', 'tok3nvalue', 'someone', '.config/gcloud'])
         assert.equal((stdout + stderr).includes(secret), false, secret);
     assert.ok(stderr.includes('"live_runtime_failure":{'));
+});
+test('model eval guard: an error value that cannot be described still stops the guard, recorded as unrecordable', () => {
+    const { status, result } = run('fatal-unrecordable');
+    assert.equal(status, 1);
+    assert.equal(result.stopped, true);
+    assert.equal(result.stop_reason, 'live_runtime_failure');
+    assert.equal(result.failure?.name, 'unrecordable');
 });

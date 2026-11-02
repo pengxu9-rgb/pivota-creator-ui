@@ -82,6 +82,8 @@ function modelQuery(value) {
     return privateText(value) ? '[private]' : value.slice(0, 200);
 }
 function bindArguments(name, args, existingBindings = {}, bound = null) {
+    if (!object(args))
+        throw Error('invalid_arguments');
     if (SERVER_TEXT.has(name)) {
         if (!bound || typeof bound.text !== 'string')
             throw Error('original_text_unavailable');

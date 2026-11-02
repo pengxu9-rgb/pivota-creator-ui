@@ -89,9 +89,16 @@ async function abortMidBody() {
     print({ body_outcome: outcome, stopped_after_late_errors: afterLate.stopped, stop_reason: snapshot.stop_reason, late_errors: snapshot.events.filter(e => e.kind === 'late_handle_error').length, runtime_failures: snapshot.events.filter(e => e.kind === 'runtime_failure').length, next, allowed_requests: snapshot.allowed_requests, tls_connections: snapshot.tls_connections });
 }
 async function fatalRecord() {
-    Promise.reject(Object.assign(new Error('boom Bearer abc.defsecret ya29.SECRETTOKEN https://example.test/x?key=s3cret'), { code: 'E_FIXTURE' }));
+    Promise.reject(Object.assign(new Error('boom Bearer abc.defsecret ya29.SECRETTOKEN https://example.test/x?key=s3cret Basic dXNlcjpwYXNzd29yZA== eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4In0.c2lnbmF0dXJl https://user:p4sswd@example.test/a access_token=tok3nvalue /Users/someone/.config/gcloud/access_tokens.db'), { code: 'E_FIXTURE' }));
     await later(20);
     const snapshot = guard.auditSnapshot();
     print({ stopped: snapshot.stopped, stop_reason: snapshot.stop_reason, failure: snapshot.events.find(e => e.kind === 'runtime_failure') || null });
 }
-({ 'abort-mid-body': abortMidBody, 'fatal-record': fatalRecord })[process.argv[2]]().catch(error => { print({ harness_error: String(error?.stack || error) }); process.exitCode = 2; });
+// An error value that cannot be described must still stop the guard.
+async function fatalUnrecordable() {
+    setTimeout(() => { throw Object.create(null); }, 1);
+    await later(20);
+    const snapshot = guard.auditSnapshot();
+    print({ stopped: snapshot.stopped, stop_reason: snapshot.stop_reason, failure: snapshot.events.find(e => e.kind === 'runtime_failure') || null });
+}
+({ 'abort-mid-body': abortMidBody, 'fatal-record': fatalRecord, 'fatal-unrecordable': fatalUnrecordable })[process.argv[2]]().catch(error => { print({ harness_error: String(error?.stack || error) }); process.exitCode = 2; });
