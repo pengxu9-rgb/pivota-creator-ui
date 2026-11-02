@@ -31,5 +31,6 @@ const c=createCollector({freeze,artifactBytes:p=>fs.readFileSync(ROOT+'/'+p),che
     }
     c.close();
     const previous=fs.existsSync(raw+'/done.json')?JSON.parse(fs.readFileSync(raw+'/done.json')):null;
-    atomic(raw+'/done.json',{fake:true,run:(previous?.run||0)+1,transport_calls_this_run:transportCalls,records:c.state().records.length,completed_episodes:c.state().outcomes.length,timings:Object.fromEntries(c.state().outcomes.map(o=>[o.arm,o.result.latency_ms])),model_calls:0,real_tokens:0,real_spend_usd:0});
+    const episodes=c.state().outcomes.filter(o=>o.id==='detached/J01');
+    atomic(raw+'/done.json',{fake:true,run:(previous?.run||0)+1,transport_calls_this_run:transportCalls,records:c.state().records.length,completed_episodes:episodes.length,timings:Object.fromEntries(episodes.map(o=>[o.arm,o.result.latency_ms])),model_calls:0,real_tokens:0,real_spend_usd:0});
 })().catch(error=>{c.close();process.stderr.write(String(error.message).slice(0,160)+'\n');process.exitCode=1;});

@@ -660,7 +660,7 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/fake-worker.cjs",
-      "sha256": "9cd82255cff5f25ab21d3549e526487c28b4211c9bbb419d6545e3cd2ffef90e"
+      "sha256": "8475d66d6fe9aa83237951c731f209c5b760c1422193dbbab2d7bbbf89c944cb"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/live-host.cjs",
