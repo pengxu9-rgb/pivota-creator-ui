@@ -264,3 +264,25 @@ test('model eval harness fix: ship_to_on_file appears only on records that carry
     assert.equal(pre.records[0].ship_to_on_file, true);
     assert.equal(JSON.stringify([search, sel, pre]).includes('dest_hk'), false);
 });
+test('model eval harness fix: proto3-omitted zero counts are measured only when the reported total still adds up', async () => {
+    const { usageCounts } = require('../../../src/lib/pokemon/shopping/model/collector.cjs');
+    const { setup: collectorSetup, response } = require('./collector.test.cjs');
+    // The exact usage Vertex returned on a MAX_TOKENS response with no output (compatibility run, 2 November).
+    assert.deepEqual(usageCounts({ promptTokenCount: 1307, totalTokenCount: 1307, trafficType: 'ON_DEMAND' }), { input: 1307, output: 0, thoughts: 0 });
+    assert.deepEqual(usageCounts({ promptTokenCount: 100, candidatesTokenCount: 20, totalTokenCount: 125 }), { input: 100, output: 20, thoughts: 5 });
+    assert.deepEqual(usageCounts({ promptTokenCount: 100, candidatesTokenCount: 20, thoughtsTokenCount: 5 }), { input: 100, output: 20, thoughts: 5 });
+    for (const bad of [{ promptTokenCount: 1307 }, { promptTokenCount: 1307, totalTokenCount: 1400 }, { totalTokenCount: 10 }, { promptTokenCount: 10, candidatesTokenCount: -1, totalTokenCount: 9 }, { promptTokenCount: 10, thoughtsTokenCount: 'x', totalTokenCount: 10 }, null])
+        assert.equal(usageCounts(bad), null, JSON.stringify(bad));
+    // In the collector the Vertex shape is measured and does not stop the arm; an inconsistent total still does.
+    const maxTokens = usageMetadata => response(200, { body: { usageMetadata, candidates: [{ finishReason: 'MAX_TOKENS', content: { role: 'model', parts: [] } }] } });
+    const ok = collectorSetup([response(), maxTokens({ promptTokenCount: 1307, totalTokenCount: 1307 })]), c = ok.open();
+    await c.run('L', ok.jobs(2));
+    assert.equal(c.state().arms.L.stop_reason, null);
+    assert.equal(c.state().records[1].usage_measured, true);
+    assert.equal(c.state().records[1].output_tokens, 0);
+    c.close();
+    const bad = collectorSetup([response(), maxTokens({ promptTokenCount: 1307, totalTokenCount: 1400 })]), d = bad.open();
+    await d.run('L', bad.jobs(2));
+    assert.equal(d.state().arms.L.stop_reason, 'invalid_or_over_cap_usage');
+    d.close();
+});

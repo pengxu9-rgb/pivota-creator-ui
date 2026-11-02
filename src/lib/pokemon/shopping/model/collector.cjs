@@ -21,7 +21,20 @@ function price(freeze, arm, input, output, thoughts = 0) {
         throw Error('no_price_no_run');
     return (input * rate.input + (output + thoughts) * rate.output_including_reasoning) / 1000000;
 }
-function validUsage(u) { return u && ['promptTokenCount', 'candidatesTokenCount'].every(k => Number.isSafeInteger(u[k]) && u[k] >= 0) && (u.thoughtsTokenCount === undefined || Number.isSafeInteger(u.thoughtsTokenCount) && u.thoughtsTokenCount >= 0); }
+// Vertex answers in proto3 JSON, which omits zero-valued counts. A missing count is zero only
+// when the reported total still adds up; anything else stays unmeasurable and stops the arm.
+function usageCounts(u) {
+    if (!u || !Number.isSafeInteger(u.promptTokenCount) || u.promptTokenCount < 0)
+        return null;
+    const count = k => u[k] === undefined ? 0 : Number.isSafeInteger(u[k]) && u[k] >= 0 ? u[k] : null;
+    const output = count('candidatesTokenCount'), thoughts = count('thoughtsTokenCount');
+    if (output === null || thoughts === null)
+        return null;
+    if (u.candidatesTokenCount === undefined && !(Number.isSafeInteger(u.totalTokenCount) && u.totalTokenCount === u.promptTokenCount + output + thoughts))
+        return null;
+    return { input: u.promptTokenCount, output, thoughts: Math.max(thoughts, (u.totalTokenCount || 0) - u.promptTokenCount - output) };
+}
+function validUsage(u) { return usageCounts(u) !== null; }
 function validateFrozenRequest(freeze, request) {
     const { CONFIG, SYSTEM_INSTRUCTION } = require('./turn.cjs');
     if (!request || Object.keys(request).sort().join(',') !== 'contents,generationConfig,systemInstruction,toolConfig,tools' || hash(request.generationConfig) !== hash(CONFIG) || hash(request.generationConfig) !== hash(freeze.generationConfig) || hash(request.toolConfig) !== hash(freeze.toolConfig) || hash(request.systemInstruction) !== hash({ parts: [{ text: SYSTEM_INSTRUCTION }] }) || hash(SYSTEM_INSTRUCTION) !== freeze.system_instruction_sha256 || !Array.isArray(request.tools) || request.tools.length !== 1 || Object.keys(request.tools[0]).join(',') !== 'functionDeclarations' || hash(request.tools[0].functionDeclarations) !== freeze.declaration_set_sha256 || freeze.declaration_set_sha256 !== declarationSet().declaration_sha256 || !Array.isArray(request.contents))
@@ -159,8 +172,8 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
             active.delete(controller);
         }
         const usage = response.body?.usageMetadata;
-        const measured = validUsage(usage);
-        const input = measured ? usage.promptTokenCount : record.reserved_input, output = measured ? usage.candidatesTokenCount : B.output_reservation_cap, thoughts = measured ? Math.max(usage.thoughtsTokenCount || 0, (usage.totalTokenCount || 0) - usage.promptTokenCount - usage.candidatesTokenCount) : 0;
+        const counts = usageCounts(usage), measured = counts !== null;
+        const input = measured ? counts.input : record.reserved_input, output = measured ? counts.output : B.output_reservation_cap, thoughts = measured ? counts.thoughts : 0;
         const overCap = measured && (input > B.prompt_reservation_cap || output + thoughts > B.output_reservation_cap);
         a.reserved_input -= record.reserved_input;
         a.reserved_usd -= record.reserved_usd;
@@ -310,4 +323,4 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
     }
     return Object.freeze({ run, request, channel, session, outcome, priorOutcome, state: () => copy(state), save, stop, close: () => { process.removeListener('SIGINT', onInt); process.removeListener('SIGTERM', onTerm); save(); } });
 }
-module.exports = { createCollector, checkFreeze, price, validUsage, atomic, MODELS, BUDGETS, SMOKE_BUDGETS, COMPAT_BUDGETS, PLANS, STOP_RULES, endpoint, validateFrozenRequest };
+module.exports = { createCollector, checkFreeze, price, validUsage, usageCounts, atomic, MODELS, BUDGETS, SMOKE_BUDGETS, COMPAT_BUDGETS, PLANS, STOP_RULES, endpoint, validateFrozenRequest };

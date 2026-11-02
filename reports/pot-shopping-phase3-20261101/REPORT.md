@@ -1,3 +1,28 @@
+# Round 3 runs, and round 4: usage parsing (post-hoc)
+
+**Round 3 runs** at `e1b8178`, freeze `bcf25e33…`, on 2 November 2026 between 22:28 and 22:42 UTC:
+- **Reduced L:** completed. **Every measured threshold passes again**, reproducing round 2:
+  - unnecessary questions 0 / 0; preview 3.5 / 4;
+  - latency p95 1.9 s first useful, 5.1 s preview;
+  - USD 0.0019 per journey; 12/12 attack cases, 6/6 faults.
+  - Fallbacks 26 of 98 turns: privacy 10, `stale_evidence` 10, `search_not_called` 6. No disguised questions; 86 verified claims rendered.
+- **Reduced P:** stopped with `preflight_failed`. Its first call timed out at 8,004 ms, as about 11% of P's calls do. That is the frozen preflight rule. The arm is unscored.
+- **Compatibility L:** stopped with `invalid_or_over_cap_usage` after 807 calls. Unscored.
+
+A first launch attempt at 22:20 UTC refused every arm before any call (`token_refresh_needed`): the terminal command started 33 minutes after the refresh. Raw evidence manifests: reduced `53a39c8fb8bcc49d09478af83cb2d47a1f12a2a3adae6257010273ad05a19026`, compatibility `91a6e5ea483eceb0004773f3f45d7e2234743ffa0bb49aaa4940e5d0b3312913`.
+
+**Root cause of the compatibility stop:**
+- **What Vertex returned:** one response with `finishReason: MAX_TOKENS`, no parts, and usage `{"promptTokenCount": 1307, "totalTokenCount": 1307}`, with no `candidatesTokenCount`.
+- **Why it was misread:** Vertex speaks proto3 JSON, which omits zero-valued counts. The collector already accepted an omitted `thoughtsTokenCount` (1,298 responses), but required `candidatesTokenCount`, so a correct zero read as unmeasurable and stopped the arm.
+- **The evidence:** across all 1,776 recorded responses with usage, the total always equals prompt + output + thinking.
+
+**Fix:**
+- A missing count is read as zero **only when** `totalTokenCount` is present and still adds up. Anything else stays unmeasurable and stops the arm, as before.
+- The thinking-token calculation is identical whenever the output count is present.
+- The test uses the exact Vertex response. Mutant `usage_total_check_dropped` is killed; mutants now total 42.
+
+---
+
 # Round 3: the compatibility plan and P's destination questions (post-hoc)
 
 **The compatibility plan (a non-regression check, not held-out validation):**

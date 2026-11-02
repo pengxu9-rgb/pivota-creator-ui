@@ -382,7 +382,7 @@ index c89b6d1..eef62fa 100644
  process.on('exit',()=>fs.writeSync(2,JSON.stringify({live_allowlist_guard_audit:auditSnapshot()})+'\n'));
  module.exports=Object.freeze({endpoint,fetchImpl,auditSnapshot,abortAll});
 diff --git a/src/lib/pokemon/shopping/model/collector.cjs b/src/lib/pokemon/shopping/model/collector.cjs
-index 2218a2f..7c82b66 100644
+index 2218a2f..3b8ca24 100644
 --- a/src/lib/pokemon/shopping/model/collector.cjs
 +++ b/src/lib/pokemon/shopping/model/collector.cjs
 @@ -7,6 +7,11 @@ const { declarationSet } = require('./declarations.cjs');
@@ -397,7 +397,29 @@ index 2218a2f..7c82b66 100644
  const STOP_RULES = Object.freeze({request_rejected:Object.freeze({consecutive_non_429_4xx:3,scope:'arm'}),access_denied:Object.freeze({statuses:Object.freeze([401,403]),scope:'global'})});
  function price(freeze, arm, input, output, thoughts = 0) {
      if (![input, output, thoughts].every(n => Number.isSafeInteger(n) && n >= 0))
-@@ -38,7 +43,7 @@ function checkFreeze(freeze, artifactBytes) {
+@@ -16,7 +21,20 @@ function price(freeze, arm, input, output, thoughts = 0) {
+         throw Error('no_price_no_run');
+     return (input * rate.input + (output + thoughts) * rate.output_including_reasoning) / 1000000;
+ }
+-function validUsage(u) { return u && ['promptTokenCount', 'candidatesTokenCount'].every(k => Number.isSafeInteger(u[k]) && u[k] >= 0) && (u.thoughtsTokenCount === undefined || Number.isSafeInteger(u.thoughtsTokenCount) && u.thoughtsTokenCount >= 0); }
++// Vertex answers in proto3 JSON, which omits zero-valued counts. A missing count is zero only
++// when the reported total still adds up; anything else stays unmeasurable and stops the arm.
++function usageCounts(u) {
++    if (!u || !Number.isSafeInteger(u.promptTokenCount) || u.promptTokenCount < 0)
++        return null;
++    const count = k => u[k] === undefined ? 0 : Number.isSafeInteger(u[k]) && u[k] >= 0 ? u[k] : null;
++    const output = count('candidatesTokenCount'), thoughts = count('thoughtsTokenCount');
++    if (output === null || thoughts === null)
++        return null;
++    if (u.candidatesTokenCount === undefined && !(Number.isSafeInteger(u.totalTokenCount) && u.totalTokenCount === u.promptTokenCount + output + thoughts))
++        return null;
++    return { input: u.promptTokenCount, output, thoughts: Math.max(thoughts, (u.totalTokenCount || 0) - u.promptTokenCount - output) };
++}
++function validUsage(u) { return usageCounts(u) !== null; }
+ function validateFrozenRequest(freeze, request) {
+     const { CONFIG, SYSTEM_INSTRUCTION } = require('./turn.cjs');
+     if (!request || Object.keys(request).sort().join(',') !== 'contents,generationConfig,systemInstruction,toolConfig,tools' || hash(request.generationConfig) !== hash(CONFIG) || hash(request.generationConfig) !== hash(freeze.generationConfig) || hash(request.toolConfig) !== hash(freeze.toolConfig) || hash(request.systemInstruction) !== hash({ parts: [{ text: SYSTEM_INSTRUCTION }] }) || hash(SYSTEM_INSTRUCTION) !== freeze.system_instruction_sha256 || !Array.isArray(request.tools) || request.tools.length !== 1 || Object.keys(request.tools[0]).join(',') !== 'functionDeclarations' || hash(request.tools[0].functionDeclarations) !== freeze.declaration_set_sha256 || freeze.declaration_set_sha256 !== declarationSet().declaration_sha256 || !Array.isArray(request.contents))
+@@ -38,7 +56,7 @@ function checkFreeze(freeze, artifactBytes) {
      if (freeze.stage !== '3a' || freeze.live_run_enabled !== false)
          throw Error('invalid_freeze');
      if (hash(freeze.stop_rules) !== hash(STOP_RULES)) throw Error('frozen_stop_rules_mismatch');
@@ -406,7 +428,7 @@ index 2218a2f..7c82b66 100644
          throw Error('frozen_limits_mismatch');
      for (const [arm, id] of Object.entries(MODELS)) {
          if (freeze.endpoints?.[arm] !== endpoint(arm))
-@@ -54,10 +59,13 @@ function checkFreeze(freeze, artifactBytes) {
+@@ -54,10 +72,13 @@ function checkFreeze(freeze, artifactBytes) {
      }
      return hash(freeze);
  }
@@ -421,7 +443,7 @@ index 2218a2f..7c82b66 100644
      // Stage 3a cannot accidentally launch a live adapter, even if credentials exist.
      if (!rehearsal && !reviewGo)
          throw Error('claude_3a_review_required');
-@@ -65,6 +73,8 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
+@@ -65,6 +86,8 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
      if (state.freeze_sha256 !== freezeHash)
          throw Error('resume_freeze_mismatch');
      if(fs.existsSync(checkpoint)&&state.rehearsal!==rehearsal)throw Error('resume_mode_mismatch');
@@ -430,7 +452,7 @@ index 2218a2f..7c82b66 100644
      state.rehearsal=rehearsal;
      state.sessions ||= {};
      if (state.records.some(r => r.status === 'reserved'))
-@@ -96,14 +106,14 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
+@@ -96,14 +119,14 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
      process.on('SIGTERM', onTerm);
      function reserve(arm, job, attempt, request) {
          validateFrozenRequest(freeze, request);
@@ -447,23 +469,25 @@ index 2218a2f..7c82b66 100644
              stop('budget_exhausted', arm);
              throw Error('budget_exhausted');
          }
-@@ -150,8 +160,8 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
+@@ -149,9 +172,9 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
+             active.delete(controller);
          }
          const usage = response.body?.usageMetadata;
-         const measured = validUsage(usage);
+-        const measured = validUsage(usage);
 -        const input = measured ? usage.promptTokenCount : record.reserved_input, output = measured ? usage.candidatesTokenCount : BUDGETS.output_reservation_cap, thoughts = measured ? Math.max(usage.thoughtsTokenCount || 0, (usage.totalTokenCount || 0) - usage.promptTokenCount - usage.candidatesTokenCount) : 0;
 -        const overCap = measured && (input > BUDGETS.prompt_reservation_cap || output + thoughts > BUDGETS.output_reservation_cap);
-+        const input = measured ? usage.promptTokenCount : record.reserved_input, output = measured ? usage.candidatesTokenCount : B.output_reservation_cap, thoughts = measured ? Math.max(usage.thoughtsTokenCount || 0, (usage.totalTokenCount || 0) - usage.promptTokenCount - usage.candidatesTokenCount) : 0;
++        const counts = usageCounts(usage), measured = counts !== null;
++        const input = measured ? counts.input : record.reserved_input, output = measured ? counts.output : B.output_reservation_cap, thoughts = measured ? counts.thoughts : 0;
 +        const overCap = measured && (input > B.prompt_reservation_cap || output + thoughts > B.output_reservation_cap);
          a.reserved_input -= record.reserved_input;
          a.reserved_usd -= record.reserved_usd;
          a.input_tokens += input;
-@@ -300,4 +310,4 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
+@@ -300,4 +323,4 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
      }
      return Object.freeze({ run, request, channel, session, outcome, priorOutcome, state: () => copy(state), save, stop, close: () => { process.removeListener('SIGINT', onInt); process.removeListener('SIGTERM', onTerm); save(); } });
  }
 -module.exports = { createCollector, checkFreeze, price, validUsage, atomic, MODELS, BUDGETS, STOP_RULES, endpoint, validateFrozenRequest };
-+module.exports = { createCollector, checkFreeze, price, validUsage, atomic, MODELS, BUDGETS, SMOKE_BUDGETS, COMPAT_BUDGETS, PLANS, STOP_RULES, endpoint, validateFrozenRequest };
++module.exports = { createCollector, checkFreeze, price, validUsage, usageCounts, atomic, MODELS, BUDGETS, SMOKE_BUDGETS, COMPAT_BUDGETS, PLANS, STOP_RULES, endpoint, validateFrozenRequest };
 diff --git a/src/lib/pokemon/shopping/model/context.cjs b/src/lib/pokemon/shopping/model/context.cjs
 index 9fb1868..8b4e192 100644
 --- a/src/lib/pokemon/shopping/model/context.cjs
