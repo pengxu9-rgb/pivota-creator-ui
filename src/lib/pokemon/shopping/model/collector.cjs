@@ -218,7 +218,10 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
         }
         else
             ({ response } = await invoke(arm, { id }, body, 1, signal));
-        if (response.status === 429 && completed.at(-1)?.attempt !== 2 && remainingCalls>=2 && !a.stop_reason && !state.stop_reason && !signal?.aborted)
+        // One retry for a 429, or for a failure before TLS completed: that request never reached Google,
+        // so retrying cannot duplicate billing or an action. Three such failures in a row still stop the run.
+        const preTls = response.tls_connected !== true && !Number.isInteger(response.status) && !!response.error;
+        if ((response.status === 429 || preTls) && completed.at(-1)?.attempt !== 2 && remainingCalls>=2 && !a.stop_reason && !state.stop_reason && !signal?.aborted)
             ({ response } = await invoke(arm, { id }, body, 2, signal));
         if (!a.preflight && !a.stop_reason && !state.stop_reason) {
             try {

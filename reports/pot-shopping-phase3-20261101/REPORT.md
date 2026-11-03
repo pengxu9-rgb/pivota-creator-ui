@@ -1,3 +1,26 @@
+# Round 5: one safe retry for failures before TLS (post-hoc)
+
+Peng chose "add a safe retry" on 3 November 2026, after two compatibility runs were cut short by the local proxy.
+
+**The problem:**
+- About 3% of calls through `127.0.0.1:7897` opened the CONNECT tunnel but failed before TLS completed, sometimes in bursts. The proxy itself answered 20 of 20 probes, so the failures are intermittent.
+- Three such failures in a row trigger the frozen `transport_unreachable` stop. That ended the compatibility runs at 634 and 176 of 778 contexts.
+- One cold-proxy first call also failed preflight.
+- Separately, a lid-close sleep (`Clamshell Sleep`, 23:05:54 UTC on 2 November) stalled P's run, and load made the 93-row gate's workers miss their 180-second deadline. The runs now use the app's keep-awake and `caffeinate`, but a closed lid still sleeps.
+
+**The fix:**
+- **When it retries:** the collector retries a call **once** when it ends with no TLS connection and no HTTP status. That request never reached Google, so retrying cannot duplicate billing or an action. The retry uses the same path and limits as the existing 429 retry: one extra attempt, only with a spare call in the turn, and never after a stop or abort.
+- **Limits:** the retry counts against the turn and journey call limits. Three pre-TLS failures in a row still stop the run as `transport_unreachable`.
+- **What still never retries:** a TLS-connected timeout and any HTTP status.
+- **Tests and mutants:** the tests cover a cold first call (preflight now passes on the retry), retrying only once, and no retry after TLS, after a 500, or without a spare call. Two mutants (retry removed, retry after TLS) are killed; mutants now total 44.
+
+**Round 4 runs** (`53cb31f`, freeze `00bbef09…`):
+- **Reduced L:** again passed every measured threshold (unnecessary 0 / 0; preview 3.5 / 4; latency p95 1.6 s first useful, 4.9 s preview; USD 0.0018 per journey; 12/12, 6/6).
+- **P:** stalled by the sleep, then `transport_unreachable`, after 115 calls (USD 14.99 accounted). Unscored.
+- **Compatibility runs:** stopped by the proxy, as above. Unscored.
+
+---
+
 # Round 3 runs, and round 4: usage parsing (post-hoc)
 
 **Round 3 runs** at `e1b8178`, freeze `bcf25e33…`, on 2 November 2026 between 22:28 and 22:42 UTC:

@@ -286,3 +286,28 @@ test('model eval harness fix: proto3-omitted zero counts are measured only when 
     assert.equal(d.state().arms.L.stop_reason, 'invalid_or_over_cap_usage');
     d.close();
 });
+test('model eval harness fix: a failure before TLS retries once; anything that reached Google does not', async () => {
+    const { setup: collectorSetup, response, requestFixture } = require('./collector.test.cjs');
+    const preTls = (error = 'transport_error') => ({ error, tls_connected: false, stage_reached: 'tunnel_established' });
+    const run = async (responses, remainingCalls = 2) => { const x = collectorSetup(responses), c = x.open(); const r = await c.request('L', 'job', requestFixture(), { remainingCalls }); const s = c.state(); c.close(); return { r, s, seen: x.seen.length }; };
+    // A cold proxy on the very first call: one retry, then preflight passes.
+    let o = await run([preTls(), response()]);
+    assert.equal(o.seen, 2);
+    assert.equal(o.r.status, 200);
+    assert.equal(o.r.attempt_count, 2);
+    assert.equal(o.s.arms.L.preflight, true);
+    assert.equal(o.s.arms.L.stop_reason, null);
+    o = await run([preTls('timeout'), response()]);
+    assert.equal(o.seen, 2);
+    // Only once: a second pre-TLS failure is returned, never a third attempt.
+    o = await run([response(), preTls(), preTls(), response()].slice(1));
+    assert.equal(o.seen, 2);
+    // Reached Google or no spare call: no retry.
+    for (const [first, remaining] of [[{ error: 'timeout', tls_connected: true, stage_reached: 'tls_connected' }, 2], [response(500), 2], [preTls(), 1]]) {
+        const x = collectorSetup([response(), first, response()]), c = x.open();
+        await c.request('L', 'pre', requestFixture());
+        await c.request('L', 'job', requestFixture(), { remainingCalls: remaining });
+        assert.equal(x.seen.length, 2, JSON.stringify(first) + ' ' + remaining);
+        c.close();
+    }
+});

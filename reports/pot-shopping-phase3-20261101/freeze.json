@@ -733,7 +733,7 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/harness-fix-runtime.patch",
-      "sha256": "1021be4f5958f2696deaf42b757e6b97ca710972c2a7aee4604b0fb2ce0e5a52"
+      "sha256": "93ecee4614ed466dc970de92b6a473225379c472a74c28347332ca3870151e5d"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/host-screen.test.cjs",
@@ -749,7 +749,7 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/mutations.cjs",
-      "sha256": "3d4830a7200461e6cfe8bfea26f66523d4b10c7c96b7eea3cd0cd6b0ac96b296"
+      "sha256": "d033b1c697030ef13711682d7942074768ba7198ed10115ac570aea9943c1fe4"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/orchestrate.cjs",
@@ -1001,7 +1001,7 @@
     },
     {
       "path": "src/lib/pokemon/shopping/model/collector.cjs",
-      "sha256": "f556e7f8e0e6eb768ac3e126449ebd6cdc1b462110272d84abe169e643dda859"
+      "sha256": "6c54a833462be00166ec8c3f241d666100b7193a9c24657dd432114306ce4ca6"
     },
     {
       "path": "src/lib/pokemon/shopping/model/compatibility.cjs",
@@ -1125,7 +1125,7 @@
     },
     {
       "path": "tests/shopping/model/harness-fix.test.cjs",
-      "sha256": "6205642b1d6c1e4f0fa642f3912ac704f6958b8ae61243d11296f0c598ce134d"
+      "sha256": "a0ebffbb06312b111762d850b47d7c8ef64c3d3a3eebd90e921a81e35e0ab877"
     },
     {
       "path": "tests/shopping/model/reduced.test.cjs",
