@@ -1,3 +1,27 @@
+# Round 6 results, and round 7: the finish question (post-hoc)
+
+**Round 6 runs** at `75dcce8`, freeze `3b1cbb73…`, on 3 November 2026 between 13:08 and 13:39 UTC. All arms completed. The pre-TLS retry fired 11 times. No record was left reserved or with null usage. Manifests: reduced `ecb738ce740d6de265b809d7217d2e63233efcc51f766fbd3e9290031f30d133`, compatibility `2a89246bd92d6271f64ee13b4a15b44c9dd12981aeafaab874adf4377b7fd5cd`.
+
+| Threshold | L | P |
+| --- | --- | --- |
+| Reduced plan | **all pass** (5th consecutive run; unnecessary 0 / 0, preview 3.5 / 4, latency p95 2.8 s / 6.8 s, USD 0.0068 per journey) | fail: unnecessary p95 1; cost (25 timeouts, USD 0.23 accounted per journey) |
+| Compatibility ≤16/34 per pass | **pass** (16 / 16, model-off floor) | not run |
+| Zero flips | **fail: 2** (round 5: 4) | not run |
+
+**What moved and why:**
+- **The task_ref binding worked:** it removed all 15 `unknown_reference` fallbacks from the compatibility run.
+- **Both remaining flips** come from L asking the user about `finish` after a correct search: `{"decision":"clarify","fields":["finish"]}`. That is 16 of 778 compatibility turns.
+- **Why that becomes a flip:** `finish` is not a valid field, so the plan is invalid, the turn falls back, and the bridge records a hold. When that happens in one pass only, it is a flip.
+- **It is also a policy violation:** the instruction already forbids asking the user to pick a printing, and the finish is part of the printing.
+
+**Round 7 change (Peng chose one more round):**
+- **The instruction gains one sentence:** "Finish (holo, reverse holo) and set are part of the printing: never ask about them."
+- **Nothing else changes.** The parser's field list is untouched, so a question about finish is still invalid and still falls back.
+- **Test and mutant:** the instruction test pins the sentence, and mutant `finish_policy_removed` is killed.
+- **Limits:** this is another post-hoc change on the same contexts the flip threshold measures. Those contexts are not held out from Flash-Lite. Flips also depend on Flash-Lite's small run-to-run error rate. A zero-flip result therefore shows the set is fitted, not that the model generalises.
+
+---
+
 # Round 5 results, and round 6: server-bound task_ref (post-hoc)
 
 **Round 5 runs** at `dd7954c`, freeze `3eef62ec…`, on 3 November 2026 between 11:48 and 12:18 UTC. The token was refreshed before each launch, under keep-awake. All three arms completed. The pre-TLS retry fired 3 times in the compatibility run. No record was left reserved and no thinking count was non-numeric, so the review's P2 condition did not occur. Manifests: reduced `924c310e587dee3ef77f10070a138a8684ffa959170e523746ee4b9f8513c3bb`, compatibility `7fa48dd807421e74d3f8bba1ae4cc93e20bda6fb076b53cd0c8f42386cdfd3df`.

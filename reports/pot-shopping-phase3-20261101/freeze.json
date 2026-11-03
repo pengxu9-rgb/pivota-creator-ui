@@ -186,7 +186,7 @@
     }
   },
   "sampling_reason": "Vendor-default sampling, bounded 1024 output tokens and thinkingLevel LOW. Identical across arms; exact-model acceptance unverified until preflight. Unsupported configuration stops an arm; no substitution.",
-  "system_instruction_sha256": "910679f60e87d488d2ca633748637b0b8f553f7da5c53f471d7690fa9c1307cb",
+  "system_instruction_sha256": "cc638059f0b8683ed6f7c7f852a744b85f74ef41d14026367ab8c77890d0e7b0",
   "declaration_set_sha256": "c92004f196464c05bf1fc7fe8a05cbed4a836aef306f3cad8e381cd105f89262",
   "dropped_schema_keywords": [
     {
@@ -733,7 +733,7 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/harness-fix-runtime.patch",
-      "sha256": "2d861c8e76b0b06faf24669b60e7f690844d7200a9ed76fb702e91439ba05b6a"
+      "sha256": "841a752a5713c94dcc52ba31e20e63682ab7a6c9297845ff039f7b30bb3ca549"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/host-screen.test.cjs",
@@ -749,7 +749,7 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/mutations.cjs",
-      "sha256": "887254051a66601c8c0dd7decee352b0c9ad5b00074ffa3d54d5cb0b333e3763"
+      "sha256": "a0239c8ba07273d979963ac07b3c18eb74e2798c66d83c9893e50740811b7c29"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/orchestrate.cjs",
@@ -793,7 +793,7 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/qualify-reduced-plan.cjs",
-      "sha256": "fd8e77f9754dc97ab98db601941821a3b3d2b728029a6533b2d65604ff6ff3a4"
+      "sha256": "9f7f5537b834d87a0b60a17a2705cc9c83bf9cb349ba37aac04f9327a8e0d8a5"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/qualify-smoke.cjs",
@@ -1025,7 +1025,7 @@
     },
     {
       "path": "src/lib/pokemon/shopping/model/turn.cjs",
-      "sha256": "89e8674b815dd533f6ab60acc41c5b1238687fbc6d6379fb11459e674e9d69d5"
+      "sha256": "64440be3d5e57718fa97e550079c2aabaa83589077a55e4ee8ff13b49f810df2"
     },
     {
       "path": "src/lib/pokemon/shopping/model/vertex-request.cjs",
@@ -1125,7 +1125,7 @@
     },
     {
       "path": "tests/shopping/model/harness-fix.test.cjs",
-      "sha256": "79c569f36dac3063c4fb9f62265af88ad7e6cccefb70bed00637434a64395db5"
+      "sha256": "079f5c9b66638afaf473e8f76f2cfa225f5b8dc674d2972c799cdb29d65746bb"
     },
     {
       "path": "tests/shopping/model/reduced.test.cjs",
