@@ -1,3 +1,95 @@
+# Phase 3 shopping model evaluation: final summary
+
+Written by Claude Code on 4 November 2026, at Peng's instruction to stop and write up. **This is not an approval or a model selection.** Shopping stays model-off in production.
+
+## Outcome
+
+**L (Gemini 3.5 Flash-Lite)**
+- **Passes every reduced-plan threshold, in six consecutive runs** (rounds 2–7). These cover completion, first offer on turn 1, preview turns, unnecessary questions, wrong items, unsupported claims, widened authority, 12 attack cases, 6 faults, trusted-call rejection, latency and cost.
+- **Latest run (round 7):**
+  - unnecessary questions 0 / 0; preview 3.5 / 4;
+  - latency p95 1.7 s first useful, 5.4 s complete preview;
+  - USD 0.0018 per journey.
+- **Compatibility thresholds: never both in the same run.**
+  - **≤16/34 compatibility:** passed in rounds 5 and 6 (16 / 16); failed in round 7 (17 / 17).
+  - **Zero flips:** failed every round (4, 2, 2).
+  - **Every remaining failure is a single random model error on one context.** The frozen bridge records any fallback as a hold, and the thresholds allow zero extra holds and zero flips.
+- **Measured spend per full round:** about USD 0.10 reduced plus USD 1.0 compatibility.
+
+**P (Gemini 3.1 Pro Preview)**
+- **Unnecessary questions:** fails (p95 1).
+- **Cost:** fails under the frozen accounting. About 11% of its calls exceed the frozen 8-second limit, even at its lowest thinking level, and each such call is charged the worst case (USD 0.42).
+- **Measured cost** is about USD 0.023 per journey, under the threshold.
+- **Preflight:** two runs stopped at preflight when the first call was slow.
+- **What a pass needs:** a decision on the 8-second limit or the accounting rule. Peng has not changed either.
+
+## What the compatibility check can and cannot show
+
+- **It is a non-regression check, not held-out validation.**
+  - **The bar is the model-off floor:** 16/34 is exactly what model-off scores, so a model that always answers passes.
+  - **The set is not new to Flash-Lite:** its A–D rows ran live on it before.
+  - **It does not see the screen changes:** compatibility turns start with an empty screen.
+- **The unnecessary-question pass is not proof of generalisation.** It was reached by fixes made after seeing data on the same four scripted journeys.
+- **Showing generalisation needs new held-out journeys,** written and frozen before any run by someone who has not seen these rounds. They should include cases where asking about printing, condition or destination *is* necessary, so that over-suppression can be detected.
+
+## Root causes found and fixed (all post-hoc, all disclosed in REPORT.md)
+
+| Round | Root cause | Fix |
+| --- | --- | --- |
+| 1 | Correct plans wrapped in a code fence; the model asked to copy user text; "search" plans with no search; guard kept no error | Fenced plans parsed; server binds user text; `search_not_called`; guard records a sanitized error and survives late socket errors |
+| 1b | Instruction never listed the allowed fields or slots | Lists from one constant, pinned by test |
+| 2 | **The model never saw the screen** (selections, previews); temperature 0 and the deprecated `thinkingBudget` on Gemini 3; "search" counted only `search_catalog` | Interface results via the privacy projection; vendor-default sampling, `thinkingLevel: LOW`; any successful catalog read counts |
+| 3 | P could not see a destination was set; compatibility never measured | Requirements view with `ship_to_on_file` (presence only); L-only compatibility plan scored by the frozen logic |
+| 4 | Vertex omits zero counts (proto3); one MAX_TOKENS response stopped a run | Missing count read as zero only when the total adds up |
+| 5 | Local proxy failed ~3% of calls before TLS, in bursts | One retry when the request provably never reached Google |
+| 6 | Flash-Lite corrupted `task_ref` (`task_1<span>#</span>0`) | Server binds the task for every tool |
+| 7 | L asked about `finish` | Instruction: finish and set are part of the printing |
+
+**Environment problems** that cost runs were not harness defects:
+- a lid-close sleep;
+- a slow cold proxy;
+- the proxy's TLS bursts;
+- machine load tripping the 93-row gate's 180-second worker deadline.
+
+Runs now use keep-awake and `caffeinate`, and refresh the token immediately before each launch.
+
+## Assurance
+
+- **Independent reviews:** four, read-only and offline (`58e18f9`, `7c785cb`, `ac29152`, `dd7954c`). Every P1 and P2 they found was fixed or disclosed. One P1 (missing fallback disclosure in compatibility scoring) was fixed before any compatibility result was used.
+- **Final commit `50c660b`, freeze `c0ffb0c2…`:**
+  - full suite 618/618, model suite 112/112, harness tests 10/10;
+  - 49/49 model mutants killed;
+  - every qualifier passes, including a byte-for-byte runtime patch check, the pinned instruction text and all 56 runtime files bound by the freeze;
+  - zero network attempts in every gate;
+  - **93-row kernel gate: not re-proven on `50c660b`.** It last passed on `ca9136d` (88 caught, the same five equivalents, zero network attempts). Every later attempt stopped on the harness's 180-second `worker deadline` (timing under machine load or sleep), never on a mutant result. None of the five kernel files changed after `ca9136d`.
+- **Process:** no push, PR, merge, deployment, marketplace, BNS or PSA call, real order or payment. Live calls ran only on Peng's go, through the reviewed launchers, inside a proxy-only sandbox. Every evidence file was checked for tokens (none).
+
+## Where things are
+
+- **Code:** local branch `codex/pot-shopping-model-eval-20261101` in `~/pivota-arch-review/phase3d-impl`, at `50c660b` plus this write-up commit. Codex's worktree is still at `3403bc9`; the branch fast-forwards from it.
+- **Raw evidence** (outside Git, each with a `MANIFEST.sha256`): `~/pivota-arch-review/phase3{d,e,f,g,h,i,j,k,l}-*`.
+
+## Decisions for Peng
+
+1. Commission held-out journeys before reading any of this as model improvement.
+2. P: keep the 8-second limit and worst-case accounting (P stays failing), or change one, with a fresh pre-registration.
+3. Whether to sync the branch into Codex's worktree.
+
+---
+
+# Round 7 results
+
+Runs at `50c660b`, freeze `c0ffb0c2…`, on 3 November 2026 between 14:09 and 14:31 UTC. Manifests: reduced `71e1da6cfd9fd25377d7cdbe716b636e2dccfd5aded2c88e16a7433b3e77f449`, compatibility `318a90184963716669683269d988d82d7d7af3a4b4adf43b9705882cef66b87e`.
+
+- **Reduced L:** passes every threshold (6th consecutive run). Unnecessary 0 / 0; preview 3.5 / 4; latency p95 1.7 s / 5.4 s; USD 0.0018 per journey.
+- **Reduced P:** stopped with `preflight_failed`. Its first call ran past 8 s after TLS, which is not retried.
+- **Compatibility L:** completed. No `finish` questions, and fallbacks fell to 16 of 778, but:
+  - compatibility is **17 / 17 (fails)**: "Have you recommended the cards?" returned a "search" plan without searching in pass 1;
+  - flips are **2 (fail)**: that context, plus one unsupported claim on "Find English Charizard SV03.5 006/165" in pass 2.
+  - Each is one stochastic model error, recorded as a hold by the frozen bridge.
+
+---
+
 # Round 6 results, and round 7: the finish question (post-hoc)
 
 **Round 6 runs** at `75dcce8`, freeze `3b1cbb73…`, on 3 November 2026 between 13:08 and 13:39 UTC. All arms completed. The pre-TLS retry fired 11 times. No record was left reserved or with null usage. Manifests: reduced `ecb738ce740d6de265b809d7217d2e63233efcc51f766fbd3e9290031f30d133`, compatibility `2a89246bd92d6271f64ee13b4a15b44c9dd12981aeafaab874adf4377b7fd5cd`.
