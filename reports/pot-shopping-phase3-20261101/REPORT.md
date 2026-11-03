@@ -1,3 +1,31 @@
+# Round 5 results, and round 6: server-bound task_ref (post-hoc)
+
+**Round 5 runs** at `dd7954c`, freeze `3eef62ec…`, on 3 November 2026 between 11:48 and 12:18 UTC. The token was refreshed before each launch, under keep-awake. All three arms completed. The pre-TLS retry fired 3 times in the compatibility run. No record was left reserved and no thinking count was non-numeric, so the review's P2 condition did not occur. Manifests: reduced `924c310e587dee3ef77f10070a138a8684ffa959170e523746ee4b9f8513c3bb`, compatibility `7fa48dd807421e74d3f8bba1ae4cc93e20bda6fb076b53cd0c8f42386cdfd3df`.
+
+| Threshold | L | P |
+| --- | --- | --- |
+| All reduced-plan thresholds | **pass** (4th consecutive run) | fail: unnecessary p95 1; cost (23 timeouts, USD 0.22 accounted per journey) |
+| Compatibility ≤16/34 per pass | **pass** (16 / 16, equal to the model-off floor: non-regression only) | not run (USD 0 budget) |
+| Zero catalog-to-hold flips | **fail: 4 flips** | not run |
+
+**Root cause of all 4 flips:**
+- **What happened:** in each pair, one pass searched and the other fell back. 3 of those fallbacks were `unknown_reference` and 1 `invalid_claim`, and the frozen bridge records a fallback as "hold".
+- **What triggered them:** the three `unknown_reference` fallbacks were Flash-Lite **corrupting the `task_ref` argument**, for example `"task_1<span>#</span>0"`. Every tool asked the model to copy the turn's task identifier.
+- **The fix:** `task_ref` is removed from all 12 model-visible declarations and bound by the server to the turn's own task. A model-written `task_ref` is ignored and recorded in the audit as `model_task_ref: ignored`. Other references are still validated. This removes the error class and tightens isolation, because the model cannot name another task at all.
+- **Not addressed:** the fourth flip (`invalid_claim`, a claim on an unreceived reference) is not fixed by this.
+
+**Fixes from the retry and usage review** (no P1; one P2, which predates round 5):
+- **P2:** a present `totalTokenCount` must now be a safe integer that covers prompt + output + thinking, or usage is unmeasurable and the arm stops. Before, a malformed total with the output count present could lose a call's cost. It never occurred in 1,776 responses.
+- **Tests:** three pre-TLS failures in a row still stop the run despite the retry; a resumed attempt 2 never tries a third time; a status without TLS is not retried; usage edge cases (string, fraction, short or loosely-equal total, null, negative) fail closed.
+- **Corrections to round 5's description:**
+  - A retry inside a turn that then times out is counted by the collector's budgets but **not** by the turn's journey call count. The 429 retry had the same gap.
+  - Resuming a checkpoint can retry a call the original run did not. Attempt 1 never reached Google, so this is not a duplicate, but the replay can diverge.
+  - A `MAX_TOKENS` response with zero reported output may have consumed unreported thinking, at most about USD 0.0026 per occurrence on L, seen once.
+  - The frozen `pricing_rule` wording predates the omitted-zero parsing.
+- **Mutants:** four new ones (`task_ref` not bound, `task_ref` visible, total unvalidated, transport stop at four) are all killed; mutants now total 48.
+
+---
+
 # Round 5: one safe retry for failures before TLS (post-hoc)
 
 Peng chose "add a safe retry" on 3 November 2026, after two compatibility runs were cut short by the local proxy.

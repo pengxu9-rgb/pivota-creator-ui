@@ -21,7 +21,7 @@ assert.deepEqual(freeze.compat_budgets,{...base.budgets,calls:2400,calls_per_arm
 assert.deepEqual(freeze.corpus_plan.smoke,{arms:['L'],journey_repetitions:2,adversarial:false,faults:false,compatibility:false,scored:false});
 // Declarations equal the reviewed ones with text removed from search_catalog and get_offers.
 const oldDecl=JSON.parse(show('reports/pot-shopping-phase3-20261101/declarations.json')).declarations;
-for(const d of oldDecl)if(['search_catalog','get_offers'].includes(d.name)){delete d.parameters.properties.text;d.parameters.required=d.parameters.required.filter(x=>x!=='text');}
+for(const d of oldDecl){if(['search_catalog','get_offers'].includes(d.name)){delete d.parameters.properties.text;d.parameters.required=d.parameters.required.filter(x=>x!=='text');}if(d.parameters.properties.task_ref){delete d.parameters.properties.task_ref;d.parameters.required=d.parameters.required.filter(x=>x!=='task_ref');}}
 assert.deepEqual(JSON.parse(fs.readFileSync(__dirname+'/declarations.json','utf8')).declarations,oldDecl);
 assert.deepEqual(freeze.review_go,{smoke:'claude_3c_smoke_go',reduced:'claude_3c_reduced_go',compatibility:'claude_3c_compat_go'});
 assert.deepEqual(freeze.smoke_budgets,{...base.budgets,calls:80,calls_per_arm:80,input_tokens:2000000,usd:1,usd_per_arm:{L:1,P:0}});
@@ -47,6 +47,6 @@ const frozen=new Set(freeze.artifacts.map(a=>a.path));
 const loaded=Object.keys(require.cache).map(f=>path.relative(root,f)).filter(f=>!f.startsWith('..')&&!f.includes('node_modules')&&f!=='reports/pot-shopping-phase3-20261101/freeze.json'&&f!=='reports/pot-shopping-phase3-20261101/qualify-reduced-plan.cjs'&&f!=='tests/helpers/strict-network-guard.cjs'); // the offline guard is preloaded by the gate, never by the live host
 const unfrozen=loaded.filter(f=>!frozen.has(f));
 assert.deepEqual(unfrozen,[],'runtime files not bound by the freeze');
-const result={passed:true,runtime_files_bound:loaded.length,runtime_patch_sha256:crypto.createHash('sha256').update(fs.readFileSync(__dirname+'/harness-fix-runtime.patch')).digest('hex'),baseline_commit:BASE,baseline_freeze:BASE_FREEZE,unchanged_fields:unchanged,changed_fields:changed,declarations:'reviewed minus text on search_catalog and get_offers',phase2_manifest:freeze.fixture_manifest_sha256,freeze_sha256:crypto.createHash('sha256').update(fs.readFileSync(__dirname+'/freeze.json')).digest('hex')};
+const result={passed:true,runtime_files_bound:loaded.length,runtime_patch_sha256:crypto.createHash('sha256').update(fs.readFileSync(__dirname+'/harness-fix-runtime.patch')).digest('hex'),baseline_commit:BASE,baseline_freeze:BASE_FREEZE,unchanged_fields:unchanged,changed_fields:changed,declarations:'reviewed minus text on search_catalog and get_offers, and minus task_ref on every tool',phase2_manifest:freeze.fixture_manifest_sha256,freeze_sha256:crypto.createHash('sha256').update(fs.readFileSync(__dirname+'/freeze.json')).digest('hex')};
 fs.writeFileSync(process.argv[2],JSON.stringify(result,null,2)+'\n');process.stdout.write(JSON.stringify(result)+'\n');
 })().catch(error=>{process.stderr.write(error.stack+'\n');process.exitCode=1;});

@@ -32,6 +32,9 @@ function usageCounts(u) {
         return null;
     if (u.candidatesTokenCount === undefined && !(Number.isSafeInteger(u.totalTokenCount) && u.totalTokenCount === u.promptTokenCount + output + thoughts))
         return null;
+    // A reported total must be a whole count that covers every part, or the call's cost is unknowable.
+    if (u.totalTokenCount !== undefined && !(Number.isSafeInteger(u.totalTokenCount) && u.totalTokenCount >= u.promptTokenCount + output + thoughts))
+        return null;
     return { input: u.promptTokenCount, output, thoughts: Math.max(thoughts, (u.totalTokenCount || 0) - u.promptTokenCount - output) };
 }
 function validUsage(u) { return usageCounts(u) !== null; }

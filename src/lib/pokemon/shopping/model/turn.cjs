@@ -116,12 +116,15 @@ function createJourney({ transport, port, fallback, renderClaim, onUseful = () =
                         throw Error('malformed_function_call');
                     if (!allowed.has(name))
                         throw Error('unknown_or_trusted_function');
-                    context.validateRefs(args);
-                    const bound = { text };
+                    // task_ref is server-bound, so only what the model may supply is checked as a reference.
+                    context.validateRefs(args && typeof args === 'object' && !Array.isArray(args) ? Object.fromEntries(Object.entries(args).filter(([k]) => k !== 'task_ref')) : args);
+                    const bound = { text, task_ref };
                     const full = bindArguments(name, args, bindings, bound);
                     // Recorded at binding, so a later failure in the batch cannot lose it.
                     if (bound.model_query !== undefined)
                         audit.push({ tool: name, model_query: bound.model_query });
+                    if (bound.model_task_ref !== undefined)
+                        audit.push({ tool: name, model_task_ref: bound.model_task_ref });
                     return { name, full, id };
                 });
                 turnTools += calls.length;

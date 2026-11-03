@@ -7,9 +7,6 @@
         "description": "",
         "type": "object",
         "properties": {
-          "task_ref": {
-            "type": "string"
-          },
           "offer_refs": {
             "type": "array",
             "items": {
@@ -27,7 +24,6 @@
           }
         },
         "required": [
-          "task_ref",
           "offer_refs",
           "criterion"
         ]
@@ -40,9 +36,6 @@
         "description": "",
         "type": "object",
         "properties": {
-          "task_ref": {
-            "type": "string"
-          },
           "selection_ref": {
             "type": "string"
           },
@@ -71,7 +64,6 @@
           }
         },
         "required": [
-          "task_ref",
           "selection_ref",
           "route",
           "quantity",
@@ -88,15 +80,11 @@
         "description": "",
         "type": "object",
         "properties": {
-          "task_ref": {
-            "type": "string"
-          },
           "printing_ref": {
             "type": "string"
           }
         },
         "required": [
-          "task_ref",
           "printing_ref"
         ]
       }
@@ -108,15 +96,11 @@
         "description": "",
         "type": "object",
         "properties": {
-          "task_ref": {
-            "type": "string"
-          },
           "preview_ref": {
             "type": "string"
           }
         },
         "required": [
-          "task_ref",
           "preview_ref"
         ]
       }
@@ -128,9 +112,6 @@
         "description": "",
         "type": "object",
         "properties": {
-          "task_ref": {
-            "type": "string"
-          },
           "printing_refs": {
             "type": "array",
             "items": {
@@ -179,7 +160,6 @@
           }
         },
         "required": [
-          "task_ref",
           "printing_refs"
         ]
       }
@@ -191,15 +171,11 @@
         "description": "",
         "type": "object",
         "properties": {
-          "task_ref": {
-            "type": "string"
-          },
           "operation_ref": {
             "type": "string"
           }
         },
         "required": [
-          "task_ref",
           "operation_ref"
         ]
       }
@@ -211,15 +187,11 @@
         "description": "",
         "type": "object",
         "properties": {
-          "task_ref": {
-            "type": "string"
-          },
           "operation_ref": {
             "type": "string"
           }
         },
         "required": [
-          "task_ref",
           "operation_ref"
         ]
       }
@@ -231,15 +203,11 @@
         "description": "",
         "type": "object",
         "properties": {
-          "task_ref": {
-            "type": "string"
-          },
           "printing_ref": {
             "type": "string"
           }
         },
         "required": [
-          "task_ref",
           "printing_ref"
         ]
       }
@@ -251,9 +219,6 @@
         "description": "",
         "type": "object",
         "properties": {
-          "task_ref": {
-            "type": "string"
-          },
           "certificate_ref": {
             "type": "string"
           },
@@ -262,7 +227,6 @@
           }
         },
         "required": [
-          "task_ref",
           "certificate_ref",
           "offer_ref"
         ]
@@ -275,9 +239,6 @@
         "description": "",
         "type": "object",
         "properties": {
-          "task_ref": {
-            "type": "string"
-          },
           "refs": {
             "type": "array",
             "items": {
@@ -307,7 +268,6 @@
           }
         },
         "required": [
-          "task_ref",
           "refs",
           "kind",
           "request_id",
@@ -323,9 +283,6 @@
         "description": "",
         "type": "object",
         "properties": {
-          "task_ref": {
-            "type": "string"
-          },
           "proposed_filters": {
             "type": "object",
             "properties": {
@@ -366,9 +323,7 @@
             "required": []
           }
         },
-        "required": [
-          "task_ref"
-        ]
+        "required": []
       }
     },
     {
@@ -378,9 +333,6 @@
         "description": "",
         "type": "object",
         "properties": {
-          "task_ref": {
-            "type": "string"
-          },
           "offer_ref": {
             "type": "string"
           },
@@ -466,7 +418,6 @@
           }
         },
         "required": [
-          "task_ref",
           "offer_ref",
           "requirements",
           "request_id",
@@ -896,17 +847,77 @@
   ],
   "server_bound": [
     {
+      "tool": "compare_offers",
+      "field": "task_ref",
+      "source": "turn_task"
+    },
+    {
+      "tool": "create_checkout_session",
+      "field": "task_ref",
+      "source": "turn_task"
+    },
+    {
+      "tool": "get_alternatives",
+      "field": "task_ref",
+      "source": "turn_task"
+    },
+    {
+      "tool": "get_checkout_session",
+      "field": "task_ref",
+      "source": "turn_task"
+    },
+    {
+      "tool": "get_offers",
+      "field": "task_ref",
+      "source": "turn_task"
+    },
+    {
       "tool": "get_offers",
       "field": "text",
       "source": "original_user_text"
     },
     {
+      "tool": "get_operation",
+      "field": "task_ref",
+      "source": "turn_task"
+    },
+    {
+      "tool": "get_order",
+      "field": "task_ref",
+      "source": "turn_task"
+    },
+    {
+      "tool": "get_product",
+      "field": "task_ref",
+      "source": "turn_task"
+    },
+    {
+      "tool": "lookup_certificate",
+      "field": "task_ref",
+      "source": "turn_task"
+    },
+    {
+      "tool": "request_refresh",
+      "field": "task_ref",
+      "source": "turn_task"
+    },
+    {
+      "tool": "search_catalog",
+      "field": "task_ref",
+      "source": "turn_task"
+    },
+    {
       "tool": "search_catalog",
       "field": "text",
       "source": "original_user_text"
+    },
+    {
+      "tool": "select_offer",
+      "field": "task_ref",
+      "source": "turn_task"
     }
   ],
-  "declaration_sha256": "0d41c5cd491e9f941813761f1b82fdb742c8421983f6c5fef662da5ac9a3ea58",
+  "declaration_sha256": "c92004f196464c05bf1fc7fe8a05cbed4a836aef306f3cad8e381cd105f89262",
   "privacy_projection_sha256": "62c8c182deebdf56494d8f0a3dcce314c5266308bdca6c57f067cd5c4524400d",
   "dropped_keywords_sha256": "1c93e02ff76d80407125dcd52c33698b2287d7cd4eeac28613b4a3db3806e756"
 }

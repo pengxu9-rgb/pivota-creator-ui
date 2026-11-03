@@ -1,55 +1,301 @@
 diff --git a/reports/pot-shopping-phase3-20261101/declarations.json b/reports/pot-shopping-phase3-20261101/declarations.json
-index 09b7065..bfb3c73 100644
+index 09b7065..6a1d403 100644
 --- a/reports/pot-shopping-phase3-20261101/declarations.json
 +++ b/reports/pot-shopping-phase3-20261101/declarations.json
-@@ -131,9 +131,6 @@
-           "task_ref": {
+@@ -7,9 +7,6 @@
+         "description": "",
+         "type": "object",
+         "properties": {
+-          "task_ref": {
+-            "type": "string"
+-          },
+           "offer_refs": {
+             "type": "array",
+             "items": {
+@@ -27,7 +24,6 @@
+           }
+         },
+         "required": [
+-          "task_ref",
+           "offer_refs",
+           "criterion"
+         ]
+@@ -40,9 +36,6 @@
+         "description": "",
+         "type": "object",
+         "properties": {
+-          "task_ref": {
+-            "type": "string"
+-          },
+           "selection_ref": {
              "type": "string"
            },
+@@ -71,7 +64,6 @@
+           }
+         },
+         "required": [
+-          "task_ref",
+           "selection_ref",
+           "route",
+           "quantity",
+@@ -88,15 +80,11 @@
+         "description": "",
+         "type": "object",
+         "properties": {
+-          "task_ref": {
+-            "type": "string"
+-          },
+           "printing_ref": {
+             "type": "string"
+           }
+         },
+         "required": [
+-          "task_ref",
+           "printing_ref"
+         ]
+       }
+@@ -108,15 +96,11 @@
+         "description": "",
+         "type": "object",
+         "properties": {
+-          "task_ref": {
+-            "type": "string"
+-          },
+           "preview_ref": {
+             "type": "string"
+           }
+         },
+         "required": [
+-          "task_ref",
+           "preview_ref"
+         ]
+       }
+@@ -128,12 +112,6 @@
+         "description": "",
+         "type": "object",
+         "properties": {
+-          "task_ref": {
+-            "type": "string"
+-          },
 -          "text": {
 -            "type": "string"
 -          },
            "printing_refs": {
              "type": "array",
              "items": {
-@@ -329,9 +326,6 @@
-           "task_ref": {
+@@ -182,7 +160,6 @@
+           }
+         },
+         "required": [
+-          "task_ref",
+           "printing_refs"
+         ]
+       }
+@@ -194,15 +171,11 @@
+         "description": "",
+         "type": "object",
+         "properties": {
+-          "task_ref": {
+-            "type": "string"
+-          },
+           "operation_ref": {
+             "type": "string"
+           }
+         },
+         "required": [
+-          "task_ref",
+           "operation_ref"
+         ]
+       }
+@@ -214,15 +187,11 @@
+         "description": "",
+         "type": "object",
+         "properties": {
+-          "task_ref": {
+-            "type": "string"
+-          },
+           "operation_ref": {
+             "type": "string"
+           }
+         },
+         "required": [
+-          "task_ref",
+           "operation_ref"
+         ]
+       }
+@@ -234,15 +203,11 @@
+         "description": "",
+         "type": "object",
+         "properties": {
+-          "task_ref": {
+-            "type": "string"
+-          },
+           "printing_ref": {
+             "type": "string"
+           }
+         },
+         "required": [
+-          "task_ref",
+           "printing_ref"
+         ]
+       }
+@@ -254,9 +219,6 @@
+         "description": "",
+         "type": "object",
+         "properties": {
+-          "task_ref": {
+-            "type": "string"
+-          },
+           "certificate_ref": {
              "type": "string"
            },
+@@ -265,7 +227,6 @@
+           }
+         },
+         "required": [
+-          "task_ref",
+           "certificate_ref",
+           "offer_ref"
+         ]
+@@ -278,9 +239,6 @@
+         "description": "",
+         "type": "object",
+         "properties": {
+-          "task_ref": {
+-            "type": "string"
+-          },
+           "refs": {
+             "type": "array",
+             "items": {
+@@ -310,7 +268,6 @@
+           }
+         },
+         "required": [
+-          "task_ref",
+           "refs",
+           "kind",
+           "request_id",
+@@ -326,12 +283,6 @@
+         "description": "",
+         "type": "object",
+         "properties": {
+-          "task_ref": {
+-            "type": "string"
+-          },
 -          "text": {
 -            "type": "string"
 -          },
            "proposed_filters": {
              "type": "object",
              "properties": {
-@@ -373,8 +367,7 @@
+@@ -372,10 +323,7 @@
+             "required": []
+           }
+         },
+-        "required": [
+-          "task_ref",
+-          "text"
+-        ]
++        "required": []
+       }
+     },
+     {
+@@ -385,9 +333,6 @@
+         "description": "",
+         "type": "object",
+         "properties": {
+-          "task_ref": {
+-            "type": "string"
+-          },
+           "offer_ref": {
+             "type": "string"
+           },
+@@ -473,7 +418,6 @@
            }
          },
          "required": [
 -          "task_ref",
--          "text"
-+          "task_ref"
-         ]
-       }
-     },
-@@ -901,7 +894,19 @@
+           "offer_ref",
+           "requirements",
+           "request_id",
+@@ -901,7 +845,79 @@
        "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
      }
    ],
 -  "declaration_sha256": "24f020f8ee926579a81eba2d81a4c8c9136ff39ff9703ac98c3fab33a4388ede",
 +  "server_bound": [
 +    {
++      "tool": "compare_offers",
++      "field": "task_ref",
++      "source": "turn_task"
++    },
++    {
++      "tool": "create_checkout_session",
++      "field": "task_ref",
++      "source": "turn_task"
++    },
++    {
++      "tool": "get_alternatives",
++      "field": "task_ref",
++      "source": "turn_task"
++    },
++    {
++      "tool": "get_checkout_session",
++      "field": "task_ref",
++      "source": "turn_task"
++    },
++    {
++      "tool": "get_offers",
++      "field": "task_ref",
++      "source": "turn_task"
++    },
++    {
 +      "tool": "get_offers",
 +      "field": "text",
 +      "source": "original_user_text"
 +    },
 +    {
++      "tool": "get_operation",
++      "field": "task_ref",
++      "source": "turn_task"
++    },
++    {
++      "tool": "get_order",
++      "field": "task_ref",
++      "source": "turn_task"
++    },
++    {
++      "tool": "get_product",
++      "field": "task_ref",
++      "source": "turn_task"
++    },
++    {
++      "tool": "lookup_certificate",
++      "field": "task_ref",
++      "source": "turn_task"
++    },
++    {
++      "tool": "request_refresh",
++      "field": "task_ref",
++      "source": "turn_task"
++    },
++    {
++      "tool": "search_catalog",
++      "field": "task_ref",
++      "source": "turn_task"
++    },
++    {
 +      "tool": "search_catalog",
 +      "field": "text",
 +      "source": "original_user_text"
++    },
++    {
++      "tool": "select_offer",
++      "field": "task_ref",
++      "source": "turn_task"
 +    }
 +  ],
-+  "declaration_sha256": "0d41c5cd491e9f941813761f1b82fdb742c8421983f6c5fef662da5ac9a3ea58",
++  "declaration_sha256": "c92004f196464c05bf1fc7fe8a05cbed4a836aef306f3cad8e381cd105f89262",
    "privacy_projection_sha256": "62c8c182deebdf56494d8f0a3dcce314c5266308bdca6c57f067cd5c4524400d",
    "dropped_keywords_sha256": "1c93e02ff76d80407125dcd52c33698b2287d7cd4eeac28613b4a3db3806e756"
  }
@@ -382,7 +628,7 @@ index c89b6d1..eef62fa 100644
  process.on('exit',()=>fs.writeSync(2,JSON.stringify({live_allowlist_guard_audit:auditSnapshot()})+'\n'));
  module.exports=Object.freeze({endpoint,fetchImpl,auditSnapshot,abortAll});
 diff --git a/src/lib/pokemon/shopping/model/collector.cjs b/src/lib/pokemon/shopping/model/collector.cjs
-index 2218a2f..ea4d618 100644
+index 2218a2f..6db8d35 100644
 --- a/src/lib/pokemon/shopping/model/collector.cjs
 +++ b/src/lib/pokemon/shopping/model/collector.cjs
 @@ -7,6 +7,11 @@ const { declarationSet } = require('./declarations.cjs');
@@ -397,7 +643,7 @@ index 2218a2f..ea4d618 100644
  const STOP_RULES = Object.freeze({request_rejected:Object.freeze({consecutive_non_429_4xx:3,scope:'arm'}),access_denied:Object.freeze({statuses:Object.freeze([401,403]),scope:'global'})});
  function price(freeze, arm, input, output, thoughts = 0) {
      if (![input, output, thoughts].every(n => Number.isSafeInteger(n) && n >= 0))
-@@ -16,7 +21,20 @@ function price(freeze, arm, input, output, thoughts = 0) {
+@@ -16,7 +21,23 @@ function price(freeze, arm, input, output, thoughts = 0) {
          throw Error('no_price_no_run');
      return (input * rate.input + (output + thoughts) * rate.output_including_reasoning) / 1000000;
  }
@@ -413,13 +659,16 @@ index 2218a2f..ea4d618 100644
 +        return null;
 +    if (u.candidatesTokenCount === undefined && !(Number.isSafeInteger(u.totalTokenCount) && u.totalTokenCount === u.promptTokenCount + output + thoughts))
 +        return null;
++    // A reported total must be a whole count that covers every part, or the call's cost is unknowable.
++    if (u.totalTokenCount !== undefined && !(Number.isSafeInteger(u.totalTokenCount) && u.totalTokenCount >= u.promptTokenCount + output + thoughts))
++        return null;
 +    return { input: u.promptTokenCount, output, thoughts: Math.max(thoughts, (u.totalTokenCount || 0) - u.promptTokenCount - output) };
 +}
 +function validUsage(u) { return usageCounts(u) !== null; }
  function validateFrozenRequest(freeze, request) {
      const { CONFIG, SYSTEM_INSTRUCTION } = require('./turn.cjs');
      if (!request || Object.keys(request).sort().join(',') !== 'contents,generationConfig,systemInstruction,toolConfig,tools' || hash(request.generationConfig) !== hash(CONFIG) || hash(request.generationConfig) !== hash(freeze.generationConfig) || hash(request.toolConfig) !== hash(freeze.toolConfig) || hash(request.systemInstruction) !== hash({ parts: [{ text: SYSTEM_INSTRUCTION }] }) || hash(SYSTEM_INSTRUCTION) !== freeze.system_instruction_sha256 || !Array.isArray(request.tools) || request.tools.length !== 1 || Object.keys(request.tools[0]).join(',') !== 'functionDeclarations' || hash(request.tools[0].functionDeclarations) !== freeze.declaration_set_sha256 || freeze.declaration_set_sha256 !== declarationSet().declaration_sha256 || !Array.isArray(request.contents))
-@@ -38,7 +56,7 @@ function checkFreeze(freeze, artifactBytes) {
+@@ -38,7 +59,7 @@ function checkFreeze(freeze, artifactBytes) {
      if (freeze.stage !== '3a' || freeze.live_run_enabled !== false)
          throw Error('invalid_freeze');
      if (hash(freeze.stop_rules) !== hash(STOP_RULES)) throw Error('frozen_stop_rules_mismatch');
@@ -428,7 +677,7 @@ index 2218a2f..ea4d618 100644
          throw Error('frozen_limits_mismatch');
      for (const [arm, id] of Object.entries(MODELS)) {
          if (freeze.endpoints?.[arm] !== endpoint(arm))
-@@ -54,10 +72,13 @@ function checkFreeze(freeze, artifactBytes) {
+@@ -54,10 +75,13 @@ function checkFreeze(freeze, artifactBytes) {
      }
      return hash(freeze);
  }
@@ -443,7 +692,7 @@ index 2218a2f..ea4d618 100644
      // Stage 3a cannot accidentally launch a live adapter, even if credentials exist.
      if (!rehearsal && !reviewGo)
          throw Error('claude_3a_review_required');
-@@ -65,6 +86,8 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
+@@ -65,6 +89,8 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
      if (state.freeze_sha256 !== freezeHash)
          throw Error('resume_freeze_mismatch');
      if(fs.existsSync(checkpoint)&&state.rehearsal!==rehearsal)throw Error('resume_mode_mismatch');
@@ -452,7 +701,7 @@ index 2218a2f..ea4d618 100644
      state.rehearsal=rehearsal;
      state.sessions ||= {};
      if (state.records.some(r => r.status === 'reserved'))
-@@ -96,14 +119,14 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
+@@ -96,14 +122,14 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
      process.on('SIGTERM', onTerm);
      function reserve(arm, job, attempt, request) {
          validateFrozenRequest(freeze, request);
@@ -469,7 +718,7 @@ index 2218a2f..ea4d618 100644
              stop('budget_exhausted', arm);
              throw Error('budget_exhausted');
          }
-@@ -149,9 +172,9 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
+@@ -149,9 +175,9 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
              active.delete(controller);
          }
          const usage = response.body?.usageMetadata;
@@ -482,7 +731,7 @@ index 2218a2f..ea4d618 100644
          a.reserved_input -= record.reserved_input;
          a.reserved_usd -= record.reserved_usd;
          a.input_tokens += input;
-@@ -195,7 +218,10 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
+@@ -195,7 +221,10 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
          }
          else
              ({ response } = await invoke(arm, { id }, body, 1, signal));
@@ -494,7 +743,7 @@ index 2218a2f..ea4d618 100644
              ({ response } = await invoke(arm, { id }, body, 2, signal));
          if (!a.preflight && !a.stop_reason && !state.stop_reason) {
              try {
-@@ -300,4 +326,4 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
+@@ -300,4 +329,4 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
      }
      return Object.freeze({ run, request, channel, session, outcome, priorOutcome, state: () => copy(state), save, stop, close: () => { process.removeListener('SIGINT', onInt); process.removeListener('SIGTERM', onTerm); save(); } });
  }
@@ -534,7 +783,7 @@ index 9fb1868..8b4e192 100644
          const safe = safeValue(out);
          for (const r of safe.records)
 diff --git a/src/lib/pokemon/shopping/model/declarations.cjs b/src/lib/pokemon/shopping/model/declarations.cjs
-index 420cbf5..4775166 100644
+index 420cbf5..aae15ff 100644
 --- a/src/lib/pokemon/shopping/model/declarations.cjs
 +++ b/src/lib/pokemon/shopping/model/declarations.cjs
 @@ -2,7 +2,10 @@
@@ -548,7 +797,7 @@ index 420cbf5..4775166 100644
  const SUPPORTED = new Set(['type', 'properties', 'required', 'items', 'enum', 'description', 'minimum', 'maximum', 'minItems', 'maxItems', 'nullable']);
  const object = v => v && typeof v === 'object' && !Array.isArray(v);
  function project(schema, path = '', removed = []) {
-@@ -45,14 +48,19 @@ function convert(schema, path = '', dropped = []) {
+@@ -45,14 +48,25 @@ function convert(schema, path = '', dropped = []) {
      return out;
  }
  function declarationSet() {
@@ -556,6 +805,12 @@ index 420cbf5..4775166 100644
 +    const privacy = [], dropped = [], serverBound = [], list = declarations().map(d => {
          const removed = [], loss = [];
          const parameters = convert(project(d.parameters, '', removed), '', loss);
++        // The turn's own task is bound by the server; the model never copies the identifier.
++        if (parameters.properties?.task_ref) {
++            delete parameters.properties.task_ref;
++            parameters.required = (parameters.required || []).filter(x => x !== 'task_ref');
++            serverBound.push({ tool: d.name, field: 'task_ref', source: 'turn_task' });
++        }
 +        if (SERVER_TEXT.has(d.name)) {
 +            delete parameters.properties.text;
 +            parameters.required = (parameters.required || []).filter(x => x !== 'text');
@@ -570,7 +825,7 @@ index 420cbf5..4775166 100644
  }
  function rejectPrivate(value) { if (Array.isArray(value)) {
      value.forEach(rejectPrivate);
-@@ -68,7 +76,23 @@ function publicArgs(value) { if (Array.isArray(value))
+@@ -68,7 +82,31 @@ function publicArgs(value) { if (Array.isArray(value))
      return Object.fromEntries(Object.entries(value).filter(([k]) => !PRIVATE.has(k)).map(([k, v]) => [k, publicArgs(v)])); return value; }
  function containsPrivate(value) { if (Array.isArray(value))
      return value.some(containsPrivate); return object(value) && Object.entries(value).some(([k, v]) => PRIVATE.has(k) || containsPrivate(v)); }
@@ -583,8 +838,16 @@ index 420cbf5..4775166 100644
 +function bindArguments(name, args, existingBindings = {}, bound = null) {
 +    if (!object(args))
 +        throw Error('invalid_arguments');
++    if (!bound || typeof bound.task_ref !== 'string')
++        throw Error('task_unavailable');
++    // A model-written task_ref is ignored: the server binds the turn's task.
++    if (Object.hasOwn(args, 'task_ref')) {
++        if (args.task_ref !== bound.task_ref)
++            bound.model_task_ref = 'ignored';
++        args = Object.fromEntries(Object.entries(args).filter(([k]) => k !== 'task_ref'));
++    }
 +    if (SERVER_TEXT.has(name)) {
-+        if (!bound || typeof bound.text !== 'string')
++        if (typeof bound.text !== 'string')
 +            throw Error('original_text_unavailable');
 +        // A model-written query is recorded for the audit and never forwarded.
 +        if (object(args) && Object.hasOwn(args, 'text')) {
@@ -595,20 +858,23 @@ index 420cbf5..4775166 100644
      rejectPrivate(args);
      // A private-bearing contract requires an exact pre-existing host payload.
      // No callback can mint action/consent in response to a model request.
-@@ -78,11 +102,13 @@ function bindArguments(name, args, existingBindings = {}) {
+@@ -78,11 +116,16 @@ function bindArguments(name, args, existingBindings = {}) {
      const needsPrivate = declarationSet().privacy_projection.some(r => r.tool === name);
      let full = copy(args);
      if (needsPrivate) {
 -        const bound = existingBindings[name];
 -        if (!bound || !containsPrivate(bound) || hash(publicArgs(bound)) !== hash(args))
 +        const host = existingBindings[name];
-+        if (!host || !containsPrivate(host) || hash(publicArgs(host)) !== hash(args))
++        const withoutTask = value => Object.fromEntries(Object.entries(value).filter(([k]) => k !== 'task_ref'));
++        if (!host || !containsPrivate(host) || hash(withoutTask(publicArgs(host))) !== hash(args))
              throw Error('private_binding_unavailable');
 -        full = copy(bound);
 +        full = copy(existingBindings[name]);
      }
 +    if (SERVER_TEXT.has(name))
 +        full.text = bound.text;
++    if (original.parameters?.properties?.task_ref)
++        full.task_ref = bound.task_ref;
      return validateRequest(name, full); // Full original schema, including dropped keywords.
  }
 -module.exports = { declarationSet, project, convert, bindArguments, rejectPrivate, publicArgs, PRIVATE };
@@ -716,7 +982,7 @@ index 759e5b6..0b2fe89 100644
 +}
 +module.exports = {score,scoreCompatibility,median,p95};
 diff --git a/src/lib/pokemon/shopping/model/turn.cjs b/src/lib/pokemon/shopping/model/turn.cjs
-index 99662c1..038a78e 100644
+index 99662c1..6422c19 100644
 --- a/src/lib/pokemon/shopping/model/turn.cjs
 +++ b/src/lib/pokemon/shopping/model/turn.cjs
 @@ -4,8 +4,15 @@ const { declarationSet, bindArguments } = require('./declarations.cjs');
@@ -810,22 +1076,27 @@ index 99662c1..038a78e 100644
                  if (functions.length !== parts.length)
                      throw Error('mixed_output');
                  if (turnTools + functions.length > 4 || toolCalls + functions.length > 12)
-@@ -94,9 +117,11 @@ function createJourney({ transport, port, fallback, renderClaim, onUseful = () =
+@@ -93,10 +116,15 @@ function createJourney({ transport, port, fallback, renderClaim, onUseful = () =
+                         throw Error('malformed_function_call');
                      if (!allowed.has(name))
                          throw Error('unknown_or_trusted_function');
-                     context.validateRefs(args);
+-                    context.validateRefs(args);
 -                    const full = bindArguments(name, args, bindings);
 -                    if (['search_catalog', 'get_offers'].includes(name) && full.text !== undefined && full.text !== text)
 -                        throw Error('original_text_required');
-+                    const bound = { text };
++                    // task_ref is server-bound, so only what the model may supply is checked as a reference.
++                    context.validateRefs(args && typeof args === 'object' && !Array.isArray(args) ? Object.fromEntries(Object.entries(args).filter(([k]) => k !== 'task_ref')) : args);
++                    const bound = { text, task_ref };
 +                    const full = bindArguments(name, args, bindings, bound);
 +                    // Recorded at binding, so a later failure in the batch cannot lose it.
 +                    if (bound.model_query !== undefined)
 +                        audit.push({ tool: name, model_query: bound.model_query });
++                    if (bound.model_task_ref !== undefined)
++                        audit.push({ tool: name, model_task_ref: bound.model_task_ref });
                      return { name, full, id };
                  });
                  turnTools += calls.length;
-@@ -107,6 +132,9 @@ function createJourney({ transport, port, fallback, renderClaim, onUseful = () =
+@@ -107,6 +135,9 @@ function createJourney({ transport, port, fallback, renderClaim, onUseful = () =
                  // function responses from the parallel model batch return in one user part.
                  for (const { name, full, id } of calls) {
                      const result = await execute(name, full);
@@ -835,7 +1106,7 @@ index 99662c1..038a78e 100644
                      audit.push({ tool: name, ok: result.ok, code: result.error?.code || null });
                      const safe = context.project(result);
                      results.push({ functionResponse: { name, ...(id === undefined ? {} : { id }), response: safe } });
-@@ -125,4 +153,4 @@ function createJourney({ transport, port, fallback, renderClaim, onUseful = () =
+@@ -125,4 +156,4 @@ function createJourney({ transport, port, fallback, renderClaim, onUseful = () =
      }
      return Object.freeze({ turn, counts: () => ({ model_calls: journeyCalls, tool_calls: toolCalls }), instruction_sha256: hash(SYSTEM_INSTRUCTION) });
  }

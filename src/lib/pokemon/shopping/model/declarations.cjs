@@ -51,6 +51,12 @@ function declarationSet() {
     const privacy = [], dropped = [], serverBound = [], list = declarations().map(d => {
         const removed = [], loss = [];
         const parameters = convert(project(d.parameters, '', removed), '', loss);
+        // The turn's own task is bound by the server; the model never copies the identifier.
+        if (parameters.properties?.task_ref) {
+            delete parameters.properties.task_ref;
+            parameters.required = (parameters.required || []).filter(x => x !== 'task_ref');
+            serverBound.push({ tool: d.name, field: 'task_ref', source: 'turn_task' });
+        }
         if (SERVER_TEXT.has(d.name)) {
             delete parameters.properties.text;
             parameters.required = (parameters.required || []).filter(x => x !== 'text');
@@ -84,8 +90,16 @@ function modelQuery(value) {
 function bindArguments(name, args, existingBindings = {}, bound = null) {
     if (!object(args))
         throw Error('invalid_arguments');
+    if (!bound || typeof bound.task_ref !== 'string')
+        throw Error('task_unavailable');
+    // A model-written task_ref is ignored: the server binds the turn's task.
+    if (Object.hasOwn(args, 'task_ref')) {
+        if (args.task_ref !== bound.task_ref)
+            bound.model_task_ref = 'ignored';
+        args = Object.fromEntries(Object.entries(args).filter(([k]) => k !== 'task_ref'));
+    }
     if (SERVER_TEXT.has(name)) {
-        if (!bound || typeof bound.text !== 'string')
+        if (typeof bound.text !== 'string')
             throw Error('original_text_unavailable');
         // A model-written query is recorded for the audit and never forwarded.
         if (object(args) && Object.hasOwn(args, 'text')) {
@@ -103,12 +117,15 @@ function bindArguments(name, args, existingBindings = {}, bound = null) {
     let full = copy(args);
     if (needsPrivate) {
         const host = existingBindings[name];
-        if (!host || !containsPrivate(host) || hash(publicArgs(host)) !== hash(args))
+        const withoutTask = value => Object.fromEntries(Object.entries(value).filter(([k]) => k !== 'task_ref'));
+        if (!host || !containsPrivate(host) || hash(withoutTask(publicArgs(host))) !== hash(args))
             throw Error('private_binding_unavailable');
         full = copy(existingBindings[name]);
     }
     if (SERVER_TEXT.has(name))
         full.text = bound.text;
+    if (original.parameters?.properties?.task_ref)
+        full.task_ref = bound.task_ref;
     return validateRequest(name, full); // Full original schema, including dropped keywords.
 }
 module.exports = { declarationSet, project, convert, bindArguments, rejectPrivate, publicArgs, PRIVATE, SERVER_TEXT };
