@@ -1,0 +1,224 @@
+{
+  "schema": "shopping.phase4.partA.summary.v1",
+  "implementation_commit": "f13e0e5fa9cf8e0e102c9d2d7d207782726951b1",
+  "kernel_retry": {
+    "fresh_full_93": true,
+    "partial_rows_reused": 0,
+    "previous_attempts": [
+      "stopped after 74 rows on worker deadline; retained unchanged",
+      "interrupted after 56 rows without a final receipt; cause unknown; retained unchanged"
+    ],
+    "temporary_idle_sleep_prevention": "caffeinate -i",
+    "raw_logs_written_to_local_temporary_storage": true,
+    "archive_sha256": "ce11065236efb71563a2b9d2d1d72fb9163514804a55bafa71d49499064d3d4e"
+  },
+  "base": "12dc3a19299c19e200541c4261a69658c26a1b72",
+  "freeze_sha256": "8a030abaaeda8e9ed2fa8e80fb6ed2476d2cb05a7f6a3748e241c98c035b54c6",
+  "heldout_fixture_bound": false,
+  "real_heldout_journeys_read_or_written": false,
+  "model_calls": 0,
+  "network_attempts": 0,
+  "full_suite": {
+    "tests": 624,
+    "pass": 624,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "model_suite": {
+    "tests": 118,
+    "pass": 118,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "harness_tests": {
+    "tests": 10,
+    "pass": 10,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "syntax_checks": 47,
+  "model_mutants": {
+    "total": 49,
+    "killed": 49
+  },
+  "equivalence": {
+    "checked_in_comparisons": 28,
+    "exact_existing_transport_comparisons": 28,
+    "legacy_outcomes_and_requests_byte_identical": true,
+    "only_excluded_output": "additive missed_necessary_questions field"
+  },
+  "qualifiers": {
+    "harness-1": {
+      "passed": true,
+      "node_audits": 4,
+      "network_attempts": 0,
+      "log_sha256": "d591ce4bd2b3a19b9cd8688e93b48e618d9c726362535820d7843857290101c5"
+    },
+    "syntax-final": {
+      "passed": true,
+      "node_audits": 1,
+      "network_attempts": 0,
+      "log_sha256": "c4dcec0eaf7ba6f25f9d4acc953cb62b796dec0aca5f9cf92fdd71e53076ffda"
+    },
+    "corpus-final": {
+      "passed": true,
+      "node_audits": 1,
+      "network_attempts": 0,
+      "log_sha256": "807f6ee46342e10ef4a5186ac818a4490d082c06d406dc76fd4c4cb45b5d84fa"
+    },
+    "smoke-final": {
+      "passed": true,
+      "node_audits": 1,
+      "network_attempts": 0,
+      "log_sha256": "3f0d11be15bcfcffbd56ee6db9bb755527cb7c350d63a9969afac04614b128b0"
+    },
+    "compat-final": {
+      "passed": true,
+      "node_audits": 1,
+      "network_attempts": 0,
+      "log_sha256": "21471102a6b0e5f706df4dc3cecc596ee1c79028db992697a634f91cdebaf696"
+    },
+    "mapping-1": {
+      "passed": true,
+      "node_audits": 1,
+      "network_attempts": 0,
+      "log_sha256": "c5de45576f8230c9e8e28c7799883897c52b1e6f07d402814efc50a1750e538e"
+    },
+    "detached-final": {
+      "passed": true,
+      "node_audits": 1,
+      "network_attempts": 0,
+      "log_sha256": "f93e81b8bfdce8d2937b3513da0041cfee399bf7027e5ffdcf8eec92eac9d2bb"
+    },
+    "arm-resume-final": {
+      "passed": true,
+      "node_audits": 1,
+      "network_attempts": 0,
+      "log_sha256": "4e89430b1162bd66d86605f83a44ee4c685ce7968f669f37e7852d266f364d93"
+    },
+    "guard-1": {
+      "passed": true,
+      "node_audits": 1,
+      "network_attempts": 0,
+      "log_sha256": "28fafb5ae7571f8bb164fba8b93a80ad1a022c548ecea18c2fa2dd217d996ca4"
+    },
+    "invariants-final": {
+      "passed": true,
+      "node_audits": 1,
+      "network_attempts": 0,
+      "log_sha256": "e7587535a582e56843291990da590fa9b3ad14738eeae8e01a7472ced3c78145"
+    },
+    "model-freeze-final": {
+      "passed": true,
+      "node_audits": 1,
+      "network_attempts": 0,
+      "log_sha256": "adbbbf70d9a633f0088245849b8e53c591ec482624180b50e3e44bc553b05c85"
+    },
+    "heldout-final": {
+      "passed": true,
+      "node_audits": 1,
+      "network_attempts": 0,
+      "log_sha256": "89f797bc03d2be271c37233bbb4159a609e34baa922c2bbe6f6d52a3284b2416"
+    },
+    "equivalence-final": {
+      "passed": true,
+      "node_audits": 1,
+      "network_attempts": 0,
+      "log_sha256": "a17ce3e41b0158273b34c2dcd65127015d944a0ceeeeeab88f5f0725cd3d02b9"
+    },
+    "equivalence-exact": {
+      "passed": true,
+      "node_audits": 1,
+      "network_attempts": 0,
+      "log_sha256": "f1e815b8ef1d99a3c4761385ea6cff646a7dbe5aef60c602bf7eb8c05eaf8787"
+    },
+    "python-1": {
+      "passed": true,
+      "node_audits": 0,
+      "network_attempts": 0,
+      "log_sha256": "38999e06252d034548f695bc989a6229e8f9f220152b165638de70d3aee4f6d3"
+    },
+    "phase2-1": {
+      "passed": true,
+      "node_audits": 1,
+      "network_attempts": 0,
+      "log_sha256": "d4b16deab8ea0dabe1a529a3ad1f45485a331e423eea08f26d0b2ab20bb42ab2"
+    },
+    "ts-1": {
+      "passed": true,
+      "node_audits": 1,
+      "network_attempts": 0,
+      "log_sha256": "95d5e2509ba7b3f13aca3af7ddedaca5baccf5d03a452ea6fe9c467ceda8ed0f"
+    },
+    "vocab-final": {
+      "passed": true,
+      "node_audits": 0,
+      "network_attempts": 0,
+      "log_sha256": "9b9b5435742032872a698f1d65c76b31e6954ea1af622e9950a0aad6d155d83c"
+    }
+  },
+  "frozen_model": {
+    "passed": true,
+    "base": "12dc3a19299c19e200541c4261a69658c26a1b72",
+    "byte_identical": [
+      {
+        "file": "src/lib/pokemon/shopping/model/turn.cjs",
+        "sha256": "64440be3d5e57718fa97e550079c2aabaa83589077a55e4ee8ff13b49f810df2"
+      },
+      {
+        "file": "src/lib/pokemon/shopping/model/declarations.cjs",
+        "sha256": "b735935f8a90d57c3b6b9bf3fb017f8cbc2930243da528cd1f59290b2038cf53"
+      },
+      {
+        "file": "reports/pot-shopping-phase3-20261101/declarations.json",
+        "sha256": "ce8a51cc206a2258d16c32c17be83e1fe87c2fa6abe535033e961182f8774e26"
+      },
+      {
+        "file": "src/lib/pokemon/shopping/model/context.cjs",
+        "sha256": "ad855589e6c727989e19fec8b102d3aac9c4ed0972ccdd880f4e49e7c74187fd"
+      }
+    ],
+    "generation_config_identical": true
+  },
+  "kernel": {
+    "complete": true,
+    "rows": 93,
+    "caught": 88,
+    "equivalent": 5,
+    "inventory": {
+      "test_files": 45,
+      "tests": 624,
+      "routing_python_workers": 63,
+      "python_workers": 64
+    },
+    "node_audits": 8694,
+    "python_audits": 6080,
+    "cells": 4324,
+    "network_attempts": 0,
+    "signals_sent_to_foreign_processes": 0,
+    "local_load_before": {
+      "logical_cpus": 10,
+      "sample_ms": 3000,
+      "idle_share": 0.46277665995975853,
+      "load": [
+        4.041015625,
+        5.0654296875,
+        8.44580078125
+      ]
+    },
+    "extra_idle_threshold_removed_by_user": true,
+    "load_min": 4.5693359375,
+    "load_max": 104.61083984375
+  },
+  "raw_evidence_manifest": {
+    "sha256": "a2f48c0ac2e9dca596201638d0a753f79c5595b9d312033fafedeb738dce74d2",
+    "files": 36367,
+    "bytes": 157912737
+  },
+  "release_pins_changed": false,
+  "production_model": "off",
+  "next": "Stop for Claude review, then offline adversarial review, before Part B. No live go is implied."
+}
