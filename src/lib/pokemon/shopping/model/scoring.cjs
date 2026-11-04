@@ -42,6 +42,7 @@ function compatibilityMetrics(outcomes, mapping, expectedCompat, expressible, re
 }
 function score(state, baseline, mapping, freeze) {
     // The smoke plan checks the harness only and is never scored.
+    if (state?.plan === 'heldout') throw Error('use_scoreHeldout');
     if (state?.plan === 'smoke')
         throw Error('smoke_not_scored');
     // A compatibility-plan checkpoint holds only held-out contexts; it is scored by scoreCompatibility().
@@ -112,6 +113,7 @@ function score(state, baseline, mapping, freeze) {
             j01_all_first_offer_turn_one:j01.length===10&&j01.every(e=>finite(e.first_qualified_offer_turn)&&e.first_qualified_offer_turn<=1),
             preview_median:median(metric('complete_preview_turn')), preview_p95:p95(metric('complete_preview_turn')),
             unnecessary_median:median(metric('unnecessary_clarifications')), unnecessary_p95:p95(metric('unnecessary_clarifications')),
+            question_measures: questionMeasures(episodes),
             compatibility_clarifications:reduced?null:clarify, actual_context_model_off_clarifications:reduced?null:controlClarify, compatibility_denominator_each_pass:reduced?null:34,
             catalog_hold_flips:flips, wrong_items:wrongItems, unsupported_claims:unsupportedClaims, duplicate_or_widened_authority:widenedAuthority,
             same_host_adversarial_passed:expectedCases.slice(0,12).filter(id=>byCase.get(id)?.result.passed).length,
@@ -177,4 +179,18 @@ function scoreCompatibility(state, mapping) {
     }
     return { rehearsal: state.rehearsal === true, arms, conclusion: state.rehearsal === true ? 'fake replay only; no live conclusion' : 'non-regression against the model-off floor; not held-out validation' };
 }
-module.exports = {score,scoreCompatibility,median,p95};
+// Measured-only: no threshold, missing observations never become zero or a pass.
+function questionMeasures(episodes){
+ const measure=key=>{const rows=episodes.filter(e=>Number.isSafeInteger(e[key])&&e[key]>=0),values=rows.map(e=>e[key]);return {measured:rows.length,missing:episodes.length-rows.length,total:values.reduce((n,v)=>n+v,0),median:values.length?median(values):null,p95:values.length?p95(values):null,threshold:null,status:values.length?'measured_only':'not_measured'};};
+ return {M1_unnecessary_clarifications:measure('unnecessary_clarifications'),M2_missed_necessary_questions:measure('missed_necessary_questions')};
+}
+function scoreHeldout(state,baseline,heldout){
+ if(state.plan!=='heldout')throw Error('heldout_plan_required');
+ const expected=[];for(let r=1;r<=10;r++)for(const j of heldout.set.journeys)expected.push('journey/'+j.id+'/'+r);
+ for(const o of state.outcomes||[])if(o.arm!=='L'||(!expected.includes(o.id)&&!o.id.startsWith('model_turn/')&&o.id!=='arm_finished'&&o.id!=='model_off_baseline'))throw Error('unexpected_heldout_outcome');
+ if((state.records||[]).some(r=>r.arm!=='L'))throw Error('heldout_is_L_only');
+ const by=unique((state.outcomes||[]).filter(o=>o.id.startsWith('journey/')),o=>o.id,'episode');
+ const rows=expected.map(id=>by.get(id)?.result||{not_run:true});
+ return {plan:'heldout',rehearsal:state.rehearsal===true,expected:expected.length,recorded:by.size,completed:rows.filter(r=>r.completed).length,model_off:questionMeasures(baseline),L:questionMeasures(rows),thresholds:null,qualification:'not assessed; measured only'};
+}
+module.exports = {score,scoreCompatibility,scoreHeldout,questionMeasures,median,p95};

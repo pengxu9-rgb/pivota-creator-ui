@@ -10,7 +10,7 @@ test('model eval harness fix: each plan launches only with its own go string, be
     const saved = { go: process.env.POT_SHOPPING_REVIEW_GO, expires: process.env.POT_LIVE_TOKEN_EXPIRES_AT };
     delete process.env.POT_LIVE_TOKEN_EXPIRES_AT;
     try {
-        assert.deepEqual(REVIEW_GO, { smoke: 'claude_3c_smoke_go', reduced: 'claude_3c_reduced_go', compatibility: 'claude_3c_compat_go' });
+        assert.deepEqual(REVIEW_GO, { smoke: 'claude_3c_smoke_go', reduced: 'claude_3c_reduced_go', compatibility: 'claude_3c_compat_go', heldout: 'claude_4_heldout_go' });
         for (const [plan, go] of [['smoke', 'claude_3c_reduced_go'], ['reduced', 'claude_3c_smoke_go'], ['smoke', 'claude_3a_go'], ['reduced', 'claude_3a_go'], ['smoke', undefined], ['compatibility', 'claude_3c_reduced_go'], ['reduced', 'claude_3c_compat_go'], ['compatibility', 'claude_3c_smoke_go']]) {
             if (go === undefined) delete process.env.POT_SHOPPING_REVIEW_GO; else process.env.POT_SHOPPING_REVIEW_GO = go;
             await assert.rejects(main('L', raw, freezeHash, plan), /claude_exact_freeze_review_required/, plan + ' with ' + go);

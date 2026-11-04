@@ -11,7 +11,8 @@ const BUDGETS = Object.freeze({ calls: 1500, calls_per_arm: 750, input_tokens: 1
 const SMOKE_BUDGETS = Object.freeze({ ...BUDGETS, calls: 80, calls_per_arm: 80, input_tokens: 2000000, usd: 1, usd_per_arm: Object.freeze({ L: 1, P: 0 }) });
 // Held-out compatibility contexts on L only; never combined with the reduced checkpoint.
 const COMPAT_BUDGETS = Object.freeze({ ...BUDGETS, calls: 2400, calls_per_arm: 2400, input_tokens: 12000000, usd: 5, usd_per_arm: Object.freeze({ L: 5, P: 0 }) });
-const PLANS = Object.freeze({ reduced: BUDGETS, smoke: SMOKE_BUDGETS, compatibility: COMPAT_BUDGETS });
+const HELDOUT_BUDGETS = Object.freeze({ ...BUDGETS, calls: 1200, calls_per_arm: 1200, input_tokens: 6000000, usd: 2, usd_per_arm: Object.freeze({L:2,P:0}) });
+const PLANS = Object.freeze({ heldout: HELDOUT_BUDGETS, reduced: BUDGETS, smoke: SMOKE_BUDGETS, compatibility: COMPAT_BUDGETS });
 const STOP_RULES = Object.freeze({request_rejected:Object.freeze({consecutive_non_429_4xx:3,scope:'arm'}),access_denied:Object.freeze({statuses:Object.freeze([401,403]),scope:'global'})});
 function price(freeze, arm, input, output, thoughts = 0) {
     if (![input, output, thoughts].every(n => Number.isSafeInteger(n) && n >= 0))
@@ -80,6 +81,8 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
         throw Error('transport_required');
     const freezeHash = checkFreeze(freeze, artifactBytes);
     const B = PLANS[plan];
+    if(plan==='heldout'&&hash(freeze.heldout_budgets)!==hash(HELDOUT_BUDGETS))throw Error('frozen_heldout_limits_mismatch');
+    if(plan==='heldout'&&!freeze.heldout_fixture)throw Error('bound_heldout_required');
     if (!Object.hasOwn(PLANS, plan))
         throw Error('unknown_plan');
     // Stage 3a cannot accidentally launch a live adapter, even if credentials exist.
@@ -90,6 +93,10 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
         throw Error('resume_freeze_mismatch');
     if(fs.existsSync(checkpoint)&&state.rehearsal!==rehearsal)throw Error('resume_mode_mismatch');
     if(fs.existsSync(checkpoint)&&(state.plan||'reduced')!==plan)throw Error('resume_plan_mismatch');
+    if(plan==='heldout'){
+        if(state.heldout_fixture&&hash(state.heldout_fixture)!==hash(freeze.heldout_fixture))throw Error('heldout_binding_mismatch');
+        state.heldout_fixture=copy(freeze.heldout_fixture);
+    }
     state.plan=plan;
     state.rehearsal=rehearsal;
     state.sessions ||= {};
@@ -121,6 +128,7 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
     process.on('SIGINT', onInt);
     process.on('SIGTERM', onTerm);
     function reserve(arm, job, attempt, request) {
+        if(plan==='heldout'&&arm!=='L')throw Error('heldout_is_L_only');
         validateFrozenRequest(freeze, request);
         const a = state.arms[arm], t = totals(), input = B.prompt_reservation_cap, usd = price(freeze, arm, input, B.output_reservation_cap);
         if (stopping || state.stop_reason || a.stop_reason)
@@ -329,4 +337,4 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
     }
     return Object.freeze({ run, request, channel, session, outcome, priorOutcome, state: () => copy(state), save, stop, close: () => { process.removeListener('SIGINT', onInt); process.removeListener('SIGTERM', onTerm); save(); } });
 }
-module.exports = { createCollector, checkFreeze, price, validUsage, usageCounts, atomic, MODELS, BUDGETS, SMOKE_BUDGETS, COMPAT_BUDGETS, PLANS, STOP_RULES, endpoint, validateFrozenRequest };
+module.exports = { createCollector, checkFreeze, price, validUsage, usageCounts, atomic, MODELS, BUDGETS, SMOKE_BUDGETS, COMPAT_BUDGETS, HELDOUT_BUDGETS, PLANS, STOP_RULES, endpoint, validateFrozenRequest };

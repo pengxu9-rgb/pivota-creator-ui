@@ -96,6 +96,19 @@
     "compatibility": false,
     "scored": false
   },
+  "heldout": {
+    "arms": [
+      "model-off",
+      "L"
+    ],
+    "journey_repetitions": 10,
+    "adversarial": false,
+    "faults": false,
+    "compatibility": false,
+    "external_fixture": true,
+    "binding": "heldout_fixture",
+    "scored": "measured only; thresholds await Peng"
+  },
   "compatibility_plan": {
     "arms": [
       "L"

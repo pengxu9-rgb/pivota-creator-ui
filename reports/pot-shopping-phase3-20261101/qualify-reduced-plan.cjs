@@ -9,13 +9,13 @@ assert.equal(crypto.createHash('sha256').update(baseBytes).digest('hex'),BASE_FR
 const base=JSON.parse(baseBytes);
 const unchanged=['models','endpoints','prices','price_evidence_sha256','pricing_rule','toolConfig','dropped_schema_keywords','privacy_projection_sha256','privacy_policy','privacy_policy_sha256','fixture_manifest_sha256','compatibility_mapping_sha256','budgets','stop_rules','turn_limits','stage','live_run_enabled','base','schema'];
 for(const key of unchanged)assert.deepEqual(freeze[key],base[key],key);
-const changed=['corpus_plan','system_instruction_sha256','declaration_set_sha256','review_required','smoke_budgets','compat_budgets','review_go','harness_fix','generationConfig','sampling_reason','sampling_limitation'];
+const changed=['corpus_plan','system_instruction_sha256','declaration_set_sha256','review_required','smoke_budgets','compat_budgets','review_go','harness_fix','generationConfig','sampling_reason','sampling_limitation','heldout_fixture','heldout_budgets','phase4_model_base'];
 // Round 2: sampling follows Gemini 3 guidance, identical on both arms.
 assert.deepEqual(freeze.generationConfig,{maxOutputTokens:1024,thinkingConfig:{includeThoughts:false,thinkingLevel:'LOW'}});
 const keys=new Set([...Object.keys(freeze),...Object.keys(base)]);keys.delete('artifacts');
 for(const key of keys)assert.ok(unchanged.includes(key)||changed.includes(key),'unlisted freeze field: '+key);
 // The corpus plan only gains the smoke block.
-const plan={...freeze.corpus_plan};delete plan.smoke;delete plan.compatibility_plan;assert.deepEqual(plan,base.corpus_plan);
+const plan={...freeze.corpus_plan};delete plan.smoke;delete plan.compatibility_plan;delete plan.heldout;assert.deepEqual(plan,base.corpus_plan);
 assert.deepEqual(freeze.corpus_plan.compatibility_plan,{arms:['L'],contexts:389,passes:2,journeys:false,scored_by:'scoreCompatibility',thresholds:['compatibility','zero_catalog_hold_flips']});
 assert.deepEqual(freeze.compat_budgets,{...base.budgets,calls:2400,calls_per_arm:2400,input_tokens:12000000,usd:5,usd_per_arm:{L:5,P:0}});
 assert.deepEqual(freeze.corpus_plan.smoke,{arms:['L'],journey_repetitions:2,adversarial:false,faults:false,compatibility:false,scored:false});
@@ -23,14 +23,14 @@ assert.deepEqual(freeze.corpus_plan.smoke,{arms:['L'],journey_repetitions:2,adve
 const oldDecl=JSON.parse(show('reports/pot-shopping-phase3-20261101/declarations.json')).declarations;
 for(const d of oldDecl){if(['search_catalog','get_offers'].includes(d.name)){delete d.parameters.properties.text;d.parameters.required=d.parameters.required.filter(x=>x!=='text');}if(d.parameters.properties.task_ref){delete d.parameters.properties.task_ref;d.parameters.required=d.parameters.required.filter(x=>x!=='task_ref');}}
 assert.deepEqual(JSON.parse(fs.readFileSync(__dirname+'/declarations.json','utf8')).declarations,oldDecl);
-assert.deepEqual(freeze.review_go,{smoke:'claude_3c_smoke_go',reduced:'claude_3c_reduced_go',compatibility:'claude_3c_compat_go'});
+assert.deepEqual(freeze.review_go,{smoke:'claude_3c_smoke_go',reduced:'claude_3c_reduced_go',compatibility:'claude_3c_compat_go',heldout:'claude_4_heldout_go'});
 assert.deepEqual(freeze.smoke_budgets,{...base.budgets,calls:80,calls_per_arm:80,input_tokens:2000000,usd:1,usd_per_arm:{L:1,P:0}});
 // The compatibility mapping is untouched; the guard is checked by qualify-guard's listed edits.
 assert.equal(fs.readFileSync(root+'/tests/fixtures/shopping-model-eval/compatibility-mapping.json','utf8'),show('tests/fixtures/shopping-model-eval/compatibility-mapping.json'));
 assert.equal(freeze.corpus_plan.compatibility.enabled,false);assert.equal(freeze.corpus_plan.journeys.length,4);assert.ok(freeze.corpus_plan.journeys.every(j=>j.repetitions===10));assert.equal(freeze.corpus_plan.adversarial.ids.length,12);assert.equal(freeze.corpus_plan.faults.ids.length,6);
 // Every runtime file's diff against d0e951a must equal the committed, reviewed patch byte for byte.
 const RUNTIME=['src/lib/pokemon','tests/fixtures/shopping','tests/fixtures/shopping-model-eval','tests/shopping/helpers.cjs','tests/shopping/evaluate.cjs','tests/shopping/model/scenarios.cjs','reports/admission-kernel-live-model',
- ...['orchestrate.cjs','live-host.cjs','vertex-allowlist-guard.cjs','token-launch.py','score.cjs','declarations.json','published-prices.json'].map(f=>'reports/pot-shopping-phase3-20261101/'+f)];
+ ...['orchestrate.cjs','journey-data.cjs','baseline-v2.cjs','validate-heldout.cjs','live-host.cjs','vertex-allowlist-guard.cjs','token-launch.py','score.cjs','declarations.json','published-prices.json'].map(f=>'reports/pot-shopping-phase3-20261101/'+f)];
 const runtimeDiff=()=>cp.execFileSync('git',['-c','core.quotePath=true','diff','--no-color','--no-ext-diff','--no-textconv','--no-renames','--diff-algorithm=myers','--src-prefix=a/','--dst-prefix=b/','-U3',BASE,'--',...RUNTIME],{cwd:root,encoding:'utf8',maxBuffer:32000000});
 if(process.argv[3]==='--write-patch'){fs.writeFileSync(__dirname+'/harness-fix-runtime.patch',runtimeDiff());process.stdout.write('patch written\n');process.exit(0);}
 assert.equal(runtimeDiff(),fs.readFileSync(__dirname+'/harness-fix-runtime.patch','utf8'),'runtime code differs from the reviewed harness-fix patch');
