@@ -9,9 +9,10 @@ journey-ID branches. Its script is trusted test input, never model output.
 `steps` is ordered. A `user` string increments the turn and invokes the model
 unless `model:false`; clarification responses also increment the turn. A user
 step's optional `supplies` map names fields and exact nonempty spans in that
-string. A trusted `interface:select` step supplies only its explicit `supplies`
-list, not every value in the requirements oracle. `changes` permits a budget
-change. Other bounded interface actions are search_catalog, compare_offers,
+string. A trusted `interface:select` step supplies only explicitly listed fields
+that carry a value in the accepted requirements. Purpose is provided through a
+user turn or a clarification answer. `changes` permits a budget change. Other
+bounded interface actions are search_catalog, compare_offers,
 get_product, preview, observe_offer, fault and deny_approval. They call only the
 existing synthetic facade/simulator. There is no arbitrary method or code hook.
 
@@ -19,8 +20,8 @@ A search step with `measure:first_offer` records the first-offer boundary; a
 complete preview with `measure:complete_preview` records the preview boundary.
 The shared tail renders the preview, uses the existing trusted approval button,
 drains the synthetic worker and renders its receipt. Optional `after_approval`
-steps allow user turns, get_operation and drain for the existing timeout journey.
-They cannot approve or submit anything. Baseline-only event annotations preserve
+steps allow user turns, get_operation and drain for the existing training timeout
+journey. Operation reads and drains belong after approval. Baseline-only event annotations preserve
 the historical model-off transcript; they are not model prompts.
 
 M1 counts a question as necessary only while its field remains unresolved in the
@@ -36,18 +37,22 @@ observations stay missing, not zero; previous phase-3 thresholds are retained.
 
 The heldout plan has only model-off and L, ten repetitions per journey, no attack,
 fault-case or compatibility population, 1,200 calls / 6M input tokens / USD 2 for L
-and USD 0 for P. The conservative per-call reservation and every previous stop
-rule remain. `scoreHeldout` reports measured-only quantities; Part C owns future
-scoring rules. No result enables the production model.
+and USD 0 for P. Held-out scripts require a model-enabled user turn before
+approval and exclude embedded faults and post-approval user turns. An L episode
+with no model participation is recorded separately from completed episodes.
+The conservative per-call reservation and previous stop rules still apply.
+`scoreHeldout` reports measured-only quantities. Part C owns future scoring rules.
 
 No real held-out set is included, read or authored in Part A. Qualification clones
 an existing training journey as `STANDIN` in temporary external storage. A future
 blind set and every catalog must resolve outside the repository. Catalog paths
 inside that file are relative to its directory, cannot escape with `..`, and are
-bound individually by SHA256 along with the journey file. The training catalog
-path instead resolves from the repository root. The validator rejects live URLs,
+bound individually by SHA256 of their raw UTF-8 bytes along with the journey file.
+Malformed UTF-8 is rejected before parsing. The training catalog path resolves
+from the repository root. The validator requires synthetic HTTPS URLs, rejects
 non-synthetic records/sources, missing refs, invalid supply spans, invalid required
-field subsets and scripts without selection and a measured complete preview.
+field subsets and scripts without a measured complete preview that remains
+approvable at the end of the pre-approval steps.
 The unchanged evidence validator assigns missing printing evidence refs.
 
 `prepare-freeze.cjs --heldout <external-file>` is a future freeze operation after

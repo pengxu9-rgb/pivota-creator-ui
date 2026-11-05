@@ -2,6 +2,7 @@
 // Offline replay only: consume recorded outcomes, never query a provider.
 const BAD = 999999;
 const {price,BUDGETS}=require('./collector.cjs');
+const { hash } = require('../schema.cjs');
 function median(values) {
     const sorted = [...values].sort((a,b) => a-b);
     return (sorted[Math.floor((sorted.length-1)/2)] + sorted[Math.ceil((sorted.length-1)/2)])/2;
@@ -184,13 +185,43 @@ function questionMeasures(episodes){
  const measure=key=>{const rows=episodes.filter(e=>Number.isSafeInteger(e[key])&&e[key]>=0),values=rows.map(e=>e[key]);return {measured:rows.length,missing:episodes.length-rows.length,total:values.reduce((n,v)=>n+v,0),median:values.length?median(values):null,p95:values.length?p95(values):null,threshold:null,status:values.length?'measured_only':'not_measured'};};
  return {M1_unnecessary_clarifications:measure('unnecessary_clarifications'),M2_missed_necessary_questions:measure('missed_necessary_questions')};
 }
-function scoreHeldout(state,baseline,heldout){
- if(state.plan!=='heldout')throw Error('heldout_plan_required');
- const expected=[];for(let r=1;r<=10;r++)for(const j of heldout.set.journeys)expected.push('journey/'+j.id+'/'+r);
- for(const o of state.outcomes||[])if(o.arm!=='L'||(!expected.includes(o.id)&&!o.id.startsWith('model_turn/')&&o.id!=='arm_finished'&&o.id!=='model_off_baseline'))throw Error('unexpected_heldout_outcome');
- if((state.records||[]).some(r=>r.arm!=='L'))throw Error('heldout_is_L_only');
- const by=unique((state.outcomes||[]).filter(o=>o.id.startsWith('journey/')),o=>o.id,'episode');
- const rows=expected.map(id=>by.get(id)?.result||{not_run:true});
- return {plan:'heldout',rehearsal:state.rehearsal===true,expected:expected.length,recorded:by.size,completed:rows.filter(r=>r.completed).length,model_off:questionMeasures(baseline),L:questionMeasures(rows),thresholds:null,qualification:'not assessed; measured only'};
+function scoreHeldout(state, baseline, heldout) {
+    const binding = state.heldout_fixture;
+    if (state.plan !== 'heldout') throw Error('heldout_plan_required');
+    if (!binding || !heldout?.binding || !heldout.set || hash(heldout.binding) !== hash(binding) || hash(heldout.set) !== binding.journeys_value_sha256)
+        throw Error('heldout_scoring_binding_mismatch');
+    const expected = [];
+    for (let repeat = 1; repeat <= 10; repeat++)
+        for (const journey of heldout.set.journeys)
+            expected.push('journey/' + journey.id + '/' + repeat);
+    const expectedIds = new Set(expected);
+    const outcomes = state.outcomes || [], records = state.records || [];
+    for (const row of outcomes)
+        if (row.arm !== 'L' || (!expectedIds.has(row.id) && !row.id.startsWith('model_turn/') && row.id !== 'arm_finished' && row.id !== 'model_off_baseline'))
+            throw Error('unexpected_heldout_outcome');
+    if (records.some(row => row.arm !== 'L')) throw Error('heldout_is_L_only');
+    const savedBaseline = outcomes.filter(row => row.id === 'model_off_baseline');
+    if (savedBaseline.length !== 1 || !Array.isArray(savedBaseline[0].result?.rows) || !Array.isArray(baseline) || hash(baseline) !== hash(savedBaseline[0].result.rows))
+        throw Error('heldout_scoring_baseline_mismatch');
+    const baselineIds = new Set(baseline.map(row => 'journey/' + row.journey + '/' + row.repeat));
+    if (baseline.length !== expected.length || baseline.some(row => row.passed !== true) || expected.some(id => !baselineIds.has(id)))
+        throw Error('heldout_scoring_baseline_mismatch');
+
+    const byEpisode = unique(outcomes.filter(row => expectedIds.has(row.id)), row => row.id, 'episode');
+    const observedEpisodes = new Set();
+    for (const record of records) {
+        const episodeId = record.id.match(/^(.*)\/call-[1-9]\d*$/)?.[1];
+        if (byEpisode.has(episodeId) && record.status === 'completed' && record.http_status === 200 && !record.error)
+            observedEpisodes.add(episodeId);
+    }
+    // Keep every expected episode in the denominator. A scripted completion
+    // without a model receipt has no observed L metrics.
+    const rows = expected.map(id => observedEpisodes.has(id) ? byEpisode.get(id).result : {});
+    return {
+        plan: 'heldout', rehearsal: state.rehearsal === true, expected: expected.length, recorded: byEpisode.size,
+        completed: rows.filter(row => row.completed === true).length,
+        model_participation: { observed: observedEpisodes.size, not_observed: byEpisode.size - observedEpisodes.size, unrecorded: expected.length - byEpisode.size },
+        model_off: questionMeasures(baseline), L: questionMeasures(rows), thresholds: null, qualification: 'not assessed; measured only'
+    };
 }
 module.exports = {score,scoreCompatibility,scoreHeldout,questionMeasures,median,p95};

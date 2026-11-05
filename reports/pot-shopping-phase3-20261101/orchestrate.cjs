@@ -15,8 +15,11 @@ const { routeChatText } = require(ROOT + '/src/lib/pokemon/chatTextIntent.cjs'),
 const { binding, FIXED_NOW } = require('../admission-kernel-live-model/offline-fixture.cjs'), dynamic = require('../admission-kernel-live-model/dynamic-context.cjs');
 const PLAN = require('../../tests/fixtures/shopping-model-eval/corpus-plan.json');
 const corpus = require('../admission-kernel-live-model/corpus.json'), holdout = require('../admission-kernel-live-model/holdout-e.json');
+const resumableStops = new Set(['received_SIGINT', 'received_SIGTERM', 'token_refresh_needed']);
+const heldoutPaused = collector => resumableStops.has(collector.state?.()?.stop_reason);
 function modelHost(collector, arm, id, h, options = {}) {
     let fallbacks = 0, turn = 0, shown = [];
+    let modelObserved = false;
     const results = [], rendered = [];
     const transport = collector.channel(arm, id);
     const timing = collector.session(arm,id);
@@ -49,7 +52,11 @@ function modelHost(collector, arm, id, h, options = {}) {
         return reply;
     };
     const runner = createJourney({
-        transport,
+        transport: options.heldout ? async (request, requestOptions) => {
+            const response = await transport(request, requestOptions);
+            if (response?.status === 200 && !response.error && !requestOptions.signal?.aborted) modelObserved = true;
+            return response;
+        } : transport,
         port: createModelPort(facadeCall, options.principal || h.principals.model),
         fallback: async ({ text }) => {
             fallbacks++;
@@ -65,6 +72,7 @@ function modelHost(collector, arm, id, h, options = {}) {
         }
     });
     return { runner, results, metrics, rendered, observe, elapsed, timing, markPreview:()=>timing.observe('complete_preview',transport.elapsedMs()), setTurn: value => { turn = value; },
+        modelObserved: () => modelObserved,
         counts: () => ({ fallbacks, ...runner.counts() }),
         show: result => { shown.push({ ok: true, result }); return result; },
         turn: async (text, more = {}) => {
@@ -72,16 +80,17 @@ function modelHost(collector, arm, id, h, options = {}) {
             const screen = shown;
             shown = [];
             const result = await runner.turn({ text, task_ref: h.taskRef, initialResults: screen, ...more });
+            if (options.heldout && heldoutPaused(collector)) throw Error('heldout_episode_paused');
             results.push(result);
             collector.outcome(arm,'model_turn/'+id+'/'+results.length,result);
             return result;
         }
     };
 }
-async function shoppingEpisode(collector, arm, id, input, { catalog, modelOff = false } = {}) {
+async function shoppingEpisode(collector, arm, id, input, { catalog, modelOff = false, heldout = false } = {}) {
     const j=data.v2(input), measure=data.questionMeasure(j);
-    const started = Date.now(), h = setup({catalog:catalog||data.fixture(j)}), host = modelHost(collector, arm, id, h);
-    let turns = 0, unnecessary = 0, firstOffer = null, completePreview = null, firstOfferMs = null, previewMs = null;
+    const started = Date.now(), h = setup({catalog:catalog||data.fixture(j)}), host = modelHost(collector, arm, id, h, { heldout });
+    let turns = 0, unnecessary = 0, firstOffer = null, completePreview = null, firstOfferMs = null, previewMs = null, op;
     const questions = [], shown = result => host.show(result);
     // After a selection the interface shows the user's accepted requirements; the privacy
     // projection keeps only safe scalars and turns a destination into ship_to_on_file.
@@ -101,7 +110,11 @@ async function shoppingEpisode(collector, arm, id, input, { catalog, modelOff = 
     async function step(s) {
         if (s.user !== undefined) { measure.supply(s); await user(s.user,s.model!==false); return; }
         switch(s.interface) {
-        case 'select': measure.supply(s); measure.boundary(); await selectShown(h,j,s.changes||{}); break;
+        case 'select':
+            await selectShown(h,j,s.changes||{});
+            measure.supplySelection(s,h.state().accepted);
+            measure.boundary();
+            break;
         case 'preview': {
             measure.boundary();
             const p=shown(await preview(h));
@@ -118,13 +131,19 @@ async function shoppingEpisode(collector, arm, id, input, { catalog, modelOff = 
         case 'observe_offer': host.observe({records:[h.shop.evidence.offer(j.offer_ref)]}); break;
         case 'fault': h.shop.sim.setFault(s.name); break;
         case 'deny_approval': denied(await h.human('approve_purchase',{preview_ref:h.state().preview.id})); break;
-        case 'get_operation': ok(await h.call('model','get_operation',{operation_ref:op})); break;
+        case 'get_operation':
+            if (!op) throw Error('approval_required_before_operation');
+            ok(await h.call('model','get_operation',{operation_ref:op}));
+            break;
         case 'drain': await h.shop.worker.drain(h.principals.worker,h.taskRef); break;
         default: throw Error('unknown_interface_step');
         }
     }
     await data.steps(j.steps,step);
+    if (heldout && !host.modelObserved())
+        return { id, arm, journey: j.id, completed: false, error: 'heldout_model_not_observed', model_participation: 'not_observed', counts: host.counts() };
     const q = h.state().preview;
+    if (q?.status !== 'complete') throw Error('approvable_preview_required');
     const itemFields = ['printing_ref','language','finish','grade_kind','grade_company','grade_value','condition_bucket','quantity','destination_ref'];
     const wrongItems = itemFields.filter(key => q[key] !== j.requirements[key]).length;
     if (wrongItems)
@@ -133,7 +152,7 @@ async function shoppingEpisode(collector, arm, id, input, { catalog, modelOff = 
     for (const slot of ['item','shipping','fee','tax','total','currency','expiry']) h.shop.render(h.principals.ui,h.taskRef,{evidence_ref:qr.evidence_ref,slot});
     previewMs=host.markPreview();
     // Trusted button/dispatch happens directly, never after a model proposal.
-    const op = shown(await approve(h)).operation_ref;
+    op = shown(await approve(h)).operation_ref;
     await h.shop.worker.drain(h.principals.worker, h.taskRef);
     await data.steps(j.after_approval||[],step);
     const order = ok(await h.call('ui', 'get_order', { operation_ref: op }));
@@ -142,7 +161,7 @@ async function shoppingEpisode(collector, arm, id, input, { catalog, modelOff = 
     for(const record of order.records) h.shop.render(h.principals.ui,h.taskRef,{evidence_ref:record.evidence_ref,slot:'status'});
     const unsupportedClaims = host.rendered.filter(c => !c.verified).length;
     const duplicateOrWidened = Number(h.shop.sim.stats().orders !== 1 || h.shop.sim.stats().merchantSubmits !== 1);
-    return { id, arm, journey: j.id, completed: true, user_turns: turns, first_qualified_offer_turn: host.metrics.qualified_offer_turn ?? firstOffer, complete_preview_turn: completePreview, latency_ms: { first_useful: host.metrics.first_useful_ms, qualified_offer: host.metrics.qualified_offer_ms, complete_preview: previewMs }, unnecessary_clarifications: unnecessary, missed_necessary_questions: measure.count(), questions, counts: host.counts(), model_turns: host.results, evidence_provenance: {first_useful:host.metrics.first_useful_origin,qualified_offer:host.metrics.qualified_offer_origin,preview:'trusted_scripted_controls',completion:'trusted_scripted_controls'}, stats: h.shop.sim.stats(), wrong_items: wrongItems, unsupported_claims: unsupportedClaims, duplicate_or_widened_authority: duplicateOrWidened };
+    return { id, arm, journey: j.id, completed: true, ...(heldout ? { model_participation: 'observed' } : {}), user_turns: turns, first_qualified_offer_turn: host.metrics.qualified_offer_turn ?? firstOffer, complete_preview_turn: completePreview, latency_ms: { first_useful: host.metrics.first_useful_ms, qualified_offer: host.metrics.qualified_offer_ms, complete_preview: previewMs }, unnecessary_clarifications: unnecessary, missed_necessary_questions: measure.count(), questions, counts: host.counts(), model_turns: host.results, evidence_provenance: {first_useful:host.metrics.first_useful_origin,qualified_offer:host.metrics.qualified_offer_origin,preview:'trusted_scripted_controls',completion:'trusted_scripted_controls'}, stats: h.shop.sim.stats(), wrong_items: wrongItems, unsupported_claims: unsupportedClaims, duplicate_or_widened_authority: duplicateOrWidened };
 }
 async function boundedCases(collector, arm) {
     for (const [kind, rows, oracle] of [['adversarial', attacks.cases, adversarialCase], ['fault', faults.cases, faultCase]])
@@ -249,13 +268,17 @@ async function runArm(collector, arm, { plan = 'reduced', heldout } = {}) {
         for (const j of (plan==='heldout'?heldout.set:data.training).journeys)
             cases.push({ repeat, j, id: 'journey/' + j.id + '/' + repeat });
     let cursor = 0;
-    async function one(c) { if (collector.priorOutcome(arm, c.id))
-        return; try {
-        collector.outcome(arm, c.id, await shoppingEpisode(collector, arm, c.id, c.j, plan==='heldout'?{catalog:heldout.catalogs[c.j.catalog]}:{}));
+    async function one(c) {
+        if (collector.priorOutcome(arm, c.id)) return;
+        let result;
+        try {
+            result = await shoppingEpisode(collector, arm, c.id, c.j, plan === 'heldout' ? { catalog: heldout.catalogs[c.j.catalog], heldout: true } : {});
+        } catch (e) {
+            result = { id: c.id, journey: c.j.id, completed: false, error: String(e.message).slice(0, 100) };
+        }
+        // Leave resumable interruptions pending. The collector replays settled calls.
+        if (plan !== 'heldout' || !heldoutPaused(collector)) collector.outcome(arm, c.id, result);
     }
-    catch (e) {
-        collector.outcome(arm, c.id, { id: c.id, journey: c.j.id, completed: false, error: String(e.message).slice(0, 100) });
-    } }
     // First normal corpus call is the preflight; subsequent sessions concurrency2.
     // Skip completed cases, but qualify the first pending normal call serially.
     while(cursor<cases.length&&!collector.state().arms[arm].preflight&&!stopped(collector,arm))
@@ -271,7 +294,8 @@ async function runArm(collector, arm, { plan = 'reduced', heldout } = {}) {
     // Global shutdowns are checkpoints, never terminal arm outcomes.
     if(after.stop_reason)return after;
     const reason=after.arms[arm].stop_reason;
-    collector.outcome(arm,'arm_finished',reason?{status:'arm_stopped',reason}:{status:'completed'});
+    const incomplete = plan === 'heldout' && (!after.arms[arm].preflight || cases.some(c => !collector.priorOutcome(arm, c.id)?.completed));
+    collector.outcome(arm,'arm_finished',reason?{status:'arm_stopped',reason}:incomplete?{status:'incomplete',reason:'heldout_episode_incomplete'}:{status:'completed'});
     return collector.state();
 }
 async function runBaseline() { const rows = []; for (let repeat = 1; repeat <= 10; repeat++)
