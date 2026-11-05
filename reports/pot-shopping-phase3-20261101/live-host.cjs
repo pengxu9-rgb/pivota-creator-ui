@@ -16,7 +16,7 @@ async function main(arm, raw, reviewHash, plan, heldoutPath) {
     let heldout;
     if(plan==='heldout'){
         if(!freeze.heldout_fixture||!heldoutPath)throw Error('bound_heldout_required');
-        heldout=require('./validate-heldout.cjs').load(heldoutPath,{expected:freeze.heldout_fixture});
+        heldout=await require('./validate-heldout.cjs').loadQualified(heldoutPath,{expected:freeze.heldout_fixture});
     }
     const expires = Date.parse(process.env.POT_LIVE_TOKEN_EXPIRES_AT);
     if (!(expires >= Date.now() + 45 * 60000))

@@ -1,7 +1,7 @@
 'use strict';
 // Only a cloned training journey is used as a stand-in. No real held-out set is read or authored.
 const fs=require('node:fs'),path=require('node:path'),os=require('node:os'),assert=require('node:assert/strict');
-const {training,ROOT}=require('./journey-data.cjs'),{load,assertBound}=require('./validate-heldout.cjs');
+const {training,ROOT}=require('./journey-data.cjs'),{load,loadQualified,assertBound}=require('./validate-heldout.cjs');
 const {createCollector}=require('../../src/lib/pokemon/shopping/model/collector.cjs');
 const {runArm,runHeldoutBaseline}=require('./orchestrate.cjs'),{scoreHeldout}=require('../../src/lib/pokemon/shopping/model/scoring.cjs');
 function standin(dir){
@@ -11,7 +11,7 @@ function standin(dir){
 async function qualify(raw){
  fs.mkdirSync(raw,{recursive:true});const input=fs.mkdtempSync(path.join(os.tmpdir(),'shopping-standin-'));let c;
  try{
-  const file=standin(input),heldout=load(file),freeze={...require('./freeze.json'),heldout_fixture:heldout.binding};let calls=0;
+  const file=standin(input),heldout=await loadQualified(file),freeze={...require('./freeze.json'),heldout_fixture:heldout.binding};let calls=0;
   const tampered=structuredClone(heldout);tampered.set.journeys[0].query+=' changed';assert.throws(()=>assertBound(tampered,heldout.binding));
   c=createCollector({freeze,artifactBytes:p=>fs.readFileSync(ROOT+'/'+p),checkpoint:raw+'/checkpoint.json',tokenExpiresAt:Date.now()+3600000,rehearsal:true,plan:'heldout',transport:async({request})=>{
    calls++;const parts=request.contents.some(c=>c.role==='model')?[{text:'{"decision":"search","fields":[],"claims":[]}'}]:[{functionCall:{name:'search_catalog',args:{}}}];

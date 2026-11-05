@@ -9,6 +9,7 @@ const {fields,ROOT,selectionSupplies}=require('./journey-data.cjs');
 const allowed={select:['changes','supplies'],preview:['expect','measure'],compare_offers:['offer_refs','criterion'],search_catalog:['text','measure'],get_product:['printing_ref'],observe_offer:[],fault:['name'],deny_approval:[],get_operation:[],drain:[]};
 const operationActions=new Set(['get_operation','drain']);
 const utf8=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true});
+const requirementsSchema=schemas['common.schema.json'].$defs.requirements;
 function check(ok){assert.ok(ok,'invalid_synthetic_journey_set');}
 function syntheticUrl(value){
  // Match the authority as written. URL normalization would hide an explicit :443 or empty userinfo.
@@ -45,12 +46,20 @@ function validate(set,catalogs,{heldout=false}={}){
   check(sources.size===c.sources.length&&destinations.size===c.destinations.length&&c.destinations.every(r=>r.synthetic===true));
   const allRefs=new Set([...refs,...evidenceRefs,...sources,...destinations]);
   for(const row of records)for(const [key,value] of Object.entries(row))if(key.endsWith('_ref')&&value!==null)check(allRefs.has(value));
-  for(const offer of c.offers){check(c.printings.some(p=>p.id===offer.printing_ref)&&c.sellers.some(s=>s.id===offer.seller_ref)&&sources.has(offer.source_ref));check(offer.source_permission===true);syntheticUrl(offer.url);check(!offer.certificate_ref||offer.certificate_ref===c.certificate.id);check(ev.qualified(offer));}
+  for(const offer of c.offers){
+   check(c.printings.some(p=>p.id===offer.printing_ref)&&c.sellers.some(s=>s.id===offer.seller_ref)&&sources.has(offer.source_ref));
+   check(offer.source_permission===true);
+   syntheticUrl(offer.url);
+   // The renderer requires this exact prefix for offer URL claims.
+   check(offer.url.startsWith('https://example.invalid/'));
+   check(!offer.certificate_ref||offer.certificate_ref===c.certificate.id);
+   check(ev.qualified(offer));
+  }
   check(j.answer_key&&typeof j.answer_key==='object'&&!Array.isArray(j.answer_key));
   for(const [f,a] of Object.entries(j.answer_key))check(fields.has(f)&&typeof a==='string'&&a.length>0&&a.length<=10000);
   check(Array.isArray(j.required_fields)&&new Set(j.required_fields).size===j.required_fields.length&&j.required_fields.every(f=>Object.hasOwn(j.answer_key,f)));
   check(c.offers.some(o=>o.id===j.offer_ref)&&c.printings.some(p=>p.id===j.requirements?.printing_ref)&&destinations.has(j.requirements.destination_ref));
-  check(conforms(j.requirements,schemas['common.schema.json'].$defs.requirements,'common.schema.json'));
+  check(conforms(j.requirements,requirementsSchema,'common.schema.json'));
   check(ev.qualified(ev.offer(j.offer_ref),j.requirements));
   let selected=false,previewStatus=null,measuredPreview=false,query=false,first=false,modelTurn=false;
   check(Array.isArray(j.steps)&&j.steps.length>0&&j.steps.length<=100);
@@ -70,8 +79,10 @@ function validate(set,catalogs,{heldout=false}={}){
     check(post===operationActions.has(s.interface));
     if(s.interface==='select'){
      check(Array.isArray(s.supplies)&&new Set(s.supplies).size===s.supplies.length);
-     check(s.changes===undefined||(s.changes&&typeof s.changes==='object'&&Object.keys(s.changes).length===1&&Object.hasOwn(s.changes,'budget_minor')&&typeof s.changes.budget_minor==='string'&&/^\d+$/.test(s.changes.budget_minor)));
-     check(selectionSupplies(s,{...j.requirements,...s.changes}).length===s.supplies.length);
+     check(s.changes===undefined||(s.changes&&typeof s.changes==='object'&&Object.keys(s.changes).length===1&&Object.hasOwn(s.changes,'budget_minor')));
+     const requirements={...j.requirements,...s.changes};
+     check(conforms(requirements,requirementsSchema,'common.schema.json'));
+     check(selectionSupplies(s,requirements).length===s.supplies.length);
      selected=true;
      previewStatus=null;
     }
@@ -114,11 +125,30 @@ function load(file,{externalOnly=true,expected=null}={}){
  if(expected)check(hash(binding)===hash(expected));
  return {set,catalogs,binding,counts};
 }
+async function loadQualified(file,options){
+ const loaded=load(file,options);
+ const {episode}=require('./baseline-v2.cjs');
+ try{
+  for(const journey of loaded.set.journeys){
+   await episode('model-off',journey,{catalog:loaded.catalogs[journey.catalog]});
+  }
+ }catch{
+  throw Error('heldout_script_preflight_failed');
+ }
+ return loaded;
+}
 function assertBound(loaded,expected){
  check(!!expected&&hash(loaded.binding)===hash(expected));
  check(hash(loaded.set)===expected.journeys_value_sha256);
  for(const row of expected.catalog_bindings)check(hash(loaded.catalogs[row.name])===row.value_sha256);
  check(hash(validate(loaded.set,loaded.catalogs,{heldout:true}))===hash(loaded.counts));
 }
-if(require.main===module){try{process.stdout.write(JSON.stringify(load(process.argv[2]).counts)+'\n');}catch{process.stderr.write('heldout_validation_failed\n');process.exitCode=1;}}
-module.exports={validate,load,external,assertBound};
+if(require.main===module){
+ loadQualified(process.argv[2]).then(({counts})=>{
+  process.stdout.write(JSON.stringify(counts)+'\n');
+ }).catch(()=>{
+  process.stderr.write('heldout_validation_failed\n');
+  process.exitCode=1;
+ });
+}
+module.exports={validate,load,loadQualified,external,assertBound};

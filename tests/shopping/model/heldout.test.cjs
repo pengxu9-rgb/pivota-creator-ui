@@ -2,7 +2,7 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os');
 const path=require('node:path'),{createHash}=require('node:crypto');
 const R='../../../reports/pot-shopping-phase3-20261101/';
-const {training,questionMeasure,ROOT}=require(R+'journey-data.cjs'),{validate,load}=require(R+'validate-heldout.cjs');
+const {training,questionMeasure,ROOT}=require(R+'journey-data.cjs'),{validate,load,loadQualified}=require(R+'validate-heldout.cjs');
 const {questionMeasures,scoreHeldout,score}=require('../../../src/lib/pokemon/shopping/model/scoring.cjs');
 const {HELDOUT_BUDGETS}=require('../../../src/lib/pokemon/shopping/model/collector.cjs');
 const catalog=require('../../fixtures/shopping/catalog.json');
@@ -28,7 +28,8 @@ test('heldout: validation requires a model turn and an approvable final preview 
   j=>j.steps.push(structuredClone(j.steps.find(s=>s.interface==='select'))),
   j=>{for(const step of j.steps)if(Object.hasOwn(step,'user'))step.model=false;},
   j=>{j.after_approval=[{user:'Check the result'}];},
-  j=>j.steps.unshift({interface:'fault',name:'timeout_after_submit'})
+  j=>j.steps.unshift({interface:'fault',name:'timeout_after_submit'}),
+  j=>{j.steps.find(s=>s.interface==='select').changes={budget_minor:'00'};}
  ];
  for(const edit of edits){
   const set=standinSet();
@@ -45,9 +46,29 @@ test('heldout: source and offer URLs cannot bypass synthetic HTTPS checks',()=>{
    assert.throws(()=>validateStandin(standinSet(),cat),/invalid_synthetic_journey_set/);
   }
  }
+ for(const url of ['HTTPS://example.invalid/item','https://example.invalid']){
+  const cat=structuredClone(catalog);
+  cat.offers[0].url=url;
+  assert.throws(()=>validateStandin(standinSet(),cat),/invalid_synthetic_journey_set/);
+ }
  const set=standinSet();
  set.journeys[0].transcript+=' HTTPS://external.example/item';
  assert.throws(()=>validateStandin(set),/invalid_synthetic_journey_set/);
+});
+test('heldout: qualification rejects a valid-shaped script that the simulator cannot complete',async()=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'heldout-preflight-'));
+ try{
+  const set=standinSet(),j=set.journeys[0],file=path.join(dir,'journeys.json');
+  j.catalog='catalog.json';
+  fs.writeFileSync(path.join(dir,j.catalog),JSON.stringify(catalog));
+  fs.writeFileSync(file,JSON.stringify(set));
+  assert.equal((await loadQualified(file)).counts.journeys,1);
+
+  j.steps.find(s=>s.interface==='select').changes={budget_minor:'0'};
+  fs.writeFileSync(file,JSON.stringify(set));
+  assert.equal(load(file).counts.journeys,1);
+  await assert.rejects(loadQualified(file),/^Error: heldout_script_preflight_failed$/);
+ }finally{fs.rmSync(dir,{recursive:true,force:true});}
 });
 test('heldout: binding hashes exact valid bytes and rejects malformed UTF-8',()=>{
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'heldout-binding-'));

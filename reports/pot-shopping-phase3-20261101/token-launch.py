@@ -37,8 +37,12 @@ def main():
             raise RuntimeError('use_qualify_heldout_for_fake')
         if args.arm != 'L' or not args.heldout_fixture or not json.loads((here / 'freeze.json').read_text()).get('heldout_fixture'):
             raise RuntimeError('bound_heldout_required')
-        # The host revalidates every external byte before reading the handed-off token.
-        verifier = "require(process.argv[1]).load(process.argv[2],{expected:require(process.argv[3]).heldout_fixture})"
+        # Check the bound bytes and replay the synthetic controls before touching the cache.
+        verifier = (
+            "require(process.argv[1]).loadQualified(process.argv[2],"
+            "{expected:require(process.argv[3]).heldout_fixture})"
+            ".catch(()=>{process.stderr.write('heldout_validation_failed\\n');process.exitCode=1})"
+        )
         env_check = dict(os.environ, NODE_OPTIONS='--require=' + str(root / 'tests/helpers/strict-network-guard.cjs'))
         subprocess.run([shutil.which('node'), '-e', verifier, str(here / 'validate-heldout.cjs'), args.heldout_fixture, str(here / 'freeze.json')], cwd=root, env=env_check, check=True, stdout=subprocess.DEVNULL)
     raw = Path(args.raw).resolve(strict=True)

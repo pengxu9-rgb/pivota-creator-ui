@@ -52,7 +52,10 @@ Malformed UTF-8 is rejected before parsing. The training catalog path resolves
 from the repository root. The validator requires synthetic HTTPS URLs, rejects
 non-synthetic records/sources, missing refs, invalid supply spans, invalid required
 field subsets and scripts without a measured complete preview that remains
-approvable at the end of the pre-approval steps.
+approvable at the end of the pre-approval steps. Offer URLs must use the canonical
+synthetic prefix accepted by the renderer. Before a fixture can be frozen or
+launched, the validator runs each journey once through the existing synthetic
+model-off baseline so admission, preview, and receipt checks also pass.
 The unchanged evidence validator assigns missing printing evidence refs.
 
 `prepare-freeze.cjs --heldout <external-file>` is a future freeze operation after

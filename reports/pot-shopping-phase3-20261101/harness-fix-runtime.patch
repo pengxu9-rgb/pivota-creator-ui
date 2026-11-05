@@ -405,7 +405,7 @@ index 0000000..b682f16
 +async function steps(rows,dispatch){for(const step of rows)await dispatch(step);}
 +module.exports={v2,fixture,questionMeasure,selectionSupplies,steps,training,fields,ROOT};
 diff --git a/reports/pot-shopping-phase3-20261101/live-host.cjs b/reports/pot-shopping-phase3-20261101/live-host.cjs
-index 44b9dd4..780c4bb 100644
+index 44b9dd4..8b54492 100644
 --- a/reports/pot-shopping-phase3-20261101/live-host.cjs
 +++ b/reports/pot-shopping-phase3-20261101/live-host.cjs
 @@ -2,12 +2,22 @@
@@ -428,7 +428,7 @@ index 44b9dd4..780c4bb 100644
 +    let heldout;
 +    if(plan==='heldout'){
 +        if(!freeze.heldout_fixture||!heldoutPath)throw Error('bound_heldout_required');
-+        heldout=require('./validate-heldout.cjs').load(heldoutPath,{expected:freeze.heldout_fixture});
++        heldout=await require('./validate-heldout.cjs').loadQualified(heldoutPath,{expected:freeze.heldout_fixture});
 +    }
      const expires = Date.parse(process.env.POT_LIVE_TOKEN_EXPIRES_AT);
      if (!(expires >= Date.now() + 45 * 60000))
@@ -760,7 +760,7 @@ index 41f87a3..2e4c9c3 100644
 +async function runHeldoutBaseline(heldout){const rows=[];for(let repeat=1;repeat<=10;repeat++)for(const j of heldout.set.journeys)rows.push({...await baselineEpisode('model-off',j,{catalog:heldout.catalogs[j.catalog]}),repeat});return rows;}
 +module.exports = { runHeldoutBaseline, runArm, runCompatibility, runBaseline, shoppingEpisode, modelHost };
 diff --git a/reports/pot-shopping-phase3-20261101/token-launch.py b/reports/pot-shopping-phase3-20261101/token-launch.py
-index 58a8352..fee45f3 100644
+index 58a8352..8129c9d 100644
 --- a/reports/pot-shopping-phase3-20261101/token-launch.py
 +++ b/reports/pot-shopping-phase3-20261101/token-launch.py
 @@ -1,4 +1,4 @@
@@ -769,7 +769,7 @@ index 58a8352..fee45f3 100644
  import argparse
  from datetime import datetime, timezone
  import hashlib
-@@ -11,21 +11,36 @@ import subprocess
+@@ -11,21 +11,40 @@ import subprocess
  import sys
  
  
@@ -800,14 +800,18 @@ index 58a8352..fee45f3 100644
 +            raise RuntimeError('use_qualify_heldout_for_fake')
 +        if args.arm != 'L' or not args.heldout_fixture or not json.loads((here / 'freeze.json').read_text()).get('heldout_fixture'):
 +            raise RuntimeError('bound_heldout_required')
-+        # The host revalidates every external byte before reading the handed-off token.
-+        verifier = "require(process.argv[1]).load(process.argv[2],{expected:require(process.argv[3]).heldout_fixture})"
++        # Check the bound bytes and replay the synthetic controls before touching the cache.
++        verifier = (
++            "require(process.argv[1]).loadQualified(process.argv[2],"
++            "{expected:require(process.argv[3]).heldout_fixture})"
++            ".catch(()=>{process.stderr.write('heldout_validation_failed\\n');process.exitCode=1})"
++        )
 +        env_check = dict(os.environ, NODE_OPTIONS='--require=' + str(root / 'tests/helpers/strict-network-guard.cjs'))
 +        subprocess.run([shutil.which('node'), '-e', verifier, str(here / 'validate-heldout.cjs'), args.heldout_fixture, str(here / 'freeze.json')], cwd=root, env=env_check, check=True, stdout=subprocess.DEVNULL)
      raw = Path(args.raw).resolve(strict=True)
      if raw == root or root in raw.parents:
          raise RuntimeError('external_evidence_required')
-@@ -51,7 +66,7 @@ def main():
+@@ -51,7 +70,7 @@ def main():
          command = [shutil.which('node'), str(here / 'fake-worker.cjs'), str(raw)]
      else:
          environment.pop('NODE_OPTIONS', None)
@@ -818,10 +822,10 @@ index 58a8352..fee45f3 100644
          with (raw / 'token-worker.log').open('ab') as log:
 diff --git a/reports/pot-shopping-phase3-20261101/validate-heldout.cjs b/reports/pot-shopping-phase3-20261101/validate-heldout.cjs
 new file mode 100644
-index 0000000..3ac7401
+index 0000000..eecc8b2
 --- /dev/null
 +++ b/reports/pot-shopping-phase3-20261101/validate-heldout.cjs
-@@ -0,0 +1,124 @@
+@@ -0,0 +1,154 @@
 +'use strict';
 +// Counts-only validator. Never invokes a transport, credential helper or model.
 +const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
@@ -833,6 +837,7 @@ index 0000000..3ac7401
 +const allowed={select:['changes','supplies'],preview:['expect','measure'],compare_offers:['offer_refs','criterion'],search_catalog:['text','measure'],get_product:['printing_ref'],observe_offer:[],fault:['name'],deny_approval:[],get_operation:[],drain:[]};
 +const operationActions=new Set(['get_operation','drain']);
 +const utf8=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true});
++const requirementsSchema=schemas['common.schema.json'].$defs.requirements;
 +function check(ok){assert.ok(ok,'invalid_synthetic_journey_set');}
 +function syntheticUrl(value){
 + // Match the authority as written. URL normalization would hide an explicit :443 or empty userinfo.
@@ -869,12 +874,20 @@ index 0000000..3ac7401
 +  check(sources.size===c.sources.length&&destinations.size===c.destinations.length&&c.destinations.every(r=>r.synthetic===true));
 +  const allRefs=new Set([...refs,...evidenceRefs,...sources,...destinations]);
 +  for(const row of records)for(const [key,value] of Object.entries(row))if(key.endsWith('_ref')&&value!==null)check(allRefs.has(value));
-+  for(const offer of c.offers){check(c.printings.some(p=>p.id===offer.printing_ref)&&c.sellers.some(s=>s.id===offer.seller_ref)&&sources.has(offer.source_ref));check(offer.source_permission===true);syntheticUrl(offer.url);check(!offer.certificate_ref||offer.certificate_ref===c.certificate.id);check(ev.qualified(offer));}
++  for(const offer of c.offers){
++   check(c.printings.some(p=>p.id===offer.printing_ref)&&c.sellers.some(s=>s.id===offer.seller_ref)&&sources.has(offer.source_ref));
++   check(offer.source_permission===true);
++   syntheticUrl(offer.url);
++   // The renderer requires this exact prefix for offer URL claims.
++   check(offer.url.startsWith('https://example.invalid/'));
++   check(!offer.certificate_ref||offer.certificate_ref===c.certificate.id);
++   check(ev.qualified(offer));
++  }
 +  check(j.answer_key&&typeof j.answer_key==='object'&&!Array.isArray(j.answer_key));
 +  for(const [f,a] of Object.entries(j.answer_key))check(fields.has(f)&&typeof a==='string'&&a.length>0&&a.length<=10000);
 +  check(Array.isArray(j.required_fields)&&new Set(j.required_fields).size===j.required_fields.length&&j.required_fields.every(f=>Object.hasOwn(j.answer_key,f)));
 +  check(c.offers.some(o=>o.id===j.offer_ref)&&c.printings.some(p=>p.id===j.requirements?.printing_ref)&&destinations.has(j.requirements.destination_ref));
-+  check(conforms(j.requirements,schemas['common.schema.json'].$defs.requirements,'common.schema.json'));
++  check(conforms(j.requirements,requirementsSchema,'common.schema.json'));
 +  check(ev.qualified(ev.offer(j.offer_ref),j.requirements));
 +  let selected=false,previewStatus=null,measuredPreview=false,query=false,first=false,modelTurn=false;
 +  check(Array.isArray(j.steps)&&j.steps.length>0&&j.steps.length<=100);
@@ -894,8 +907,10 @@ index 0000000..3ac7401
 +    check(post===operationActions.has(s.interface));
 +    if(s.interface==='select'){
 +     check(Array.isArray(s.supplies)&&new Set(s.supplies).size===s.supplies.length);
-+     check(s.changes===undefined||(s.changes&&typeof s.changes==='object'&&Object.keys(s.changes).length===1&&Object.hasOwn(s.changes,'budget_minor')&&typeof s.changes.budget_minor==='string'&&/^\d+$/.test(s.changes.budget_minor)));
-+     check(selectionSupplies(s,{...j.requirements,...s.changes}).length===s.supplies.length);
++     check(s.changes===undefined||(s.changes&&typeof s.changes==='object'&&Object.keys(s.changes).length===1&&Object.hasOwn(s.changes,'budget_minor')));
++     const requirements={...j.requirements,...s.changes};
++     check(conforms(requirements,requirementsSchema,'common.schema.json'));
++     check(selectionSupplies(s,requirements).length===s.supplies.length);
 +     selected=true;
 +     previewStatus=null;
 +    }
@@ -938,14 +953,33 @@ index 0000000..3ac7401
 + if(expected)check(hash(binding)===hash(expected));
 + return {set,catalogs,binding,counts};
 +}
++async function loadQualified(file,options){
++ const loaded=load(file,options);
++ const {episode}=require('./baseline-v2.cjs');
++ try{
++  for(const journey of loaded.set.journeys){
++   await episode('model-off',journey,{catalog:loaded.catalogs[journey.catalog]});
++  }
++ }catch{
++  throw Error('heldout_script_preflight_failed');
++ }
++ return loaded;
++}
 +function assertBound(loaded,expected){
 + check(!!expected&&hash(loaded.binding)===hash(expected));
 + check(hash(loaded.set)===expected.journeys_value_sha256);
 + for(const row of expected.catalog_bindings)check(hash(loaded.catalogs[row.name])===row.value_sha256);
 + check(hash(validate(loaded.set,loaded.catalogs,{heldout:true}))===hash(loaded.counts));
 +}
-+if(require.main===module){try{process.stdout.write(JSON.stringify(load(process.argv[2]).counts)+'\n');}catch{process.stderr.write('heldout_validation_failed\n');process.exitCode=1;}}
-+module.exports={validate,load,external,assertBound};
++if(require.main===module){
++ loadQualified(process.argv[2]).then(({counts})=>{
++  process.stdout.write(JSON.stringify(counts)+'\n');
++ }).catch(()=>{
++  process.stderr.write('heldout_validation_failed\n');
++  process.exitCode=1;
++ });
++}
++module.exports={validate,load,loadQualified,external,assertBound};
 diff --git a/reports/pot-shopping-phase3-20261101/vertex-allowlist-guard.cjs b/reports/pot-shopping-phase3-20261101/vertex-allowlist-guard.cjs
 index c89b6d1..eef62fa 100644
 --- a/reports/pot-shopping-phase3-20261101/vertex-allowlist-guard.cjs
