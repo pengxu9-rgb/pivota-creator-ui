@@ -1,82 +1,41 @@
-# Phase 4 Part A — offline handoff (4 November 2026)
+# Phase 4 Part A review fixes
 
-Implementation: `f13e0e5fa9cf8e0e102c9d2d7d207782726951b1` from `12dc3a19299c19e200541c4261a69658c26a1b72`.
-Freeze SHA256: `8a030abaaeda8e9ed2fa8e80fb6ed2476d2cb05a7f6a3748e241c98c035b54c6`.
+Both independent offline reviewers passed the functional repair at `6903247`.
+A follow-up review passed the mutation-tooling update at `36cf755dcbd5ee4f520d70d64de730a33725a14c`. The earlier
+Part A report is preserved at `3fd7f28`. The current freeze SHA-256 is
+`9a2423f88236a600081b8693c8f8e984b17d9b81b3cfdacbd4e18f4d0fb0d9a2`.
 
-The episode driver now executes schema-v2 scripts, accepts per-set catalog fixtures,
-and records M1 unnecessary clarifications and M2 missed necessary questions.
-M2 latches missing user-supplied required fields at selection/preview, without
-letting the fixture requirements oracle fill them. New question measures have no
-new threshold. The heldout plan is L plus model-off, ten repetitions per journey,
-with a separate 1,200-call / 6M-input / USD 2 L, USD 0 P budget.
+The validator tracks approval phases and requires a current complete preview.
+It checks the renderer's synthetic URL format and hashes external fixture bytes
+before parsing strict UTF-8. The freeze generator and both launcher entry points
+replay the bound scripts through the synthetic model-off baseline before writing
+the freeze or handing off credentials.
 
-No real held-out journey was read or authored. The committed heldout binding is
-null, so launching is deliberately blocked. The qualifier uses only an existing
-training journey cloned into a temporary synthetic stand-in. Future blind input
-must be external and frozen by journey/catalog hashes, then separately approved
-with `claude_4_heldout_go`. Production shopping remains model-off.
+M2 counts only values supplied through a user turn or an accepted interface
+selection. L completion requires observed model participation, and scoring checks
+the durable receipts and bound model-off rows. The baseline verifies the order
+printing and total. These changes were verified against the historical J01–J04
+outputs and requests in 56 byte-for-byte comparisons.
 
-The first kernel attempt stopped after 74 rows on worker deadlines and is retained
-unchanged. A later retry was interrupted after 56 rows without a final receipt;
-its cause is unknown and its logs are also retained. This result comes from a
-fresh full 93-row retry, with no partial cells
-reused. For the retry only, idle sleep was prevented with a temporary caffeinate
-assertion and raw logs were written to local temporary storage, then archived
-outside Git. No source, concurrency, deadline or freeze changed.
+The full suite passed 630/630, the model suite passed
+124/124, and the explicit harness tests passed
+10/10. All 49 model mutations were caught.
+All 12 qualifiers passed, including 778 compatibility contexts
+and ten L plus ten model-off stand-in episodes. An earlier compatibility attempt
+stopped at the fake-token time limit after a wall-clock gap. A model-mutation
+run on the functional repair also exposed a stale literal match in the approval
+display mutation. The tooling update retargets that same mutation without
+altering its assertion.
 
-## Evidence
+The fresh kernel gate ran all 93 rows, caught 88, and retained the five known
+equivalents. The run recorded 8,694 Node and
+6,080 Python audits with zero network attempts.
+The local one-minute load started at 15.34 and ranged
+from 5.42 to 46.10 during the gate. The gate ran within
+the restricted execution environment with the strict Node and Python guards.
 
-- J01–J04: 28 checked-in comparisons plus 28 supplementary comparisons using the
-  exact existing corpus, smoke and detached-worker fake response recipes. Every
-  legacy outcome, turn count, metric, simulator statistic, durable model-turn
-  outcome and serialized request matches byte for byte under a fixed clock.
-  The additive M2 output is excluded only from the legacy byte comparison.
-  Model-off is compared to the unchanged historical phase-2 evaluator. The old
-  runtime branch driver is removed; the comparator loads its original Git blob.
-- Full suite: 624/624. Model suite: 118/118. Explicit harness tests: 10/10.
-- Model mutation gate: 49/49 killed on the implementation snapshot.
-- Syntax: 47/47; Python release checks 23/23; TypeScript and vocabulary checks pass.
-- All 12 qualifiers pass: equivalence, frozen model, heldout stand-in, runtime
-  patch/invariants, syntax, corpus, smoke, compatibility, mapping, detached
-  restart, arm resume and CONNECT/TLS guard. The additional exact-transport
-  comparison also passes. The runtime byte check binds all 59 loaded runtime
-  files; the freeze binds 124 artifacts.
-- Corpus fake replay: model-off 40/40; each model arm 40/40 journeys and 18/18
-  same-host attack/fault cases, 352 fake requests total. Smoke: 8/8; compatibility:
-  778 contexts; heldout stand-in: L 10/10 plus model-off 10/10, 40 fake requests,
-  P calls zero. These are harness evidence, not model quality results.
-- Fresh kernel gate: 93 rows, 88 caught, the same five documented equivalents,
-  zero unexplained survivors. Inventory: 45 files,
-  624 tests; 4324 cells,
-  8694 Node audits and 6080 Python audits.
-  Run on the local Mac under recorded load. Peng explicitly removed the extra
-  80% idle precondition on 4 November; this is not claimed as an idle-machine run.
-  Before launch, the 3-second
-  CPU sample was 46.3% idle on 10 logical CPUs;
-  1-minute load was 4.04. Gate load ranged
-  4.57–104.61, including its own workers.
-- All network-attempt counts are zero. Every Node process inherits the strict
-  preload; Python probes have separate denial; the whole run has an OS network
-  block. No foreign process was signalled. Phase-2 evaluation bytes remain
-  `3ca27b40bea6eced39f30197d3c3eb41e6f6b97aa72c5d815a9eae44327c16d2`.
-
-## Frozen model boundary and review notes
-
-Files changed within the brief's frozen model side: **none**. turn.cjs (including
-the instruction), declarations.cjs, declarations.json and context.cjs are
-byte-identical to `12dc3a1`; generation settings are identical. Collector and
-scorer changes are evaluation support for budgets, binding and measured-only
-question aggregates. The kernel runner only gains the report dependencies in
-its snapshot inventory; its 93/88/5 requirements remain fixed.
-
-The standalone validator emits counts only. External file paths, raw prompts,
-responses and full worker logs remain outside Git. Compact evidence is bound by
-external manifest `a2f48c0ac2e9dca596201638d0a753f79c5595b9d312033fafedeb738dce74d2` (36367 files).
-Earlier local attempts and invocation errors are retained there; final gates
-above are the successful runs on the stable implementation. An early qualifier
-exposed a catalog-binding key collision; it was fixed before the implementation
-commit, and disk/in-memory tamper checks now pass.
-
-No release pins changed. No push, PR, merge, deployment, credential read,
-marketplace/BNS/PSA/model call, real order or payment. Stop here for Claude's
-Part A review, then the separate offline adversarial review before Part B.
+All four frozen model files and the generation configuration match `12dc3a1`.
+The held-out binding is null. All evaluation traffic used local fake transport.
+Raw evidence stays outside Git and is bound by the archive SHA-256
+`eee3a0a5ad5ee2238407ad117009f4feb3088ecfbc2533e21f6403c431674031` and manifest SHA-256
+`d55c3659a2b83835323bd3297ee4eb3903bd19177d57706c3b33bbb5ce45f575`.

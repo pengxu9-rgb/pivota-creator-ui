@@ -1,33 +1,27 @@
 {
-  "schema": "shopping.phase4.partA.summary.v1",
-  "implementation_commit": "f13e0e5fa9cf8e0e102c9d2d7d207782726951b1",
-  "kernel_retry": {
-    "fresh_full_93": true,
-    "partial_rows_reused": 0,
-    "previous_attempts": [
-      "stopped after 74 rows on worker deadline; retained unchanged",
-      "interrupted after 56 rows without a final receipt; cause unknown; retained unchanged"
-    ],
-    "temporary_idle_sleep_prevention": "caffeinate -i",
-    "raw_logs_written_to_local_temporary_storage": true,
-    "archive_sha256": "ce11065236efb71563a2b9d2d1d72fb9163514804a55bafa71d49499064d3d4e"
+  "schema": "shopping.phase4.partA.review-fix.summary.v1",
+  "implementation_commit": "36cf755dcbd5ee4f520d70d64de730a33725a14c",
+  "prior_evidence_commit": "3fd7f2868a07c1c121b23fe03c12139dacac30fa",
+  "freeze_sha256": "9a2423f88236a600081b8693c8f8e984b17d9b81b3cfdacbd4e18f4d0fb0d9a2",
+  "review": {
+    "behavior": "pass",
+    "boundary": "pass",
+    "implementation_head": "690324715a2128e97bfc100df5b2c66e4d3253ff",
+    "mutation_anchor_followup": {
+      "head": "36cf755dcbd5ee4f520d70d64de730a33725a14c",
+      "verdict": "pass"
+    }
   },
-  "base": "12dc3a19299c19e200541c4261a69658c26a1b72",
-  "freeze_sha256": "8a030abaaeda8e9ed2fa8e80fb6ed2476d2cb05a7f6a3748e241c98c035b54c6",
-  "heldout_fixture_bound": false,
-  "real_heldout_journeys_read_or_written": false,
-  "model_calls": 0,
-  "network_attempts": 0,
   "full_suite": {
-    "tests": 624,
-    "pass": 624,
+    "tests": 630,
+    "pass": 630,
     "fail": 0,
     "cancelled": 0,
     "skipped": 0
   },
   "model_suite": {
-    "tests": 118,
-    "pass": 118,
+    "tests": 124,
+    "pass": 124,
     "fail": 0,
     "cancelled": 0,
     "skipped": 0
@@ -39,127 +33,12 @@
     "cancelled": 0,
     "skipped": 0
   },
-  "syntax_checks": 47,
   "model_mutants": {
     "total": 49,
     "killed": 49
   },
-  "equivalence": {
-    "checked_in_comparisons": 28,
-    "exact_existing_transport_comparisons": 28,
-    "legacy_outcomes_and_requests_byte_identical": true,
-    "only_excluded_output": "additive missed_necessary_questions field"
-  },
-  "qualifiers": {
-    "harness-1": {
-      "passed": true,
-      "node_audits": 4,
-      "network_attempts": 0,
-      "log_sha256": "d591ce4bd2b3a19b9cd8688e93b48e618d9c726362535820d7843857290101c5"
-    },
-    "syntax-final": {
-      "passed": true,
-      "node_audits": 1,
-      "network_attempts": 0,
-      "log_sha256": "c4dcec0eaf7ba6f25f9d4acc953cb62b796dec0aca5f9cf92fdd71e53076ffda"
-    },
-    "corpus-final": {
-      "passed": true,
-      "node_audits": 1,
-      "network_attempts": 0,
-      "log_sha256": "807f6ee46342e10ef4a5186ac818a4490d082c06d406dc76fd4c4cb45b5d84fa"
-    },
-    "smoke-final": {
-      "passed": true,
-      "node_audits": 1,
-      "network_attempts": 0,
-      "log_sha256": "3f0d11be15bcfcffbd56ee6db9bb755527cb7c350d63a9969afac04614b128b0"
-    },
-    "compat-final": {
-      "passed": true,
-      "node_audits": 1,
-      "network_attempts": 0,
-      "log_sha256": "21471102a6b0e5f706df4dc3cecc596ee1c79028db992697a634f91cdebaf696"
-    },
-    "mapping-1": {
-      "passed": true,
-      "node_audits": 1,
-      "network_attempts": 0,
-      "log_sha256": "c5de45576f8230c9e8e28c7799883897c52b1e6f07d402814efc50a1750e538e"
-    },
-    "detached-final": {
-      "passed": true,
-      "node_audits": 1,
-      "network_attempts": 0,
-      "log_sha256": "f93e81b8bfdce8d2937b3513da0041cfee399bf7027e5ffdcf8eec92eac9d2bb"
-    },
-    "arm-resume-final": {
-      "passed": true,
-      "node_audits": 1,
-      "network_attempts": 0,
-      "log_sha256": "4e89430b1162bd66d86605f83a44ee4c685ce7968f669f37e7852d266f364d93"
-    },
-    "guard-1": {
-      "passed": true,
-      "node_audits": 1,
-      "network_attempts": 0,
-      "log_sha256": "28fafb5ae7571f8bb164fba8b93a80ad1a022c548ecea18c2fa2dd217d996ca4"
-    },
-    "invariants-final": {
-      "passed": true,
-      "node_audits": 1,
-      "network_attempts": 0,
-      "log_sha256": "e7587535a582e56843291990da590fa9b3ad14738eeae8e01a7472ced3c78145"
-    },
-    "model-freeze-final": {
-      "passed": true,
-      "node_audits": 1,
-      "network_attempts": 0,
-      "log_sha256": "adbbbf70d9a633f0088245849b8e53c591ec482624180b50e3e44bc553b05c85"
-    },
-    "heldout-final": {
-      "passed": true,
-      "node_audits": 1,
-      "network_attempts": 0,
-      "log_sha256": "89f797bc03d2be271c37233bbb4159a609e34baa922c2bbe6f6d52a3284b2416"
-    },
-    "equivalence-final": {
-      "passed": true,
-      "node_audits": 1,
-      "network_attempts": 0,
-      "log_sha256": "a17ce3e41b0158273b34c2dcd65127015d944a0ceeeeeab88f5f0725cd3d02b9"
-    },
-    "equivalence-exact": {
-      "passed": true,
-      "node_audits": 1,
-      "network_attempts": 0,
-      "log_sha256": "f1e815b8ef1d99a3c4761385ea6cff646a7dbe5aef60c602bf7eb8c05eaf8787"
-    },
-    "python-1": {
-      "passed": true,
-      "node_audits": 0,
-      "network_attempts": 0,
-      "log_sha256": "38999e06252d034548f695bc989a6229e8f9f220152b165638de70d3aee4f6d3"
-    },
-    "phase2-1": {
-      "passed": true,
-      "node_audits": 1,
-      "network_attempts": 0,
-      "log_sha256": "d4b16deab8ea0dabe1a529a3ad1f45485a331e423eea08f26d0b2ab20bb42ab2"
-    },
-    "ts-1": {
-      "passed": true,
-      "node_audits": 1,
-      "network_attempts": 0,
-      "log_sha256": "95d5e2509ba7b3f13aca3af7ddedaca5baccf5d03a452ea6fe9c467ceda8ed0f"
-    },
-    "vocab-final": {
-      "passed": true,
-      "node_audits": 0,
-      "network_attempts": 0,
-      "log_sha256": "9b9b5435742032872a698f1d65c76b31e6954ea1af622e9950a0aad6d155d83c"
-    }
-  },
+  "equivalence_comparisons": 56,
+  "qualification_count": 12,
   "frozen_model": {
     "passed": true,
     "base": "12dc3a19299c19e200541c4261a69658c26a1b72",
@@ -183,42 +62,170 @@
     ],
     "generation_config_identical": true
   },
+  "network_attempts": 0,
+  "live_evaluation_calls": 0,
+  "heldout_fixture_bound": false,
   "kernel": {
-    "complete": true,
     "rows": 93,
     "caught": 88,
     "equivalent": 5,
     "inventory": {
       "test_files": 45,
-      "tests": 624,
+      "tests": 630,
       "routing_python_workers": 63,
       "python_workers": 64
     },
     "node_audits": 8694,
     "python_audits": 6080,
     "cells": 4324,
-    "network_attempts": 0,
-    "signals_sent_to_foreign_processes": 0,
-    "local_load_before": {
-      "logical_cpus": 10,
-      "sample_ms": 3000,
-      "idle_share": 0.46277665995975853,
-      "load": [
-        4.041015625,
-        5.0654296875,
-        8.44580078125
-      ]
+    "launch_load": [
+      15.3408203125,
+      17.384765625,
+      16.662109375
+    ],
+    "launch_idle_share": 0.22704339051463168,
+    "load_range": [
+      5.41650390625,
+      46.10400390625
+    ]
+  },
+  "gates": {
+    "equivalence-final": {
+      "seconds": 0.5283481669612229,
+      "log_sha256": "2123e70a35e51d6ba6a1e286c698e55bf6dff99aed404aaaaf508df5c95f85d0",
+      "node_audits": 1,
+      "network_attempts": 0
     },
-    "extra_idle_threshold_removed_by_user": true,
-    "load_min": 4.5693359375,
-    "load_max": 104.61083984375
+    "model-freeze-final": {
+      "seconds": 0.22562358318828046,
+      "log_sha256": "ddbefd66d676c0651511bba5a92438c8cdb9eb1e122cf9fde8366dab530e531d",
+      "node_audits": 1,
+      "network_attempts": 0
+    },
+    "heldout-final": {
+      "seconds": 1.6690064589492977,
+      "log_sha256": "68c5e756b1c789994e3ffc31077d63b1d670ccd8af6fec2715ba5e7a15ff6e60",
+      "node_audits": 1,
+      "network_attempts": 0
+    },
+    "invariants-final": {
+      "seconds": 0.2716263751499355,
+      "log_sha256": "881b430f52ba2f1adcdca68edb75569e567d69f788f6188413df89359ef0fd02",
+      "node_audits": 1,
+      "network_attempts": 0
+    },
+    "syntax-final": {
+      "seconds": 3.5819614159408957,
+      "log_sha256": "52a950008fdfa4f2867e888d402328e08589716ab73be8865b47231bab60147a",
+      "node_audits": 1,
+      "network_attempts": 0
+    },
+    "corpus-final": {
+      "seconds": 17.849218958057463,
+      "log_sha256": "50eb52e7eff506581603cfe5ea9dfa0d06adaa44241cbfb336752d011adc35e4",
+      "node_audits": 1,
+      "network_attempts": 0
+    },
+    "smoke-final": {
+      "seconds": 1.5050477921031415,
+      "log_sha256": "48eb856347049a0951207a2ff4acd956f0445930075f4e2c4efa1dbe24f66cf7",
+      "node_audits": 1,
+      "network_attempts": 0
+    },
+    "compat-final": {
+      "seconds": 194.80247624986805,
+      "log_sha256": "2fe88703ab1e864f798dc89e2d2a339e3908a6b6f2574ab93700219a4c055805",
+      "node_audits": 1,
+      "network_attempts": 0
+    },
+    "mapping-1": {
+      "seconds": 0.5101497089490294,
+      "log_sha256": "356992565207834c14872bd484176ab6f23dc89ef10fdaa39c815240d30cc521",
+      "node_audits": 1,
+      "network_attempts": 0
+    },
+    "detached-final": {
+      "seconds": 1.3903700830414891,
+      "log_sha256": "08cb0438160f6bdf77775c6ad2a314023f442a931102a62e2a59574ab313f73c",
+      "node_audits": 1,
+      "network_attempts": 0
+    },
+    "arm-resume-final": {
+      "seconds": 3.5062821661122143,
+      "log_sha256": "f0599a1fcf22a3c516640c7d7c80ee6939f29d7dcc9183ef66a14d9960992daa",
+      "node_audits": 1,
+      "network_attempts": 0
+    },
+    "guard-1": {
+      "seconds": 0.18826858303509653,
+      "log_sha256": "eae2e2e2402a2326158358b5558711041e19c2f1eac5962874a4f55db633c1dd",
+      "node_audits": 1,
+      "network_attempts": 0
+    },
+    "equivalence-exact": {
+      "seconds": 0.7838080418296158,
+      "log_sha256": "4dfc033fe4c5af6b28576c1ab8f9b2b35ba3fb0d1b437ddac1ce4ef3d4b30dc1",
+      "node_audits": 1,
+      "network_attempts": 0
+    },
+    "full-final": {
+      "seconds": 44.33308658306487,
+      "log_sha256": "b2236a98f1ab04c70ed2638b98193cf045d7ecb74b643cd217c6897fb5b2488a",
+      "node_audits": 47,
+      "network_attempts": 0
+    },
+    "model-final": {
+      "seconds": 6.039605709025636,
+      "log_sha256": "7c8835289f2c39a20563befd3edeb23cbb736d8ae8052e25ea8153e28b3b25e0",
+      "node_audits": 2,
+      "network_attempts": 0
+    },
+    "harness-1": {
+      "seconds": 0.5324221670161933,
+      "log_sha256": "6d0efee910d4ff1d2c6515fd9110f4a9ee97fbe2edf074d3e8272fc6ccc9ce46",
+      "node_audits": 4,
+      "network_attempts": 0
+    },
+    "mutants-final": {
+      "seconds": 316.95415229094215,
+      "log_sha256": "c2b5c92be24312abb833abcec7b93bfcc78433b34da881400cca1690c52fe82a",
+      "node_audits": 1,
+      "network_attempts": 0
+    },
+    "python-1": {
+      "seconds": 0.26037883292883635,
+      "log_sha256": "01a3361790affbbb7f05249396624d280422febb36bfe07f37a85876115130fc",
+      "node_audits": 0,
+      "network_attempts": 0
+    },
+    "phase2-1": {
+      "seconds": 0.30546229099854827,
+      "log_sha256": "6c2b5b7411a0ccbf1cb8a4569189b61facb27c1de7398b38072bf5b95dbc1aff",
+      "node_audits": 1,
+      "network_attempts": 0
+    },
+    "ts-1": {
+      "seconds": 7.316823208937421,
+      "log_sha256": "6dd06e2606abc7fd2ff4328bd936764c16667c809f55011ad211dd9de5472ee6",
+      "node_audits": 1,
+      "network_attempts": 0
+    },
+    "vocab-final": {
+      "seconds": 2.4623474159743637,
+      "log_sha256": "9b9b5435742032872a698f1d65c76b31e6954ea1af622e9950a0aad6d155d83c",
+      "node_audits": 0,
+      "network_attempts": 0
+    },
+    "kernel-final": {
+      "seconds": 2519.055488540791,
+      "log_sha256": "0810c422eb7339c5bb3d0f80d1d75a87fa215cdf8d69087220d0ebc1bacac9d7",
+      "node_audits": 1,
+      "network_attempts": 0
+    }
   },
-  "raw_evidence_manifest": {
-    "sha256": "a2f48c0ac2e9dca596201638d0a753f79c5595b9d312033fafedeb738dce74d2",
-    "files": 36367,
-    "bytes": 157912737
-  },
-  "release_pins_changed": false,
-  "production_model": "off",
-  "next": "Stop for Claude review, then offline adversarial review, before Part B. No live go is implied."
+  "raw_archive": {
+    "sha256": "eee3a0a5ad5ee2238407ad117009f4feb3088ecfbc2533e21f6403c431674031",
+    "manifest_sha256": "d55c3659a2b83835323bd3297ee4eb3903bd19177d57706c3b33bbb5ce45f575",
+    "files": 14983
+  }
 }
