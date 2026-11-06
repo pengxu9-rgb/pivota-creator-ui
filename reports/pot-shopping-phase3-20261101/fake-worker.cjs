@@ -1,6 +1,8 @@
 'use strict';
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
-const ROOT=path.resolve(__dirname,'../..'),raw=process.argv[2];
+const ROOT=path.resolve(__dirname,'../..');
+const {acquireRunLock,externalRunDirectory}=require('./run-directory.cjs');
+const raw=externalRunDirectory(ROOT,process.argv[2]),lock=acquireRunLock(raw);
 const {createCollector,atomic}=require(ROOT+'/src/lib/pokemon/shopping/model/collector.cjs');
 const {shoppingEpisode,modelHost}=require('./orchestrate.cjs');
 const {setup,journeys}=require(ROOT+'/tests/shopping/helpers.cjs');
@@ -33,4 +35,5 @@ const c=createCollector({freeze,artifactBytes:p=>fs.readFileSync(ROOT+'/'+p),che
     const previous=fs.existsSync(raw+'/done.json')?JSON.parse(fs.readFileSync(raw+'/done.json')):null;
     const episodes=c.state().outcomes.filter(o=>o.id==='detached/J01');
     atomic(raw+'/done.json',{fake:true,run:(previous?.run||0)+1,transport_calls_this_run:transportCalls,records:c.state().records.length,completed_episodes:episodes.length,timings:Object.fromEntries(episodes.map(o=>[o.arm,o.result.latency_ms])),model_calls:0,real_tokens:0,real_spend_usd:0});
-})().catch(error=>{c.close();process.stderr.write(String(error.message).slice(0,160)+'\n');process.exitCode=1;});
+})().catch(error=>{c.close();process.stderr.write(String(error.message).slice(0,160)+'\n');process.exitCode=1;})
+    .finally(()=>lock.close());

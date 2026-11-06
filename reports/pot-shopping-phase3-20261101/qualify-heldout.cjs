@@ -21,10 +21,11 @@ async function qualify(raw){
   await assert.rejects(runArm(c,'L',{plan:'heldout'}),/bound_heldout_required/);
   await runArm(c,'L',{plan:'heldout',heldout});const s=c.state(),baseline=await runHeldoutBaseline(heldout),scored=scoreHeldout(s,baseline,heldout);
   assert.equal(scored.expected,10);assert.equal(scored.completed,10);assert.equal(scored.L.M2_missed_necessary_questions.total,0);assert.equal(scored.L.M2_missed_necessary_questions.threshold,null);
-  assert.deepEqual(scored.model_participation,{observed:10,not_observed:0,unrecorded:0});
+  assert.deepEqual(scored.model_participation,{observed:10,usable:10,fallback_only_completed:0,not_observed:0,unrecorded:0});
+  assert.deepEqual(scored.fallbacks,{turns:20,count:0,share:0,reasons:{}});
   const withoutReceipts=scoreHeldout({...s,records:[]},baseline,heldout);
   assert.equal(withoutReceipts.completed,0);
-  assert.deepEqual(withoutReceipts.model_participation,{observed:0,not_observed:10,unrecorded:0});
+  assert.deepEqual(withoutReceipts.model_participation,{observed:0,usable:0,fallback_only_completed:0,not_observed:10,unrecorded:0});
   assert.equal(withoutReceipts.L.M2_missed_necessary_questions.missing,10);
   assert.throws(()=>scoreHeldout(s,baseline.slice(1),heldout),/heldout_scoring_baseline_mismatch/);
   assert.throws(()=>scoreHeldout(s,baseline,tampered),/heldout_scoring_binding_mismatch/);

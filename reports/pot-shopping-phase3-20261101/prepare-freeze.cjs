@@ -1,5 +1,6 @@
 'use strict';
 const fs = require('node:fs'), path = require('node:path');
+const { createHash } = require('node:crypto');
 const ROOT = path.resolve(__dirname, '../..'), { hash } = require(ROOT + '/src/lib/pokemon/shopping/schema.cjs');
 const { declarationSet } = require(ROOT + '/src/lib/pokemon/shopping/model/declarations.cjs');
 const { CONFIG, SYSTEM_INSTRUCTION, LIMITS } = require(ROOT + '/src/lib/pokemon/shopping/model/turn.cjs');
@@ -30,8 +31,11 @@ async function main() {
         ...['helpers', 'evaluate'].map(f => 'tests/shopping/' + f + '.cjs'),
         // Every other file the harness loads at runtime, so the launch gate binds what decides the scores.
         ...['collectorError.cjs', 'admissionVocabulary.json', 'chatReleaseHints.json', 'vendor/privateCollector.cjs', 'sourceFamilyAdvisory.cjs', 'requestBudgets.cjs', 'catalogMedia.cjs', 'mediaWarnings.cjs', 'workspaceFeedback.cjs', 'conversations.cjs', 'commerceHistory.cjs', 'commerceContract.cjs', 'bnsPreview.cjs', 'sellerEvidence.cjs', 'listingEvidence.cjs', 'purchaseLink.cjs', 'sourceReadiness.cjs', 'bnsChatState.cjs', 'offerEvidence.cjs', 'comparisonRecords.cjs', 'geminiVertex.cjs', 'vendor/collectorClient.cjs'].map(f => 'src/lib/pokemon/' + f),
-        'reports/admission-kernel-live-model/offline-fixture.cjs', 'reports/admission-kernel-live-model/dynamic-context.cjs', 'tests/shopping/model/scenarios.cjs');
-    const artifacts = [...new Set(paths)].sort().map(p => ({ path: p, sha256: hash(fs.readFileSync(ROOT + '/' + p, 'utf8')) }));
+        'reports/admission-kernel-live-model/offline-fixture.cjs', 'reports/admission-kernel-live-model/dynamic-context.cjs',
+        'reports/admission-kernel-live-model/token-launch.py', 'tests/helpers/strict-network-guard.cjs', 'tests/shopping/model/scenarios.cjs');
+    const artifacts = [...new Set(paths)].sort().map(p => ({
+        path: p, sha256: createHash('sha256').update(fs.readFileSync(ROOT + '/' + p)).digest('hex')
+    }));
     const manifest = artifacts.find(r => r.path === 'tests/fixtures/shopping/frozen-manifest.json').sha256;
     if (!manifest.startsWith('bd4258fb'))
         throw Error('phase2_manifest_required');

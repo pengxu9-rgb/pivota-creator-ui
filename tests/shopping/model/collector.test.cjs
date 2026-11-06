@@ -1,5 +1,6 @@
 'use strict';
 const test = require('node:test'), assert = require('node:assert/strict'), fs = require('node:fs'), os = require('node:os'), path = require('node:path');
+const { createHash } = require('node:crypto');
 const { createCollector, price, MODELS, BUDGETS, SMOKE_BUDGETS, COMPAT_BUDGETS, STOP_RULES, endpoint } = require('../../../src/lib/pokemon/shopping/model/collector.cjs');
 const { CONFIG, SYSTEM_INSTRUCTION } = require('../../../src/lib/pokemon/shopping/model/turn.cjs');
 const { declarationSet } = require('../../../src/lib/pokemon/shopping/model/declarations.cjs');
@@ -16,6 +17,21 @@ function setup(responses = [], options = {}) {
 test('model eval collector: price both exact models and long-context tiers including reasoning', () => { const f = freeze(); assert.equal(price(f, 'L', 1000000, 1000000, 1000000), 5.3); assert.equal(price(f, 'P', 200000, 10, 5), .40018); assert.equal(price(f, 'P', 200001, 10, 5), .800274); assert.throws(() => price({ ...f, prices: {} }, 'L', 1, 1), /no_price/); });
 test('model eval collector: checkpoints every completed call, concurrency two, resume never repeats', async () => { let active = 0, max = 0; const x = setup([], { transport: async () => { active++; max = Math.max(max, active); await new Promise(r => setTimeout(r, 3)); active--; return response(); } }), c = x.open(); await c.run('L', x.jobs()); c.close(); assert.equal(max, 2); let state = JSON.parse(fs.readFileSync(x.checkpoint)); assert.equal(state.records.length, 5); assert.ok(state.records.every(r => r.status === 'completed')); const d = x.open(); await d.run('L', x.jobs()); d.close(); state = JSON.parse(fs.readFileSync(x.checkpoint)); assert.equal(state.records.length, 5); assert.equal(state.arms.L.calls, 5); assert.equal(state.arms.L.thought_tokens, 25); });
 test('model eval collector: freeze changes, artifacts and uncertain reservations refuse resume', async () => { const x = setup(), c = x.open(); await c.run('L', x.jobs(1)); c.close(); x.args.freeze = { ...x.args.freeze, changed: true }; assert.throws(x.open, /resume_freeze_mismatch/); x.args.freeze = freeze(); let state = JSON.parse(fs.readFileSync(x.checkpoint)); state.records[0].status = 'reserved'; fs.writeFileSync(x.checkpoint, JSON.stringify(state)); assert.throws(x.open, /uncertain_in_flight/); x.args.freeze = { ...freeze(), artifacts: [{ path: 'f', sha256: 'wrong' }] }; assert.throws(x.open, /frozen_artifact_mismatch/); });
+test('model eval collector: artifact hashes distinguish exact bytes with the same decoded text', () => {
+    const exact = Buffer.from([0x80]), changed = Buffer.from([0x81]);
+    assert.equal(exact.toString('utf8'), changed.toString('utf8'));
+    const x = setup([], {
+        freeze: { ...freeze(), artifacts: [{ path: 'fixture', sha256: createHash('sha256').update(exact).digest('hex') }] },
+        artifactBytes: () => exact
+    });
+    try {
+        x.open().close();
+        x.args.artifactBytes = () => changed;
+        assert.throws(x.open, /frozen_artifact_mismatch:fixture/);
+    } finally {
+        fs.rmSync(x.dir, { recursive: true, force: true });
+    }
+});
 test('model eval collector: stage3a defaults fail closed and no price means no run', () => { const x = setup(); assert.throws(() => createCollector({ ...x.args, rehearsal: false }), /claude_3a_review_required/); assert.throws(() => createCollector({ ...x.args, freeze: { ...freeze(), prices: {} } }), /no_price/); });
 test('model eval collector: token launch and refresh boundaries checkpoint without real cache reads', async () => { const x = setup(); x.args.tokenExpiresAt = 1000 + 44 * 60000; const c = x.open(); await assert.rejects(c.run('L', x.jobs()), /45_minutes/); c.close(); const y = setup([], { transport: async () => { y.advance(51 * 60000); return response(); } }), d = y.open(); await d.run('L', y.jobs()); d.close(); const state = JSON.parse(fs.readFileSync(y.checkpoint)); assert.equal(state.stop_reason, 'token_refresh_needed'); assert.equal(state.records.length, 1); });
 test('model eval collector: SIGINT saves and stops with no repeated completed call', async () => { const x = setup([], { transport: async () => { process.emit('SIGINT'); return response(); } }), c = x.open(); await c.run('L', x.jobs()); c.close(); const state = JSON.parse(fs.readFileSync(x.checkpoint)); assert.equal(state.stop_reason, 'received_SIGINT'); assert.equal(state.records.length, 1); assert.deepEqual(state.signals, ['SIGINT']); });
@@ -41,6 +57,153 @@ test('model eval collector: every loop continuation is reserved and replayed; fr
 test('model eval collector: turn abort reaches active request before fallback returns', async () => { const { createJourney, createModelPort } = require('../../../src/lib/pokemon/shopping/model/turn.cjs'), { setup: shopSetup } = require('../helpers.cjs'), h = shopSetup(); let aborted = false; const x = setup([], { transport: ({ signal }) => new Promise((_, reject) => signal.addEventListener('abort', () => { aborted = true; reject(Object.assign(Error('timeout'), { code: 'timeout', tls_connected: true })); }, { once: true })) }), c = x.open(), runner = createJourney({ transport: c.channel('L', 'abort_episode'), port: createModelPort(h.shop.call, h.principals.model), fallback: async () => ({}), renderClaim: () => '', timeoutMs: 5 }); const r = await runner.turn({ text: 'Pikachu', task_ref: h.taskRef }); await new Promise(resolve => setImmediate(resolve)); assert.equal(r.fallback, true); assert.equal(aborted, true); assert.equal(c.state().records.length, 1); assert.equal(c.state().records[0].status, 'completed'); c.close(); });
 test('model eval collector: completed checkpoint resumes afterSIGTERM without clearing permanent stops',async()=>{const x=setup(),c=x.open();await c.run('L',x.jobs(1));process.emit('SIGTERM');c.close();const d=x.open();assert.equal(d.state().stop_reason,null);await d.run('L',x.jobs(2));assert.equal(d.state().records.length,2);assert.ok(d.state().resume_history.some(r=>r.previous_stop==='received_SIGTERM'));d.close();let s=JSON.parse(fs.readFileSync(x.checkpoint));s.stop_reason='access_denied';fs.writeFileSync(x.checkpoint,JSON.stringify(s));const e=x.open();assert.equal(e.state().stop_reason,'access_denied');e.close();});
 test('model eval collector: 429 retry consumes the turn and journey call allowance',async()=>{const {createJourney,createModelPort}=require('../../../src/lib/pokemon/shopping/model/turn.cjs'),{setup:shopSetup}=require('../helpers.cjs'),h=shopSetup();let attempts=0;const tool=()=>response(200,{body:{usageMetadata:{promptTokenCount:100,candidatesTokenCount:10},candidates:[{finishReason:'STOP',content:{parts:[{functionCall:{name:'search_catalog',args:{task_ref:h.taskRef,text:'Pikachu'}}}]}}]}});const x=setup([],{transport:async()=>++attempts%2?response(429):tool()}),c=x.open(),runner=createJourney({transport:c.channel('L','retry_limits'),port:createModelPort(h.shop.call,h.principals.model),fallback:async()=>({}),renderClaim:()=>''});const r=await runner.turn({text:'Pikachu',task_ref:h.taskRef});assert.equal(r.turn_calls,4);assert.equal(r.fallback,true);assert.equal(attempts,4);assert.equal(c.state().records.length,4);c.close();});
+test('model eval collector: a timed-out retry consumes the journey allowance and stays counted on replay', async () => {
+    const { createJourney } = require('../../../src/lib/pokemon/shopping/model/turn.cjs');
+    let expireTurn;
+    const sent = [];
+    const x = setup([], {
+        transport: async ({ request, signal }) => {
+            sent.push(request);
+            if (sent.length === 1)
+                return response();
+            if (sent.length % 2 === 0)
+                return response(429);
+            return new Promise((_, reject) => {
+                signal.addEventListener('abort', () => reject(Object.assign(Error('timeout'), {
+                    code: 'timeout', tls_connected: true
+                })), { once: true });
+                // Fire the outer watchdog only after the retry has reached the fake transport.
+                queueMicrotask(expireTurn);
+            });
+        }
+    });
+    let collector = x.open();
+    const makeRunner = () => createJourney({
+        transport: collector.channel('L', 'retry_timeout'),
+        port: Object.freeze({ call: () => assert.fail('the model proposed no tool calls') }),
+        fallback: async () => ({}),
+        renderClaim: () => '',
+        timer: expire => { expireTurn = expire; },
+        clearTimer: () => {}
+    });
+    const input = { text: 'Pikachu', task_ref: 'task_1' };
+    try {
+        const runner = makeRunner();
+        assert.equal((await runner.turn(input)).fallback, false);
+        for (let turn = 0; turn < 5; turn++) {
+            const result = await runner.turn(input);
+            assert.equal(result.reason, 'timeout');
+            assert.equal(result.turn_calls, 2);
+        }
+        await runner.turn(input);
+        assert.equal((await runner.turn(input)).reason, 'call_limit');
+        assert.equal(sent.length, 12);
+        assert.equal(collector.state().records.length, 12);
+        assert.ok(collector.state().records.every(record => record.status === 'completed'));
+        collector.close();
+        collector = x.open();
+
+        await assert.rejects(collector.request('L', 'retry_timeout/call-2', sent[1], { remainingCalls: 1 }), /call_limit/);
+        const replay = makeRunner();
+        assert.equal((await replay.turn(input)).turn_calls, 1);
+        assert.equal((await replay.turn(input)).turn_calls, 2);
+        assert.equal(replay.counts().model_calls, 3);
+        assert.equal(sent.length, 12);
+    } finally {
+        collector.close();
+        fs.rmSync(x.dir, { recursive: true, force: true });
+    }
+});
+test('model eval collector: a first-attempt caller deadline replays the same fallback without another request', async () => {
+    const { createJourney } = require('../../../src/lib/pokemon/shopping/model/turn.cjs');
+    const input = { text: 'Pikachu', task_ref: 'task_1' };
+    for (const lateStatus of [null, 429, 200, 403]) {
+        let sent = 0, expireTurn;
+        const x = setup([], {
+            transport: async ({ signal }) => {
+                if (++sent !== 2)
+                    return response();
+                return new Promise((resolve, reject) => {
+                    signal.addEventListener('abort', () => {
+                        if (lateStatus === null)
+                            reject(Object.assign(Error('timeout'), { code: 'timeout' }));
+                        else
+                            resolve(response(lateStatus));
+                    }, { once: true });
+                    queueMicrotask(expireTurn);
+                });
+            }
+        });
+        let collector = x.open();
+        const makeRunner = () => createJourney({
+            transport: collector.channel('L', 'caller_deadline'),
+            port: Object.freeze({ call: () => assert.fail('the model proposed no tool calls') }),
+            fallback: async () => ({}),
+            renderClaim: () => '',
+            timer: expire => { expireTurn = expire; },
+            clearTimer: () => {}
+        });
+        try {
+            await collector.request('L', 'warmup', requestFixture());
+            const result = await makeRunner().turn(input);
+            assert.equal(result.reason, 'timeout');
+            assert.equal(result.turn_calls, 1);
+            collector.outcome('L', 'model_turn/caller_deadline/1', result);
+            await new Promise(resolve => setImmediate(resolve));
+            const state = JSON.parse(fs.readFileSync(x.checkpoint));
+            const timed = state.records.at(-1);
+            assert.equal(timed.status, 'completed');
+            assert.equal(timed.caller_cancelled, true);
+            assert.equal(timed.http_status, lateStatus);
+            assert.equal(timed.usage_measured, lateStatus !== null);
+            assert.equal(state.stop_reason, lateStatus === 403 ? 'access_denied' : null);
+            collector.close();
+            collector = x.open();
+
+            const replayed = await makeRunner().turn(input);
+            assert.deepEqual(replayed, result);
+            assert.deepEqual(collector.outcome('L', 'model_turn/caller_deadline/1', replayed), result);
+            assert.equal(sent, 2);
+            assert.equal(collector.state().records.length, 2);
+        } finally {
+            collector.close();
+            fs.rmSync(x.dir, { recursive: true, force: true });
+        }
+    }
+});
+test('model eval collector: a collector stop before TLS remains resumable with its unused retry', async () => {
+    let sent = 0, collector;
+    const x = setup([], {
+        transport: async ({ signal }) => {
+            if (++sent !== 2)
+                return response();
+            return new Promise((_, reject) => {
+                signal.addEventListener('abort', () => reject(Object.assign(Error('timeout'), { code: 'timeout' })), { once: true });
+                queueMicrotask(() => collector.stop('received_SIGTERM'));
+            });
+        }
+    });
+    collector = x.open();
+    try {
+        await collector.request('L', 'warmup', requestFixture());
+        const request = requestFixture();
+        const interrupted = await collector.request('L', 'interrupted', request, { signal: new AbortController().signal });
+        assert.equal(interrupted.error, 'timeout');
+        assert.equal(interrupted.attempt_count, 1);
+        assert.equal(collector.state().records.at(-1).caller_cancelled, undefined);
+        assert.equal(collector.state().stop_reason, 'received_SIGTERM');
+        collector.close();
+        collector = x.open();
+
+        const resumed = await collector.request('L', 'interrupted', request, { signal: new AbortController().signal });
+        assert.equal(resumed.status, 200);
+        assert.equal(resumed.attempt_count, 2);
+        assert.equal(sent, 3);
+    } finally {
+        collector.close();
+        fs.rmSync(x.dir, { recursive: true, force: true });
+    }
+});
 test('model eval collector: global input/spend and per-arm spend stop before transport',async()=>{for(const kind of ['input','global_usd','arm_usd']){const x=setup(),c=x.open();await c.run('L',x.jobs(1));c.close();const s=JSON.parse(fs.readFileSync(x.checkpoint));if(kind==='input')s.arms.L.input_tokens=BUDGETS.input_tokens;if(kind==='global_usd'){s.arms.L.usd=4;s.arms.P.usd=21;}if(kind==='arm_usd')s.arms.L.usd=BUDGETS.usd_per_arm.L;fs.writeFileSync(x.checkpoint,JSON.stringify(s));const d=x.open();await d.run('L',[{id:'after_limit',request:requestFixture()}]);assert.equal(d.state().records.length,1);assert.equal(d.state().arms.L.stop_reason,'budget_exhausted');d.close();}});
 test('model eval collector: fake checkpoint cannot be resumed as live evidence',async()=>{const x=setup(),c=x.open();await c.run('L',x.jobs(1));c.close();assert.equal(JSON.parse(fs.readFileSync(x.checkpoint)).rehearsal,true);assert.throws(()=>createCollector({...x.args,rehearsal:false,reviewGo:true}),/resume_mode_mismatch/);});
 test('model eval collector: durable session timing survives partial restart without shorter observations',()=>{const x=setup(),c=x.open(),s=c.session('L','timed');x.advance(100);assert.equal(s.observe('first_useful'),100);x.advance(100);assert.equal(s.observe('qualified_offer'),200);c.close();x.advance(5000);const d=x.open(),resumed=d.session('L','timed');assert.equal(resumed.observe('first_useful'),100);assert.equal(resumed.observe('qualified_offer'),200);assert.equal(resumed.observe('complete_preview'),5200);assert.equal(resumed.snapshot().started_at,1000);d.close();const e=x.open();assert.equal(e.session('L','timed').observe('complete_preview'),5200);e.close();});

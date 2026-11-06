@@ -25,8 +25,10 @@ journey. Operation reads and drains belong after approval. Baseline-only event a
 the historical model-off transcript; they are not model prompts.
 
 M1 counts a question as necessary only while its field remains unresolved in the
-answer key. Its frozen answer is consumed once. A supplied field is resolved;
-other or repeated questions get the unchanged unexpected-question fallback.
+answer key. Its frozen answer is consumed once. In a held-out clarification,
+the driver handles each distinct field in order and sends the answers as one
+scripted user turn. Resolved fields and questions outside the key get the frozen
+unexpected-question fallback.
 M2 counts distinct required fields missing at any selection or preview boundary.
 Supply comes only from a declared query/user span, an actual answer to a model
 question, or an explicit trusted interface choice. An answer oracle by itself
@@ -38,8 +40,13 @@ observations stay missing, not zero; previous phase-3 thresholds are retained.
 The heldout plan has only model-off and L, ten repetitions per journey, no attack,
 fault-case or compatibility population, 1,200 calls / 6M input tokens / USD 2 for L
 and USD 0 for P. Held-out scripts require a model-enabled user turn before
-approval and exclude embedded faults and post-approval user turns. An L episode
-with no model participation is recorded separately from completed episodes.
+approval and exclude embedded faults and post-approval user turns. Scoring
+counts HTTP 200 receipts separately from validated, non-fallback model turns.
+L completion requires both and a completed synthetic script. A script that
+completes with only fallback turns is disclosed separately. L question metrics
+keep every planned episode in the denominator and treat results without usable
+model evidence as missing. Fallback totals and reasons include all recorded
+model turns, including episodes that also received a usable plan.
 The conservative per-call reservation and previous stop rules still apply.
 `scoreHeldout` reports measured-only quantities. Part C owns future scoring rules.
 
@@ -62,15 +69,19 @@ The unchanged evidence validator assigns missing printing evidence refs.
 blind authoring, not performed in Part A. The committed `heldout_fixture:null`
 deliberately prevents launch. Python and Node launch gates require the separate
 `claude_4_heldout_go`, the exact new freeze hash, L, a matching external binding and
-the existing cached-token lifetime. They validate input before token handoff.
+the existing cached-token lifetime. They verify the frozen artifacts and replay
+the synthetic script before token handoff. The launcher binds the cached-token
+helper by its exact bytes. A process holds an exclusive run-directory lock
+through checkpoint close, including when Python hands off to a detached worker.
 Fake heldout rehearsal uses `qualify-heldout.cjs`, never the live launcher.
 
-Equivalence executes the old driver from Git commit `12dc3a1` in memory and
-compares serialized outcomes and requests under a fixed clock. The only excluded
-output field is the additive M2 value, which had no old representation. The
-model-off adapter is also compared against the unchanged historical evaluator.
-`qualify-model-freeze.cjs` separately proves byte equality of turn.cjs,
-declarations.cjs, declarations.json and context.cjs, plus identical generation
-configuration, against that commit. The runtime patch check is extended to bind
-the new data driver/validator; the kernel gate snapshots these report dependencies
-so its current full test inventory can execute in isolated copies.
+Equivalence executes the pinned historical driver from commit `12dc3a1` in
+memory and compares serialized outcomes and requests under a fixed clock. The
+checked-in snapshot and hash manifest make the comparison independent of Git
+history. The only excluded output field is the additive M2 value, which had no
+old representation. The model-off adapter is also compared against the pinned
+historical evaluator. The model freeze qualifier verifies that the system
+instruction, generation configuration, limits, declarations and context match
+the historical snapshot. The runtime patch check binds the exact retry accounting
+change in turn.cjs alongside the driver and validator. The kernel gate snapshots
+these report dependencies for isolated tests.

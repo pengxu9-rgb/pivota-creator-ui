@@ -9,6 +9,7 @@ const { adversarialCase, faultCase } = require(ROOT + '/tests/shopping/model/sce
 const assert = require('node:assert/strict');
 const attacks = require(ROOT + '/tests/fixtures/shopping/adversarial.json'), faults = require(ROOT + '/tests/fixtures/shopping/faults.json');
 const { createJourney, createModelPort } = require(ROOT + '/src/lib/pokemon/shopping/model/turn.cjs');
+const { usableModelTurn } = require(ROOT + '/src/lib/pokemon/shopping/model/scoring.cjs');
 const { bridge } = require(ROOT + '/src/lib/pokemon/shopping/model/compatibility.cjs');
 const { buildModelInput } = require(ROOT + '/src/lib/pokemon/modelTurn.cjs');
 const { routeChatText } = require(ROOT + '/src/lib/pokemon/chatTextIntent.cjs'), { admit } = require(ROOT + '/src/lib/pokemon/admission.cjs');
@@ -96,17 +97,24 @@ async function shoppingEpisode(collector, arm, id, input, { catalog, modelOff = 
     // projection keeps only safe scalars and turns a destination into ship_to_on_file.
     const selectShown = async (...args) => { shown(await select(...args)); shown({ synthetic: true, tool: 'interface_requirements', status: 'accepted', state_version: h.state().state_version, records: [{ id: 'requirements_' + h.taskRef, kind: 'requirements', ...h.state().accepted }] }); };
 
-    async function user(text, model = true) { turns++; host.setTurn(turns); if (!model || modelOff)
-        return; let r = await host.turn(text); let extra = 0; while (r.plan?.decision === 'clarify' && extra++ < 12) {
-        const field = r.plan.fields[0] || 'unknown', q = measure.answer(field, journeys.unexpected_question_rule.fallback), {answer}=q;
-        if (q.unnecessary) unnecessary++;
-        questions.push(q);
+    async function user(text, model = true) {
         turns++;
         host.setTurn(turns);
-        r = await host.turn(answer);
-        if (host.runner.counts().model_calls >= 12)
-            break;
-    } }
+        if (!model || modelOff) return;
+        let r = await host.turn(text);
+        let extra = 0;
+        while (r.plan?.decision === 'clarify' && extra++ < 12) {
+            const fields = heldout ? [...new Set(r.plan.fields)] : [r.plan.fields[0] || 'unknown'];
+            if (!fields.length) break;
+            const answers = fields.map(field => measure.answer(field, journeys.unexpected_question_rule.fallback));
+            unnecessary += answers.filter(q => q.unnecessary).length;
+            questions.push(...answers);
+            turns++;
+            host.setTurn(turns);
+            r = await host.turn(answers.map(q => q.answer).join('\n'));
+            if (host.runner.counts().model_calls >= 12) break;
+        }
+    }
     async function step(s) {
         if (s.user !== undefined) { measure.supply(s); await user(s.user,s.model!==false); return; }
         switch(s.interface) {
@@ -161,7 +169,13 @@ async function shoppingEpisode(collector, arm, id, input, { catalog, modelOff = 
     for(const record of order.records) h.shop.render(h.principals.ui,h.taskRef,{evidence_ref:record.evidence_ref,slot:'status'});
     const unsupportedClaims = host.rendered.filter(c => !c.verified).length;
     const duplicateOrWidened = Number(h.shop.sim.stats().orders !== 1 || h.shop.sim.stats().merchantSubmits !== 1);
-    return { id, arm, journey: j.id, completed: true, ...(heldout ? { model_participation: 'observed' } : {}), user_turns: turns, first_qualified_offer_turn: host.metrics.qualified_offer_turn ?? firstOffer, complete_preview_turn: completePreview, latency_ms: { first_useful: host.metrics.first_useful_ms, qualified_offer: host.metrics.qualified_offer_ms, complete_preview: previewMs }, unnecessary_clarifications: unnecessary, missed_necessary_questions: measure.count(), questions, counts: host.counts(), model_turns: host.results, evidence_provenance: {first_useful:host.metrics.first_useful_origin,qualified_offer:host.metrics.qualified_offer_origin,preview:'trusted_scripted_controls',completion:'trusted_scripted_controls'}, stats: h.shop.sim.stats(), wrong_items: wrongItems, unsupported_claims: unsupportedClaims, duplicate_or_widened_authority: duplicateOrWidened };
+    const usable = !heldout || host.results.some(usableModelTurn);
+    const participation = !heldout ? {} : {
+        script_completed: true,
+        model_participation: usable ? 'usable' : host.counts().fallbacks > 0 ? 'fallback_only' : 'no_usable_plan',
+        ...(usable ? {} : { error: 'heldout_usable_model_plan_required' })
+    };
+    return { id, arm, journey: j.id, completed: usable, ...participation, user_turns: turns, first_qualified_offer_turn: host.metrics.qualified_offer_turn ?? firstOffer, complete_preview_turn: completePreview, latency_ms: { first_useful: host.metrics.first_useful_ms, qualified_offer: host.metrics.qualified_offer_ms, complete_preview: previewMs }, unnecessary_clarifications: unnecessary, missed_necessary_questions: measure.count(), questions, counts: host.counts(), model_turns: host.results, evidence_provenance: {first_useful:host.metrics.first_useful_origin,qualified_offer:host.metrics.qualified_offer_origin,preview:'trusted_scripted_controls',completion:'trusted_scripted_controls'}, stats: h.shop.sim.stats(), wrong_items: wrongItems, unsupported_claims: unsupportedClaims, duplicate_or_widened_authority: duplicateOrWidened };
 }
 async function boundedCases(collector, arm) {
     for (const [kind, rows, oracle] of [['adversarial', attacks.cases, adversarialCase], ['fault', faults.cases, faultCase]])

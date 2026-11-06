@@ -96,9 +96,20 @@ function createJourney({ transport, port, fallback, renderClaim, onUseful = () =
                 let id;
                 const request = { systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] }, generationConfig: copy(CONFIG), toolConfig: { functionCallingConfig: { mode: 'AUTO' } }, tools: [{ functionDeclarations: decl.declarations }], contents: copy(contents) };
                 const remainingCalls=Math.min(LIMITS.calls_per_turn-turnCalls+1,LIMITS.calls_per_journey-journeyCalls+1);
-                const response = await Promise.race([Promise.resolve().then(() => transport(request, { signal: abort.signal, timeoutMs: LIMITS.timeout_ms, remainingCalls })), new Promise((_, reject) => { id = timer(() => { abort.abort(); reject(Error('timeout')); }, timeoutMs); })]).finally(() => clearTimer(id));
-                const extraAttempts=Math.max(0,(response.attempt_count||1)-1);turnCalls+=extraAttempts;journeyCalls+=extraAttempts;
-                if(turnCalls>LIMITS.calls_per_turn||journeyCalls>LIMITS.calls_per_journey)throw Error('call_limit');
+                let accountedAttempts = 1;
+                const onAttempts = attempts => {
+                    if (attempts <= accountedAttempts)
+                        return;
+                    const extra = attempts - accountedAttempts;
+                    if (turnCalls + extra > LIMITS.calls_per_turn || journeyCalls + extra > LIMITS.calls_per_journey)
+                        throw Error('call_limit');
+                    turnCalls += extra;
+                    journeyCalls += extra;
+                    accountedAttempts = attempts;
+                };
+                // Collector-backed transports report attempts before dispatch, even if the outer deadline wins.
+                const response = await Promise.race([Promise.resolve().then(() => transport(request, { signal: abort.signal, timeoutMs: LIMITS.timeout_ms, remainingCalls, onAttempts })), new Promise((_, reject) => { id = timer(() => { abort.abort(); reject(Error('timeout')); }, timeoutMs); })]).finally(() => clearTimer(id));
+                onAttempts(response.attempt_count || 1);
                 const parts = parseResponse(response), functions = parts.filter(p => Object.hasOwn(p, 'functionCall'));
                 currentFunctionNames=functions.map(p=>p.functionCall?.name).filter(n=>typeof n==='string').slice(0,128);
                 if (!functions.length)

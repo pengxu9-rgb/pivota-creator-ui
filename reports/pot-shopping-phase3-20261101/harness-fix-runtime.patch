@@ -405,47 +405,106 @@ index 0000000..b682f16
 +async function steps(rows,dispatch){for(const step of rows)await dispatch(step);}
 +module.exports={v2,fixture,questionMeasure,selectionSupplies,steps,training,fields,ROOT};
 diff --git a/reports/pot-shopping-phase3-20261101/live-host.cjs b/reports/pot-shopping-phase3-20261101/live-host.cjs
-index 44b9dd4..8b54492 100644
+index 44b9dd4..5db5e09 100644
 --- a/reports/pot-shopping-phase3-20261101/live-host.cjs
 +++ b/reports/pot-shopping-phase3-20261101/live-host.cjs
-@@ -2,12 +2,22 @@
+@@ -1,39 +1,82 @@
+ 'use strict';
  // Lazy, disabled stage3b host. Stage3a never invokes main or reads token stdin.
  const fs = require('node:fs'), path = require('node:path');
++const { createHash } = require('node:crypto');
  const ROOT = path.resolve(__dirname, '../..');
 -async function main(arm, raw, reviewHash) {
+-    const { hash } = require(ROOT + '/src/lib/pokemon/shopping/schema.cjs'), bytes = fs.readFileSync(__dirname + '/freeze.json', 'utf8'), freeze = JSON.parse(bytes);
+-    if (process.env.POT_SHOPPING_REVIEW_GO !== 'claude_3a_go' || reviewHash !== hash(bytes))
++const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 +// Each plan has its own go; a go for one plan never launches the other.
 +const REVIEW_GO = Object.freeze({ smoke: 'claude_3c_smoke_go', reduced: 'claude_3c_reduced_go', compatibility: 'claude_3c_compat_go', heldout: 'claude_4_heldout_go' });
++
++function verifyFrozenArtifacts(freeze) {
++    if (freeze.stage !== '3a' || freeze.live_run_enabled !== false || !Array.isArray(freeze.artifacts))
++        throw Error('invalid_freeze');
++    const entries = new Set();
++    for (const { path: relative, sha256: expected } of freeze.artifacts) {
++        if (typeof relative !== 'string' || path.isAbsolute(relative) || relative.split('/').includes('..') || entries.has(relative))
++            throw Error('invalid_frozen_artifact_path');
++        if (sha256(fs.readFileSync(path.join(ROOT, relative))) !== expected)
++            throw Error('frozen_artifact_mismatch:' + relative);
++        entries.add(relative);
++    }
++    for (const required of ['live-host.cjs', 'run-directory.cjs', 'validate-heldout.cjs', 'vertex-allowlist-guard.cjs']) {
++        if (!entries.has('reports/pot-shopping-phase3-20261101/' + required))
++            throw Error('frozen_artifact_required:' + required);
++    }
++}
++
 +async function main(arm, raw, reviewHash, plan, heldoutPath) {
-     const { hash } = require(ROOT + '/src/lib/pokemon/shopping/schema.cjs'), bytes = fs.readFileSync(__dirname + '/freeze.json', 'utf8'), freeze = JSON.parse(bytes);
--    if (process.env.POT_SHOPPING_REVIEW_GO !== 'claude_3a_go' || reviewHash !== hash(bytes))
++    const bytes = fs.readFileSync(__dirname + '/freeze.json');
++    const freeze = JSON.parse(bytes);
 +    if (!Object.hasOwn(REVIEW_GO, plan) || freeze.review_go?.[plan] !== REVIEW_GO[plan])
 +        throw Error('exact_plan_required');
-+    if (process.env.POT_SHOPPING_REVIEW_GO !== REVIEW_GO[plan] || reviewHash !== hash(bytes))
++    if (process.env.POT_SHOPPING_REVIEW_GO !== REVIEW_GO[plan] || reviewHash !== sha256(bytes))
          throw Error('claude_exact_freeze_review_required');
      if (!['L', 'P'].includes(arm))
          throw Error('exact_arm_required');
 +    if(plan==='heldout'&&arm!=='L')throw Error('heldout_is_L_only');
-+    let heldout;
-+    if(plan==='heldout'){
-+        if(!freeze.heldout_fixture||!heldoutPath)throw Error('bound_heldout_required');
-+        heldout=await require('./validate-heldout.cjs').loadQualified(heldoutPath,{expected:freeze.heldout_fixture});
-+    }
++    if (plan === 'heldout' && (!freeze.heldout_fixture || !heldoutPath))
++        throw Error('bound_heldout_required');
++    verifyFrozenArtifacts(freeze);
      const expires = Date.parse(process.env.POT_LIVE_TOKEN_EXPIRES_AT);
      if (!(expires >= Date.now() + 45 * 60000))
          throw Error('cached_token_requires_45_minutes');
-@@ -22,9 +32,9 @@ async function main(arm, raw, reviewHash) {
-     process.env.POT_LIVE_PROJECT_ID = 'pivota-prod';
-     process.env.POT_SHOPPING_MODEL_ARM = arm;
-     const guard = require('./vertex-allowlist-guard.cjs'), { createVertexRequest } = require(ROOT + '/src/lib/pokemon/shopping/model/vertex-request.cjs'), { createCollector } = require(ROOT + '/src/lib/pokemon/shopping/model/collector.cjs'), { runArm } = require('./orchestrate.cjs');
+-    // Same attempt4 cached-token handoff: user-owned cached token supplied on stdin;
+-    // no refresh and no credential/cache lookup by this module.
+-    const token = fs.readFileSync(0, 'utf8').trim();
+-    if (!/^[A-Za-z0-9._~+\/-]+=*$/.test(token) || token.length < 16 || token.length > 16384)
+-        throw Error('invalid_token_handoff');
+-    const directory = fs.realpathSync(raw);
+-    if (directory === ROOT || directory.startsWith(ROOT + path.sep))
+-        throw Error('raw_evidence_must_be_external');
+-    process.env.POT_LIVE_PROJECT_ID = 'pivota-prod';
+-    process.env.POT_SHOPPING_MODEL_ARM = arm;
+-    const guard = require('./vertex-allowlist-guard.cjs'), { createVertexRequest } = require(ROOT + '/src/lib/pokemon/shopping/model/vertex-request.cjs'), { createCollector } = require(ROOT + '/src/lib/pokemon/shopping/model/collector.cjs'), { runArm } = require('./orchestrate.cjs');
 -    const request = createVertexRequest({ arm, guard, token }), collector = createCollector({ freeze, artifactBytes: p => fs.readFileSync(ROOT + '/' + p), checkpoint: directory + '/checkpoint.json', tokenExpiresAt: expires, reviewGo: true, transport: ({ request: body, signal, onStageReader }) => request(body, { signal, onStageReader }) });
-+    const request = createVertexRequest({ arm, guard, token }), collector = createCollector({ freeze, artifactBytes: p => fs.readFileSync(ROOT + '/' + p), checkpoint: directory + '/checkpoint.json', tokenExpiresAt: expires, reviewGo: true, plan, transport: ({ request: body, signal, onStageReader }) => request(body, { signal, onStageReader }) });
++    const { acquireRunLock, externalRunDirectory } = require('./run-directory.cjs');
++    const directory = externalRunDirectory(ROOT, raw);
++    const lock = acquireRunLock(directory);
++    let guard;
      try {
 -        await runArm(collector, arm);
-+        await runArm(collector, arm, { plan, heldout });
+-    }
+-    finally {
+-        collector.close();
+-        guard.abortAll('collector_closed');
++        process.env.POT_LIVE_PROJECT_ID = 'pivota-prod';
++        process.env.POT_SHOPPING_MODEL_ARM = arm;
++        guard = require('./vertex-allowlist-guard.cjs');
++        const heldout = plan === 'heldout'
++            ? await require('./validate-heldout.cjs').loadQualified(heldoutPath, { expected: freeze.heldout_fixture })
++            : undefined;
++        // The user-owned cached token is supplied on stdin after validation and locking.
++        const token = fs.readFileSync(0, 'utf8').trim();
++        if (!/^[A-Za-z0-9._~+\/-]+=*$/.test(token) || token.length < 16 || token.length > 16384)
++            throw Error('invalid_token_handoff');
++        const { createVertexRequest } = require(ROOT + '/src/lib/pokemon/shopping/model/vertex-request.cjs');
++        const { createCollector } = require(ROOT + '/src/lib/pokemon/shopping/model/collector.cjs');
++        const { runArm } = require('./orchestrate.cjs');
++        const request = createVertexRequest({ arm, guard, token });
++        const collector = createCollector({
++            freeze, artifactBytes: p => fs.readFileSync(ROOT + '/' + p),
++            checkpoint: directory + '/checkpoint.json', tokenExpiresAt: expires,
++            reviewGo: true, plan, transport: ({ request: body, signal, onStageReader }) =>
++                request(body, { signal, onStageReader })
++        });
++        try {
++            await runArm(collector, arm, { plan, heldout });
++        } finally {
++            collector.close();
++        }
++    } finally {
++        try { guard?.abortAll('collector_closed'); } finally { lock.close(); }
      }
-     finally {
-         collector.close();
-@@ -34,6 +44,6 @@ async function main(arm, raw, reviewHash) {
+ }
  if (require.main === module) {
      if (process.argv[2] !== '--live')
          throw Error('explicit_reviewed_live_mode_required');
@@ -455,10 +514,10 @@ index 44b9dd4..8b54492 100644
 -module.exports = { main };
 +module.exports = { main, REVIEW_GO };
 diff --git a/reports/pot-shopping-phase3-20261101/orchestrate.cjs b/reports/pot-shopping-phase3-20261101/orchestrate.cjs
-index 41f87a3..2e4c9c3 100644
+index 41f87a3..5563002 100644
 --- a/reports/pot-shopping-phase3-20261101/orchestrate.cjs
 +++ b/reports/pot-shopping-phase3-20261101/orchestrate.cjs
-@@ -3,7 +3,8 @@
+@@ -3,19 +3,24 @@
  // The model gets only immutable model-principal port and collector channel.
  const path = require('node:path'), ROOT = path.resolve(__dirname, '../..');
  const { setup, ok, denied, select, preview, ready, approve, journeys } = require(ROOT + '/tests/shopping/helpers.cjs');
@@ -468,7 +527,11 @@ index 41f87a3..2e4c9c3 100644
  const { adversarialCase, faultCase } = require(ROOT + '/tests/shopping/model/scenarios.cjs');
  const assert = require('node:assert/strict');
  const attacks = require(ROOT + '/tests/fixtures/shopping/adversarial.json'), faults = require(ROOT + '/tests/fixtures/shopping/faults.json');
-@@ -14,8 +15,11 @@ const { routeChatText } = require(ROOT + '/src/lib/pokemon/chatTextIntent.cjs'),
+ const { createJourney, createModelPort } = require(ROOT + '/src/lib/pokemon/shopping/model/turn.cjs');
++const { usableModelTurn } = require(ROOT + '/src/lib/pokemon/shopping/model/scoring.cjs');
+ const { bridge } = require(ROOT + '/src/lib/pokemon/shopping/model/compatibility.cjs');
+ const { buildModelInput } = require(ROOT + '/src/lib/pokemon/modelTurn.cjs');
+ const { routeChatText } = require(ROOT + '/src/lib/pokemon/chatTextIntent.cjs'), { admit } = require(ROOT + '/src/lib/pokemon/admission.cjs');
  const { binding, FIXED_NOW } = require('../admission-kernel-live-model/offline-fixture.cjs'), dynamic = require('../admission-kernel-live-model/dynamic-context.cjs');
  const PLAN = require('../../tests/fixtures/shopping-model-eval/corpus-plan.json');
  const corpus = require('../admission-kernel-live-model/corpus.json'), holdout = require('../admission-kernel-live-model/holdout-e.json');
@@ -481,7 +544,7 @@ index 41f87a3..2e4c9c3 100644
      const results = [], rendered = [];
      const transport = collector.channel(arm, id);
      const timing = collector.session(arm,id);
-@@ -48,7 +52,11 @@ function modelHost(collector, arm, id, h, options = {}) {
+@@ -48,7 +53,11 @@ function modelHost(collector, arm, id, h, options = {}) {
          return reply;
      };
      const runner = createJourney({
@@ -494,7 +557,7 @@ index 41f87a3..2e4c9c3 100644
          port: createModelPort(facadeCall, options.principal || h.principals.model),
          fallback: async ({ text }) => {
              fallbacks++;
-@@ -64,105 +72,96 @@ function modelHost(collector, arm, id, h, options = {}) {
+@@ -64,105 +73,109 @@ function modelHost(collector, arm, id, h, options = {}) {
          }
      });
      return { runner, results, metrics, rendered, observe, elapsed, timing, markPreview:()=>timing.observe('complete_preview',transport.elapsedMs()), setTurn: value => { turn = value; },
@@ -520,6 +583,12 @@ index 41f87a3..2e4c9c3 100644
 -    const questions = [];
 -    const unresolved = j.id === 'J02' ? { language: 'English', purpose: 'display gift', grade: 'raw', budget: 'USD 50 item budget' } : {};
 -    async function user(text, model = true) { turns++; host.setTurn(turns); if (!model)
+-        return; let r = await host.turn(text); let extra = 0; while (r.plan?.decision === 'clarify' && extra++ < 12) {
+-        const field = r.plan.fields[0] || 'unknown', has = Object.hasOwn(unresolved, field), answer = has ? unresolved[field] : journeys.unexpected_question_rule.fallback;
+-        if (!has)
+-            unnecessary++;
+-        delete unresolved[field];
+-        questions.push({ field, unnecessary: !has, answer });
 +async function shoppingEpisode(collector, arm, id, input, { catalog, modelOff = false, heldout = false } = {}) {
 +    const j=data.v2(input), measure=data.questionMeasure(j);
 +    const started = Date.now(), h = setup({catalog:catalog||data.fixture(j)}), host = modelHost(collector, arm, id, h, { heldout });
@@ -529,22 +598,13 @@ index 41f87a3..2e4c9c3 100644
 +    // projection keeps only safe scalars and turns a destination into ship_to_on_file.
 +    const selectShown = async (...args) => { shown(await select(...args)); shown({ synthetic: true, tool: 'interface_requirements', status: 'accepted', state_version: h.state().state_version, records: [{ id: 'requirements_' + h.taskRef, kind: 'requirements', ...h.state().accepted }] }); };
 +
-+    async function user(text, model = true) { turns++; host.setTurn(turns); if (!model || modelOff)
-         return; let r = await host.turn(text); let extra = 0; while (r.plan?.decision === 'clarify' && extra++ < 12) {
--        const field = r.plan.fields[0] || 'unknown', has = Object.hasOwn(unresolved, field), answer = has ? unresolved[field] : journeys.unexpected_question_rule.fallback;
--        if (!has)
--            unnecessary++;
--        delete unresolved[field];
--        questions.push({ field, unnecessary: !has, answer });
-+        const field = r.plan.fields[0] || 'unknown', q = measure.answer(field, journeys.unexpected_question_rule.fallback), {answer}=q;
-+        if (q.unnecessary) unnecessary++;
-+        questions.push(q);
++    async function user(text, model = true) {
          turns++;
          host.setTurn(turns);
-         r = await host.turn(answer);
-         if (host.runner.counts().model_calls >= 12)
-             break;
-     } }
+-        r = await host.turn(answer);
+-        if (host.runner.counts().model_calls >= 12)
+-            break;
+-    } }
 -    if (j.id === 'J04')
 -        await ready(h, j);
 -    if(j.id==='J04')host.observe({records:[h.shop.evidence.offer(j.offer_ref)]});
@@ -582,7 +642,21 @@ index 41f87a3..2e4c9c3 100644
 -        await select(h, j);
 -        if ((await preview(h)).status === 'complete')
 -            completePreview = turns;
--    }
++        if (!model || modelOff) return;
++        let r = await host.turn(text);
++        let extra = 0;
++        while (r.plan?.decision === 'clarify' && extra++ < 12) {
++            const fields = heldout ? [...new Set(r.plan.fields)] : [r.plan.fields[0] || 'unknown'];
++            if (!fields.length) break;
++            const answers = fields.map(field => measure.answer(field, journeys.unexpected_question_rule.fallback));
++            unnecessary += answers.filter(q => q.unnecessary).length;
++            questions.push(...answers);
++            turns++;
++            host.setTurn(turns);
++            r = await host.turn(answers.map(q => q.answer).join('\n'));
++            if (host.runner.counts().model_calls >= 12) break;
++        }
+     }
 -    else {
 -        h.shop.sim.setFault('price_change');
 -        if ((await preview(h)).status !== 'terms_changed')
@@ -655,11 +729,17 @@ index 41f87a3..2e4c9c3 100644
      const unsupportedClaims = host.rendered.filter(c => !c.verified).length;
      const duplicateOrWidened = Number(h.shop.sim.stats().orders !== 1 || h.shop.sim.stats().merchantSubmits !== 1);
 -    return { id, arm, journey: j.id, completed: true, user_turns: turns, first_qualified_offer_turn: host.metrics.qualified_offer_turn ?? firstOffer, complete_preview_turn: completePreview, latency_ms: { first_useful: host.metrics.first_useful_ms, qualified_offer: host.metrics.qualified_offer_ms, complete_preview: previewMs }, unnecessary_clarifications: unnecessary, questions, counts: host.counts(), model_turns: host.results, evidence_provenance: {first_useful:host.metrics.first_useful_origin,qualified_offer:host.metrics.qualified_offer_origin,preview:'trusted_scripted_controls',completion:'trusted_scripted_controls'}, stats: h.shop.sim.stats(), wrong_items: wrongItems, unsupported_claims: unsupportedClaims, duplicate_or_widened_authority: duplicateOrWidened };
-+    return { id, arm, journey: j.id, completed: true, ...(heldout ? { model_participation: 'observed' } : {}), user_turns: turns, first_qualified_offer_turn: host.metrics.qualified_offer_turn ?? firstOffer, complete_preview_turn: completePreview, latency_ms: { first_useful: host.metrics.first_useful_ms, qualified_offer: host.metrics.qualified_offer_ms, complete_preview: previewMs }, unnecessary_clarifications: unnecessary, missed_necessary_questions: measure.count(), questions, counts: host.counts(), model_turns: host.results, evidence_provenance: {first_useful:host.metrics.first_useful_origin,qualified_offer:host.metrics.qualified_offer_origin,preview:'trusted_scripted_controls',completion:'trusted_scripted_controls'}, stats: h.shop.sim.stats(), wrong_items: wrongItems, unsupported_claims: unsupportedClaims, duplicate_or_widened_authority: duplicateOrWidened };
++    const usable = !heldout || host.results.some(usableModelTurn);
++    const participation = !heldout ? {} : {
++        script_completed: true,
++        model_participation: usable ? 'usable' : host.counts().fallbacks > 0 ? 'fallback_only' : 'no_usable_plan',
++        ...(usable ? {} : { error: 'heldout_usable_model_plan_required' })
++    };
++    return { id, arm, journey: j.id, completed: usable, ...participation, user_turns: turns, first_qualified_offer_turn: host.metrics.qualified_offer_turn ?? firstOffer, complete_preview_turn: completePreview, latency_ms: { first_useful: host.metrics.first_useful_ms, qualified_offer: host.metrics.qualified_offer_ms, complete_preview: previewMs }, unnecessary_clarifications: unnecessary, missed_necessary_questions: measure.count(), questions, counts: host.counts(), model_turns: host.results, evidence_provenance: {first_useful:host.metrics.first_useful_origin,qualified_offer:host.metrics.qualified_offer_origin,preview:'trusted_scripted_controls',completion:'trusted_scripted_controls'}, stats: h.shop.sim.stats(), wrong_items: wrongItems, unsupported_claims: unsupportedClaims, duplicate_or_widened_authority: duplicateOrWidened };
  }
  async function boundedCases(collector, arm) {
      for (const [kind, rows, oracle] of [['adversarial', attacks.cases, adversarialCase], ['fault', faults.cases, faultCase]])
-@@ -188,8 +187,9 @@ async function boundedCases(collector, arm) {
+@@ -188,8 +201,9 @@ async function boundedCases(collector, arm) {
          }
  }
  function stopped(c, a) { const s = c.state(); return !!(s.stop_reason || s.arms[a].stop_reason); }
@@ -671,7 +751,7 @@ index 41f87a3..2e4c9c3 100644
      const entries = [...corpus.entries, ...holdout.entries];
      for (const pass of [1, 2]) {
          const pending = new Map(entries.map(e => [e.id, e])), done = new Set(), active = new Map();
-@@ -230,9 +230,28 @@ async function runCompatibility(collector, arm) {
+@@ -230,9 +244,28 @@ async function runCompatibility(collector, arm) {
          await Promise.all(active.values());
      }
  }
@@ -701,7 +781,7 @@ index 41f87a3..2e4c9c3 100644
      if(arm==='P'){
          const first=collector.priorOutcome('L','arm_finished');
          const completed=first?.status==='completed';
-@@ -243,18 +262,23 @@ async function runArm(collector, arm) {
+@@ -243,18 +276,23 @@ async function runArm(collector, arm) {
          collector.outcome(arm,'arm_finished',{status:'arm_stopped',reason:before.arms[arm].stop_reason});
          return collector.state();
      }
@@ -734,7 +814,7 @@ index 41f87a3..2e4c9c3 100644
      // First normal corpus call is the preflight; subsequent sessions concurrency2.
      // Skip completed cases, but qualify the first pending normal call serially.
      while(cursor<cases.length&&!collector.state().arms[arm].preflight&&!stopped(collector,arm))
-@@ -262,18 +286,20 @@ async function runArm(collector, arm) {
+@@ -262,18 +300,20 @@ async function runArm(collector, arm) {
      async function worker() { while (cursor < cases.length && !stopped(collector, arm))
          await one(cases[cursor++]); }
      await Promise.all([worker(), worker()]);
@@ -759,22 +839,106 @@ index 41f87a3..2e4c9c3 100644
 -module.exports = { runArm, runCompatibility, runBaseline, shoppingEpisode, modelHost };
 +async function runHeldoutBaseline(heldout){const rows=[];for(let repeat=1;repeat<=10;repeat++)for(const j of heldout.set.journeys)rows.push({...await baselineEpisode('model-off',j,{catalog:heldout.catalogs[j.catalog]}),repeat});return rows;}
 +module.exports = { runHeldoutBaseline, runArm, runCompatibility, runBaseline, shoppingEpisode, modelHost };
+diff --git a/reports/pot-shopping-phase3-20261101/run-directory.cjs b/reports/pot-shopping-phase3-20261101/run-directory.cjs
+new file mode 100644
+index 0000000..0ed662c
+--- /dev/null
++++ b/reports/pot-shopping-phase3-20261101/run-directory.cjs
+@@ -0,0 +1,47 @@
++'use strict';
++
++const fs = require('node:fs');
++const path = require('node:path');
++const { spawnSync } = require('node:child_process');
++
++const LOCK_FILE = '.checkpoint.lock';
++const LOCK_FD_ENV = 'POT_SHOPPING_RUN_LOCK_FD';
++
++function externalRunDirectory(root, raw) {
++    const directory = fs.realpathSync(raw);
++    const relative = path.relative(fs.realpathSync(root), directory);
++    if (!relative || (!path.isAbsolute(relative) && relative !== '..' && !relative.startsWith('..' + path.sep)))
++        throw Error('raw_evidence_must_be_external');
++    if (!fs.statSync(directory).isDirectory()) throw Error('run_directory_required');
++    return directory;
++}
++
++function acquireRunLock(directory, inherited = process.env[LOCK_FD_ENV]) {
++    const lockPath = path.join(directory, LOCK_FILE);
++    const openedHere = inherited === undefined;
++    const fd = openedHere
++        ? fs.openSync(lockPath, fs.constants.O_RDWR | fs.constants.O_CREAT | fs.constants.O_NOFOLLOW, 0o600)
++        : Number(inherited);
++    let ownsFd = openedHere;
++    try {
++        if (!Number.isSafeInteger(fd) || fd < 3) throw Error('invalid_run_lock_fd');
++        const open = fs.fstatSync(fd, { bigint: true });
++        const named = fs.lstatSync(lockPath, { bigint: true });
++        if (!open.isFile() || !named.isFile() || open.dev !== named.dev || open.ino !== named.ino)
++            throw Error('invalid_run_lock_fd');
++        ownsFd = true;
++        // Node has no flock primitive. Python locks the same open file description
++        // through its inherited descriptor. The lock survives until every copy closes.
++        const lock = spawnSync('python3', ['-I', '-B', '-c',
++            'import fcntl\nfcntl.flock(3, fcntl.LOCK_EX | fcntl.LOCK_NB)'],
++        { stdio: ['ignore', 'ignore', 'ignore', fd] });
++        if (lock.error || lock.signal) throw Error('run_lock_unavailable');
++        if (lock.status !== 0) throw Error('run_directory_locked');
++        return { fd, close: () => fs.closeSync(fd) };
++    } catch (error) {
++        if (ownsFd) fs.closeSync(fd);
++        throw error;
++    }
++}
++
++module.exports = { acquireRunLock, externalRunDirectory, LOCK_FD_ENV };
 diff --git a/reports/pot-shopping-phase3-20261101/token-launch.py b/reports/pot-shopping-phase3-20261101/token-launch.py
-index 58a8352..8129c9d 100644
+index 58a8352..84c9eab 100644
 --- a/reports/pot-shopping-phase3-20261101/token-launch.py
 +++ b/reports/pot-shopping-phase3-20261101/token-launch.py
-@@ -1,4 +1,4 @@
+@@ -1,34 +1,106 @@
 -"""Disabled until exact 3a review; same read-only cached-token helper as attempt4."""
 +"""Disabled until Claude's go for the exact plan and freeze; same read-only cached-token helper as attempt4."""
  import argparse
  from datetime import datetime, timezone
++import fcntl
  import hashlib
-@@ -11,21 +11,40 @@ import subprocess
+ import json
+ import os
+ from pathlib import Path
+-import runpy
+ import shutil
++import stat
+ import subprocess
  import sys
  
  
 +# Each plan has its own go; a go for one plan never launches the other.
 +REVIEW_GO = {'smoke': 'claude_3c_smoke_go', 'reduced': 'claude_3c_reduced_go', 'compatibility': 'claude_3c_compat_go', 'heldout': 'claude_4_heldout_go'}
++TOKEN_HELPER = 'reports/admission-kernel-live-model/token-launch.py'
++NETWORK_GUARD = 'tests/helpers/strict-network-guard.cjs'
++LOCK_FILE = '.checkpoint.lock'
++LOCK_FD_ENV = 'POT_SHOPPING_RUN_LOCK_FD'
++
++
++def verify_frozen_artifacts(root, freeze, required):
++    if freeze.get('stage') != '3a' or freeze.get('live_run_enabled') is not False:
++        raise RuntimeError('invalid_freeze')
++    verified = set()
++    helper_source = None
++    for row in freeze['artifacts']:
++        relative = row['path']
++        if Path(relative).is_absolute() or '..' in Path(relative).parts or relative in verified:
++            raise RuntimeError('invalid_frozen_artifact_path')
++        contents = (root / relative).read_bytes()
++        if hashlib.sha256(contents).hexdigest() != row['sha256']:
++            raise RuntimeError('frozen_artifact_mismatch')
++        if relative == TOKEN_HELPER:
++            helper_source = contents
++        verified.add(relative)
++    if not required.issubset(verified) or helper_source is None:
++        raise RuntimeError('frozen_artifact_required')
++    return helper_source
 +
 +
  def main():
@@ -789,29 +953,74 @@ index 58a8352..8129c9d 100644
      args = parser.parse_args()
      here = Path(__file__).resolve().parent
      root = here.parents[1]
-     actual = hashlib.sha256((here / 'freeze.json').read_bytes()).hexdigest()
+-    actual = hashlib.sha256((here / 'freeze.json').read_bytes()).hexdigest()
++    freeze_bytes = (here / 'freeze.json').read_bytes()
++    actual = hashlib.sha256(freeze_bytes).hexdigest()
      if actual != args.freeze_sha:
          raise RuntimeError('freeze_mismatch')
 -    if args.mode == 'live' and os.environ.get('POT_SHOPPING_REVIEW_GO') != 'claude_3a_go':
-+    if args.mode == 'live' and os.environ.get('POT_SHOPPING_REVIEW_GO') != REVIEW_GO[args.plan]:
++    freeze = json.loads(freeze_bytes)
++    if args.mode == 'live' and (os.environ.get('POT_SHOPPING_REVIEW_GO') != REVIEW_GO[args.plan]
++                                or freeze.get('review_go', {}).get(args.plan) != REVIEW_GO[args.plan]):
          raise RuntimeError('claude_exact_freeze_review_required')
 +    if args.plan == 'heldout':
 +        if args.mode != 'live':
 +            raise RuntimeError('use_qualify_heldout_for_fake')
-+        if args.arm != 'L' or not args.heldout_fixture or not json.loads((here / 'freeze.json').read_text()).get('heldout_fixture'):
++        if args.arm != 'L' or not args.heldout_fixture or not freeze.get('heldout_fixture'):
 +            raise RuntimeError('bound_heldout_required')
-+        # Check the bound bytes and replay the synthetic controls before touching the cache.
-+        verifier = (
-+            "require(process.argv[1]).loadQualified(process.argv[2],"
-+            "{expected:require(process.argv[3]).heldout_fixture})"
-+            ".catch(()=>{process.stderr.write('heldout_validation_failed\\n');process.exitCode=1})"
-+        )
-+        env_check = dict(os.environ, NODE_OPTIONS='--require=' + str(root / 'tests/helpers/strict-network-guard.cjs'))
-+        subprocess.run([shutil.which('node'), '-e', verifier, str(here / 'validate-heldout.cjs'), args.heldout_fixture, str(here / 'freeze.json')], cwd=root, env=env_check, check=True, stdout=subprocess.DEVNULL)
      raw = Path(args.raw).resolve(strict=True)
      if raw == root or root in raw.parents:
          raise RuntimeError('external_evidence_required')
-@@ -51,7 +70,7 @@ def main():
++    if not raw.is_dir():
++        raise RuntimeError('run_directory_required')
++    required = {NETWORK_GUARD, TOKEN_HELPER}
++    required.update(str((here / name).relative_to(root)) for name in
++                    ('token-launch.py', 'live-host.cjs', 'validate-heldout.cjs', 'run-directory.cjs', 'fake-worker.cjs'))
++    helper_source = verify_frozen_artifacts(root, freeze, required)
++    lock_fd = os.open(raw / LOCK_FILE, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
++    try:
++        if not stat.S_ISREG(os.fstat(lock_fd).st_mode):
++            raise RuntimeError('invalid_run_lock_fd')
++        try:
++            fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
++        except BlockingIOError:
++            raise RuntimeError('run_directory_locked') from None
++        return launch_locked(args, here, root, raw, actual, freeze.get('heldout_fixture'), helper_source, lock_fd)
++    finally:
++        # The detached worker inherits this open file description. Closing the
++        # parent's copy leaves the worker's lock intact.
++        os.close(lock_fd)
++
++
++def launch_locked(args, here, root, raw, actual, heldout_binding, helper_source, lock_fd):
++    if args.plan == 'heldout':
++        # Check the bound bytes and replay the synthetic controls before touching the cache.
++        verifier = (
++            "require(process.argv[1]).loadQualified(process.argv[2],"
++            "{expected:JSON.parse(process.argv[3])})"
++            ".catch(()=>{process.stderr.write('heldout_validation_failed\\n');process.exitCode=1})"
++        )
++        env_check = dict(os.environ, NODE_OPTIONS='--require=' + str(root / NETWORK_GUARD))
++        subprocess.run([shutil.which('node'), '-e', verifier, str(here / 'validate-heldout.cjs'),
++                        args.heldout_fixture, json.dumps(heldout_binding)],
++                       cwd=root, env=env_check, check=True, stdout=subprocess.DEVNULL)
+     if args.mode == 'fake':
+         if not args.fake_cache:
+             raise RuntimeError('fake_cache_required')
+@@ -43,19 +115,23 @@ def main():
+         account = os.environ.get('POT_VERTEX_ACCOUNT', '')
+         if not account:
+             raise RuntimeError('account_required')
+-    helper = runpy.run_path(str(here.parent / 'admission-kernel-live-model/token-launch.py'), run_name='shopping_cached_token_helper')
++    helper_path = str(root / TOKEN_HELPER)
++    helper = {'__name__': 'shopping_cached_token_helper', '__file__': helper_path}
++    exec(compile(helper_source, helper_path, 'exec'), helper)
+     token, expiry = helper['cached_token'](cache, datetime.now(timezone.utc), account)
+     environment = dict(os.environ, POT_LIVE_TOKEN_EXPIRES_AT=expiry.isoformat())
++    environment[LOCK_FD_ENV] = str(lock_fd)
+     if args.mode == 'fake':
+-        environment['NODE_OPTIONS'] = '--require=' + str(root / 'tests/helpers/strict-network-guard.cjs')
++        environment['NODE_OPTIONS'] = '--require=' + str(root / NETWORK_GUARD)
          command = [shutil.which('node'), str(here / 'fake-worker.cjs'), str(raw)]
      else:
          environment.pop('NODE_OPTIONS', None)
@@ -820,6 +1029,23 @@ index 58a8352..8129c9d 100644
      child = None
      try:
          with (raw / 'token-worker.log').open('ab') as log:
+-            child = subprocess.Popen(command, cwd=root, env=environment, stdin=subprocess.PIPE, stdout=log, stderr=log, start_new_session=True)
++            child = subprocess.Popen(command, cwd=root, env=environment, stdin=subprocess.PIPE,
++                                     stdout=log, stderr=log, start_new_session=True, pass_fds=(lock_fd,))
+             child.stdin.write(token)
+             child.stdin.close()
+         (raw / 'pid.json').write_text(json.dumps({'pid': child.pid, 'mode': args.mode, 'arm': args.arm, 'detached': True}) + '\n')
+@@ -69,6 +145,8 @@ def main():
+ if __name__ == '__main__':
+     try:
+         sys.exit(main())
+-    except Exception:
+-        print('shopping_token_launch_stopped_no_refresh', file=sys.stderr)
++    except Exception as error:
++        message = str(error)
++        print(message if message == 'run_directory_locked' else 'shopping_token_launch_stopped_no_refresh',
++              file=sys.stderr)
+         sys.exit(1)
 diff --git a/reports/pot-shopping-phase3-20261101/validate-heldout.cjs b/reports/pot-shopping-phase3-20261101/validate-heldout.cjs
 new file mode 100644
 index 0000000..eecc8b2
@@ -1044,10 +1270,16 @@ index c89b6d1..eef62fa 100644
  process.on('exit',()=>fs.writeSync(2,JSON.stringify({live_allowlist_guard_audit:auditSnapshot()})+'\n'));
  module.exports=Object.freeze({endpoint,fetchImpl,auditSnapshot,abortAll});
 diff --git a/src/lib/pokemon/shopping/model/collector.cjs b/src/lib/pokemon/shopping/model/collector.cjs
-index 2218a2f..42808d0 100644
+index 2218a2f..842a2a2 100644
 --- a/src/lib/pokemon/shopping/model/collector.cjs
 +++ b/src/lib/pokemon/shopping/model/collector.cjs
-@@ -7,6 +7,12 @@ const { declarationSet } = require('./declarations.cjs');
+@@ -2,11 +2,18 @@
+ // Dependency-injected collector core. No sockets, credentials, token cache or
+ // cloud client. A future reviewed host supplies the guarded generateContent port.
+ const fs = require('node:fs'), path = require('node:path');
++const { createHash } = require('node:crypto');
+ const { hash, copy } = require('../schema.cjs');
+ const { declarationSet } = require('./declarations.cjs');
  const MODELS = Object.freeze({ L: 'gemini-3.5-flash-lite', P: 'gemini-3.1-pro-preview' });
  const endpoint = arm => 'https://aiplatform.googleapis.com/v1/projects/pivota-prod/locations/global/publishers/google/models/' + MODELS[arm] + ':generateContent';
  const BUDGETS = Object.freeze({ calls: 1500, calls_per_arm: 750, input_tokens: 15000000, usd: 25, usd_per_arm: Object.freeze({L:5,P:20}), concurrency: 2, minimum_launch_minutes: 45, refresh_minutes: 10, prompt_reservation_cap: 200000, output_reservation_cap: 2048 });
@@ -1060,7 +1292,7 @@ index 2218a2f..42808d0 100644
  const STOP_RULES = Object.freeze({request_rejected:Object.freeze({consecutive_non_429_4xx:3,scope:'arm'}),access_denied:Object.freeze({statuses:Object.freeze([401,403]),scope:'global'})});
  function price(freeze, arm, input, output, thoughts = 0) {
      if (![input, output, thoughts].every(n => Number.isSafeInteger(n) && n >= 0))
-@@ -16,7 +22,23 @@ function price(freeze, arm, input, output, thoughts = 0) {
+@@ -16,7 +23,23 @@ function price(freeze, arm, input, output, thoughts = 0) {
          throw Error('no_price_no_run');
      return (input * rate.input + (output + thoughts) * rate.output_including_reasoning) / 1000000;
  }
@@ -1085,7 +1317,7 @@ index 2218a2f..42808d0 100644
  function validateFrozenRequest(freeze, request) {
      const { CONFIG, SYSTEM_INSTRUCTION } = require('./turn.cjs');
      if (!request || Object.keys(request).sort().join(',') !== 'contents,generationConfig,systemInstruction,toolConfig,tools' || hash(request.generationConfig) !== hash(CONFIG) || hash(request.generationConfig) !== hash(freeze.generationConfig) || hash(request.toolConfig) !== hash(freeze.toolConfig) || hash(request.systemInstruction) !== hash({ parts: [{ text: SYSTEM_INSTRUCTION }] }) || hash(SYSTEM_INSTRUCTION) !== freeze.system_instruction_sha256 || !Array.isArray(request.tools) || request.tools.length !== 1 || Object.keys(request.tools[0]).join(',') !== 'functionDeclarations' || hash(request.tools[0].functionDeclarations) !== freeze.declaration_set_sha256 || freeze.declaration_set_sha256 !== declarationSet().declaration_sha256 || !Array.isArray(request.contents))
-@@ -38,7 +60,7 @@ function checkFreeze(freeze, artifactBytes) {
+@@ -38,7 +61,7 @@ function checkFreeze(freeze, artifactBytes) {
      if (freeze.stage !== '3a' || freeze.live_run_enabled !== false)
          throw Error('invalid_freeze');
      if (hash(freeze.stop_rules) !== hash(STOP_RULES)) throw Error('frozen_stop_rules_mismatch');
@@ -1094,7 +1326,13 @@ index 2218a2f..42808d0 100644
          throw Error('frozen_limits_mismatch');
      for (const [arm, id] of Object.entries(MODELS)) {
          if (freeze.endpoints?.[arm] !== endpoint(arm))
-@@ -54,10 +76,15 @@ function checkFreeze(freeze, artifactBytes) {
+@@ -49,15 +72,20 @@ function checkFreeze(freeze, artifactBytes) {
+     }
+     for (const row of freeze.artifacts) {
+         const bytes = artifactBytes(row.path);
+-        if (hash(bytes.toString('utf8')) !== row.sha256)
++        if (createHash('sha256').update(bytes).digest('hex') !== row.sha256)
+             throw Error('frozen_artifact_mismatch:' + row.path);
      }
      return hash(freeze);
  }
@@ -1111,7 +1349,7 @@ index 2218a2f..42808d0 100644
      // Stage 3a cannot accidentally launch a live adapter, even if credentials exist.
      if (!rehearsal && !reviewGo)
          throw Error('claude_3a_review_required');
-@@ -65,6 +92,12 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
+@@ -65,6 +93,12 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
      if (state.freeze_sha256 !== freezeHash)
          throw Error('resume_freeze_mismatch');
      if(fs.existsSync(checkpoint)&&state.rehearsal!==rehearsal)throw Error('resume_mode_mismatch');
@@ -1124,10 +1362,12 @@ index 2218a2f..42808d0 100644
      state.rehearsal=rehearsal;
      state.sessions ||= {};
      if (state.records.some(r => r.status === 'reserved'))
-@@ -95,15 +128,16 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
+@@ -94,22 +128,24 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
+     const onInt = () => signal('SIGINT'), onTerm = () => signal('SIGTERM');
      process.on('SIGINT', onInt);
      process.on('SIGTERM', onTerm);
-     function reserve(arm, job, attempt, request) {
+-    function reserve(arm, job, attempt, request) {
++    function reserve(arm, job, attempt, request, onAttempts) {
 +        if(plan==='heldout'&&arm!=='L')throw Error('heldout_is_L_only');
          validateFrozenRequest(freeze, request);
 -        const a = state.arms[arm], t = totals(), input = BUDGETS.prompt_reservation_cap, usd = price(freeze, arm, input, BUDGETS.output_reservation_cap);
@@ -1143,7 +1383,39 @@ index 2218a2f..42808d0 100644
              stop('budget_exhausted', arm);
              throw Error('budget_exhausted');
          }
-@@ -149,9 +183,9 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
+         // UTF-8 bytes are a conservative token bound; reject large requests outright.
+         if (Buffer.byteLength(JSON.stringify(request)) > input)
+             throw Error('prompt_cap_exceeded');
++        onAttempts(attempt);
+         const record = { id: job.id, arm, attempt, status: 'reserved', request_sha256: hash(request), reserved_input: input, reserved_usd: usd };
+         state.records.push(record);
+         a.calls++;
+@@ -118,17 +154,21 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
+         save();
+         return record;
+     }
+-    async function invoke(arm, job, request, attempt, signal) {
++    async function invoke(arm, job, request, attempt, signal, onAttempts) {
+         if (signal?.aborted)
+             throw Error('request_cancelled');
+         if (active.size >= 2)
+             throw Error('concurrency_limit');
+-        const record = reserve(arm, job, attempt, request), a = state.arms[arm], controller = new AbortController();
++        const record = reserve(arm, job, attempt, request, onAttempts), a = state.arms[arm], controller = new AbortController();
+         active.add(controller);
+         const start = clock();
+         let response;
+         let timeout, abortListener, stageReader = () => ({tls_connected:false,stage_reached:'not_started'});
+-        abortListener = () => controller.abort();
++        abortListener = () => {
++            record.caller_cancelled = true;
++            controller.abort();
++            save();
++        };
+         signal?.addEventListener('abort', abortListener, { once: true });
+         try {
+             response = await Promise.race([
+@@ -149,9 +189,9 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
              active.delete(controller);
          }
          const usage = response.body?.usageMetadata;
@@ -1156,19 +1428,56 @@ index 2218a2f..42808d0 100644
          a.reserved_input -= record.reserved_input;
          a.reserved_usd -= record.reserved_usd;
          a.input_tokens += input;
-@@ -195,7 +229,10 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
+@@ -181,22 +221,28 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
+         save();
+         return { record, response };
+     }
+-    async function request(arm, id, body, { signal, remainingCalls=2 } = {}) {
++    async function request(arm, id, body, { signal, remainingCalls = 2, onAttempts = () => {} } = {}) {
+         if (!MODELS[arm])
+             throw Error('unknown_arm');
+         validateFrozenRequest(freeze, body);
+         const a = state.arms[arm], completed = state.records.filter(r => r.id === id && r.arm === arm && r.status === 'completed');
+         if (completed.some(r => r.request_sha256 !== hash(body)))
+             throw Error('resume_request_mismatch');
+-        let response;
++        if (!Number.isSafeInteger(remainingCalls) || remainingCalls < 1 || completed.length > remainingCalls)
++            throw Error('call_limit');
++        let record, response;
+         if (completed.length) {
+-            const last = completed.at(-1);
+-            response = { status: last.http_status, body: copy(last.response), tls_connected: last.tls_connected, stage_reached: last.stage_reached, error: last.error };
++            onAttempts(completed.length);
++            record = completed.at(-1);
++            response = { status: record.http_status, body: copy(record.response), tls_connected: record.tls_connected, stage_reached: record.stage_reached, error: record.error };
          }
          else
-             ({ response } = await invoke(arm, { id }, body, 1, signal));
+-            ({ response } = await invoke(arm, { id }, body, 1, signal));
 -        if (response.status === 429 && completed.at(-1)?.attempt !== 2 && remainingCalls>=2 && !a.stop_reason && !state.stop_reason && !signal?.aborted)
+-            ({ response } = await invoke(arm, { id }, body, 2, signal));
++            ({ record, response } = await invoke(arm, { id }, body, 1, signal, onAttempts));
 +        // One retry for a 429, or for a failure before TLS completed: that request never reached Google,
 +        // so retrying cannot duplicate billing or an action. Three such failures in a row still stop the run.
 +        const preTls = response.tls_connected !== true && !Number.isInteger(response.status) && !!response.error;
-+        if ((response.status === 429 || preTls) && completed.at(-1)?.attempt !== 2 && remainingCalls>=2 && !a.stop_reason && !state.stop_reason && !signal?.aborted)
-             ({ response } = await invoke(arm, { id }, body, 2, signal));
++        if (!record.caller_cancelled && (response.status === 429 || preTls) && record.attempt !== 2 && remainingCalls>=2 && !a.stop_reason && !state.stop_reason && !signal?.aborted)
++            ({ record, response } = await invoke(arm, { id }, body, 2, signal, onAttempts));
          if (!a.preflight && !a.stop_reason && !state.stop_reason) {
              try {
-@@ -300,4 +337,4 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
+                 require('./turn.cjs').parseResponse(response);
+@@ -209,7 +255,11 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
+                 stop('preflight_failed', arm);
+             }
+         }
+-        return {...copy(response),attempt_count:state.records.filter(r=>r.id===id&&r.arm===arm&&r.status==='completed').length};
++        // The caller saw its deadline even if the wire response arrived after cancellation.
++        // Preserve the wire record above for budget and stop rules, and replay the caller's result.
++        if (record.caller_cancelled)
++            return { status: null, body: null, error: 'timeout', attempt_count: record.attempt };
++        return { ...copy(response), attempt_count: record.attempt };
+     }
+     function channel(arm, session) {
+         let sequence = 0;
+@@ -300,4 +350,4 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
      }
      return Object.freeze({ run, request, channel, session, outcome, priorOutcome, state: () => copy(state), save, stop, close: () => { process.removeListener('SIGINT', onInt); process.removeListener('SIGTERM', onTerm); save(); } });
  }
@@ -1305,7 +1614,7 @@ index 420cbf5..aae15ff 100644
 -module.exports = { declarationSet, project, convert, bindArguments, rejectPrivate, publicArgs, PRIVATE };
 +module.exports = { declarationSet, project, convert, bindArguments, rejectPrivate, publicArgs, PRIVATE, SERVER_TEXT };
 diff --git a/src/lib/pokemon/shopping/model/scoring.cjs b/src/lib/pokemon/shopping/model/scoring.cjs
-index 759e5b6..d4177bb 100644
+index 759e5b6..e675dd7 100644
 --- a/src/lib/pokemon/shopping/model/scoring.cjs
 +++ b/src/lib/pokemon/shopping/model/scoring.cjs
 @@ -2,6 +2,7 @@
@@ -1385,7 +1694,7 @@ index 759e5b6..d4177bb 100644
              compatibility_clarifications:reduced?null:clarify, actual_context_model_off_clarifications:reduced?null:controlClarify, compatibility_denominator_each_pass:reduced?null:34,
              catalog_hold_flips:flips, wrong_items:wrongItems, unsupported_claims:unsupportedClaims, duplicate_or_widened_authority:widenedAuthority,
              same_host_adversarial_passed:expectedCases.slice(0,12).filter(id=>byCase.get(id)?.result.passed).length,
-@@ -134,4 +148,80 @@ function score(state, baseline, mapping, freeze) {
+@@ -134,4 +148,111 @@ function score(state, baseline, mapping, freeze) {
      }
      return {rehearsal:state.rehearsal===true,arms,conclusion:state.rehearsal?'fake replay only; no live conclusion':reduced?'reduced run; compatibility not measured; no model-selection conclusion':Object.values(arms).some(a=>a.improves)?'an arm improves':'no arm improves'};
  }
@@ -1427,6 +1736,11 @@ index 759e5b6..d4177bb 100644
 + const measure=key=>{const rows=episodes.filter(e=>Number.isSafeInteger(e[key])&&e[key]>=0),values=rows.map(e=>e[key]);return {measured:rows.length,missing:episodes.length-rows.length,total:values.reduce((n,v)=>n+v,0),median:values.length?median(values):null,p95:values.length?p95(values):null,threshold:null,status:values.length?'measured_only':'not_measured'};};
 + return {M1_unnecessary_clarifications:measure('unnecessary_clarifications'),M2_missed_necessary_questions:measure('missed_necessary_questions')};
 +}
++function usableModelTurn(turn) {
++    const plan = turn?.plan;
++    return turn?.fallback === false && ['search', 'hold', 'answer', 'clarify'].includes(plan?.decision) &&
++        Array.isArray(plan.fields) && Array.isArray(plan.claims) && (plan.decision !== 'clarify' || plan.fields.length > 0);
++}
 +function scoreHeldout(state, baseline, heldout) {
 +    const binding = state.heldout_fixture;
 +    if (state.plan !== 'heldout') throw Error('heldout_plan_required');
@@ -1456,19 +1770,45 @@ index 759e5b6..d4177bb 100644
 +        if (byEpisode.has(episodeId) && record.status === 'completed' && record.http_status === 200 && !record.error)
 +            observedEpisodes.add(episodeId);
 +    }
-+    // Keep every expected episode in the denominator. A scripted completion
-+    // without a model receipt has no observed L metrics.
-+    const rows = expected.map(id => observedEpisodes.has(id) ? byEpisode.get(id).result : {});
++    const usableEpisodes = new Set(), fallbackEpisodes = new Set();
++    const modelTurns = unique(outcomes.filter(row => row.id.startsWith('model_turn/')), row => row.id, 'model_turn');
++    const reasons = new Map();
++    let fallbackCount = 0;
++    for (const {id, result} of modelTurns.values()) {
++        const episodeId = id.match(/^model_turn\/(journey\/[^/]+\/[1-9]\d*)\/[1-9]\d*$/)?.[1];
++        if (!expectedIds.has(episodeId)) throw Error('unexpected_heldout_outcome');
++        if (result?.fallback === true) {
++            fallbackEpisodes.add(episodeId);
++            fallbackCount++;
++            const reason = result.reason || 'unspecified';
++            reasons.set(reason, (reasons.get(reason) || 0) + 1);
++        }
++        if (observedEpisodes.has(episodeId) && usableModelTurn(result)) usableEpisodes.add(episodeId);
++    }
++    // Transport evidence and a durable usable turn are both required for L metrics.
++    const rows = expected.map(id => usableEpisodes.has(id) ? byEpisode.get(id).result : {});
++    const fallbackOnlyCompleted = expected.filter(id => {
++        const result = byEpisode.get(id)?.result;
++        return observedEpisodes.has(id) && !usableEpisodes.has(id) && fallbackEpisodes.has(id) &&
++            (result?.script_completed === true || result?.completed === true);
++    }).length;
 +    return {
 +        plan: 'heldout', rehearsal: state.rehearsal === true, expected: expected.length, recorded: byEpisode.size,
 +        completed: rows.filter(row => row.completed === true).length,
-+        model_participation: { observed: observedEpisodes.size, not_observed: byEpisode.size - observedEpisodes.size, unrecorded: expected.length - byEpisode.size },
++        model_participation: {
++            observed: observedEpisodes.size, usable: usableEpisodes.size, fallback_only_completed: fallbackOnlyCompleted,
++            not_observed: byEpisode.size - observedEpisodes.size, unrecorded: expected.length - byEpisode.size
++        },
++        fallbacks: {
++            turns: modelTurns.size, count: fallbackCount, share: modelTurns.size ? fallbackCount / modelTurns.size : null,
++            reasons: Object.fromEntries(reasons)
++        },
 +        model_off: questionMeasures(baseline), L: questionMeasures(rows), thresholds: null, qualification: 'not assessed; measured only'
 +    };
 +}
-+module.exports = {score,scoreCompatibility,scoreHeldout,questionMeasures,median,p95};
++module.exports = {score,scoreCompatibility,scoreHeldout,questionMeasures,usableModelTurn,median,p95};
 diff --git a/src/lib/pokemon/shopping/model/turn.cjs b/src/lib/pokemon/shopping/model/turn.cjs
-index 99662c1..f78fdce 100644
+index 99662c1..603f9df 100644
 --- a/src/lib/pokemon/shopping/model/turn.cjs
 +++ b/src/lib/pokemon/shopping/model/turn.cjs
 @@ -4,8 +4,15 @@ const { declarationSet, bindArguments } = require('./declarations.cjs');
@@ -1553,7 +1893,27 @@ index 99662c1..f78fdce 100644
              while (true) {
                  if (turnCalls >= LIMITS.calls_per_turn || journeyCalls >= LIMITS.calls_per_journey)
                      throw Error('call_limit');
-@@ -79,7 +102,7 @@ function createJourney({ transport, port, fallback, renderClaim, onUseful = () =
+@@ -73,13 +96,24 @@ function createJourney({ transport, port, fallback, renderClaim, onUseful = () =
+                 let id;
+                 const request = { systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] }, generationConfig: copy(CONFIG), toolConfig: { functionCallingConfig: { mode: 'AUTO' } }, tools: [{ functionDeclarations: decl.declarations }], contents: copy(contents) };
+                 const remainingCalls=Math.min(LIMITS.calls_per_turn-turnCalls+1,LIMITS.calls_per_journey-journeyCalls+1);
+-                const response = await Promise.race([Promise.resolve().then(() => transport(request, { signal: abort.signal, timeoutMs: LIMITS.timeout_ms, remainingCalls })), new Promise((_, reject) => { id = timer(() => { abort.abort(); reject(Error('timeout')); }, timeoutMs); })]).finally(() => clearTimer(id));
+-                const extraAttempts=Math.max(0,(response.attempt_count||1)-1);turnCalls+=extraAttempts;journeyCalls+=extraAttempts;
+-                if(turnCalls>LIMITS.calls_per_turn||journeyCalls>LIMITS.calls_per_journey)throw Error('call_limit');
++                let accountedAttempts = 1;
++                const onAttempts = attempts => {
++                    if (attempts <= accountedAttempts)
++                        return;
++                    const extra = attempts - accountedAttempts;
++                    if (turnCalls + extra > LIMITS.calls_per_turn || journeyCalls + extra > LIMITS.calls_per_journey)
++                        throw Error('call_limit');
++                    turnCalls += extra;
++                    journeyCalls += extra;
++                    accountedAttempts = attempts;
++                };
++                // Collector-backed transports report attempts before dispatch, even if the outer deadline wins.
++                const response = await Promise.race([Promise.resolve().then(() => transport(request, { signal: abort.signal, timeoutMs: LIMITS.timeout_ms, remainingCalls, onAttempts })), new Promise((_, reject) => { id = timer(() => { abort.abort(); reject(Error('timeout')); }, timeoutMs); })]).finally(() => clearTimer(id));
++                onAttempts(response.attempt_count || 1);
                  const parts = parseResponse(response), functions = parts.filter(p => Object.hasOwn(p, 'functionCall'));
                  currentFunctionNames=functions.map(p=>p.functionCall?.name).filter(n=>typeof n==='string').slice(0,128);
                  if (!functions.length)
@@ -1562,7 +1922,7 @@ index 99662c1..f78fdce 100644
                  if (functions.length !== parts.length)
                      throw Error('mixed_output');
                  if (turnTools + functions.length > 4 || toolCalls + functions.length > 12)
-@@ -93,10 +116,15 @@ function createJourney({ transport, port, fallback, renderClaim, onUseful = () =
+@@ -93,10 +127,15 @@ function createJourney({ transport, port, fallback, renderClaim, onUseful = () =
                          throw Error('malformed_function_call');
                      if (!allowed.has(name))
                          throw Error('unknown_or_trusted_function');
@@ -1582,7 +1942,7 @@ index 99662c1..f78fdce 100644
                      return { name, full, id };
                  });
                  turnTools += calls.length;
-@@ -107,6 +135,9 @@ function createJourney({ transport, port, fallback, renderClaim, onUseful = () =
+@@ -107,6 +146,9 @@ function createJourney({ transport, port, fallback, renderClaim, onUseful = () =
                  // function responses from the parallel model batch return in one user part.
                  for (const { name, full, id } of calls) {
                      const result = await execute(name, full);
@@ -1592,7 +1952,7 @@ index 99662c1..f78fdce 100644
                      audit.push({ tool: name, ok: result.ok, code: result.error?.code || null });
                      const safe = context.project(result);
                      results.push({ functionResponse: { name, ...(id === undefined ? {} : { id }), response: safe } });
-@@ -125,4 +156,4 @@ function createJourney({ transport, port, fallback, renderClaim, onUseful = () =
+@@ -125,4 +167,4 @@ function createJourney({ transport, port, fallback, renderClaim, onUseful = () =
      }
      return Object.freeze({ turn, counts: () => ({ model_calls: journeyCalls, tool_calls: toolCalls }), instruction_sha256: hash(SYSTEM_INSTRUCTION) });
  }

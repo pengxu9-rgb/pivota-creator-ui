@@ -30,3 +30,35 @@ test('model eval harness fix: each plan launches only with its own go string, be
         fs.rmSync(raw, { recursive: true, force: true });
     }
 });
+
+test('model eval launcher refuses a changed credential helper before reading stdin', async () => {
+    const fs = require('node:fs'), os = require('node:os'), path = require('node:path');
+    const { createHash } = require('node:crypto');
+    const { main, REVIEW_GO } = require('./live-host.cjs');
+    const raw = fs.mkdtempSync(path.join(os.tmpdir(), 'shopping-freeze-fixture-'));
+    const readFileSync = fs.readFileSync;
+    const freezeHash = createHash('sha256').update(readFileSync(path.join(__dirname, 'freeze.json'))).digest('hex');
+    const saved = { go: process.env.POT_SHOPPING_REVIEW_GO, expires: process.env.POT_LIVE_TOKEN_EXPIRES_AT };
+    let stdinReads = 0;
+    try {
+        process.env.POT_SHOPPING_REVIEW_GO = REVIEW_GO.smoke;
+        process.env.POT_LIVE_TOKEN_EXPIRES_AT = new Date(Date.now() + 60 * 60000).toISOString();
+        fs.readFileSync = (file, ...args) => {
+            if (file === 0) {
+                stdinReads++;
+                throw Error('unexpected_stdin_read');
+            }
+            if (typeof file === 'string' && file.endsWith('/reports/admission-kernel-live-model/token-launch.py'))
+                return Buffer.concat([readFileSync(file), Buffer.from('\n# synthetic change\n')]);
+            return readFileSync(file, ...args);
+        };
+        await assert.rejects(main('L', raw, freezeHash, 'smoke'), /frozen_artifact_mismatch:reports\/admission-kernel-live-model\/token-launch\.py/);
+        assert.equal(stdinReads, 0);
+        assert.equal(fs.existsSync(path.join(raw, 'checkpoint.json')), false);
+    } finally {
+        fs.readFileSync = readFileSync;
+        if (saved.go === undefined) delete process.env.POT_SHOPPING_REVIEW_GO; else process.env.POT_SHOPPING_REVIEW_GO = saved.go;
+        if (saved.expires === undefined) delete process.env.POT_LIVE_TOKEN_EXPIRES_AT; else process.env.POT_LIVE_TOKEN_EXPIRES_AT = saved.expires;
+        fs.rmSync(raw, { recursive: true, force: true });
+    }
+});

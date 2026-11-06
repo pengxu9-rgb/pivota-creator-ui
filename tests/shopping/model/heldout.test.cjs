@@ -15,6 +15,18 @@ function standinSet() {
 function validateStandin(set,cat=catalog) {
  return validate(set,{[set.journeys[0].catalog]:cat},{heldout:true});
 }
+function scriptedCollector(respond) {
+ const fake=require(R+'qualify-episode-equivalence.cjs').collector('answer');
+ fake.channel=()=>Object.assign(async request=>{
+  fake.requests.push(structuredClone(request));
+  return respond(fake.requests.length);
+ },{elapsedMs:()=>0});
+ return fake;
+}
+const answerPlan={decision:'answer',fields:[],claims:[]};
+function reply(plan) {
+ return {status:200,body:{candidates:[{finishReason:'STOP',content:{parts:[{text:JSON.stringify(plan)}]}}]}};
+}
 test('heldout: v2 references, steps, supply spans and synthetic boundaries are checked',()=>{
  assert.equal(valid().journeys,4);
  const edits=[s=>s.schema='v1',s=>s.journeys[0].required_fields=['missing'],s=>s.journeys[0].steps=[],s=>s.journeys[0].steps[0].supplies.language='not in text',s=>s.journeys[0].steps.push({interface:'approve_purchase'}),s=>s.journeys[0].offer_ref='unknown',s=>s.journeys[0].steps.find(s=>s.interface==='compare_offers').offer_refs=['unknown']];
@@ -144,6 +156,58 @@ test('heldout: trusted controls cannot complete L without a model response',asyn
  assert.ok(noResponse.counts.model_calls>0);
  assert.equal(noResponse.completed,false);
  assert.equal(noResponse.model_participation,'not_observed');
+});
+test('heldout: one clarification turn answers every distinct field and counts unnecessary fields',async()=>{
+ const {shoppingEpisode}=require(R+'orchestrate.cjs');
+ const j=standinSet().journeys[0];
+ const later=j.steps.find(step=>step.supplies?.purpose);
+ later.user=later.user.replace(later.supplies.purpose,'');
+ delete later.supplies.purpose;
+ const fake=scriptedCollector(call=>reply(call===1 ?
+  {decision:'clarify',fields:['language','purpose','condition','language'],claims:[]} : answerPlan));
+
+ const result=await shoppingEpisode(fake,'L','journey/J02/1',j,{heldout:true});
+ const fallback=training.unexpected_question_rule.fallback;
+ const userText=request=>JSON.parse(request.contents[0].parts[0].text).text;
+ assert.equal(result.completed,true);
+ assert.equal(result.unnecessary_clarifications,1);
+ assert.equal(result.missed_necessary_questions,0);
+ assert.deepEqual(result.questions.map(q=>q.field),['language','purpose','condition']);
+ assert.equal(result.user_turns,j.steps.filter(step=>Object.hasOwn(step,'user')).length+1);
+ assert.deepEqual(fake.requests.map(userText),[j.query,[j.answer_key.language,j.answer_key.purpose,fallback].join('\n'),later.user]);
+});
+test('heldout: durable scoring separates HTTP receipts, usable plans and fallback-only checkout',async()=>{
+ const {shoppingEpisode,runHeldoutBaseline}=require(R+'orchestrate.cjs');
+ const {hash}=require('../../../src/lib/pokemon/shopping/schema.cjs');
+ const set=standinSet(),j=set.journeys[0];
+ const binding={journeys_value_sha256:hash(set)};
+ const heldout={set,binding,catalogs:{[j.catalog]:catalog}};
+ const baseline=await runHeldoutBaseline(heldout);
+ const state={
+  plan:'heldout',rehearsal:true,heldout_fixture:binding,records:[],
+  outcomes:[{arm:'L',id:'model_off_baseline',result:{rows:baseline}}]
+ };
+ const blocked={status:200,body:{promptFeedback:{blockReason:'SAFETY'}}};
+ for(const repeat of [1,2]){
+  const id='journey/J02/'+repeat;
+  const fake=scriptedCollector(call=>repeat===2&&call===1?reply(answerPlan):blocked);
+  const result=await shoppingEpisode(fake,'L',id,j,{heldout:true});
+  assert.equal(result.script_completed,true);
+  assert.equal(result.completed,repeat===2);
+  assert.equal(result.model_participation,repeat===1?'fallback_only':'usable');
+  state.outcomes.push(...fake.outcomes,{arm:'L',id,result});
+  state.records.push(...fake.requests.map((_,i)=>({arm:'L',id:id+'/call-'+(i+1),status:'completed',http_status:200})));
+ }
+
+ const scored=scoreHeldout(state,baseline,heldout);
+ assert.equal(scored.expected,10);
+ assert.equal(scored.completed,1);
+ assert.deepEqual(scored.model_participation,{observed:2,usable:1,fallback_only_completed:1,not_observed:0,unrecorded:8});
+ assert.deepEqual(scored.fallbacks,{turns:4,count:3,share:0.75,reasons:{safety_block:3}});
+ assert.equal(scored.L.M2_missed_necessary_questions.measured,1);
+ assert.equal(scored.L.M2_missed_necessary_questions.missing,9);
+ const withoutUsableTurn={...state,outcomes:state.outcomes.filter(row=>row.id!=='model_turn/journey/J02/2/1')};
+ assert.equal(scoreHeldout(withoutUsableTurn,baseline,heldout).completed,0);
 });
 test('heldout: plan has L and model-off only, with separate bounded caps and launch gate',async()=>{
  assert.equal(HELDOUT_BUDGETS.calls,1200);assert.equal(HELDOUT_BUDGETS.input_tokens,6000000);assert.deepEqual(HELDOUT_BUDGETS.usd_per_arm,{L:2,P:0});assert.equal(HELDOUT_BUDGETS.usd,2);

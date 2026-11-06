@@ -2,6 +2,7 @@
 // Dependency-injected collector core. No sockets, credentials, token cache or
 // cloud client. A future reviewed host supplies the guarded generateContent port.
 const fs = require('node:fs'), path = require('node:path');
+const { createHash } = require('node:crypto');
 const { hash, copy } = require('../schema.cjs');
 const { declarationSet } = require('./declarations.cjs');
 const MODELS = Object.freeze({ L: 'gemini-3.5-flash-lite', P: 'gemini-3.1-pro-preview' });
@@ -71,7 +72,7 @@ function checkFreeze(freeze, artifactBytes) {
     }
     for (const row of freeze.artifacts) {
         const bytes = artifactBytes(row.path);
-        if (hash(bytes.toString('utf8')) !== row.sha256)
+        if (createHash('sha256').update(bytes).digest('hex') !== row.sha256)
             throw Error('frozen_artifact_mismatch:' + row.path);
     }
     return hash(freeze);
@@ -127,7 +128,7 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
     const onInt = () => signal('SIGINT'), onTerm = () => signal('SIGTERM');
     process.on('SIGINT', onInt);
     process.on('SIGTERM', onTerm);
-    function reserve(arm, job, attempt, request) {
+    function reserve(arm, job, attempt, request, onAttempts) {
         if(plan==='heldout'&&arm!=='L')throw Error('heldout_is_L_only');
         validateFrozenRequest(freeze, request);
         const a = state.arms[arm], t = totals(), input = B.prompt_reservation_cap, usd = price(freeze, arm, input, B.output_reservation_cap);
@@ -144,6 +145,7 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
         // UTF-8 bytes are a conservative token bound; reject large requests outright.
         if (Buffer.byteLength(JSON.stringify(request)) > input)
             throw Error('prompt_cap_exceeded');
+        onAttempts(attempt);
         const record = { id: job.id, arm, attempt, status: 'reserved', request_sha256: hash(request), reserved_input: input, reserved_usd: usd };
         state.records.push(record);
         a.calls++;
@@ -152,17 +154,21 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
         save();
         return record;
     }
-    async function invoke(arm, job, request, attempt, signal) {
+    async function invoke(arm, job, request, attempt, signal, onAttempts) {
         if (signal?.aborted)
             throw Error('request_cancelled');
         if (active.size >= 2)
             throw Error('concurrency_limit');
-        const record = reserve(arm, job, attempt, request), a = state.arms[arm], controller = new AbortController();
+        const record = reserve(arm, job, attempt, request, onAttempts), a = state.arms[arm], controller = new AbortController();
         active.add(controller);
         const start = clock();
         let response;
         let timeout, abortListener, stageReader = () => ({tls_connected:false,stage_reached:'not_started'});
-        abortListener = () => controller.abort();
+        abortListener = () => {
+            record.caller_cancelled = true;
+            controller.abort();
+            save();
+        };
         signal?.addEventListener('abort', abortListener, { once: true });
         try {
             response = await Promise.race([
@@ -215,25 +221,28 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
         save();
         return { record, response };
     }
-    async function request(arm, id, body, { signal, remainingCalls=2 } = {}) {
+    async function request(arm, id, body, { signal, remainingCalls = 2, onAttempts = () => {} } = {}) {
         if (!MODELS[arm])
             throw Error('unknown_arm');
         validateFrozenRequest(freeze, body);
         const a = state.arms[arm], completed = state.records.filter(r => r.id === id && r.arm === arm && r.status === 'completed');
         if (completed.some(r => r.request_sha256 !== hash(body)))
             throw Error('resume_request_mismatch');
-        let response;
+        if (!Number.isSafeInteger(remainingCalls) || remainingCalls < 1 || completed.length > remainingCalls)
+            throw Error('call_limit');
+        let record, response;
         if (completed.length) {
-            const last = completed.at(-1);
-            response = { status: last.http_status, body: copy(last.response), tls_connected: last.tls_connected, stage_reached: last.stage_reached, error: last.error };
+            onAttempts(completed.length);
+            record = completed.at(-1);
+            response = { status: record.http_status, body: copy(record.response), tls_connected: record.tls_connected, stage_reached: record.stage_reached, error: record.error };
         }
         else
-            ({ response } = await invoke(arm, { id }, body, 1, signal));
+            ({ record, response } = await invoke(arm, { id }, body, 1, signal, onAttempts));
         // One retry for a 429, or for a failure before TLS completed: that request never reached Google,
         // so retrying cannot duplicate billing or an action. Three such failures in a row still stop the run.
         const preTls = response.tls_connected !== true && !Number.isInteger(response.status) && !!response.error;
-        if ((response.status === 429 || preTls) && completed.at(-1)?.attempt !== 2 && remainingCalls>=2 && !a.stop_reason && !state.stop_reason && !signal?.aborted)
-            ({ response } = await invoke(arm, { id }, body, 2, signal));
+        if (!record.caller_cancelled && (response.status === 429 || preTls) && record.attempt !== 2 && remainingCalls>=2 && !a.stop_reason && !state.stop_reason && !signal?.aborted)
+            ({ record, response } = await invoke(arm, { id }, body, 2, signal, onAttempts));
         if (!a.preflight && !a.stop_reason && !state.stop_reason) {
             try {
                 require('./turn.cjs').parseResponse(response);
@@ -246,7 +255,11 @@ function createCollector({ freeze, artifactBytes, checkpoint, transport, clock =
                 stop('preflight_failed', arm);
             }
         }
-        return {...copy(response),attempt_count:state.records.filter(r=>r.id===id&&r.arm===arm&&r.status==='completed').length};
+        // The caller saw its deadline even if the wire response arrived after cancellation.
+        // Preserve the wire record above for budget and stop rules, and replay the caller's result.
+        if (record.caller_cancelled)
+            return { status: null, body: null, error: 'timeout', attempt_count: record.attempt };
+        return { ...copy(response), attempt_count: record.attempt };
     }
     function channel(arm, session) {
         let sequence = 0;

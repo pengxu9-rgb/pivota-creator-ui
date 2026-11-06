@@ -1,9 +1,20 @@
 'use strict';
-// Execute the historical Git blob as an independent oracle, never retain an old driver in runtime.
-const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process'),Module=require('node:module'),assert=require('node:assert/strict');
+// Execute the pinned historical driver as an independent offline oracle.
+const fs=require('node:fs'),path=require('node:path'),Module=require('node:module'),assert=require('node:assert/strict');
 const {hash}=require('../../src/lib/pokemon/shopping/schema.cjs');
-const ROOT=path.resolve(__dirname,'../..'),BASE='12dc3a19299c19e200541c4261a69658c26a1b72';
-function historical(file){const mod=new Module(ROOT+'/'+file);mod.filename=ROOT+'/'+file;mod.paths=Module._nodeModulePaths(path.dirname(mod.filename));mod._compile(cp.execFileSync('git',['show',BASE+':'+file],{cwd:ROOT,encoding:'utf8'}),mod.filename);return mod.exports;}
+const {baselines:{phase4},sha256}=require('./historical-baselines.cjs');
+const ROOT=path.resolve(__dirname,'../..'),BASE=phase4.commit;
+function historicalOrchestrator(){
+ const turnFile=ROOT+'/src/lib/pokemon/shopping/model/turn.cjs';
+ const turn=new Module(turnFile);
+ turn.filename=turnFile;turn.paths=Module._nodeModulePaths(path.dirname(turnFile));
+ turn._compile(phase4.turn,turnFile);
+ const filename=__dirname+'/orchestrate.cjs',mod=new Module(filename);
+ mod.filename=filename;mod.paths=Module._nodeModulePaths(__dirname);
+ mod.require=id=>id===turnFile?turn.exports:Module.prototype.require.call(mod,id);
+ mod._compile(phase4.orchestrator,filename);
+ return mod.exports;
+}
 function collector(kind){const requests=[],outcomes=[];return {requests,outcomes,channel:()=>{let n=0;return Object.defineProperty(async request=>{
  requests.push(structuredClone(request));n++;
  const parts=kind==='clarify'&&n===1?[{text:'{"decision":"clarify","fields":["language"],"claims":[]}'}]:kind==='answer'?[{text:'{"decision":"answer","fields":[],"claims":[]}'}]:request.contents.some(c=>c.role==='model')?[{text:'{"decision":"search","fields":[],"claims":[]}'}]:[{functionCall:{name:'search_catalog',args:{task_ref:'task_1',text:'ignored shortened model text'}}}];
@@ -13,7 +24,9 @@ function oldShape(r){const copy=structuredClone(r);delete copy.missed_necessary_
 async function qualify(){
  const now=Date.now;Date.now=()=>1793491200000;
  try{
-  const old=historical('reports/pot-shopping-phase3-20261101/orchestrate.cjs'),fresh=require('./orchestrate.cjs'),legacyBaseline=historical('tests/shopping/evaluate.cjs');
+  const baselineFile=ROOT+'/tests/shopping/evaluate.cjs';
+  assert.equal(sha256(fs.readFileSync(baselineFile)),phase4.baselineEvaluatorSha256,'historical phase-2 evaluator changed');
+  const old=historicalOrchestrator(),fresh=require('./orchestrate.cjs'),legacyBaseline=require(baselineFile);
   const {training}=require('./journey-data.cjs'),rows=[];
   for(const j of training.journeys){
    const a=await legacyBaseline.episode('model-off',j),b=await require('./baseline-v2.cjs').episode('model-off',j);

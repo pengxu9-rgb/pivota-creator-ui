@@ -185,6 +185,11 @@ function questionMeasures(episodes){
  const measure=key=>{const rows=episodes.filter(e=>Number.isSafeInteger(e[key])&&e[key]>=0),values=rows.map(e=>e[key]);return {measured:rows.length,missing:episodes.length-rows.length,total:values.reduce((n,v)=>n+v,0),median:values.length?median(values):null,p95:values.length?p95(values):null,threshold:null,status:values.length?'measured_only':'not_measured'};};
  return {M1_unnecessary_clarifications:measure('unnecessary_clarifications'),M2_missed_necessary_questions:measure('missed_necessary_questions')};
 }
+function usableModelTurn(turn) {
+    const plan = turn?.plan;
+    return turn?.fallback === false && ['search', 'hold', 'answer', 'clarify'].includes(plan?.decision) &&
+        Array.isArray(plan.fields) && Array.isArray(plan.claims) && (plan.decision !== 'clarify' || plan.fields.length > 0);
+}
 function scoreHeldout(state, baseline, heldout) {
     const binding = state.heldout_fixture;
     if (state.plan !== 'heldout') throw Error('heldout_plan_required');
@@ -214,14 +219,40 @@ function scoreHeldout(state, baseline, heldout) {
         if (byEpisode.has(episodeId) && record.status === 'completed' && record.http_status === 200 && !record.error)
             observedEpisodes.add(episodeId);
     }
-    // Keep every expected episode in the denominator. A scripted completion
-    // without a model receipt has no observed L metrics.
-    const rows = expected.map(id => observedEpisodes.has(id) ? byEpisode.get(id).result : {});
+    const usableEpisodes = new Set(), fallbackEpisodes = new Set();
+    const modelTurns = unique(outcomes.filter(row => row.id.startsWith('model_turn/')), row => row.id, 'model_turn');
+    const reasons = new Map();
+    let fallbackCount = 0;
+    for (const {id, result} of modelTurns.values()) {
+        const episodeId = id.match(/^model_turn\/(journey\/[^/]+\/[1-9]\d*)\/[1-9]\d*$/)?.[1];
+        if (!expectedIds.has(episodeId)) throw Error('unexpected_heldout_outcome');
+        if (result?.fallback === true) {
+            fallbackEpisodes.add(episodeId);
+            fallbackCount++;
+            const reason = result.reason || 'unspecified';
+            reasons.set(reason, (reasons.get(reason) || 0) + 1);
+        }
+        if (observedEpisodes.has(episodeId) && usableModelTurn(result)) usableEpisodes.add(episodeId);
+    }
+    // Transport evidence and a durable usable turn are both required for L metrics.
+    const rows = expected.map(id => usableEpisodes.has(id) ? byEpisode.get(id).result : {});
+    const fallbackOnlyCompleted = expected.filter(id => {
+        const result = byEpisode.get(id)?.result;
+        return observedEpisodes.has(id) && !usableEpisodes.has(id) && fallbackEpisodes.has(id) &&
+            (result?.script_completed === true || result?.completed === true);
+    }).length;
     return {
         plan: 'heldout', rehearsal: state.rehearsal === true, expected: expected.length, recorded: byEpisode.size,
         completed: rows.filter(row => row.completed === true).length,
-        model_participation: { observed: observedEpisodes.size, not_observed: byEpisode.size - observedEpisodes.size, unrecorded: expected.length - byEpisode.size },
+        model_participation: {
+            observed: observedEpisodes.size, usable: usableEpisodes.size, fallback_only_completed: fallbackOnlyCompleted,
+            not_observed: byEpisode.size - observedEpisodes.size, unrecorded: expected.length - byEpisode.size
+        },
+        fallbacks: {
+            turns: modelTurns.size, count: fallbackCount, share: modelTurns.size ? fallbackCount / modelTurns.size : null,
+            reasons: Object.fromEntries(reasons)
+        },
         model_off: questionMeasures(baseline), L: questionMeasures(rows), thresholds: null, qualification: 'not assessed; measured only'
     };
 }
-module.exports = {score,scoreCompatibility,scoreHeldout,questionMeasures,median,p95};
+module.exports = {score,scoreCompatibility,scoreHeldout,questionMeasures,usableModelTurn,median,p95};
