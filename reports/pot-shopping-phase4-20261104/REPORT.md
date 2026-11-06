@@ -1,41 +1,34 @@
-# Phase 4 Part A review fixes
+# PR 36 adversarial review fixes
 
-Both independent offline reviewers passed the functional repair at `6903247`.
-A follow-up review passed the mutation-tooling update at `36cf755dcbd5ee4f520d70d64de730a33725a14c`. The earlier
-Part A report is preserved at `3fd7f28`. The current freeze SHA-256 is
-`9a2423f88236a600081b8693c8f8e984b17d9b81b3cfdacbd4e18f4d0fb0d9a2`.
+This report verifies `3909acf240dc1d157b4469a9f8041109cb4c35a1` and freeze SHA-256 `9e70f325a3c98c3c355727dce748e2774e5bc8e038099007b67a6b58c2246d72`. Independent
+re-review passed the scoring, portability, retry, replay, and launcher fixes.
 
-The validator tracks approval phases and requires a current complete preview.
-It checks the renderer's synthetic URL format and hashes external fixture bytes
-before parsing strict UTF-8. The freeze generator and both launcher entry points
-replay the bound scripts through the synthetic model-off baseline before writing
-the freeze or handing off credentials.
+- The launcher holds an exclusive run-directory lock through checkpoint close
+  and publishes the detached worker PID before sending the framed handoff.
+  It checks frozen bytes before credential access, including the cached-token helper.
+- Attempts count before dispatch. A timed-out retry still counts, and a settled
+  caller timeout replays without another transport attempt.
+- The held-out driver answers distinct fields in one scripted turn. The scorer
+  separates HTTP receipts, usable plans, and fallback-only checkouts.
+- The qualifiers verify the pinned historical inputs without Git ancestry.
+  A checkout without .git passed the model contract, episode equivalence, and
+  runtime patch checks. The historical comparison uses the historical turn runner.
 
-M2 counts only values supplied through a user turn or an accepted interface
-selection. L completion requires observed model participation, and scoring checks
-the durable receipts and bound model-off rows. The baseline verifies the order
-printing and total. These changes were verified against the historical J01–J04
-outputs and requests in 56 byte-for-byte comparisons.
+The full suite passed 636/636, the model suite 130/130, and the
+explicit harness 11/11. All 49 model mutations and all
+12 qualifiers passed. The 56 historical J01–J04 comparisons
+matched outcomes and requests. Compatibility replay covered 778 contexts.
+The synthetic stand-in ran ten L and ten model-off episodes.
 
-The full suite passed 630/630, the model suite passed
-124/124, and the explicit harness tests passed
-10/10. All 49 model mutations were caught.
-All 12 qualifiers passed, including 778 compatibility contexts
-and ten L plus ten model-off stand-in episodes. An earlier compatibility attempt
-stopped at the fake-token time limit after a wall-clock gap. A model-mutation
-run on the functional repair also exposed a stale literal match in the approval
-display mutation. The tooling update retargets that same mutation without
-altering its assertion.
+The fresh kernel gate ran 93 rows, caught 88 and retained 5 known equivalents.
+The 8,694 Node and 6,080
+Python kernel audits recorded zero network attempts. The local one-minute load
+started at 7.52 and ranged from 6.29 to 54.55.
+The first run stopped after 21 rows on a worker deadline. Peak one-minute load was 51.69. The retry reran all rows with the original deadlines. Both runs are preserved in the archive.
 
-The fresh kernel gate ran all 93 rows, caught 88, and retained the five known
-equivalents. The run recorded 8,694 Node and
-6,080 Python audits with zero network attempts.
-The local one-minute load started at 15.34 and ranged
-from 5.42 to 46.10 during the gate. The gate ran within
-the restricted execution environment with the strict Node and Python guards.
 
-All four frozen model files and the generation configuration match `12dc3a1`.
-The held-out binding is null. All evaluation traffic used local fake transport.
-Raw evidence stays outside Git and is bound by the archive SHA-256
-`eee3a0a5ad5ee2238407ad117009f4feb3088ecfbc2533e21f6403c431674031` and manifest SHA-256
-`d55c3659a2b83835323bd3297ee4eb3903bd19177d57706c3b33bbb5ce45f575`.
+The system instruction, generation settings, limits, declarations and context
+match the historical baseline. The freeze contains a null held-out binding.
+Validation used synthetic fixtures and fake transport. The previous validation
+report is preserved in `d4f6b5d`. Raw evidence is outside Git and is bound by
+archive SHA-256 `3092c6bfe8f78dacd14f77c3526e286d2dc83ca0e83d3cc692277d2a3760d931` and manifest SHA-256 `897f55bdac2dc8093d159773220eca50fbf758b37807f40ecd8f5bd4f9c803ce`.
