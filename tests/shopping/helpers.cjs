@@ -4,8 +4,9 @@ const catalog=require('../fixtures/shopping/catalog.json');
 const journeys=require('../fixtures/shopping/journeys.json');
 const {createShopping}=require('../../src/lib/pokemon/shopping/facade.cjs');
 function setup(options={}){
- let now=catalog.clock,seq=0;const native=[];
- const shop=createShopping({catalog,clock:()=>now,nativeProbe:t=>native.push(t),...options});
+ const fixture=options.catalog||catalog;
+ let now=fixture.clock,seq=0;const native=[];
+ const shop=createShopping({catalog:fixture,clock:()=>now,nativeProbe:t=>native.push(t),...options});
  const scope={tenant:'tenant_fixture',app:'pot_fixture',user:'user_fixture'};
  const principals=Object.fromEntries(['ui','model','worker'].map(role=>[role,shop.issuePrincipal(scope,role)]));
  const task=shop.createTask(principals.ui),taskRef=task.id;

@@ -58,6 +58,7 @@ function preparePythonShim(candidate){
   return {directory,audits,executable,helper_sha256:hash(PYTHON_HELPER),shell_sha256:sha(shell)};
 }
 const snapshotNames=['src','tests','cloud','public','scripts','.github','docs','private-coverage','package.json','tsconfig.json',
+  'reports/pot-shopping-phase3-20261101','reports/admission-kernel-live-model',
   'reports/admission-kernel/evidence','reports/admission-kernel-round2/evidence',
   'reports/admission-kernel-round3/evidence','reports/admission-kernel-round4/evidence',
   'reports/admission-kernel-round5/evidence'];

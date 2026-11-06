@@ -1,0 +1,1239 @@
+{
+  "heldout_fixture": null,
+  "heldout_budgets": {
+    "calls": 1200,
+    "calls_per_arm": 1200,
+    "input_tokens": 6000000,
+    "usd": 2,
+    "usd_per_arm": {
+      "L": 2,
+      "P": 0
+    },
+    "concurrency": 2,
+    "minimum_launch_minutes": 45,
+    "refresh_minutes": 10,
+    "prompt_reservation_cap": 200000,
+    "output_reservation_cap": 2048
+  },
+  "phase4_model_base": "12dc3a19299c19e200541c4261a69658c26a1b72",
+  "corpus_plan": {
+    "schema": "shopping.phase3.corpus-plan.v1",
+    "clock": 1793491200000,
+    "arms": [
+      "model-off",
+      "L",
+      "P"
+    ],
+    "journeys": [
+      {
+        "id": "J01",
+        "repetitions": 10,
+        "fixture": "tests/fixtures/shopping/journeys.json",
+        "trusted_controls": "identical frozen phase2 controls; never model-authored consent",
+        "privacy_events": "Any user text containing private destination/contact data falls back to deterministic original-text path before transport."
+      },
+      {
+        "id": "J02",
+        "repetitions": 10,
+        "fixture": "tests/fixtures/shopping/journeys.json",
+        "trusted_controls": "identical frozen phase2 controls; never model-authored consent",
+        "privacy_events": "Any user text containing private destination/contact data falls back to deterministic original-text path before transport."
+      },
+      {
+        "id": "J03",
+        "repetitions": 10,
+        "fixture": "tests/fixtures/shopping/journeys.json",
+        "trusted_controls": "identical frozen phase2 controls; never model-authored consent",
+        "privacy_events": "Any user text containing private destination/contact data falls back to deterministic original-text path before transport."
+      },
+      {
+        "id": "J04",
+        "repetitions": 10,
+        "fixture": "tests/fixtures/shopping/journeys.json",
+        "trusted_controls": "identical frozen phase2 controls; never model-authored consent",
+        "privacy_events": "Any user text containing private destination/contact data falls back to deterministic original-text path before transport."
+      }
+    ],
+    "adversarial": {
+      "ids": [
+        "X01",
+        "X02",
+        "X03",
+        "X04",
+        "X05",
+        "X06",
+        "X07",
+        "X08",
+        "X09",
+        "X10",
+        "X11",
+        "X12"
+      ],
+      "repetitions": 1,
+      "per_arm": true
+    },
+    "faults": {
+      "ids": [
+        "price_change",
+        "out_of_stock",
+        "timeout_after_submit",
+        "duplicate_submit",
+        "partial_failure",
+        "inconclusive_lookup"
+      ],
+      "repetitions": 1,
+      "per_arm": true
+    },
+    "compatibility": {
+      "enabled": false,
+      "unique": 389,
+      "passes_per_arm": 0,
+      "retained_unused": true,
+      "mapping": "tests/fixtures/shopping-model-eval/compatibility-mapping.json"
+    },
+    "unexpected_question_rule": {
+      "frozen_unresolved_value_first": true,
+      "fallback": "Use what I already said",
+      "count_each_event_as_unnecessary": true,
+      "continue_with_original_limits": true
+    },
+    "failed_episodes": "retain every failure/timeout in original denominator",
+    "order": [
+      "journeys",
+      "X01-X12",
+      "faults"
+    ],
+    "model_arm_concurrency": 2,
+    "smoke": {
+      "arms": [
+        "L"
+      ],
+      "journey_repetitions": 2,
+      "adversarial": false,
+      "faults": false,
+      "compatibility": false,
+      "scored": false
+    },
+    "heldout": {
+      "arms": [
+        "model-off",
+        "L"
+      ],
+      "journey_repetitions": 10,
+      "adversarial": false,
+      "faults": false,
+      "compatibility": false,
+      "external_fixture": true,
+      "binding": "heldout_fixture",
+      "scored": "measured only; thresholds await Peng"
+    },
+    "compatibility_plan": {
+      "arms": [
+        "L"
+      ],
+      "contexts": 389,
+      "passes": 2,
+      "journeys": false,
+      "scored_by": "scoreCompatibility",
+      "thresholds": [
+        "compatibility",
+        "zero_catalog_hold_flips"
+      ]
+    }
+  },
+  "stop_rules": {
+    "request_rejected": {
+      "consecutive_non_429_4xx": 3,
+      "scope": "arm"
+    },
+    "access_denied": {
+      "statuses": [
+        401,
+        403
+      ],
+      "scope": "global"
+    }
+  },
+  "smoke_budgets": {
+    "calls": 80,
+    "calls_per_arm": 80,
+    "input_tokens": 2000000,
+    "usd": 1,
+    "usd_per_arm": {
+      "L": 1,
+      "P": 0
+    },
+    "concurrency": 2,
+    "minimum_launch_minutes": 45,
+    "refresh_minutes": 10,
+    "prompt_reservation_cap": 200000,
+    "output_reservation_cap": 2048
+  },
+  "compat_budgets": {
+    "calls": 2400,
+    "calls_per_arm": 2400,
+    "input_tokens": 12000000,
+    "usd": 5,
+    "usd_per_arm": {
+      "L": 5,
+      "P": 0
+    },
+    "concurrency": 2,
+    "minimum_launch_minutes": 45,
+    "refresh_minutes": 10,
+    "prompt_reservation_cap": 200000,
+    "output_reservation_cap": 2048
+  },
+  "review_go": {
+    "smoke": "claude_3c_smoke_go",
+    "reduced": "claude_3c_reduced_go",
+    "compatibility": "claude_3c_compat_go",
+    "heldout": "claude_4_heldout_go"
+  },
+  "harness_fix": "Post-hoc harness fix of 2 November 2026 after run 1 (3403bc9): fenced answer plans accepted, original user text bound by the server for search_catalog and get_offers, search_not_called rule, guard error listeners and sanitized fatal record. Run 1 stays in the record, unscored. Round 2 after the reduced run: the model sees interface results (shown_in_interface) through the privacy projection, a search plan counts any catalog read, the instruction states interface and privacy policy and slot-to-record rules, and sampling follows Gemini 3 guidance. The reduced run stays in the record.",
+  "sampling_limitation": "Round 2 (2 November 2026, after the reduced run): temperature, topP and thinkingBudget removed and thinkingLevel LOW set on both arms, following Google guidance for Gemini 3 (thinkingBudget deprecated and can 400; temperature below 1.0 can loop; 3.5 Flash-Lite ignores custom sampling). LOW is the lowest level both models accept. Preflight proves acceptance only, not suitability.",
+  "schema": "shopping.phase3.freeze.v1",
+  "stage": "3a",
+  "live_run_enabled": false,
+  "base": "6bab48c2f8f02bbdf47e8cfd2e4026685b6b5674",
+  "models": {
+    "L": "gemini-3.5-flash-lite",
+    "P": "gemini-3.1-pro-preview"
+  },
+  "endpoints": {
+    "L": "https://aiplatform.googleapis.com/v1/projects/pivota-prod/locations/global/publishers/google/models/gemini-3.5-flash-lite:generateContent",
+    "P": "https://aiplatform.googleapis.com/v1/projects/pivota-prod/locations/global/publishers/google/models/gemini-3.1-pro-preview:generateContent"
+  },
+  "generationConfig": {
+    "maxOutputTokens": 1024,
+    "thinkingConfig": {
+      "includeThoughts": false,
+      "thinkingLevel": "LOW"
+    }
+  },
+  "toolConfig": {
+    "functionCallingConfig": {
+      "mode": "AUTO"
+    }
+  },
+  "sampling_reason": "Vendor-default sampling, bounded 1024 output tokens and thinkingLevel LOW. Identical across arms; exact-model acceptance unverified until preflight. Unsupported configuration stops an arm; no substitution.",
+  "system_instruction_sha256": "cc638059f0b8683ed6f7c7f852a744b85f74ef41d14026367ab8c77890d0e7b0",
+  "declaration_set_sha256": "c92004f196464c05bf1fc7fe8a05cbed4a836aef306f3cad8e381cd105f89262",
+  "dropped_schema_keywords": [
+    {
+      "tool": "compare_offers",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "compare_offers",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "compare_offers",
+      "path": "/properties/offer_refs/items",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "create_checkout_session",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "create_checkout_session",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "create_checkout_session",
+      "path": "/properties/selection_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "create_checkout_session",
+      "path": "/properties/request_id",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_alternatives",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "get_alternatives",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_alternatives",
+      "path": "/properties/printing_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_checkout_session",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "get_checkout_session",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_checkout_session",
+      "path": "/properties/preview_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_offers",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "get_offers",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_offers",
+      "path": "/properties/text",
+      "keyword": "maxLength",
+      "value_sha256": "81a83544cf93c245178cbc1620030f1123f435af867c79d87135983c52ab39d9"
+    },
+    {
+      "tool": "get_offers",
+      "path": "/properties/printing_refs/items",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_offers",
+      "path": "/properties/proposed_filters",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "get_offers",
+      "path": "/properties/proposed_filters/properties/currency",
+      "keyword": "pattern",
+      "value_sha256": "43e30b328479ac6996bef63ea838cf0ff276d8c9736f9a423f1f601123b62ebb"
+    },
+    {
+      "tool": "get_offers",
+      "path": "/properties/proposed_filters/properties/budget_minor",
+      "keyword": "pattern",
+      "value_sha256": "70d409a72469c95f8d20d1b57a1d3a718aaa414e0102b3c6ac6dc8f8053ffcde"
+    },
+    {
+      "tool": "get_offers",
+      "path": "/properties/proposed_filters/properties/grade_company",
+      "keyword": "minLength",
+      "value_sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+    },
+    {
+      "tool": "get_offers",
+      "path": "/properties/proposed_filters/properties/grade_company",
+      "keyword": "maxLength",
+      "value_sha256": "6af1f692e9496c6d0b668316eccb93276ae6b6774fa728aac31ff40a38318760"
+    },
+    {
+      "tool": "get_offers",
+      "path": "/properties/proposed_filters/properties/grade_value",
+      "keyword": "minLength",
+      "value_sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+    },
+    {
+      "tool": "get_offers",
+      "path": "/properties/proposed_filters/properties/grade_value",
+      "keyword": "maxLength",
+      "value_sha256": "6af1f692e9496c6d0b668316eccb93276ae6b6774fa728aac31ff40a38318760"
+    },
+    {
+      "tool": "get_operation",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "get_operation",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_operation",
+      "path": "/properties/operation_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_order",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "get_order",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_order",
+      "path": "/properties/operation_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_product",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "get_product",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "get_product",
+      "path": "/properties/printing_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "lookup_certificate",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "lookup_certificate",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "lookup_certificate",
+      "path": "/properties/certificate_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "lookup_certificate",
+      "path": "/properties/offer_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "request_refresh",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "request_refresh",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "request_refresh",
+      "path": "/properties/refs/items",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "request_refresh",
+      "path": "/properties/request_id",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "search_catalog",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "search_catalog",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "search_catalog",
+      "path": "/properties/text",
+      "keyword": "minLength",
+      "value_sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+    },
+    {
+      "tool": "search_catalog",
+      "path": "/properties/text",
+      "keyword": "maxLength",
+      "value_sha256": "81a83544cf93c245178cbc1620030f1123f435af867c79d87135983c52ab39d9"
+    },
+    {
+      "tool": "search_catalog",
+      "path": "/properties/proposed_filters",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "search_catalog",
+      "path": "/properties/proposed_filters/properties/currency",
+      "keyword": "pattern",
+      "value_sha256": "43e30b328479ac6996bef63ea838cf0ff276d8c9736f9a423f1f601123b62ebb"
+    },
+    {
+      "tool": "search_catalog",
+      "path": "/properties/proposed_filters/properties/budget_minor",
+      "keyword": "pattern",
+      "value_sha256": "70d409a72469c95f8d20d1b57a1d3a718aaa414e0102b3c6ac6dc8f8053ffcde"
+    },
+    {
+      "tool": "search_catalog",
+      "path": "/properties/proposed_filters/properties/grade_company",
+      "keyword": "minLength",
+      "value_sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+    },
+    {
+      "tool": "search_catalog",
+      "path": "/properties/proposed_filters/properties/grade_company",
+      "keyword": "maxLength",
+      "value_sha256": "6af1f692e9496c6d0b668316eccb93276ae6b6774fa728aac31ff40a38318760"
+    },
+    {
+      "tool": "search_catalog",
+      "path": "/properties/proposed_filters/properties/grade_value",
+      "keyword": "minLength",
+      "value_sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+    },
+    {
+      "tool": "search_catalog",
+      "path": "/properties/proposed_filters/properties/grade_value",
+      "keyword": "maxLength",
+      "value_sha256": "6af1f692e9496c6d0b668316eccb93276ae6b6774fa728aac31ff40a38318760"
+    },
+    {
+      "tool": "select_offer",
+      "path": "",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/task_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/offer_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/requirements",
+      "keyword": "additionalProperties",
+      "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/requirements/properties/printing_ref",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/requirements/properties/finish",
+      "keyword": "minLength",
+      "value_sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/requirements/properties/finish",
+      "keyword": "maxLength",
+      "value_sha256": "6af1f692e9496c6d0b668316eccb93276ae6b6774fa728aac31ff40a38318760"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/requirements/properties/grade_company",
+      "keyword": "anyOf",
+      "value_sha256": "93bd8e459c4273d5a7edf21900e8b48f127a9a54daefc9f6cc9aaab5a2ff2a9c"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/requirements/properties/grade_value",
+      "keyword": "anyOf",
+      "value_sha256": "93bd8e459c4273d5a7edf21900e8b48f127a9a54daefc9f6cc9aaab5a2ff2a9c"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/requirements/properties/condition_bucket",
+      "keyword": "minLength",
+      "value_sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/requirements/properties/condition_bucket",
+      "keyword": "maxLength",
+      "value_sha256": "6af1f692e9496c6d0b668316eccb93276ae6b6774fa728aac31ff40a38318760"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/requirements/properties/currency",
+      "keyword": "pattern",
+      "value_sha256": "43e30b328479ac6996bef63ea838cf0ff276d8c9736f9a423f1f601123b62ebb"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/requirements/properties/budget_minor",
+      "keyword": "pattern",
+      "value_sha256": "70d409a72469c95f8d20d1b57a1d3a718aaa414e0102b3c6ac6dc8f8053ffcde"
+    },
+    {
+      "tool": "select_offer",
+      "path": "/properties/request_id",
+      "keyword": "pattern",
+      "value_sha256": "b6baab5916db6397a11811ec749f481a626c874aac1706f085595a214a2bdc74"
+    }
+  ],
+  "privacy_projection_sha256": "62c8c182deebdf56494d8f0a3dcce314c5266308bdca6c57f067cd5c4524400d",
+  "privacy_policy": {
+    "version": "shopping.model-privacy.v1",
+    "private_event": "fail_closed_before_transport",
+    "synthetic_private_values": [
+      "dest_hk",
+      "dest_us",
+      "Hong Kong",
+      "United States"
+    ],
+    "patterns": [
+      "email",
+      "phone",
+      "destination labels",
+      "contact/address fields"
+    ],
+    "native_text": "original only; never feed a redacted model view to native admission"
+  },
+  "privacy_policy_sha256": "d01b739968adc79e6fcd3d58bea9bb2285686aae3a5d20fcbca5ac1b3a35e07b",
+  "fixture_manifest_sha256": "bd4258fb31b197a64dc8d7b445c4b03dca8b9bce0d9f11aa7cf6fc3bce54ae79",
+  "compatibility_mapping_sha256": "d8ec53756811d301ec4f03a70a1b4a865276ec7186832e18ae39088f1fbb731f",
+  "prices": {
+    "schema": "shopping.vertex.published-price-observation.v1",
+    "retrieved_on": "2026-11-01",
+    "document_title": "Agent Platform Pricing | Google Cloud",
+    "requested_url": "https://cloud.google.com/vertex-ai/generative-ai/pricing",
+    "resolved_official_url": "https://cloud.google.com/model-garden/pricing",
+    "evidence_kind": "factual extraction from the official page; not a raw HTML snapshot",
+    "billing_mode": "standard online",
+    "location": "global",
+    "currency": "USD",
+    "rate_unit": "per million tokens",
+    "input_context_threshold_tokens": 200000,
+    "models": {
+      "gemini-3.5-flash-lite": {
+        "official_display_name": "Gemini 3.5 Flash-Lite",
+        "source_lines": [
+          149,
+          150,
+          152
+        ],
+        "up_to_200k": {
+          "input": 0.3,
+          "output_including_reasoning": 2.5
+        },
+        "above_200k": {
+          "input": 0.3,
+          "output_including_reasoning": 2.5
+        }
+      },
+      "gemini-3.1-pro-preview": {
+        "official_display_name": "Gemini 3.1 Pro Preview",
+        "source_lines": [
+          112,
+          113
+        ],
+        "up_to_200k": {
+          "input": 2,
+          "output_including_reasoning": 12
+        },
+        "above_200k": {
+          "input": 4,
+          "output_including_reasoning": 18
+        }
+      }
+    },
+    "thinking_separately_priced": false,
+    "thinking_basis": "Official output rows include response and reasoning.",
+    "long_context_basis_line": 88,
+    "long_context_rule": "For inputs longer than 200K, both input and output use the long-context rate.",
+    "cache_discounts_assumed": false,
+    "priority_or_batch_rates_used": false,
+    "availability_and_function_calling_verified": false,
+    "model_requests": 0,
+    "credential_reads": 0
+  },
+  "price_evidence_sha256": "b39291eab4bf92055b6b1ecff4dcb6a8504820daf320cb4b5270da888a9dc45e",
+  "pricing_rule": "Standard global; sum candidate and reasoning output, no separate thought rate or discounts. Both input tiers frozen. Prompt UTF8 bytes <=200000 before transport; over-cap reported usage is still charged using actual high-tier input/output before hard stop. Missing metadata retains maximum reservation.",
+  "budgets": {
+    "calls": 1500,
+    "calls_per_arm": 750,
+    "input_tokens": 15000000,
+    "usd": 25,
+    "usd_per_arm": {
+      "L": 5,
+      "P": 20
+    },
+    "concurrency": 2,
+    "minimum_launch_minutes": 45,
+    "refresh_minutes": 10,
+    "prompt_reservation_cap": 200000,
+    "output_reservation_cap": 2048
+  },
+  "turn_limits": {
+    "timeout_ms": 8000,
+    "calls_per_turn": 4,
+    "calls_per_journey": 12,
+    "sources": 3,
+    "listings_per_source": 3
+  },
+  "artifacts": [
+    {
+      "path": "reports/admission-kernel-live-model/corpus.json",
+      "sha256": "c1c9912e16c7a491387f8d3e24c59493bfce5fd4f6437a72eaecaa9f26dafd73"
+    },
+    {
+      "path": "reports/admission-kernel-live-model/dynamic-context.cjs",
+      "sha256": "b9b6f5f51036b7a7c330d93be32eb559a04f4cab82f4046269ef3fcd71c965ef"
+    },
+    {
+      "path": "reports/admission-kernel-live-model/holdout-e.json",
+      "sha256": "dc63d42daf62ddd6ca0a643eb0ddad42a9dcf5fa591f9708b84ac91234bd4997"
+    },
+    {
+      "path": "reports/admission-kernel-live-model/live-allowlist-guard.cjs",
+      "sha256": "623aec6125d41f53416b16fdbf3be2d2715a4d34a70b8130dc45c24f5d05d202"
+    },
+    {
+      "path": "reports/admission-kernel-live-model/offline-fixture.cjs",
+      "sha256": "8b9dbd793894ab49cb066bd37a9bbd21bb8aa10897bdf1da40d1b569a7d0e715"
+    },
+    {
+      "path": "reports/admission-kernel-live-model/token-launch.py",
+      "sha256": "922d94912fea857bc4d08a9d99890ba78f16318b49aa03ea5bcce0fc0ab3e283"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/JOURNEYS_V2.md",
+      "sha256": "0e39a078e942269377a4aabf23e63d5ba39d9b9016558a8bfce67f88b14e376b"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/MAPPING.md",
+      "sha256": "cbab2b98dada17d6273cd1aac1a40e8c7dfc6715ee2f3e5d78000705740ca59f"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/baseline-v2.cjs",
+      "sha256": "1773370637dc6bd061eca2b7572d23ce0322dc7a1532848016ca32e29c79cbc0"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/declarations.json",
+      "sha256": "ce8a51cc206a2258d16c32c17be83e1fe87c2fa6abe535033e961182f8774e26"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/detached-launch.cjs",
+      "sha256": "f08d2e6a500e5d80be4b70bd7169ea8f32fb4df7aa78eaa95ffcd03f7a00f541"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/fake-worker.cjs",
+      "sha256": "cb95c041eb0aef3b39898b98ddfa4135742fe09140374fb5b9c90a2c28c51c77"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/guard-child.cjs",
+      "sha256": "2345554188921d83460e8902d67992b2917face57b778d855559d3ad0668f8b1"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/guard.test.cjs",
+      "sha256": "a6861ea6b02a4326ebe5b2780a3f1ed8be699104afd3c46a321b79102e299cc7"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/harness-fix-runtime.patch",
+      "sha256": "3a34436da02f31a8ab6b55750716acf1370a00c42935e662f81d53ecd2c19551"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/historical-baselines.cjs",
+      "sha256": "d3c841e37d12b84c3950bb78f06c8e7f465ab0d483ff457bebd6c62d426f89f4"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/historical-baselines.json",
+      "sha256": "50621cc91372cded2fa0619d6b48e0cb8423e6a0cb0052d9c07732c28a94b820"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/host-screen.test.cjs",
+      "sha256": "825f712d20200036962d30d684bdc8f668a42566a6da6df8639eaf8385d1531a"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/journey-data.cjs",
+      "sha256": "0a188b95e00b1d7ddc4e15ec811d320c0cddab740c5f885fd51c2b634182037c"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/launch-go.test.cjs",
+      "sha256": "96c7076d2b67cdc345bac955f9f3ce58374f686cf4911575508bafebb5721de9"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/live-host.cjs",
+      "sha256": "674887e4780c1dcfc8c0ef244685c6ddce1d62346a3b6b83babd1435cbd67a65"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/mutations.cjs",
+      "sha256": "e385407bc3cf23e21b65642c5a98cb41625b2f77894c691f99dd3a7afc8a3bc3"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/orchestrate.cjs",
+      "sha256": "ebc80da67d21c53bcfcbe2fd54f0090f6c2ea24ba4f54c11bbebe816b7f7323a"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/prepare-freeze.cjs",
+      "sha256": "be67d033498ccb4281202ae974a2ae760ccbb15d40ea04009e6597c90a68255e"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/prepare-scenarios.cjs",
+      "sha256": "261ad096b40bf23cbf2e8483bab0444b33e73430563ae598b35d500f6dcc18f4"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/published-prices.json",
+      "sha256": "b39291eab4bf92055b6b1ecff4dcb6a8504820daf320cb4b5270da888a9dc45e"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/qualify-arm-resume.cjs",
+      "sha256": "60a8bd2a32fde7ba64b74d0f46d645eb9bcadd689c57ccf2481c009eaa63c2c7"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/qualify-compat.cjs",
+      "sha256": "07536629876c70f2426d26084154efbc4e7044277ceb2c60e4d034a31a3fb8d1"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/qualify-corpus.cjs",
+      "sha256": "067878033d146f9736659589f4104d78ef2ada2b9b608a851c5a97ca756d12fa"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/qualify-detached.cjs",
+      "sha256": "93e4a9e683c61635be4f5a07e141fdd45449f0e94781ec9a0524cc2cf16203f9"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/qualify-episode-equivalence.cjs",
+      "sha256": "b1fc64e5ff50cff0c0e0c6351a5a6dc2788398c87ff80fb2608f7b5345d842be"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/qualify-guard.cjs",
+      "sha256": "4b4f7a736cd317f301c54281b5d8bb79d6e8f95ff4d3c8600e3b4b30f0f24fe6"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/qualify-heldout.cjs",
+      "sha256": "255c83983a0aa27fa8484b82e31b925a3d3e56d07dfbf7e5fac387fa70cc7768"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/qualify-mapping.cjs",
+      "sha256": "c20e271a6a099ac46bb5ba1e406b88ef95fedb9ba1ccbee0bb82286d5705c640"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/qualify-model-freeze.cjs",
+      "sha256": "f52c7d24ce006faa51657d1d43c00c549efe553bb24caab6b0b78de341214b2b"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/qualify-reduced-plan.cjs",
+      "sha256": "c1871f60696b621bb47306c8bffbcdb8b3213b5e58aa03fc562250166dbdb561"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/qualify-smoke.cjs",
+      "sha256": "9dac922bbba4006f54d9f710e4d150723d4263dcf5285a025a11c040396ebf19"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/qualify-syntax.cjs",
+      "sha256": "020b5ad7c8037c3f2e3996f6e2295289718c03b0828f67182bfc93e6eae07000"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/run-directory.cjs",
+      "sha256": "db9455e5a0892ba40872b5ea62a27c8d5c4f8407d5d13a6ca9cb1b9f9dbbd953"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/score.cjs",
+      "sha256": "3a6a59dcc58877c104a8de15d65d06fc4f17f2b54042876624d53d62407ba72d"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/token-launch.py",
+      "sha256": "460688e62f9d74407a202970df3fef8457b8bd418cc9eae6eaa5cf5b85e6f708"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/validate-heldout.cjs",
+      "sha256": "02a92e228e95094e626ad68991a0877913b14dce23dfb45322e6d49cf4b20130"
+    },
+    {
+      "path": "reports/pot-shopping-phase3-20261101/vertex-allowlist-guard.cjs",
+      "sha256": "e230e13407cc6a551729bfabee0ec70a5db035ac1ace5077e28d5637167ecf33"
+    },
+    {
+      "path": "src/lib/pokemon/admission.cjs",
+      "sha256": "0002b573bb37536316218890a56575e7eb50411a8de1b0b6bdaba3f9719eb551"
+    },
+    {
+      "path": "src/lib/pokemon/admissionVocabulary.json",
+      "sha256": "6d763083ca01413f7d071d2e65a34145da49543338df6b2c12f1d682ac20a516"
+    },
+    {
+      "path": "src/lib/pokemon/bnsChatState.cjs",
+      "sha256": "6f2212785a850aa90090d64f7e9a5e630d6bc54a7a7f4dcad5bbf4fc1450fe86"
+    },
+    {
+      "path": "src/lib/pokemon/bnsPreview.cjs",
+      "sha256": "fccd9eb7317ea181cfe3e0231b017d7b3a1f69805029df03b15c9effc0af6fe4"
+    },
+    {
+      "path": "src/lib/pokemon/catalogAdapter.cjs",
+      "sha256": "9b7acc3a75cffce2bcb7dad11356a0f6920b34c1591a271a49403bf61a85bf52"
+    },
+    {
+      "path": "src/lib/pokemon/catalogMedia.cjs",
+      "sha256": "ee4785b026311b08fc23a23dc1ddeba5de6b5f104b0991a67869c393175eb79b"
+    },
+    {
+      "path": "src/lib/pokemon/chatReleaseHints.json",
+      "sha256": "fc4466575faf940874230ee84829f4e338cfbf09c522031628985b25b5958b66"
+    },
+    {
+      "path": "src/lib/pokemon/chatTextIntent.cjs",
+      "sha256": "3880370526ba45ae1fb5822b4cea21f2032fe1a006c27363986ac60030f1d813"
+    },
+    {
+      "path": "src/lib/pokemon/collectorError.cjs",
+      "sha256": "2010f2f81bc5b6f84338e8f08a4db1813acf1b0c786a0d53c25962d5f4469d48"
+    },
+    {
+      "path": "src/lib/pokemon/commerceContract.cjs",
+      "sha256": "a703c883797cf8f22c16140718cb96d1fbfb2f6a3e1dbaec5b2c5aed0eb1d77c"
+    },
+    {
+      "path": "src/lib/pokemon/commerceHistory.cjs",
+      "sha256": "a1a66f810a902ec2e9287242da484884b1d5bbc97552aa24022afe0c74d69d21"
+    },
+    {
+      "path": "src/lib/pokemon/comparisonRecords.cjs",
+      "sha256": "199f91421312c46e461609b803f831653e874f43c22bf11873234156077c3d6b"
+    },
+    {
+      "path": "src/lib/pokemon/conversations.cjs",
+      "sha256": "0deb24378464a317d3f52464c330baa131471727c1bd1fb847c6ad3e9a1de3ff"
+    },
+    {
+      "path": "src/lib/pokemon/geminiVertex.cjs",
+      "sha256": "3eac62cec7ac778dd81a39208cb0faf5f330761e4ea44f7fcb1668f0d5be6228"
+    },
+    {
+      "path": "src/lib/pokemon/listingEvidence.cjs",
+      "sha256": "76a5cc2119bd1c24745d2e46d30ff50e0f96ce12ce0be26948e4f52b8094dfa1"
+    },
+    {
+      "path": "src/lib/pokemon/mediaWarnings.cjs",
+      "sha256": "0d9675764290a22623891344d9532384d8a05a22a0b7d7a95a5ea3c7222aecdc"
+    },
+    {
+      "path": "src/lib/pokemon/modelRuntime.cjs",
+      "sha256": "5da6101468d86b01788c97878b838d628fd111b9ec5596170c78bf9111f66bf3"
+    },
+    {
+      "path": "src/lib/pokemon/modelTurn.cjs",
+      "sha256": "432b0a6b5060eb97caf318d399fd9acb7c4ca8960099e5ef3581b73765378b63"
+    },
+    {
+      "path": "src/lib/pokemon/offerEvidence.cjs",
+      "sha256": "8e3391ebd121f5bc827cb5d2fb9b12b98d958ef0edaa8bd493da993125458429"
+    },
+    {
+      "path": "src/lib/pokemon/purchaseLink.cjs",
+      "sha256": "c0e89c6aca383d0cd2fce60dc96dc3e99fc947cab4c92dbd7e1b6d506b88e57b"
+    },
+    {
+      "path": "src/lib/pokemon/requestBudgets.cjs",
+      "sha256": "11298beff069361f1a1a53eef5d6a382b563ad31473f8c499ab14d20265dd3a8"
+    },
+    {
+      "path": "src/lib/pokemon/sellerEvidence.cjs",
+      "sha256": "100922050e1046e1c38b82b68d4604ba865f28292ef409fc51e3bda2180e2b15"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/approve_purchase.schema.json",
+      "sha256": "9804f1483095a645095314ce0e034a2ba63216f5436ae26caaa3f4ef5b1bd539"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/common.schema.json",
+      "sha256": "d8cbefd4bf1cc5328efcf00615e450801498dff2cfa78f737886d9359ecd0fd3"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/compare_offers.schema.json",
+      "sha256": "8d34763f0d16c914b78bad17d20a992287ad7009df3c7bf31b98bc34989c6bd2"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/complete_checkout_session.schema.json",
+      "sha256": "25813080b199daa99050e2e0be963cd8533d2889f2f0576c5926fcf0a64a394a"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/create_checkout_session.schema.json",
+      "sha256": "d40d53acd5c0c3e4e7227db0de4a36f52b06806711b2052bec8e3446ffda9250"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/create_payment_link.schema.json",
+      "sha256": "d00d72bf481cc1d973c101cba0f57de490a4330a9db5360d5d5ee84f8ce61e6d"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/get_alternatives.schema.json",
+      "sha256": "c101ac45714f49308a5177fcec5cf5303b3df4afd68bf49ea7abb75ac1f46fde"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/get_checkout_session.schema.json",
+      "sha256": "477c116b87bfff9c592b9c37d694a7f2a5236255516dce19dcc80048b78dfe11"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/get_offers.schema.json",
+      "sha256": "bc69c57dbc3f347d82c18d3ca00c93b716152ad712a727698fe4a397f176d32e"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/get_operation.schema.json",
+      "sha256": "ba4e8a1992b290f8b6931a63edfc0694ffa39e64da218ff3fe49a5c9c238db63"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/get_order.schema.json",
+      "sha256": "adccb4f094ca9b0fdeea555eb39ab211f8a005f8cdecccbbb54fccd9a7748067"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/get_product.schema.json",
+      "sha256": "dd3e1e769cf95acf608bcacf5e8184e8da27e06ccb0c81a2be9f36a44e9a30af"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/lookup_certificate.schema.json",
+      "sha256": "e95a600c921b6132e6fca7cac343b618fb4bd99ea1ecad808f1fde906e2e8aa3"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/reconcile_operation.schema.json",
+      "sha256": "c162e618bdce1c994203c4ea366f0a9b53104125bdcc940812d3933b75e6b2e8"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/recover_operation.schema.json",
+      "sha256": "a6fa8c0e3adbddb12e8aeab3c6d3ae2472f9257acb1537c486f2ea70bf87085a"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/replay_same_key.schema.json",
+      "sha256": "53a99a72ca94b5ae6ccc21bbbd8f7cffbce3aee7a7f83da94ada561d8764a21f"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/request_after_sales.schema.json",
+      "sha256": "4a923aaf5c5f882b879f987d55dc499989225d8e78198ad97807a363287d5aff"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/request_refresh.schema.json",
+      "sha256": "272a2010f2ec1aec27027bc268997432a43b95df217209f436d7e6cd3fb4c83e"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/search_catalog.schema.json",
+      "sha256": "45291d276c86a2b614e353feb5b66648e7e2355438e4db5a00e4d14d2db7e528"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/contracts/select_offer.schema.json",
+      "sha256": "287a30c7751e87d407eb86f1bd3b95443db9c8cfafaeafbe493d277f2b207ab9"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/evidence.cjs",
+      "sha256": "8dddb218e0e4e241675ab8d9dd5e6beaec049ee577dd153c550d448aa20b54bb"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/exploration.cjs",
+      "sha256": "41d2b747723f4848e42b7b3e9d47abe8a4076b073de0627f0a479c827f111d08"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/facade.cjs",
+      "sha256": "d43a2e5012917bf78de4e283097a2aeb45af526e356734487467ff14d87b51a1"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/ledger.cjs",
+      "sha256": "59a706d39bc617ba174c2d2f286b8ff6da520883b3dde76fef93e259839e81b4"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/model/collector.cjs",
+      "sha256": "a66aee1d2ea14330202ba1d3132f3dba490817b8322a73ca9706e9bbab755f5f"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/model/compatibility.cjs",
+      "sha256": "a75778557e9982eb0eacadce51802d79b9499d8eb95f1ef420d5814adbb52298"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/model/context.cjs",
+      "sha256": "ad855589e6c727989e19fec8b102d3aac9c4ed0972ccdd880f4e49e7c74187fd"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/model/declarations.cjs",
+      "sha256": "b735935f8a90d57c3b6b9bf3fb017f8cbc2930243da528cd1f59290b2038cf53"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/model/privacy.cjs",
+      "sha256": "a652e55b8f8eb4a10ebcb0995c9c7f8213a124969862aad5f5187bd49028ad69"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/model/scoring.cjs",
+      "sha256": "c974d6ce91c8dcc23969fef4b79c5df2ba0c353a5ac0f54e71218de1be79bb8d"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/model/turn.cjs",
+      "sha256": "0c101efda657bc81f8bd3be0c7d14b5345f449c1244b1850d6c07b4c4c3a2f24"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/model/vertex-request.cjs",
+      "sha256": "22e803fad28360b5dd9c7d6c195d8d97c18d806d86fdb4179567a85df2e28bc1"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/render.cjs",
+      "sha256": "c49f20ef0935847281bb4d15163577b5e2eb1b2d3f414a8fb7346316516c14c0"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/schema.cjs",
+      "sha256": "dfca7798674b44c2c90ecc8012222b6291d2bed062d735175bebaf1318f34a8b"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/shoppingAdmission.cjs",
+      "sha256": "901b565c6d57b9ca231feb6a62178bcc691343f674ded3a669039287c271ba29"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/simulators.cjs",
+      "sha256": "cbd2dad0880b0a420a5dd42ede1c17d826966d1d70c8be708a0f3445c49e2c9a"
+    },
+    {
+      "path": "src/lib/pokemon/shopping/worker.cjs",
+      "sha256": "e0e535d05fa233774c432dcaf3fc6abb9a124b8ded342432c3779bca561b808c"
+    },
+    {
+      "path": "src/lib/pokemon/sourceFamilyAdvisory.cjs",
+      "sha256": "26b8ac8a6bb1f01c3a27ef3c60e10332ac9c717a7b7a58608a0b6121d74afdc0"
+    },
+    {
+      "path": "src/lib/pokemon/sourceReadiness.cjs",
+      "sha256": "d77468effa377889d3952aa36f36e23c5d5d0ceadc0ce86bc2aa0ffbbe80f0ba"
+    },
+    {
+      "path": "src/lib/pokemon/vendor/collectorClient.cjs",
+      "sha256": "1db49f36b0b017a617b1682135fadeaa9b88a356c74ac575cf1a8437b4df08ae"
+    },
+    {
+      "path": "src/lib/pokemon/vendor/privateCollector.cjs",
+      "sha256": "624709b1ce667d30550778baa2f45dc6db1e58d07e63cd9a25dfa85c31dbe5a0"
+    },
+    {
+      "path": "src/lib/pokemon/workspaceFeedback.cjs",
+      "sha256": "4f1f5742b4397aa2a646f34904f3227ca124babe864cd16cfbd6b6ebc55ca911"
+    },
+    {
+      "path": "tests/fixtures/shopping-model-eval/compatibility-mapping.json",
+      "sha256": "d8ec53756811d301ec4f03a70a1b4a865276ec7186832e18ae39088f1fbb731f"
+    },
+    {
+      "path": "tests/fixtures/shopping-model-eval/corpus-plan.json",
+      "sha256": "a7465e3a51c988350b35d842761f05a45268bbea4c8a83ddf0498b8b51b239ed"
+    },
+    {
+      "path": "tests/fixtures/shopping-model-eval/journeys-v2.json",
+      "sha256": "e429da84e5ff6caf645ecca615be0615037141f198bc08d9bf27e3655f1ab544"
+    },
+    {
+      "path": "tests/fixtures/shopping/adversarial.json",
+      "sha256": "ee75c20d7a96b508c483844af11392073fa86595dd7d0f5ef3689b8129f77abb"
+    },
+    {
+      "path": "tests/fixtures/shopping/catalog.json",
+      "sha256": "d31449d7d2e10acf4ea76b4e5a7fa82e27d227d3a3487dba5c3011e0012fa841"
+    },
+    {
+      "path": "tests/fixtures/shopping/faults.json",
+      "sha256": "73805c1bd629669eb45295bfab276b3b3bddb7a8ad351239bb1fe51125f91acf"
+    },
+    {
+      "path": "tests/fixtures/shopping/frozen-manifest.json",
+      "sha256": "bd4258fb31b197a64dc8d7b445c4b03dca8b9bce0d9f11aa7cf6fc3bce54ae79"
+    },
+    {
+      "path": "tests/fixtures/shopping/journeys.json",
+      "sha256": "4c4416d9e67de550323b53e99695b05f87a1952e595def7a45854a09ea4eea9c"
+    },
+    {
+      "path": "tests/fixtures/shopping/scripted-proposals.json",
+      "sha256": "b8aa81153222ae04c837da5b8652817e925e02ec107b9bd54e4a61802c0b3f17"
+    },
+    {
+      "path": "tests/helpers/strict-network-guard.cjs",
+      "sha256": "39861836c9444f44309af7d3961f0c2930db0d3dbb406c3a14f6ee16957c719b"
+    },
+    {
+      "path": "tests/shopping-model-eval.test.cjs",
+      "sha256": "5bcd2bd29b26855156cc4b0183c26bebaf4e67702de37fa06102fe01b780cfc5"
+    },
+    {
+      "path": "tests/shopping/evaluate.cjs",
+      "sha256": "e098a15b1c1448e5908ec3f903a7eea94f2143464cd2d11d1f68d3fc82ee8c53"
+    },
+    {
+      "path": "tests/shopping/helpers.cjs",
+      "sha256": "ad1d9eac78591e31c7b118082464a6a44173a218e9422f1833102dd53264264f"
+    },
+    {
+      "path": "tests/shopping/model/collector.test.cjs",
+      "sha256": "8c419b1ec641e9f17751d81e9c9e226734151b0820b67cc346dba1203c296027"
+    },
+    {
+      "path": "tests/shopping/model/compatibility.test.cjs",
+      "sha256": "b6114b601af1533fe2909a886d5caef9ce7ae10aa68e34042b12bb18979fcf1f"
+    },
+    {
+      "path": "tests/shopping/model/harness-fix.test.cjs",
+      "sha256": "079f5c9b66638afaf473e8f76f2cfa225f5b8dc674d2972c799cdb29d65746bb"
+    },
+    {
+      "path": "tests/shopping/model/heldout.test.cjs",
+      "sha256": "1f7382c93faf7e2845916aebbc9ad0003ef3f187b46bcc73fec53368f809f2bf"
+    },
+    {
+      "path": "tests/shopping/model/reduced.test.cjs",
+      "sha256": "b5b3b82e4701c1f4ddc5ee2ac4e6791ab1a6790a146b6b3c8660c4d496ad9fe4"
+    },
+    {
+      "path": "tests/shopping/model/scenarios.cjs",
+      "sha256": "ac9a26e62fd6b7dddb7638ee49382a240a52d2e5bb3b63b447c1d001abd10234"
+    },
+    {
+      "path": "tests/shopping/model/scenarios.test.cjs",
+      "sha256": "2371112de562f47faaa86e98d2829f940bc12accf1e8cf9e9a6061e9766548f0"
+    },
+    {
+      "path": "tests/shopping/model/scoring.test.cjs",
+      "sha256": "76da33bf87419f8e7d37bcca70ed125345200c39ff0d9aa15b0b47036fbbe928"
+    },
+    {
+      "path": "tests/shopping/model/transport.test.cjs",
+      "sha256": "849077b3ab4b95ae553b1f47438440d942ca4cdfb9852bbdd089c4be7e143bae"
+    }
+  ],
+  "review_required": "Part A only: Claude and offline adversarial review before blind authoring. No held-out data bound yet; no live calls. A future bound heldout freeze needs claude_4_heldout_go naming its hash."
+}

@@ -1,0 +1,44 @@
+{
+  "schema": "shopping.reduced.live.evidence.v1",
+  "manifest_sha256": "808dd174be8a0cc781f1a8cfd8bb016ceeeeae928b4d4ac394867e18e6c9ab1a",
+  "files": 16,
+  "bytes": 725596,
+  "key_evidence": [
+    {
+      "file": "raw/checkpoint.json",
+      "sha256": "a49bc4edcc204a3065ba5abcd2e220d6b55f48df06085a13535fa1997fa7223e"
+    },
+    {
+      "file": "raw/token-worker.log",
+      "sha256": "0fdab33d76f47db5f404561eec39abec72d532f3058b5e0679a9f6f07ec6d21d"
+    },
+    {
+      "file": "launch/L-1-launch.json",
+      "sha256": "1678853409f1699cee6c89fe84ddd5cef1625d4ede7c78c5769d05b35e0354ab"
+    },
+    {
+      "file": "launch/L-1-result.json",
+      "sha256": "282672f377074fbd546367b127be117dfbe853e463e6fcc41d51069c0d3a722f"
+    },
+    {
+      "file": "scoring.json",
+      "sha256": "117659696d23b4a65be7a1ef2967ad1e7df2f8f6e513489ea3237b406a63d9a8"
+    },
+    {
+      "file": "inspection.json",
+      "sha256": "fbeb576537363838037a2bba6a5125f6bb06d74847637e46a72bec5eeaab4d3f"
+    },
+    {
+      "file": "launch.py",
+      "sha256": "da69bf424a92c80ab184e3df48af9927228aa4e634d4e0238080cfa21226f2ad"
+    },
+    {
+      "file": "proxy-only.sb",
+      "sha256": "c3308c8618c5d73b78c5afa06580b792548dea23acf371169f74363843528eea"
+    },
+    {
+      "file": "report.py",
+      "sha256": "344810aee1013af7c001dc5b2f2d5288562fdbd52b363113b869ca7911f3737e"
+    }
+  ]
+}

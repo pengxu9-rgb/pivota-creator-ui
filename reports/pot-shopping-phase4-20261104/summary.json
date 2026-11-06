@@ -1,0 +1,214 @@
+{
+  "schema": "shopping.pr36.adversary-fix.evidence.v1",
+  "head": "3909acf240dc1d157b4469a9f8041109cb4c35a1",
+  "freeze_sha256": "9e70f325a3c98c3c355727dce748e2774e5bc8e038099007b67a6b58c2246d72",
+  "previous_evidence": "d4f6b5d",
+  "independent_review": {
+    "scoring_and_portability": "pass",
+    "retry_and_replay": "pass",
+    "launch_and_handoff": "pass"
+  },
+  "tests": {
+    "full": 636,
+    "model": 130,
+    "explicit_harness": 11
+  },
+  "qualifiers": 12,
+  "equivalence_comparisons": 56,
+  "without_git_history": true,
+  "frozen_model_contract": {
+    "passed": true,
+    "base": "12dc3a19299c19e200541c4261a69658c26a1b72",
+    "byte_identical": [
+      {
+        "file": "src/lib/pokemon/shopping/model/declarations.cjs",
+        "sha256": "b735935f8a90d57c3b6b9bf3fb017f8cbc2930243da528cd1f59290b2038cf53"
+      },
+      {
+        "file": "reports/pot-shopping-phase3-20261101/declarations.json",
+        "sha256": "ce8a51cc206a2258d16c32c17be83e1fe87c2fa6abe535033e961182f8774e26"
+      },
+      {
+        "file": "src/lib/pokemon/shopping/model/context.cjs",
+        "sha256": "ad855589e6c727989e19fec8b102d3aac9c4ed0972ccdd880f4e49e7c74187fd"
+      }
+    ],
+    "generation_config_identical": true,
+    "instruction_identical": true,
+    "limits_identical": true,
+    "turn": {
+      "historical_sha256": "64440be3d5e57718fa97e550079c2aabaa83589077a55e4ee8ff13b49f810df2",
+      "sha256": "0c101efda657bc81f8bd3be0c7d14b5345f449c1244b1850d6c07b4c4c3a2f24",
+      "byte_identical": false
+    }
+  },
+  "model_mutants_caught": 49,
+  "network_attempts": 0,
+  "kernel": {
+    "rows": 93,
+    "caught": 88,
+    "equivalent": 5,
+    "node_audits": 8694,
+    "python_audits": 6080,
+    "load_before": [
+      7.52392578125,
+      21.869140625,
+      19.92822265625
+    ],
+    "load_range": [
+      6.2890625,
+      54.54833984375
+    ],
+    "idle_share_before": 0.6485762144053602,
+    "first_attempt": {
+      "rows": 21,
+      "reason": "worker deadline",
+      "peak_load": 51.6875
+    }
+  },
+  "gates": {
+    "equivalence-final": {
+      "seconds": 0.6680664999876171,
+      "log_sha256": "91247339dc4a4d7ab07db858ba1c081ab07e056895195d0b2b94a63092fe4336",
+      "node_audits": 1,
+      "network_attempts": 0
+    },
+    "model-freeze-final": {
+      "seconds": 0.12656100001186132,
+      "log_sha256": "bd1f0c2f51a87b819aee63c7669a45579150c9999b1df0fb29a4188c7b6ceeee",
+      "node_audits": 1,
+      "network_attempts": 0
+    },
+    "heldout-final": {
+      "seconds": 3.1911143749020994,
+      "log_sha256": "4b657a0d88839e5dcb673c11cbbeb7eb68bb16e8b32e71c4974c84ba890eca91",
+      "node_audits": 1,
+      "network_attempts": 0
+    },
+    "invariants-final": {
+      "seconds": 0.3963784580118954,
+      "log_sha256": "fe3d571caa39cc9e4f77e899bd9c70ca3b53f32b726c3c4babd460ceefa5293f",
+      "node_audits": 1,
+      "network_attempts": 0
+    },
+    "syntax-final": {
+      "seconds": 5.075473708100617,
+      "log_sha256": "c3795a7d4679b7c1ceaa6908dfcb03a48881ab566b9db9e1e874d9cb18e087b7",
+      "node_audits": 1,
+      "network_attempts": 0
+    },
+    "corpus-final": {
+      "seconds": 27.499012249987572,
+      "log_sha256": "5aea6a1ed861b997bf7584065c01a440f804099bcbbef8d134183d6513316b85",
+      "node_audits": 1,
+      "network_attempts": 0
+    },
+    "smoke-final": {
+      "seconds": 2.0948064168915153,
+      "log_sha256": "4da52c8c1a5e3830530eb83785b24b35ce64cf2ea764177135aacbb3d35005dc",
+      "node_audits": 1,
+      "network_attempts": 0
+    },
+    "compat-final": {
+      "seconds": 224.8304273339454,
+      "log_sha256": "b7e9009b38a8d1d59ca3309af24f24b2ce19efd6cf6e2adafcd1af9561808165",
+      "node_audits": 1,
+      "network_attempts": 0
+    },
+    "mapping-1": {
+      "seconds": 0.5664355421904474,
+      "log_sha256": "ddbb33a1236d1b0c1ba1d96ae103a36c71ec7fff1b541c9a060f0863707ad169",
+      "node_audits": 1,
+      "network_attempts": 0
+    },
+    "detached-final": {
+      "seconds": 3.551540083019063,
+      "log_sha256": "e471e703deba4512c03e8fa55a2a9e05ed2147314bd7a3b579765f9151e45f4b",
+      "node_audits": 1,
+      "network_attempts": 0
+    },
+    "arm-resume-final": {
+      "seconds": 4.461797958007082,
+      "log_sha256": "a411f617b0c2f35627cc2a758b379865f50dfab91c5e98b5f8de35b4f869f58d",
+      "node_audits": 1,
+      "network_attempts": 0
+    },
+    "guard-1": {
+      "seconds": 0.19070475012995303,
+      "log_sha256": "a53ce896d134e30a270962716341e492a1e1c77ef7b9a0599023e4209776682c",
+      "node_audits": 1,
+      "network_attempts": 0
+    },
+    "equivalence-exact": {
+      "seconds": 1.3239719169214368,
+      "log_sha256": "db75c7d4d607f35b618e438fdd7707f05129a11de6342af03b6a74c09f567237",
+      "node_audits": 1,
+      "network_attempts": 0
+    },
+    "portable": {
+      "seconds": 1.413416082970798,
+      "log_sha256": "a7c1795963dbeac6962ae73c993f3d30329733abf4d0e8b595afac6219d68ca6",
+      "node_audits": 3,
+      "network_attempts": 0
+    },
+    "full-final": {
+      "seconds": 55.55483924993314,
+      "log_sha256": "13e8c4502e99239105b520ac9bd45a0b7765cc4eec583e0d2425435f3b9aa0df",
+      "node_audits": 47,
+      "network_attempts": 0
+    },
+    "model-final": {
+      "seconds": 10.072276792023331,
+      "log_sha256": "284a1b0d8923dc99fac3018ca91e366ee11f65ccc1dd9d4329c55af33be3fcd6",
+      "node_audits": 2,
+      "network_attempts": 0
+    },
+    "harness-1": {
+      "seconds": 1.0468382081016898,
+      "log_sha256": "299469a5974ff0a683437ab8ded5c19f872cbeb724e0574d04907c897dc86239",
+      "node_audits": 4,
+      "network_attempts": 0
+    },
+    "mutants-final": {
+      "seconds": 436.00140087516047,
+      "log_sha256": "d110a486a689b8d070c68acef914a35f7d569c4e8d4ea18e091337e37156f787",
+      "node_audits": 1,
+      "network_attempts": 0
+    },
+    "python-1": {
+      "seconds": 0.48300166707485914,
+      "log_sha256": "16765ef7fc56b2533a1480b7e1731d788ebc41bd5d41d0abc59d1866ff26f7b5",
+      "node_audits": 0,
+      "network_attempts": 0
+    },
+    "phase2-1": {
+      "seconds": 0.5793935828842223,
+      "log_sha256": "924baf7cfbdf6a493d3b61900fdd6db539e1c042e1a282f5b128eddbc0a13a0d",
+      "node_audits": 1,
+      "network_attempts": 0
+    },
+    "ts-1": {
+      "seconds": 10.561822875170037,
+      "log_sha256": "5a74228e81686c1ac65309ccc81b1f37596fbec59345e7268c3af30e3ad81b1c",
+      "node_audits": 1,
+      "network_attempts": 0
+    },
+    "vocab-final": {
+      "seconds": 3.2779521660413593,
+      "log_sha256": "9b9b5435742032872a698f1d65c76b31e6954ea1af622e9950a0aad6d155d83c",
+      "node_audits": 0,
+      "network_attempts": 0
+    },
+    "kernel-final": {
+      "seconds": 4122.932860832894,
+      "log_sha256": "33d0bed8ffc19a5f1c0959ba67c77c698d2df0f82e1dd8eb28f02e49802e3c0d",
+      "node_audits": 1,
+      "network_attempts": 0
+    }
+  },
+  "raw_archive": {
+    "sha256": "3092c6bfe8f78dacd14f77c3526e286d2dc83ca0e83d3cc692277d2a3760d931",
+    "manifest_sha256": "897f55bdac2dc8093d159773220eca50fbf758b37807f40ecd8f5bd4f9c803ce",
+    "files": 18687
+  }
+}
