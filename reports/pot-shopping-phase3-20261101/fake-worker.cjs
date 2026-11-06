@@ -1,8 +1,14 @@
 'use strict';
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 const ROOT=path.resolve(__dirname,'../..');
-const {acquireRunLock,externalRunDirectory}=require('./run-directory.cjs');
+const {acquireRunLock,externalRunDirectory,readLaunchInput}=require('./run-directory.cjs');
 const raw=externalRunDirectory(ROOT,process.argv[2]),lock=acquireRunLock(raw);
+try {
+    if (readLaunchInput().length < 16) throw Error('invalid_token_handoff');
+} catch (error) {
+    lock.close();
+    throw error;
+}
 const {createCollector,atomic}=require(ROOT+'/src/lib/pokemon/shopping/model/collector.cjs');
 const {shoppingEpisode,modelHost}=require('./orchestrate.cjs');
 const {setup,journeys}=require(ROOT+'/tests/shopping/helpers.cjs');

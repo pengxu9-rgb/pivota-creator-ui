@@ -760,11 +760,11 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/detached-launch.cjs",
-      "sha256": "43894e6d102458736c8ba197897feec7075e1a24d97428e74e5deed9721e204e"
+      "sha256": "f08d2e6a500e5d80be4b70bd7169ea8f32fb4df7aa78eaa95ffcd03f7a00f541"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/fake-worker.cjs",
-      "sha256": "976d5673c6d056c4ffa7fd70f43fe076a7665543be72d9ff3e9f62be4bb030ae"
+      "sha256": "cb95c041eb0aef3b39898b98ddfa4135742fe09140374fb5b9c90a2c28c51c77"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/guard-child.cjs",
@@ -776,7 +776,7 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/harness-fix-runtime.patch",
-      "sha256": "f432aa831d161f124b9209681e3ed3ebb9490b2ba2dfca2a9bbca127dddc21ac"
+      "sha256": "3a34436da02f31a8ab6b55750716acf1370a00c42935e662f81d53ecd2c19551"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/historical-baselines.cjs",
@@ -796,11 +796,11 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/launch-go.test.cjs",
-      "sha256": "44102b12351ebe6e0b21ac359a520f1c73943f2608ecd7cce386c0cbd10fdfca"
+      "sha256": "96c7076d2b67cdc345bac955f9f3ce58374f686cf4911575508bafebb5721de9"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/live-host.cjs",
-      "sha256": "4f16dd4333c04130e3e30f67f245669ab2d602eceb6438d47329c921ee48ed02"
+      "sha256": "674887e4780c1dcfc8c0ef244685c6ddce1d62346a3b6b83babd1435cbd67a65"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/mutations.cjs",
@@ -836,7 +836,7 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/qualify-detached.cjs",
-      "sha256": "8a081138e60504c61e3f6ac96d1b61db70c6d0111b4d86455db44f1778530649"
+      "sha256": "93e4a9e683c61635be4f5a07e141fdd45449f0e94781ec9a0524cc2cf16203f9"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/qualify-episode-equivalence.cjs",
@@ -872,7 +872,7 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/run-directory.cjs",
-      "sha256": "3412667e4f47db108228a0348fbbe5895ef261d3cb5551ef32235def8ca3e2e8"
+      "sha256": "db9455e5a0892ba40872b5ea62a27c8d5c4f8407d5d13a6ca9cb1b9f9dbbd953"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/score.cjs",
@@ -880,7 +880,7 @@
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/token-launch.py",
-      "sha256": "b957fca02e172adbfae8631459b46cdbbea05614f9c4e3871782294f9b6b746d"
+      "sha256": "460688e62f9d74407a202970df3fef8457b8bd418cc9eae6eaa5cf5b85e6f708"
     },
     {
       "path": "reports/pot-shopping-phase3-20261101/validate-heldout.cjs",

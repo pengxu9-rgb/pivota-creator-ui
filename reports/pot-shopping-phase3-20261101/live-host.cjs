@@ -40,7 +40,7 @@ async function main(arm, raw, reviewHash, plan, heldoutPath) {
     const expires = Date.parse(process.env.POT_LIVE_TOKEN_EXPIRES_AT);
     if (!(expires >= Date.now() + 45 * 60000))
         throw Error('cached_token_requires_45_minutes');
-    const { acquireRunLock, externalRunDirectory } = require('./run-directory.cjs');
+    const { acquireRunLock, externalRunDirectory, readLaunchInput } = require('./run-directory.cjs');
     const directory = externalRunDirectory(ROOT, raw);
     const lock = acquireRunLock(directory);
     let guard;
@@ -52,9 +52,10 @@ async function main(arm, raw, reviewHash, plan, heldoutPath) {
             ? await require('./validate-heldout.cjs').loadQualified(heldoutPath, { expected: freeze.heldout_fixture })
             : undefined;
         // The user-owned cached token is supplied on stdin after validation and locking.
-        const token = fs.readFileSync(0, 'utf8').trim();
+        const token = readLaunchInput();
         if (!/^[A-Za-z0-9._~+\/-]+=*$/.test(token) || token.length < 16 || token.length > 16384)
             throw Error('invalid_token_handoff');
+        verifyFrozenArtifacts(freeze);
         const { createVertexRequest } = require(ROOT + '/src/lib/pokemon/shopping/model/vertex-request.cjs');
         const { createCollector } = require(ROOT + '/src/lib/pokemon/shopping/model/collector.cjs');
         const { runArm } = require('./orchestrate.cjs');

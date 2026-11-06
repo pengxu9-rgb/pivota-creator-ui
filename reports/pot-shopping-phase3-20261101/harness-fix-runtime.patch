@@ -405,10 +405,10 @@ index 0000000..b682f16
 +async function steps(rows,dispatch){for(const step of rows)await dispatch(step);}
 +module.exports={v2,fixture,questionMeasure,selectionSupplies,steps,training,fields,ROOT};
 diff --git a/reports/pot-shopping-phase3-20261101/live-host.cjs b/reports/pot-shopping-phase3-20261101/live-host.cjs
-index 44b9dd4..5db5e09 100644
+index 44b9dd4..f41f4f9 100644
 --- a/reports/pot-shopping-phase3-20261101/live-host.cjs
 +++ b/reports/pot-shopping-phase3-20261101/live-host.cjs
-@@ -1,39 +1,82 @@
+@@ -1,39 +1,83 @@
  'use strict';
  // Lazy, disabled stage3b host. Stage3a never invokes main or reads token stdin.
  const fs = require('node:fs'), path = require('node:path');
@@ -466,7 +466,7 @@ index 44b9dd4..5db5e09 100644
 -    process.env.POT_SHOPPING_MODEL_ARM = arm;
 -    const guard = require('./vertex-allowlist-guard.cjs'), { createVertexRequest } = require(ROOT + '/src/lib/pokemon/shopping/model/vertex-request.cjs'), { createCollector } = require(ROOT + '/src/lib/pokemon/shopping/model/collector.cjs'), { runArm } = require('./orchestrate.cjs');
 -    const request = createVertexRequest({ arm, guard, token }), collector = createCollector({ freeze, artifactBytes: p => fs.readFileSync(ROOT + '/' + p), checkpoint: directory + '/checkpoint.json', tokenExpiresAt: expires, reviewGo: true, transport: ({ request: body, signal, onStageReader }) => request(body, { signal, onStageReader }) });
-+    const { acquireRunLock, externalRunDirectory } = require('./run-directory.cjs');
++    const { acquireRunLock, externalRunDirectory, readLaunchInput } = require('./run-directory.cjs');
 +    const directory = externalRunDirectory(ROOT, raw);
 +    const lock = acquireRunLock(directory);
 +    let guard;
@@ -483,9 +483,10 @@ index 44b9dd4..5db5e09 100644
 +            ? await require('./validate-heldout.cjs').loadQualified(heldoutPath, { expected: freeze.heldout_fixture })
 +            : undefined;
 +        // The user-owned cached token is supplied on stdin after validation and locking.
-+        const token = fs.readFileSync(0, 'utf8').trim();
++        const token = readLaunchInput();
 +        if (!/^[A-Za-z0-9._~+\/-]+=*$/.test(token) || token.length < 16 || token.length > 16384)
 +            throw Error('invalid_token_handoff');
++        verifyFrozenArtifacts(freeze);
 +        const { createVertexRequest } = require(ROOT + '/src/lib/pokemon/shopping/model/vertex-request.cjs');
 +        const { createCollector } = require(ROOT + '/src/lib/pokemon/shopping/model/collector.cjs');
 +        const { runArm } = require('./orchestrate.cjs');
@@ -841,10 +842,10 @@ index 41f87a3..5563002 100644
 +module.exports = { runHeldoutBaseline, runArm, runCompatibility, runBaseline, shoppingEpisode, modelHost };
 diff --git a/reports/pot-shopping-phase3-20261101/run-directory.cjs b/reports/pot-shopping-phase3-20261101/run-directory.cjs
 new file mode 100644
-index 0000000..0ed662c
+index 0000000..5abec7c
 --- /dev/null
 +++ b/reports/pot-shopping-phase3-20261101/run-directory.cjs
-@@ -0,0 +1,47 @@
+@@ -0,0 +1,60 @@
 +'use strict';
 +
 +const fs = require('node:fs');
@@ -853,6 +854,7 @@ index 0000000..0ed662c
 +
 +const LOCK_FILE = '.checkpoint.lock';
 +const LOCK_FD_ENV = 'POT_SHOPPING_RUN_LOCK_FD';
++const HANDOFF_BYTES_ENV = 'POT_SHOPPING_HANDOFF_BYTES';
 +
 +function externalRunDirectory(root, raw) {
 +    const directory = fs.realpathSync(raw);
@@ -891,12 +893,24 @@ index 0000000..0ed662c
 +    }
 +}
 +
-+module.exports = { acquireRunLock, externalRunDirectory, LOCK_FD_ENV };
++function readLaunchInput() {
++    const bytes = fs.readFileSync(0);
++    const expected = process.env[HANDOFF_BYTES_ENV];
++    // Keep bare stdin for a directly launched host. Inherited workers always
++    // require the full frame, including after a launcher failure or crash.
++    if (process.env[LOCK_FD_ENV] !== undefined || expected !== undefined) {
++        if (expected !== String(bytes.length) || bytes.length < 16 || bytes.length > 16384)
++            throw Error('invalid_token_handoff');
++    }
++    return bytes.toString('utf8').trim();
++}
++
++module.exports = { acquireRunLock, externalRunDirectory, readLaunchInput, LOCK_FD_ENV, HANDOFF_BYTES_ENV };
 diff --git a/reports/pot-shopping-phase3-20261101/token-launch.py b/reports/pot-shopping-phase3-20261101/token-launch.py
-index 58a8352..84c9eab 100644
+index 58a8352..906d5dc 100644
 --- a/reports/pot-shopping-phase3-20261101/token-launch.py
 +++ b/reports/pot-shopping-phase3-20261101/token-launch.py
-@@ -1,34 +1,106 @@
+@@ -1,14 +1,45 @@
 -"""Disabled until exact 3a review; same read-only cached-token helper as attempt4."""
 +"""Disabled until Claude's go for the exact plan and freeze; same read-only cached-token helper as attempt4."""
  import argparse
@@ -911,14 +925,16 @@ index 58a8352..84c9eab 100644
 +import stat
  import subprocess
  import sys
- 
- 
++import tempfile
++
++
 +# Each plan has its own go; a go for one plan never launches the other.
 +REVIEW_GO = {'smoke': 'claude_3c_smoke_go', 'reduced': 'claude_3c_reduced_go', 'compatibility': 'claude_3c_compat_go', 'heldout': 'claude_4_heldout_go'}
 +TOKEN_HELPER = 'reports/admission-kernel-live-model/token-launch.py'
 +NETWORK_GUARD = 'tests/helpers/strict-network-guard.cjs'
 +LOCK_FILE = '.checkpoint.lock'
 +LOCK_FD_ENV = 'POT_SHOPPING_RUN_LOCK_FD'
++HANDOFF_BYTES_ENV = 'POT_SHOPPING_HANDOFF_BYTES'
 +
 +
 +def verify_frozen_artifacts(root, freeze, required):
@@ -939,11 +955,10 @@ index 58a8352..84c9eab 100644
 +    if not required.issubset(verified) or helper_source is None:
 +        raise RuntimeError('frozen_artifact_required')
 +    return helper_source
-+
-+
+ 
+ 
  def main():
-     parser = argparse.ArgumentParser()
-     parser.add_argument('--mode', choices=['fake', 'live'], required=True)
+@@ -17,18 +48,78 @@ def main():
      parser.add_argument('--arm', choices=['L', 'P'], required=True)
      parser.add_argument('--raw', required=True)
      parser.add_argument('--freeze-sha', required=True)
@@ -992,6 +1007,23 @@ index 58a8352..84c9eab 100644
 +        os.close(lock_fd)
 +
 +
++def publish_pid(raw, record):
++    with tempfile.NamedTemporaryFile(mode='w', dir=raw, prefix='.pid-', delete=False) as temp:
++        temp_path = Path(temp.name)
++        try:
++            temp.write(json.dumps(record) + '\n')
++            temp.flush()
++            os.fsync(temp.fileno())
++            os.replace(temp_path, raw / 'pid.json')
++            directory = os.open(raw, os.O_RDONLY | os.O_DIRECTORY)
++            try:
++                os.fsync(directory)
++            finally:
++                os.close(directory)
++        finally:
++            temp_path.unlink(missing_ok=True)
++
++
 +def launch_locked(args, here, root, raw, actual, heldout_binding, helper_source, lock_fd):
 +    if args.plan == 'heldout':
 +        # Check the bound bytes and replay the synthetic controls before touching the cache.
@@ -1007,7 +1039,7 @@ index 58a8352..84c9eab 100644
      if args.mode == 'fake':
          if not args.fake_cache:
              raise RuntimeError('fake_cache_required')
-@@ -43,19 +115,23 @@ def main():
+@@ -43,22 +134,28 @@ def main():
          account = os.environ.get('POT_VERTEX_ACCOUNT', '')
          if not account:
              raise RuntimeError('account_required')
@@ -1018,6 +1050,7 @@ index 58a8352..84c9eab 100644
      token, expiry = helper['cached_token'](cache, datetime.now(timezone.utc), account)
      environment = dict(os.environ, POT_LIVE_TOKEN_EXPIRES_AT=expiry.isoformat())
 +    environment[LOCK_FD_ENV] = str(lock_fd)
++    environment[HANDOFF_BYTES_ENV] = str(len(token))
      if args.mode == 'fake':
 -        environment['NODE_OPTIONS'] = '--require=' + str(root / 'tests/helpers/strict-network-guard.cjs')
 +        environment['NODE_OPTIONS'] = '--require=' + str(root / NETWORK_GUARD)
@@ -1032,10 +1065,15 @@ index 58a8352..84c9eab 100644
 -            child = subprocess.Popen(command, cwd=root, env=environment, stdin=subprocess.PIPE, stdout=log, stderr=log, start_new_session=True)
 +            child = subprocess.Popen(command, cwd=root, env=environment, stdin=subprocess.PIPE,
 +                                     stdout=log, stderr=log, start_new_session=True, pass_fds=(lock_fd,))
++            # The worker cannot start with empty or incomplete stdin.
++            publish_pid(raw, {'pid': child.pid, 'mode': args.mode, 'arm': args.arm, 'detached': True})
              child.stdin.write(token)
              child.stdin.close()
-         (raw / 'pid.json').write_text(json.dumps({'pid': child.pid, 'mode': args.mode, 'arm': args.arm, 'detached': True}) + '\n')
-@@ -69,6 +145,8 @@ def main():
+-        (raw / 'pid.json').write_text(json.dumps({'pid': child.pid, 'mode': args.mode, 'arm': args.arm, 'detached': True}) + '\n')
+     finally:
+         token[:] = b'\0' * len(token)
+         if child is not None and child.stdin is not None and not child.stdin.closed:
+@@ -69,6 +166,8 @@ def main():
  if __name__ == '__main__':
      try:
          sys.exit(main())

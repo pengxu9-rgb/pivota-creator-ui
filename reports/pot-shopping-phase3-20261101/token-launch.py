@@ -10,6 +10,7 @@ import shutil
 import stat
 import subprocess
 import sys
+import tempfile
 
 
 # Each plan has its own go; a go for one plan never launches the other.
@@ -18,6 +19,7 @@ TOKEN_HELPER = 'reports/admission-kernel-live-model/token-launch.py'
 NETWORK_GUARD = 'tests/helpers/strict-network-guard.cjs'
 LOCK_FILE = '.checkpoint.lock'
 LOCK_FD_ENV = 'POT_SHOPPING_RUN_LOCK_FD'
+HANDOFF_BYTES_ENV = 'POT_SHOPPING_HANDOFF_BYTES'
 
 
 def verify_frozen_artifacts(root, freeze, required):
@@ -89,6 +91,23 @@ def main():
         os.close(lock_fd)
 
 
+def publish_pid(raw, record):
+    with tempfile.NamedTemporaryFile(mode='w', dir=raw, prefix='.pid-', delete=False) as temp:
+        temp_path = Path(temp.name)
+        try:
+            temp.write(json.dumps(record) + '\n')
+            temp.flush()
+            os.fsync(temp.fileno())
+            os.replace(temp_path, raw / 'pid.json')
+            directory = os.open(raw, os.O_RDONLY | os.O_DIRECTORY)
+            try:
+                os.fsync(directory)
+            finally:
+                os.close(directory)
+        finally:
+            temp_path.unlink(missing_ok=True)
+
+
 def launch_locked(args, here, root, raw, actual, heldout_binding, helper_source, lock_fd):
     if args.plan == 'heldout':
         # Check the bound bytes and replay the synthetic controls before touching the cache.
@@ -121,6 +140,7 @@ def launch_locked(args, here, root, raw, actual, heldout_binding, helper_source,
     token, expiry = helper['cached_token'](cache, datetime.now(timezone.utc), account)
     environment = dict(os.environ, POT_LIVE_TOKEN_EXPIRES_AT=expiry.isoformat())
     environment[LOCK_FD_ENV] = str(lock_fd)
+    environment[HANDOFF_BYTES_ENV] = str(len(token))
     if args.mode == 'fake':
         environment['NODE_OPTIONS'] = '--require=' + str(root / NETWORK_GUARD)
         command = [shutil.which('node'), str(here / 'fake-worker.cjs'), str(raw)]
@@ -132,9 +152,10 @@ def launch_locked(args, here, root, raw, actual, heldout_binding, helper_source,
         with (raw / 'token-worker.log').open('ab') as log:
             child = subprocess.Popen(command, cwd=root, env=environment, stdin=subprocess.PIPE,
                                      stdout=log, stderr=log, start_new_session=True, pass_fds=(lock_fd,))
+            # The worker cannot start with empty or incomplete stdin.
+            publish_pid(raw, {'pid': child.pid, 'mode': args.mode, 'arm': args.arm, 'detached': True})
             child.stdin.write(token)
             child.stdin.close()
-        (raw / 'pid.json').write_text(json.dumps({'pid': child.pid, 'mode': args.mode, 'arm': args.arm, 'detached': True}) + '\n')
     finally:
         token[:] = b'\0' * len(token)
         if child is not None and child.stdin is not None and not child.stdin.closed:

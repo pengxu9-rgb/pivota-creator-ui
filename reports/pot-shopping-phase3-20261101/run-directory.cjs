@@ -6,6 +6,7 @@ const { spawnSync } = require('node:child_process');
 
 const LOCK_FILE = '.checkpoint.lock';
 const LOCK_FD_ENV = 'POT_SHOPPING_RUN_LOCK_FD';
+const HANDOFF_BYTES_ENV = 'POT_SHOPPING_HANDOFF_BYTES';
 
 function externalRunDirectory(root, raw) {
     const directory = fs.realpathSync(raw);
@@ -44,4 +45,16 @@ function acquireRunLock(directory, inherited = process.env[LOCK_FD_ENV]) {
     }
 }
 
-module.exports = { acquireRunLock, externalRunDirectory, LOCK_FD_ENV };
+function readLaunchInput() {
+    const bytes = fs.readFileSync(0);
+    const expected = process.env[HANDOFF_BYTES_ENV];
+    // Keep bare stdin for a directly launched host. Inherited workers always
+    // require the full frame, including after a launcher failure or crash.
+    if (process.env[LOCK_FD_ENV] !== undefined || expected !== undefined) {
+        if (expected !== String(bytes.length) || bytes.length < 16 || bytes.length > 16384)
+            throw Error('invalid_token_handoff');
+    }
+    return bytes.toString('utf8').trim();
+}
+
+module.exports = { acquireRunLock, externalRunDirectory, readLaunchInput, LOCK_FD_ENV, HANDOFF_BYTES_ENV };
