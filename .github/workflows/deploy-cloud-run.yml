@@ -144,6 +144,25 @@ jobs:
           # deployed with, so resolve the tag and compare digests (tags are mutable anyway).
           want="${REPO}@$(gcloud artifacts docker images describe "${REPO}:${TAG}" \
             --format='value(image_summary.digest)')"
+          # Since 2026-11 the runner's Docker pushes the tag as an OCI image INDEX (the amd64
+          # image plus a provenance attestation), and Cloud Run records the amd64 CHILD's
+          # digest, so the tag's own digest can never match. Read the manifest the tag points
+          # at (registry API: docker is only logged in on the build path, and a rollback or
+          # re-run reuses an existing tag) and, for an index, want its one linux/amd64 child.
+          # Masked: a later `set -x` or `curl -v` must not print a live deploy token.
+          token=$(gcloud auth print-access-token)
+          echo "::add-mask::${token}"
+          manifest=$(curl -sSf --retry 3 --connect-timeout 10 --max-time 60 \
+            -H "Authorization: Bearer ${token}" \
+            -H 'Accept: application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json' \
+            "https://${REPO%%/*}/v2/${REPO#*/}/manifests/${TAG}") \
+            || { echo "::error::could not read the manifest for ${REPO}:${TAG}"; exit 1; }
+          if jq -e 'type == "object" and has("manifests")' >/dev/null <<<"$manifest"; then
+            child=$(jq -r '[.manifests[] | select(.platform.os == "linux" and .platform.architecture == "amd64") | .digest]
+              | if length == 1 then .[0] else empty end' <<<"$manifest")
+            [ -n "$child" ] || { echo "::error::${REPO}:${TAG} is an index without exactly one linux/amd64 image"; exit 1; }
+            want="${REPO}@${child}"
+          fi
           image=$(gcloud run revisions describe "$ready" --project "$PROJECT" --region "$REGION" \
             --format='value(spec.containers[0].image)')
           [ "$image" = "$want" ] || { echo "::error::${ready} runs ${image}, want ${want} (${TAG})"; exit 1; }
