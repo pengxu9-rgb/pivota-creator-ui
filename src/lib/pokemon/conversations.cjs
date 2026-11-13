@@ -17,6 +17,14 @@ const uuid=v=>typeof v==='string'&&/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab]
 const fail=code=>{throw new CollectorCallError(code);};
 const copy=v=>structuredClone(v);
 const MODEL_CALL_LIMIT=20;
+// Per-chat limits reset when a chat is deleted, so two further caps bound spend:
+// a durable per-identity daily counter that survives chat deletion, and an
+// in-memory per-instance hourly ceiling across every identity. A refusal from
+// any cap, like a model outage, routes the turn deterministically.
+const MODEL_DEFAULT_LIMITS=Object.freeze({perIdentityDaily:100,perInstanceHourly:600});
+const MODEL_USAGE_KIND='model_usage',MODEL_USAGE_ID='00000000-0000-4000-8000-000000000000';
+const DAY_MS=86400000,HOUR_MS=3600000;
+const MODEL_FALLBACK_CODES=new Set(['model_unavailable','gemini_timeout','model_budget_exhausted','model_identity_budget_exhausted','model_instance_budget_exhausted']);
 const MODEL_STATUS=new Set(['accepted','unavailable','invalid','budget_exhausted']);
 const MODEL_CODES=new Set(['accepted','model_unavailable','invalid_model_proposal','model_budget_exhausted','gemini_timeout','gemini_cancelled']);
 const MODEL_EXPLANATIONS=new Set(['current_results','identity_ambiguity','grade_budget_unverified','prices_unavailable','provider_disabled','capability_scope']);
@@ -63,7 +71,7 @@ function cardForMessage(message,id){
 function createConversationFileStore({directory}) {
   const root=path.resolve(directory);
   const file=(owner,kind,id)=>{
-    if(!/^[a-f0-9]{64}$/.test(owner)||!['chats','bookmarks'].includes(kind)||!uuid(id))fail('invalid_chat_request');
+    if(!/^[a-f0-9]{64}$/.test(owner)||!['chats','bookmarks',MODEL_USAGE_KIND].includes(kind)||!uuid(id))fail('invalid_chat_request');
     return path.join(root,owner,kind,id+'.json');
   };
   return {
@@ -154,10 +162,47 @@ const FAILURE_TEXT={catalog_cancelled:'The turn was interrupted. Your conversati
   catalog_rejected_action:'That choice needs current scope or evidence. Check the latest prompt before setting a target.',
   catalog_snapshot_changed:'The catalog snapshot changed. Start a new chat and review the card again before confirming a target.'};
 
-function createConversationService({workspace,authenticate,store,now=Date.now,retentionMs=86400000,localFixtureGuard=false,admitPresentation,interpretTurn}) {
+function modelLimitsFor(value){
+  if(value==null)return MODEL_DEFAULT_LIMITS;
+  if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).some(k=>!Object.hasOwn(MODEL_DEFAULT_LIMITS,k)))throw Error('invalid_model_configuration');
+  const limits={...MODEL_DEFAULT_LIMITS,...value};
+  if(!Object.values(limits).every(v=>Number.isSafeInteger(v)&&v>=0&&v<=1e6))throw Error('invalid_model_configuration');
+  return Object.freeze(limits);
+}
+function defaultModelFallbackLog(event){
+  // A fixed code only: never the user's text, the model output or an error message.
+  try{process.stderr.write(JSON.stringify({kind:'model_fallback',...event})+'\n');}catch{/* logging never changes a turn */}
+}
+function createConversationService({workspace,authenticate,store,now=Date.now,retentionMs=86400000,localFixtureGuard=false,admitPresentation,interpretTurn,modelLimits,onModelFallback=defaultModelFallbackLog,modelNow=now}) {
   if(interpretTurn!=null&&typeof interpretTurn!=='function')throw Error('invalid_model_configuration');
+  if(typeof onModelFallback!=='function'||typeof modelNow!=='function')throw Error('invalid_model_configuration');
+  const limits=modelLimitsFor(modelLimits);
   const catalog=createCatalogAdapter({workspace,authenticate,now});
   const locks=new Map();
+  // Per-instance ceiling: a fixed UTC-hour window, checked and reserved synchronously.
+  const instanceUsage={window:null,calls:0};
+  function reserveInstanceCall(time){
+    const window=Math.floor(time/HOUR_MS);
+    if(instanceUsage.window!==window){instanceUsage.window=window;instanceUsage.calls=0;}
+    if(instanceUsage.calls>=limits.perInstanceHourly)return false;
+    instanceUsage.calls++;return true;
+  }
+  // Per-identity counter: one durable record per owner, outside every chat, so
+  // deleting or recreating chats never resets it. An unreadable record refuses.
+  async function identityUsage(user,time){
+    const day=Math.floor(time/DAY_MS),record=await store.get(user,MODEL_USAGE_KIND,MODEL_USAGE_ID);
+    if(record==null)return {id:MODEL_USAGE_ID,day,calls:0,expiresAt:(day+2)*DAY_MS};
+    if(!exact(record,['id','day','calls','expiresAt'])||record.id!==MODEL_USAGE_ID||!Number.isSafeInteger(record.day)||
+      !Number.isSafeInteger(record.calls)||record.calls<0||!Number.isFinite(record.expiresAt))return null;
+    if(record.day!==day)return {id:MODEL_USAGE_ID,day,calls:0,expiresAt:(day+2)*DAY_MS};
+    return record;
+  }
+  function deterministicRoute(text,current,routingState,code){
+    if(!MODEL_FALLBACK_CODES.has(code))throw Error('invalid_model_fallback');
+    try{onModelFallback({code,outcome:'deterministic_router'});}catch{/* logging never changes a turn */}
+    const routed=routeChatText(text,current,routingState);
+    return {action:routed.action,languagePreference:routed.languagePreference,modelMeta:{status:'fallback',code}};
+  }
   async function owner(context){let principal;try{principal=await authenticate(context);}catch{fail('collector_caller_denied');}if(!principal||typeof principal.id!=='string'||!principal.id.trim()||principal.id.length>200)fail('collector_caller_denied');return createHash('sha256').update(principal.id).digest('hex');}
   async function read(user,id,admit=true){if(!uuid(id))fail('chat_not_found');const doc=await store.get(user,'chats',id);if(!doc||doc.expiresAt<=now())fail('chat_not_found');if(admit)await family.admitStoredPresentation(doc,admitPresentation);return doc;}
   function lock(user,id,cancellable=false){if(locks.has(user))fail('logical_turn_in_progress');let finish;const settled=new Promise(r=>{finish=r;});const value={id,cancellable,controller:new AbortController(),finish,settled};locks.set(user,value);return value;}
@@ -209,17 +254,29 @@ function createConversationService({workspace,authenticate,store,now=Date.now,re
       if(modelEnabled){
         const count=doc.modelCalls===undefined?0:Number.isSafeInteger(doc.modelCalls)&&doc.modelCalls>=0&&doc.modelCalls<=MODEL_CALL_LIMIT?doc.modelCalls:MODEL_CALL_LIMIT;
         modelRequestId=randomUUID();
-        const time=now();doc={...doc,version:doc.version+1,updatedAt:time,title:doc.messages.length?doc.title:text.slice(0,100),
-          pending:true,requiresReconfirmation:true,commerceAnchor:null,modelCalls:count<MODEL_CALL_LIMIT?count+1:count,
-          modelPending:{requestId:modelRequestId,stateVersion:sourceDoc.version,workspaceVersion:current?.version??null,startedAt:time},
+        const time=now(),usageTime=modelNow();
+        let refusal=count>=MODEL_CALL_LIMIT?'model_budget_exhausted':null,usage=null;
+        if(!refusal){usage=await identityUsage(user,usageTime);active();if(!usage||usage.calls>=limits.perIdentityDaily)refusal='model_identity_budget_exhausted';}
+        if(!refusal&&!reserveInstanceCall(usageTime))refusal='model_instance_budget_exhausted';
+        // Reserve the identity call durably before acquiring credentials or contacting a model.
+        if(!refusal)await store.put(user,MODEL_USAGE_KIND,MODEL_USAGE_ID,{...usage,calls:usage.calls+1});
+        doc={...doc,version:doc.version+1,updatedAt:time,title:doc.messages.length?doc.title:text.slice(0,100),
+          pending:true,requiresReconfirmation:true,commerceAnchor:null,modelCalls:refusal?count:count+1,
+          modelPending:refusal?null:{requestId:modelRequestId,stateVersion:sourceDoc.version,workspaceVersion:current?.version??null,startedAt:time},
           messages:[...doc.messages,{id:randomUUID(),role:'user',status:'submitted',text,createdAt:time}]};
-        // Reserve the call durably before acquiring credentials or contacting a model.
+        // Reserve the chat call durably before acquiring credentials or contacting a model.
         pendingOwned=true;await store.put(user,'chats',doc.id,doc);active();
-        if(count>=MODEL_CALL_LIMIT)routed=modelFallback(routingState.languagePreference,'model_budget_exhausted');
+        if(refusal)routed=deterministicRoute(text,current,routingState,refusal);
         else{
+          let outage=null;
           try{routed=await interpretOnce(interpretTurn,{text,doc:sourceDoc,current:copy(current)},{signal:held.controller.signal,deadline:end});}
-          catch(error){active();if(error?.code==='catalog_cancelled')throw error;routed=modelFallback(routingState.languagePreference,error?.code==='gemini_timeout'?'gemini_timeout':'model_unavailable');}
-          active();if(!admittedModelRoute(routed))routed=modelFallback(routingState.languagePreference,'invalid_model_proposal');
+          catch(error){active();if(error?.code==='catalog_cancelled')throw error;outage=error?.code==='gemini_timeout'?'gemini_timeout':'model_unavailable';}
+          active();
+          // An unavailable, timed-out or failing model routes as if the model were off.
+          // Only a model that answered with an inadmissible proposal gets the clarification.
+          if(!outage&&admittedModelRoute(routed)&&routed.modelMeta.status==='unavailable')outage=routed.modelMeta.code==='gemini_timeout'?'gemini_timeout':'model_unavailable';
+          if(outage)routed=deterministicRoute(text,current,routingState,outage);
+          else if(!admittedModelRoute(routed))routed=modelFallback(routingState.languagePreference,'invalid_model_proposal');
         }
         action=copy(routed.action);
       }
