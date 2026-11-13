@@ -126,7 +126,7 @@ test('language holds remain stronger than model routing and clear only after acc
   chat=await h.send(chat,'Japanese');assert.equal(chat.languageClarificationPending,false);assert.equal(chat.workspace.result.scope_filters.language,'ja');
 });
 
-test('twenty-call budget persists across reopening; exhaustion calls neither model nor catalog',async()=>{
+test('twenty-call budget persists across reopening; exhaustion skips the model and routes as if it were off',async()=>{
   let calls=0;const h=harness(async()=>{calls++;return route({type:'recommendation_status'},null);});
   let chat=await h.service.create(h.owner,{});
   for(let n=0;n<20;n++)chat=await h.send(chat,'status');
@@ -134,8 +134,13 @@ test('twenty-call budget persists across reopening; exhaustion calls neither mod
   const restored=h.restore();chat=await restored.get(h.owner,{id:chat.id});
   chat=await restored.send(h.owner,{id:chat.id,version:chat.version,text:'status'});
   assert.equal(calls,20);assert.equal(h.calls.length,0);assert.equal(h.doc(chat.id).modelCalls,20);
-  assert.match(chat.messages.at(-1).text,/model-turn limit/);assert.equal(chat.modelClarificationPending,true);
-  assert.equal(h.doc(chat.id).modelLast.code,'model_budget_exhausted');assert.equal(h.doc(chat.id).pending,null);
+  const off=harness(async()=>assert.fail('the model-off reference must not call a model')),offService=off.restore(false);
+  let reference=await offService.create(off.owner,{});
+  reference=await offService.send(off.owner,{id:reference.id,version:reference.version,text:'status'});
+  assert.equal(chat.messages.at(-1).text,reference.messages.at(-1).text,'an exhausted chat answers exactly as the model-off router does');
+  assert.doesNotMatch(chat.messages.at(-1).text,/model-turn limit/);assert.equal(chat.messages.at(-1).status,'accepted');
+  assert.equal(h.doc(chat.id).modelLast.code,'model_budget_exhausted');assert.equal(h.doc(chat.id).modelLast.status,'fallback');
+  assert.equal(h.doc(chat.id).pending,null);assert.equal(h.doc(chat.id).modelPending,null);
 });
 
 test('model callback cannot return selection authority or leak errors through retained metadata',async()=>{
@@ -212,6 +217,7 @@ test('model-only timeout aborts its request and safely clarifies without droppin
   assert.ok(Date.now()-started<MAX_TIMEOUT_MS+1000,'a model that ignores its signal cannot hold the turn indefinitely');
   assert.equal(modelSignal.aborted,true);assert.equal(h.calls.length,count);assert.deepEqual(chat.workspace.result.preferences,PREFS);
   assert.equal(chat.modelClarificationPending,true);assert.equal(h.doc(chat.id).modelLast.code,'gemini_timeout');
+  assert.equal(h.doc(chat.id).modelLast.status,'fallback','a timed-out model routes the turn deterministically');
   assert.equal(chat.messages.at(-1).status,'accepted');assert.equal(chat.target,null);
   late.resolve(route({type:'ask',question:'English Pikachu cards'}));await new Promise(resolve=>setImmediate(resolve));
   assert.equal(h.calls.length,count);assert.equal(h.doc(chat.id).pending,null);

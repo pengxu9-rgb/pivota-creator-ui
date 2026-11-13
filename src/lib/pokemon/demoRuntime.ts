@@ -164,6 +164,14 @@ export function demoRuntime(): Runtime {
   }) as Service;
   const rawChats = createConversationService({
     interpretTurn: createRuntimeModelRouter(),
+    onModelFallback: (event: { code: string; outcome: string }) => {
+      void recordDemoEvent({
+        kind: "model_fallback",
+        ...telemetry.getStore(),
+        code: event.code,
+        outcome: event.outcome,
+      });
+    },
     ...(configuration?.scope==="beta"?{retentionMs:configuration.retentionMs}:{}),
     workspace,
     admitPresentation,

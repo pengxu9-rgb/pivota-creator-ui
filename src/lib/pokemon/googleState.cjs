@@ -126,6 +126,7 @@ function createDurableState({
         "bookmarks",
         "collection_items",
         "price_alerts",
+        "model_usage",
       ].includes(kind) ||
       !uuid(id)
     )
